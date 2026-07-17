@@ -1,0 +1,64 @@
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^(.+)$ index.php?module=$1 [L,QSA]
+#L (Last): Khi tìm thấy biểu thức phù hợp => Dừng lại
+#QSA: Hỗ trợ Query String
+
+# ===============================================================
+# M11 — BẢN CŨ có dòng:  php_value error_reporting -1
+#   => bật hiển thị MỌI lỗi. Ở production việc này in ra trình duyệt
+#      đường dẫn file, câu SQL, có khi cả thông tin kết nối.
+#   Nay bỏ đi; việc bật/tắt do APP_DEBUG trong .env quyết định
+#   (bootstrap.php xử lý) — một nguồn cấu hình duy nhất.
+# ===============================================================
+
+# ===============================================================
+# CHẶN TRUY CẬP TRỰC TIẾP FILE NHẠY CẢM
+#
+# Rất quan trọng: dòng `RewriteCond %{REQUEST_FILENAME} !-f` ở trên
+# nghĩa là file CÓ THẬT KHÔNG đi qua index.php mà được web server
+# phục vụ thẳng. Nên nếu không chặn tường minh ở đây thì:
+#   http://host/<app>/.env                        -> lộ mật khẩu DB
+#   http://host/<app>/database/*.sql              -> lộ toàn bộ dữ liệu + hash
+#   http://host/<app>/composer.json               -> lộ cấu trúc
+# đều tải về được bằng trình duyệt.
+# ===============================================================
+
+# .env và mọi biến thể (.env.example, .env.local...)
+<FilesMatch "^\.env">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Dump SQL, tài liệu, log, file khoá của composer
+<FilesMatch "\.(sql|log|lock|md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# composer.json / composer.lock
+<FilesMatch "^composer\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Không cho liệt kê nội dung thư mục
+Options -Indexes

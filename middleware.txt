@@ -1,0 +1,21 @@
+Middleware là gì?
+
+- Middleware là bộ lọc trung gian tiếp nhận Request từ Route và trả về Controller
+- Middleware sẽ đứng sau Route và trước Controller
+- Middleware thường được dùng dể xác thực, phân quyền
+- Trên hệ thống có nhiều Middleware
+
+=> Ví dụ:
+- Kiểm tra đăng nhập trước khi vào trang admin (Xác thực)
+- Kiểm tra quyền thêm mới sản phẩm trong trang admin (Phân quyền)
+
+
+Các loại Middleware:
+
+1. Global Middleware: Tất cả các Request đều chạy Middleware này
+
+2. Route Middleware: Các request chỉ chạy đến Middleware tương ứng đã đăng ký trong Route
+
+=> Ví dụ: Route: /admin => Đăng ký Middleware: AuthMiddleware
+
+=> Cần file cấu hình đăng ký Middleware

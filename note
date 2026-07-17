@@ -1,0 +1,14 @@
+- Các file trong thư mục app dành cho nhà phát triển
+- Các lớp, file trong thư mục app sẽ kế thừa các lớp trong thư mục core
+
+- tên class và tên file giống nhau
+
+- Load model vào controller
+
+- 1 model chỉ nên làm việc với 1 bảng
+
+- Mỗi controller sẽ tương ứng với 1 thư mục views
+Ví dụ: Category Controller sẽ tương ứng với thư mục view: categories
+- add.php
+- edit.php
+- list.php

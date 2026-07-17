@@ -1,0 +1,46 @@
+Lưu ý:
+- Mỗi controllers có thể load 1 hoặc nhiều models
+- Mỗi controllers thường tương với 1 module (Nhiều chức năng)
+- Mỗi controllers có thể load 1 hoặc nhiều views (Nên gom nhóm các views vào trong 1 folder tương ứng với tên controller)
+
+Thực hành: Tạo module Users bao gồm 4 chức năng:
++ Hiển thị danh sách
++ Thêm user
++ Sửa user
++ Xoá user
+
+Gợi ý:
+
+1. Tạo controller tên: Users
++ Tạo action (phương thức) tên index(): Chức năng hiển thị danh sách
++ Tạo action tên add(): Chức năng thêm users
++ Tạo action tên edit(): Chức năng sửa users
++ Tạo action tên delete(): Chức năng xoá user
+
+2. Tạo model tên UsersModel
+
++ Tạo method tên getListUsers(): Lấy danh sách users từ database
++ Tạo method tên addUser(): Thêm user vào database
++ Tạo method tên editUser(): Sửa user trong database
++ Tạo method tên deleteUser(): Xoá user trong database
+
+3. Tạo thư mục views có tên: users
+
++ Tạo list.php: Hiển thị danh sách
++ Tạo add.php: Hiển thị form thêm user
++ Tạo edit.php: Hiển thị form sửa user
+
+4. Liên kết giữa controller và views
+
++ Action index() => file: users/list.php
++ Action add() => file: users/add.php
++ Action edit() => file: users/edit.php
++ Action delete => Không liên kết tới views
+
+5. Liên kết giữa controller và model
+
++ Action index() => Gọi method tên getListUsers() trong model UsersModel
++ Action add() => Gọi method tên addUser() trong model UsersModel
++ Action edit() => Gọi method tên editUser() trong model UsersModel
++ Action delete() => Gọi method tên deleteUser() trong model UsersModel
+

@@ -1,0 +1,14 @@
+{
+    "name": "tanphat/framework",
+    "description": "Build php framework Tan Phat",
+    "type": "project",
+    "require": {
+
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "./"
+        },
+        "files": ["app/helpers/functions.php"]
+    }
+}

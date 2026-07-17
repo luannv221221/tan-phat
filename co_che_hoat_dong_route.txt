@@ -1,0 +1,26 @@
+Cơ chế hoạt động Route và App.php
+
+- Route sẽ lấy các config từ file web.php (Người phát triển sẽ khai báo đường dẫn ảo và đường dẫn thật) bằng cách sử dụng chính quy ở đường dẫn ảo
+Ví dụ:
+
+Cú pháp: Route::get(duong_dan_ao, duong_dan_that);
+
+Trong đó:
++ duong_dan_ao => Dùng biểu thức chính quy
++ duong_dan_that: Sử dụng $1, $2 để lấy dữ liệu từ Capturing Group
+
+Route::get('nguoi-dung', 'users/index');
+
+Route::get('nguoi-dung', 'users/index');
+
+- Route sẽ xử lý tìm kiếm và thay thế đường dẫn ảo thành đường dẫn thật
+
+- App.php sẽ lấy đường dẫn thật sau khi đã thay thế từ bên Route và đưa vào handleUrl trong App để xử lý gọi đến Controller, Action, Params tương ứng
+
+- Phương thức get() và post() trong Route sẽ có tác dụng phân biệt và cho phép 2 phương thức có cùng 1 đường dẫn ảo (Khác đường dẫn thật)
+
+Ví dụ:
+
+Route::get('nguoi-dung/them', 'users/add');
+
+Route::post('nguoi-dung/them', 'users/postAdd');

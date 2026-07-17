@@ -1,0 +1,10 @@
+Trường hợp 1:
+
+Khi khách hàng truy cập vào url => check quyền => Cho phép truy cập hoặc không (Redirect)
+
+Trường hợp 2:
+
+Ẩn các url không có quyền
++ Bước 1: Lấy được url
++ Bước 2: Gọi middleware tương ứng
++ Bước 3: Kiểm tra trạng thái của Middleware để hiển thị (Dựa vào true, false)

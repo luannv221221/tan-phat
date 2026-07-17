@@ -1,0 +1,14 @@
+CƠ CHẾ LOGIN TOKEN
+
+- Lưu lại tất cả lịch sử của thành viên trên hệ thống
+- Giúp quản lý và theo dõi các thành viên đăng nhập
+- Các thành viên tự quản lý các nền tảng đăng nhập tài khoản của mình
+- Hữu ích khi làm các hệ thống lớn, hệ thống bán tài khoản (tránh gian lận share tài khoản)
+
+Cách hoạt động:
+
+- Table login_token lưu trữ tất cả token đăng nhập
+- Khi thành viên đăng xuất (thủ công) => xoá login_token tương ứng
+- Khi thành viên đăng xuất tự động (Tắt trình duyệt) => Tự động xoá
+
+Khi check middleware => Hệ thống sẽ kiểm tra xem login_token có tồn tại hay không

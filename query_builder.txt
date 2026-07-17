@@ -1,0 +1,21 @@
+Query Builder là 1 class được xây dựng sẵn dùng để tao tác với Database dễ dàng mà không cần dùng đến câu lệnh SQL
+
+Ví dụ:
+Truy vấn SQL: SELECT name, email FROM users WHERE email='hoangan.web@gmail.com' AND age>=30
+
+=> Query Builder: $this->select('name, email')->table('users')->where('email', '=', 'hoangan.web@gmail.com')->where('age', '>=', 30)->get();
+
+1. where: $this->where(field, compare, value)
+2. orWhere: $this->orWhere(field, compare, value)
+3. get(): $this->get(); //Lấy tất cả bản ghi
+4. first(): $this->first(); //Lấy bản ghi đầu tiên
+5. table(): $this->table(name)
+6. join(): $this->join(tableName, relationship)
+7. limit(): $this->limit(offset, number)
+8. insert(): $this->table(name)->insert($data)
+9. update(): $this->table(name)->where(field, compare, value)->update($data)
+10. delete(): $this->table(name)->where(field, compare, value)->delete()
+11. whereLike(): $this->whereLike($field, $value)
+12. select(): $this->select($field)
+13. orderBy: $this->orderBy(field, type)
+14. lastId(); $this->lastId();

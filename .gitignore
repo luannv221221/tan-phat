@@ -1,0 +1,24 @@
+# Credential — TUYET DOI khong commit
+.env
+
+# Session that cua nguoi dung (16 file da tung bi commit nham)
+public/logs/session/*
+!public/logs/session/.gitkeep
+
+# Log
+public/logs/errors/*
+!public/logs/errors/.gitkeep
+public/logs/access/*
+!public/logs/access/.gitkeep
+
+# Backup truoc khi va Phase 0
+_backup_truoc_phase0/
+
+# He dieu hanh / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Composer
+/vendor/
