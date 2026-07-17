@@ -1,0 +1,158 @@
+# TRẠNG THÁI DỰ ÁN — chốt ngày 17/07/2026
+
+> Đọc file này trước khi tiếp tục làm ở máy khác.
+
+| | |
+|---|---|
+| **Test** | **381 test, 0 fail** — `C:\xampp\php\php.exe tests\run.php` |
+| **DB** | MySQL 8.0.44, DB `tanphat_php`, 20 bảng, 6 migration |
+| **PHP** | Chạy trên 8.0.30 (bản gốc chỉ chạy được ≤ 7.4) |
+| **Nền tảng** | Framework tự viết (giữ theo yêu cầu), đã vá |
+
+---
+
+## 🔴 ĐỌC TRƯỚC KHI PUSH — 2 cảnh báo
+
+### 1. Git root đang là CẢ thư mục `Downloads`
+
+```
+git rev-parse --show-toplevel  ->  C:/Users/admin/Downloads
+```
+
+Thư mục `core/` **chưa từng được git theo dõi**. Và `git status` ở `Downloads` đang có **510 mục** chờ commit — gồm **tài liệu cá nhân**: CV, hợp đồng, báo giá, ảnh 4x6, giấy ĐKKD, file Excel nhân sự...
+
+> ⚠️ **`git add .` ở `Downloads` = đẩy toàn bộ tài liệu cá nhân lên remote.**
+
+**Nên làm:** tạo repo riêng **bên trong** thư mục dự án:
+
+```bash
+cd C:/Users/admin/Downloads/framework_11_12_2021_fix
+git init
+git add .
+git commit -m "Phase 0: va base + cay danh muc xe + phu tung + CRUD danh muc"
+```
+
+`.gitignore` trong thư mục dự án đã sẵn sàng cho việc này.
+
+### 2. `.env` chứa mật khẩu DB — ĐÃ được chặn
+
+```
+git check-ignore -v .env  ->  .gitignore:2:.env    ✅ an toàn
+```
+
+Nhưng ở máy nhà **phải tự tạo `.env`**: copy `.env.example` → `.env` rồi điền `DB_PASS`.
+
+**Vẫn cần làm (ngoài code):** credential cũ và 16 file session **đã nằm trong git history** của repo `Downloads`. Nếu repo đó từng được push đi đâu, phải đổi mật khẩu DB và coi mọi phiên cũ đã lộ.
+
+---
+
+## ✅ ĐÃ LÀM
+
+### Phase 0 — vá base (chi tiết: `PHASE0_VA_BASE.md`)
+
+| Mã | Nội dung |
+|---|---|
+| **B1** | SQL Injection — viết lại QueryBuilder dùng **bound parameters thật** + whitelist toán tử + kiểm tra tên cột |
+| **B2** | Thêm **transaction** (`beginTransaction/commit/rollBack/transaction()`) |
+| **B3** | Bỏ `escape()`/`get_magic_quotes_gpc()` — **chạy được trên PHP 8** |
+| **B4** | **bcrypt** thay md5; hash md5 cũ **tự nâng cấp** khi đăng nhập đúng; token dùng `random_bytes` |
+| **B5** | `catch (\PDOException)` thay `catch (Exception)` (bản cũ không bao giờ bắt được) |
+| **H1** | Reset query state — bản cũ gọi 2 lần ra `WHERE id=1 AND id=2` |
+| **H2** | **CSRF** middleware global + `csrf_field()` |
+| **H3** | Session ra khỏi `public/`; cookie `httponly`+`samesite`; chống session fixation |
+| **H4** | Credential ra `.env`; `_WEB_URL` hết hardcode |
+| **H5** | **Migration runner**: `php migrate.php` / `status` / `rollback` / `make` |
+| **M1** | `removeExpired()` — 1 câu DELETE thay vì nạp cả bảng + xoá từng dòng |
+| **M2** | `utf8mb4` thay `utf8` |
+| **M6** | Rà XSS toàn bộ view, sửa 5 chỗ chưa escape |
+| **M7** | `Connection` dùng chung 1 PDO (bản cũ mỗi `new Model()` mở 1 kết nối mới) |
+| **M9** | Viết `CHUAN_CODE.md` |
+| **M10** | `joinOn()` bọc backtick — sửa bug `groups` là từ khoá dành riêng MySQL 8 |
+| **M11** | `.htaccess` chặn `.env`, `.sql`; bỏ `error_reporting -1` |
+
+### Nghiệp vụ
+
+| Phần | Chi tiết | Tài liệu |
+|---|---|---|
+| **Cây danh mục xe** | 6 bảng: hãng, kiểu dáng, model, đời, nhiên liệu, màu | `CAY_DANH_MUC_XE.md` |
+| **Phụ tùng + liên kết xe** | 7 bảng; TASK_86/87/90/91/93 | `PHU_TUNG.md` |
+| **CRUD 7 danh mục** | Màn hình quản trị + menu + phân quyền | `CRUD_DANH_MUC.md` |
+
+### Tài liệu
+
+| File | Nội dung |
+|---|---|
+| `SRS_ERP_TanPhat.md` | SRS dựng lại từ file Excel — **ứng dụng làm về cái gì** |
+| `PHASE0_VA_BASE.md` | Chi tiết từng lỗi + bằng chứng + cách sửa |
+| `CHUAN_CODE.md` | **Đọc trước khi viết code mới** — quy tắc + phụ lục các bẫy đã cắn dự án |
+| `CAY_DANH_MUC_XE.md` | Thiết kế cây xe (đã chốt "Dòng xe" = kiểu dáng) |
+| `PHU_TUNG.md` | Thiết kế phụ tùng |
+| `CRUD_DANH_MUC.md` | Cách thêm danh mục mới |
+
+---
+
+## ⬜ CHƯA LÀM — việc tiếp theo
+
+### Ưu tiên 1 — để người dùng nhập được dữ liệu xe
+
+- [ ] **CRUD Hãng xe** (`car_brands`) — có upload logo
+- [ ] **CRUD Model xe** (`car_models`) — dropdown phụ thuộc: chọn hãng → lọc kiểu dáng
+- [ ] **CRUD Đời xe** (`car_years`) — chọn model → nhập khoảng năm
+- [ ] **CRUD Danh mục phụ tùng** (`part_categories`) — có phân cấp cha-con
+
+> 4 màn hình này **không dùng lại được** `LookupCrudController` vì có quan hệ/dropdown phụ thuộc.
+
+### Ưu tiên 2 — phụ tùng
+
+- [ ] **CRUD Phụ tùng** — form gán nhiều đời xe (`PartFitmentsModel::syncForPart` đã sẵn sàng)
+- [ ] Phân trang (bắt buộc — phụ tùng sẽ hàng nghìn dòng)
+- [ ] TASK_77 thư viện ảnh · TASK_78 import Excel · TASK_81 phụ kiện đi kèm
+
+### Ưu tiên 3 — cần người có quyền, không phải code
+
+- [ ] **Đổi mật khẩu DB** (credential cũ trong git history)
+- [ ] **Xoá 16 file session khỏi git history** (`git filter-repo`)
+- [ ] **Trỏ docroot vào `public/`** thay vì thư mục gốc — `.htaccess` chỉ có tác dụng trên Apache; dùng Nginx là mọi chặn vô hiệu
+
+### Còn treo trong SRS
+
+- **Phân hệ Kế toán không có trong file Tracking** dù sheet Help liệt kê là 1 trong 6 đầu việc chính, và sheet Biểu mẫu/MENU đặc tả rất chi tiết. Cần BA bổ sung.
+- **~48 dòng trong Tracking không có trạng thái** → con số "Total 68" không phản ánh quy mô thật (>130 hạng mục).
+
+---
+
+## 🚀 Dựng lại ở máy nhà
+
+```bash
+# 1. Cài PHP 8 + MySQL 8 (hoặc XAMPP)
+
+# 2. Cấu hình
+cp .env.example .env
+#    rồi sửa DB_PASS, DB_PORT, APP_BASE_PATH cho đúng máy
+
+# 3. Tạo DB trắng
+#    CREATE DATABASE tanphat_php CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+# 4. Dựng schema + dữ liệu mồi
+C:\xampp\php\php.exe migrate.php
+
+# 5. Kiểm tra
+C:\xampp\php\php.exe tests\run.php      # phải PASS hết
+C:\xampp\php\php.exe migrate.php status
+```
+
+**Đăng nhập:** `hoangan.web@gmail.com` / `123456` (dữ liệu từ dump gốc).
+
+> ⚠️ **Chạy `migrate.php` TRƯỚC khi ai đăng nhập lần đầu.** Cột `password` gốc là `varchar(50)`, bcrypt dài 60 → không migrate thì người đầu tiên đăng nhập sẽ bị cắt hash và **mất tài khoản vĩnh viễn**. Xem `PHASE0_VA_BASE.md` mục 5.4.
+
+### Nếu import dump cũ vào DB đã có sẵn
+
+Migration `000003` sẽ chuyển các bảng cũ sang utf8mb4. **Bắt buộc** — không có nó thì không lưu được emoji và MySQL 8 sẽ từ chối INSERT (xem `PHASE0_VA_BASE.md` mục 5.10).
+
+---
+
+## 📌 Ba điều dễ quên nhất
+
+1. **Đừng `git add .` ở `Downloads`** — xem cảnh báo đầu file.
+2. **Chạy `migrate.php` trước khi đăng nhập** — nếu không sẽ mất tài khoản.
+3. **Đọc `CHUAN_CODE.md` trước khi viết code mới** — nhất là 3 chỗ raw còn lại trong QueryBuilder (`select()`, `join()` kiểu cũ, `$where` của `getList()`).

@@ -1,7 +1,12 @@
 # Credential — TUYET DOI khong commit
 .env
 
-# Session that cua nguoi dung (16 file da tung bi commit nham)
+# Session that cua nguoi dung.
+# CHO MOI (tu Phase 0 H3) — session luu o day, ngoai public/
+storage/sessions/*
+!storage/sessions/.gitkeep
+
+# CHO CU — giu lai de repo cu khong commit lai 16 file session da tung bi lo
 public/logs/session/*
 !public/logs/session/.gitkeep
 
