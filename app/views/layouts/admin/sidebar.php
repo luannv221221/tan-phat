@@ -19,6 +19,7 @@ $menuGroups = [
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
     'Danh mục phụ tùng'  => ['part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
     'Nội dung'           => ['products', 'news'],
+    'Kế toán'            => ['vouchers', 'cash-book', 'accounts', 'cost-items', 'projects'],
     'Hệ thống'           => ['users', 'groups'],
 ];
 
@@ -26,6 +27,7 @@ $groupIcons = [
     'Danh mục xe'        => 'fa-car',
     'Danh mục phụ tùng'  => 'fa-cogs',
     'Nội dung'           => 'fa-folder-open',
+    'Kế toán'            => 'fa-calculator',
     'Hệ thống'           => 'fa-sliders-h',
 ];
 
@@ -46,6 +48,11 @@ $itemIcons = [
     'news'                  => 'fa-newspaper',
     'users'                 => 'fa-users',
     'groups'               => 'fa-user-shield',
+    'vouchers'              => 'fa-receipt',
+    'cash-book'             => 'fa-book',
+    'accounts'              => 'fa-landmark',
+    'cost-items'            => 'fa-coins',
+    'projects'              => 'fa-briefcase',
 ];
 
 // Chỉ giữ module user có quyền, index theo link

@@ -123,6 +123,29 @@ Route::group('admin', function(){
        Route::get($url.'/delete/(\d+)',    'admin/'.$controller.'/delete/$1');
    }
 
+   /* =========================================================
+    * KẾ TOÁN (KT-1 + KT-2) — theo KE_TOAN_SPEC_DE_XUAT.md
+    * ========================================================= */
+   $accModules = [
+       'accounts'   => 'accounts',    // Danh mục tài khoản (cây)
+       'cost-items' => 'costitems',   // Mã phí
+       'projects'   => 'projects',    // Mã vụ việc
+       'vouchers'   => 'vouchers',    // Phiếu thu / chi
+   ];
+   foreach ($accModules as $url => $controller){
+       Route::get($url,                 'admin/'.$controller);
+       Route::get($url.'/add',          'admin/'.$controller.'/add');
+       Route::post($url.'/add',         'admin/'.$controller.'/postAdd');
+       Route::get($url.'/edit/(\d+)',   'admin/'.$controller.'/edit/$1');
+       Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
+       Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
+   }
+   // Phiếu: ghi sổ / huỷ ghi sổ
+   Route::get('vouchers/post/(\d+)',   'admin/vouchers/post/$1');
+   Route::get('vouchers/unpost/(\d+)', 'admin/vouchers/unpost/$1');
+   // Sổ quỹ (chỉ xem)
+   Route::get('cash-book', 'admin/cashbook');
+
    Route::get('khong-co-quyen', 'admin/dashboard/noPermission');
 
 });
