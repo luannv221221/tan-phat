@@ -9,7 +9,7 @@
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-star mr-2"></i>{{$page_name}}</h3>
         <div class="card-tools">
-            @if ($pending > 0)<span class="badge badge-warning">{{(int)$pending}} chờ duyệt</span>@endif
+            {!! $pending > 0 ? '<span class="badge badge-warning">'.(int)$pending.' chờ duyệt</span>' : '' !!}
         </div>
     </div>
     <div class="card-body border-bottom">

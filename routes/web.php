@@ -183,6 +183,24 @@ Route::group('admin', function(){
    Route::get('ton-kho', 'admin/tonkho');
    Route::get('the-kho', 'admin/thekho');
 
+   // KHO-2: điều chuyển kho + kiểm kê
+   $whOps = [
+       'transfers'   => 'transfers',    // Điều chuyển kho
+       'stock-takes' => 'stocktakes',   // Kiểm kê kho
+   ];
+   foreach ($whOps as $url => $controller){
+       Route::get($url,                 'admin/'.$controller);
+       Route::get($url.'/add',          'admin/'.$controller.'/add');
+       Route::post($url.'/add',         'admin/'.$controller.'/postAdd');
+       Route::get($url.'/edit/(\d+)',   'admin/'.$controller.'/edit/$1');
+       Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
+       Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
+   }
+   Route::get('transfers/post/(\d+)',     'admin/transfers/post/$1');
+   Route::get('transfers/unpost/(\d+)',   'admin/transfers/unpost/$1');
+   Route::get('stock-takes/post/(\d+)',   'admin/stocktakes/post/$1');
+   Route::get('stock-takes/unpost/(\d+)', 'admin/stocktakes/unpost/$1');
+
    /* =========================================================
     * BÁN HÀNG (SAL) — khép vòng doanh thu + công nợ khách
     *

@@ -11,7 +11,9 @@ $isActive = isset($old['status']) ? !empty($old['status']) : ((int) $item['statu
         <form action="" method="post">
             <?php echo csrf_field(); ?>
             <div class="card-body">
-                @if (!empty($msg))<div class="alert alert-danger"><i class="fas fa-exclamation-circle mr-1"></i> {{$msg}}</div>@endif
+                @if (!empty($msg))
+                <div class="alert alert-danger"><i class="fas fa-exclamation-circle mr-1"></i> {{$msg}}</div>
+                @endif
                 <div class="form-group">
                     <label>Tên nhóm <span class="text-danger">*</span></label>
                     <input type="text" name="name" class="form-control" value="{{$v('name')}}"/>

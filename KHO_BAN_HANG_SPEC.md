@@ -68,8 +68,17 @@ Khi **ghi sổ**, hệ thống tạo 1 **phiếu kế toán** (`acc_vouchers.vou
 - Báo giá KHÔNG tác động tồn/kế toán. Thuế GTGT 1 mức/hoá đơn (mặc định 10%).
 - Đối tượng khách hàng dùng chung `partners`. **KT-6 đã khép vòng** (nhập/xuất kho + bán hàng đều tự sinh bút toán).
 
+## 5b. Kho-2 (đã làm — migration 000020)
+
+| Màn hình | URL | Nội dung |
+|---|---|---|
+| Điều chuyển kho | `admin/transfers` | chuyển hàng kho A→B: xuất nguồn tại bq → nhập đích tại **cùng giá vốn**; KHÔNG sinh bút toán (nội bộ) |
+| Kiểm kê kho | `admin/stock-takes` | nhập SL thực tế; chốt → so tồn sổ, điều chỉnh + bút toán **thừa Nợ156/Có711**, **thiếu Nợ632/Có156** |
+
+- Tựa lên `StocksModel` (applyIn/applyOut/reverseDoc/isLastMovement). Huỷ ghi sổ chỉ khi là phát sinh cuối (bình quân gia quyền). Bổ sung TK 711.
+
 ## 6. Hoãn sang đợt sau
 
-- Kho-2: điều chuyển kho (WH-05), kiểm kê (WH-07), hàng tồn lâu (WH-12), báo cáo đồ thị; phân cấp kho 5 tầng.
+- Kho-3: hàng tồn lâu (WH-12), báo cáo đồ thị biến động; phân cấp kho 5 tầng.
 - Bán hàng: hợp đồng (theo yêu cầu "không cần làm hợp đồng"), chiết khấu dòng, hoá đơn điện tử.
 - TASK_79 (ẩn tồn theo quyền) & TASK_92 (facet) — cần storefront website.
