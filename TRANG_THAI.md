@@ -111,6 +111,12 @@ Nhưng ở máy nhà **phải tự tạo `.env`**: copy `.env.example` → `.env
 - [x] **TASK_77 thư viện ảnh** (18/07) — upload nhiều ảnh/phụ tùng, đặt ảnh đại diện, xoá (kèm file); bảng `part_images`
 - [x] **TASK_78 import Excel/CSV** (18/07) — reader `.xlsx` tự viết (zip+XML, không cần thư viện) + `.csv`; upsert theo `code`, map FK theo slug
 - [x] **TASK_81 phụ kiện đi kèm** (18/07) — bảng `part_related` (tự tham chiếu có hướng, CASCADE), picker tìm kiếm AJAX trong form phụ tùng, chặn tự tham chiếu
+- [x] **TASK_80 lọc khuyến mãi** (18/07) — lọc SP có `sale_price` trong danh sách
+- [x] **TASK_90 thông số kỹ thuật** (18/07) — bảng `attributes` + `part_attribute_values`, CRUD thông số, gán giá trị + lọc theo thông số
+- [x] **TASK_91 gợi ý tìm kiếm** (18/07) — autocomplete ở ô tìm (dùng `products/search-json`)
+- [x] **TASK_85 tải catalogue** (18/07) — xuất CSV theo bộ lọc (`products/export`)
+- [ ] **TASK_79 ẩn tồn kho theo quyền** — ⏸ HOÃN: parts chưa có trường tồn kho + chưa có hệ thống thành viên website
+- [ ] **TASK_92 lọc facet** — ⏸ HOÃN: tính năng website khách hàng, chưa có storefront
 
 ### Ưu tiên 3 — cần người có quyền, không phải code
 
@@ -120,7 +126,7 @@ Nhưng ở máy nhà **phải tự tạo `.env`**: copy `.env.example` → `.env
 
 ### Còn treo trong SRS
 
-- **Phân hệ Kế toán không có trong file Tracking** dù sheet Help liệt kê là 1 trong 6 đầu việc chính, và sheet Biểu mẫu/MENU đặc tả rất chi tiết. Cần BA bổ sung.
+- **Phân hệ Kế toán không có trong file Tracking** dù sheet Help liệt kê là 1 trong 6 đầu việc chính, và sheet Biểu mẫu/MENU đặc tả rất chi tiết. → **Đã soạn `KE_TOAN_SPEC_DE_XUAT.md`** (18/07) đề xuất phạm vi + mô hình dữ liệu + 8 câu hỏi cần BA/Kế toán chốt trước khi code.
 - **~48 dòng trong Tracking không có trạng thái** → con số "Total 68" không phản ánh quy mô thật (>130 hạng mục).
 
 ---
