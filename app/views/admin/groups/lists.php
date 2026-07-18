@@ -30,12 +30,12 @@
                 </td>
                 <td class="text-center">
                     @if (route('admin/groups/edit/'.$item['id']))
-                    <a href="{{_WEB_URL.'/admin/groups/edit/'.$item['id']}}" class="btn btn-warning"><i class="fa fa-edit"></i> </a>
+                    <a href="{{_WEB_URL.'/admin/groups/edit/'.$item['id']}}" class="btn btn-warning"><i class="fas fa-edit"></i> </a>
                     @endif
                 </td>
                 <td class="text-center">
                     @if (route('admin/groups/edit/'.$item['id']))
-                    <a onclick="return confirm('Bạn có chắc chắn?')" href="{{_WEB_URL.'/admin/groups/delete/'.$item['id']}}" class="btn btn-danger"><i class="fa fa-trash"></i></a>
+                    <a onclick="return confirm('Bạn có chắc chắn?')" href="{{_WEB_URL.'/admin/groups/delete/'.$item['id']}}" class="btn btn-danger"><i class="fas fa-trash"></i></a>
                     @endif
                 </td>
             </tr>

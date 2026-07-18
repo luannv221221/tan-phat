@@ -1,44 +1,36 @@
-<header class="bg-light py-2">
-    <div class="container">
-        <h1 class="text-center">TÂN PHÁT</h1>
+<!-- Navbar trên cùng -->
+<nav class="main-header navbar navbar-expand navbar-white navbar-light">
 
-        <div class="row">
-            <div class="col-8">
-                <nav>
-                    <ul class="nav">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="<?php echo _WEB_URL.'/admin'; ?>">Trang chủ</a>
-                        </li>
-                        <?php
-                        if (!empty($listModules)):
-                            foreach ($listModules as $item):
-                                if (route('admin/'.$item['link'])):
-                                ?>
-                                <li class="nav-item">
-                                    <a class="nav-link" href="<?php echo e(_WEB_URL.'/admin/'.$item['link']); ?>"><?php echo e($item['name']); ?></a>
-                                </li>
-                                <?php
-                                endif;
-                            endforeach;
-                        endif;
-                        ?>
+    <!-- Bên trái: nút thu/mở sidebar -->
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+        </li>
+        <li class="nav-item d-none d-sm-inline-block">
+            <a href="<?php echo _WEB_URL.'/admin'; ?>" class="nav-link">Trang chủ</a>
+        </li>
+    </ul>
 
-                    </ul>
-                </nav>
+    <!-- Bên phải: xem trang chủ + user -->
+    <ul class="navbar-nav ml-auto">
+        <li class="nav-item d-none d-sm-inline-block">
+            <a href="<?php echo _WEB_URL; ?>" target="_blank" class="nav-link">
+                <i class="fas fa-external-link-alt mr-1"></i> Xem trang chủ
+            </a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link" data-toggle="dropdown" href="#">
+                <i class="fas fa-user-circle mr-1"></i>
+                <?php echo e(!empty($infoUser['name']) ? $infoUser['name'] : 'Tài khoản'); ?>
+                <i class="fas fa-angle-down ml-1"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right">
+                <span class="dropdown-header"><?php echo e(!empty($infoUser['email']) ? $infoUser['email'] : ''); ?></span>
+                <div class="dropdown-divider"></div>
+                <a href="<?php echo _WEB_URL.'/dang-xuat'; ?>" class="dropdown-item">
+                    <i class="fas fa-sign-out-alt mr-2 text-danger"></i> Đăng xuất
+                </a>
             </div>
-            <div class="col-4 d-flex justify-content-end">
-                <a href="<?php echo _WEB_URL; ?>" target="_blank" class="btn btn-primary mr-2"><i class="fa fa-home"></i> Xem trang chủ</a>
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-expanded="false"><i class="fa fa-user" aria-hidden="true"></i>
-                        Hi, <?php echo e($infoUser['name']); ?>
-                    </button>
-                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-
-                        <a class="dropdown-item" href="<?php echo _WEB_URL.'/dang-xuat'; ?>">Đăng xuất</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-</header>
+        </li>
+    </ul>
+</nav>
