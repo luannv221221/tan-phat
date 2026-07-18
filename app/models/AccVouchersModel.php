@@ -37,9 +37,18 @@ class AccVouchersModel extends Model {
         return $this->table($this->_table)->where('voucher_no', '=', $no)->first();
     }
 
-    /** Sinh số phiếu kế tiếp: PT-000001 (thu) / PC-000001 (chi) */
+    /** Danh sách phiếu kế toán (voucher_type=ke_toan), không cần TK quỹ */
+    public function getJournalList($from = '', $to = ''){
+        $q = $this->table($this->_table)->where('voucher_type', '=', 'ke_toan');
+        if ($from !== '') $q = $q->where('voucher_date', '>=', $from);
+        if ($to !== '')   $q = $q->where('voucher_date', '<=', $to);
+        return $q->orderBy('voucher_date', 'DESC')->orderBy('id', 'DESC')->get();
+    }
+
+    /** Sinh số phiếu kế tiếp: PT (thu) / PC (chi) / PKT (kế toán) */
     public function nextNo($type){
-        $prefix = $type === 'thu' ? 'PT' : 'PC';
+        $prefixes = ['thu' => 'PT', 'chi' => 'PC', 'ke_toan' => 'PKT'];
+        $prefix = isset($prefixes[$type]) ? $prefixes[$type] : 'PX';
         $row = $this->table($this->_table)
                     ->select('`voucher_no`')
                     ->where('voucher_type', '=', $type)

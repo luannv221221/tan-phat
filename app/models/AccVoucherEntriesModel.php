@@ -21,6 +21,48 @@ class AccVoucherEntriesModel extends Model {
             ->get();
     }
 
+    /** Định khoản của phiếu kế toán (Nợ/Có tự do) — trả về raw, controller tự map tên TK */
+    public function getJournalByVoucher($voucherId){
+        return $this->table($this->_table)
+                    ->where('voucher_id', '=', $voucherId)
+                    ->orderBy('id', 'ASC')
+                    ->get();
+    }
+
+    /**
+     * Thay toàn bộ định khoản PHIẾU KẾ TOÁN (mỗi dòng: Nợ TK / Có TK / số tiền).
+     *
+     * @param array $lines mỗi phần tử: [debit_account_id, credit_account_id, amount, description]
+     * @return float tổng tiền
+     */
+    public function syncJournalForVoucher($voucherId, array $lines){
+        $voucherId = (int) $voucherId;
+
+        return $this->transaction(function($db) use ($voucherId, $lines){
+            $db->delete('acc_voucher_entries', '`voucher_id` = ?', [$voucherId]);
+
+            $now   = date('Y-m-d H:i:s');
+            $total = 0.0;
+            foreach ($lines as $ln){
+                $dr  = isset($ln['debit_account_id'])  ? (int) $ln['debit_account_id']  : 0;
+                $cr  = isset($ln['credit_account_id']) ? (int) $ln['credit_account_id'] : 0;
+                $amt = isset($ln['amount']) ? (float) $ln['amount'] : 0;
+                if ($dr <= 0 || $cr <= 0 || $amt <= 0) continue;
+
+                $db->insert('acc_voucher_entries', [
+                    'voucher_id'        => $voucherId,
+                    'debit_account_id'  => $dr,
+                    'credit_account_id' => $cr,
+                    'amount'            => $amt,
+                    'description'       => !empty($ln['description']) ? $ln['description'] : null,
+                    'create_at'         => $now,
+                ]);
+                $total += $amt;
+            }
+            return $total;
+        });
+    }
+
     /**
      * Thay toàn bộ định khoản của 1 phiếu (transaction).
      *

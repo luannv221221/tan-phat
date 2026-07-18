@@ -131,6 +131,7 @@ Route::group('admin', function(){
        'cost-items' => 'costitems',   // Mã phí
        'projects'   => 'projects',    // Mã vụ việc
        'vouchers'   => 'vouchers',    // Phiếu thu / chi
+       'journal'    => 'journal',     // Phiếu kế toán (định khoản tự do) - KT-3
    ];
    foreach ($accModules as $url => $controller){
        Route::get($url,                 'admin/'.$controller);
@@ -143,6 +144,8 @@ Route::group('admin', function(){
    // Phiếu: ghi sổ / huỷ ghi sổ
    Route::get('vouchers/post/(\d+)',   'admin/vouchers/post/$1');
    Route::get('vouchers/unpost/(\d+)', 'admin/vouchers/unpost/$1');
+   Route::get('journal/post/(\d+)',    'admin/journal/post/$1');
+   Route::get('journal/unpost/(\d+)',  'admin/journal/unpost/$1');
    // Sổ quỹ (chỉ xem)
    Route::get('cash-book', 'admin/cashbook');
 
