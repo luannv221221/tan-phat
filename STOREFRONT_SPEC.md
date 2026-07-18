@@ -24,6 +24,17 @@ Bề mặt **công khai** — controller gốc `app/controllers/` (KHÔNG thuộ
 - **Giỏ → báo giá**: giỏ session; "Gửi yêu cầu báo giá" tạo `quotations` trạng thái *sent* trong phân hệ Bán hàng → NVKD xử lý ở `admin/quotations`. Khép vòng web ↔ nội bộ.
 - Thành viên: `MembersModel` bcrypt (`password_hash`), tách khỏi `users`/`partners`.
 
+## CMS nội dung (đã làm — migration 000021)
+
+| Màn hình | Admin | Storefront |
+|---|---|---|
+| Tin tức | `admin/news` + `admin/news-categories` | `tin-tuc`, `tin-tuc/<slug>` (lọc theo danh mục, lượt xem) |
+| Dự án / công trình | `admin/du-an` (controller `Projectportfolio`) | `du-an`, `du-an/<slug>` |
+
+- Bảng `news_categories` + `news` (is_published, published_at, view_count) + `projects` (portfolio, client/location/completed).
+- Nội dung cho phép HTML (admin tin cậy) — render raw `{!! content !!}`. Nav storefront thêm Tin tức + Dự án.
+- ⚠️ Link/module `projects` đã là Mã vụ việc kế toán → portfolio dùng `du-an` + controller `Projectportfolio` (tránh trùng `Projects`).
+
 ## Hoãn (các đợt web sau)
 
-SEO (TASK_97–104) · quản lý menu (105–108) · thống kê truy cập (109–111) · webchat/hotline theo danh mục (112–113) · CMS tin/video/thư viện ảnh/dự án · thanh toán online (TASK_96) · giỏ hàng lưu DB · **CSKH** (bảo hành, nhóm KH, bình luận/đánh giá TASK_84). Ảnh sản phẩm trên storefront (hiện dùng placeholder).
+SEO (TASK_97–104) · quản lý menu (105–108) · thống kê truy cập (109–111) · webchat/hotline (112–113) · video/thư viện ảnh · thanh toán online (TASK_96) · giỏ hàng lưu DB · upload ảnh (tin/dự án/SP hiện nhập URL/placeholder).

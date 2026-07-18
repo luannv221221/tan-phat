@@ -70,8 +70,22 @@ Route::group('admin', function(){
    // Xuất catalogue CSV (TASK_85)
    Route::get('products/export', 'admin/products/export');
 
-   //Route news
-   Route::get('news', 'admin/news');
+   /* =========================================================
+    * CMS NỘI DUNG — Tin tức + Danh mục tin + Dự án (portfolio)
+    * ========================================================= */
+   $cmsModules = [
+       'news'            => 'news',              // Tin tức
+       'news-categories' => 'newscategories',    // Danh mục tin
+       'du-an'           => 'projectportfolio',  // Dự án (KHÁC Projects/Mã vụ việc)
+   ];
+   foreach ($cmsModules as $url => $controller){
+       Route::get($url,                 'admin/'.$controller);
+       Route::get($url.'/add',          'admin/'.$controller.'/add');
+       Route::post($url.'/add',         'admin/'.$controller.'/postAdd');
+       Route::get($url.'/edit/(\d+)',   'admin/'.$controller.'/edit/$1');
+       Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
+       Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
+   }
 
    /* =========================================================
     * DANH MỤC XE + DANH MỤC PHỤ TÙNG
@@ -283,6 +297,12 @@ Route::post('gio-hang/cap-nhat', 'cart/update');
 Route::get('gio-hang/xoa/(\d+)', 'cart/remove/$1');
 Route::post('gio-hang/gui', 'cart/submit');
 Route::get('gio-hang/hoan-tat', 'cart/done');
+
+// CMS công khai: Tin tức + Dự án
+Route::get('tin-tuc', 'tintuc/index');
+Route::get('tin-tuc/([a-z0-9\-]+)', 'tintuc/detail/$1');
+Route::get('du-an', 'duan/index');
+Route::get('du-an/([a-z0-9\-]+)', 'duan/detail/$1');
 
 // Thành viên
 Route::get('thanh-vien', 'member/account');

@@ -144,6 +144,8 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
     }
     ?>
     <a href="<?php echo _WEB_URL; ?>/san-pham?promo=1">🔥 Khuyến mãi</a>
+    <a href="<?php echo _WEB_URL; ?>/du-an">Dự án</a>
+    <a href="<?php echo _WEB_URL; ?>/tin-tuc">Tin tức</a>
 </div></nav>
 
 <main class="container">
