@@ -132,6 +132,7 @@ Route::group('admin', function(){
        'projects'   => 'projects',    // Mã vụ việc
        'vouchers'   => 'vouchers',    // Phiếu thu / chi
        'journal'    => 'journal',     // Phiếu kế toán (định khoản tự do) - KT-3
+       'partners'   => 'partners',    // Đối tượng khách/NCC - KT-4
    ];
    foreach ($accModules as $url => $controller){
        Route::get($url,                 'admin/'.$controller);
@@ -148,6 +149,8 @@ Route::group('admin', function(){
    Route::get('journal/unpost/(\d+)',  'admin/journal/unpost/$1');
    // Sổ quỹ (chỉ xem)
    Route::get('cash-book', 'admin/cashbook');
+   // Công nợ (chỉ xem) - KT-4
+   Route::get('debt', 'admin/debt');
 
    Route::get('khong-co-quyen', 'admin/dashboard/noPermission');
 

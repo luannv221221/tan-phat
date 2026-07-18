@@ -21,6 +21,66 @@ class AccVoucherEntriesModel extends Model {
             ->get();
     }
 
+    /**
+     * SỔ CÁI CHUẨN HOÁ — quy mọi phiếu ĐÃ GHI SỔ về dạng (Nợ TK / Có TK / số tiền).
+     *   - phiếu kế toán: dùng debit/credit sẵn có
+     *   - phiếu thu:  Nợ TK quỹ / Có account_id
+     *   - phiếu chi:  Nợ account_id / Có TK quỹ
+     * Dùng cho công nợ (KT-4) và nhật ký chung / sổ cái (KT-5).
+     *
+     * @param int    $partnerId lọc theo đối tượng (0 = tất cả)
+     * @param string $from,$to  khoảng ngày
+     * @param int    $accountId chỉ giữ dòng có TK này ở Nợ hoặc Có (0 = tất cả)
+     */
+    public function getPostedLedger($partnerId = 0, $from = '', $to = '', $accountId = 0){
+        $q = $this->table($this->_table)
+            ->select('`acc_voucher_entries`.*, `acc_vouchers`.`voucher_no`, `acc_vouchers`.`voucher_date`, '
+                   . '`acc_vouchers`.`voucher_type`, `acc_vouchers`.`cash_account_id`, '
+                   . '`acc_vouchers`.`partner_id`, `acc_vouchers`.`partner_name`, `acc_vouchers`.`reason`')
+            ->joinOn('acc_vouchers', 'acc_voucher_entries.voucher_id', 'acc_vouchers.id')
+            ->where('acc_vouchers.status', '=', 1);
+
+        if ($partnerId > 0) $q = $q->where('acc_vouchers.partner_id', '=', $partnerId);
+        if ($from !== '')   $q = $q->where('acc_vouchers.voucher_date', '>=', $from);
+        if ($to !== '')     $q = $q->where('acc_vouchers.voucher_date', '<=', $to);
+
+        $rows = $q->orderBy('acc_vouchers.voucher_date', 'ASC')
+                  ->orderBy('acc_vouchers.id', 'ASC')
+                  ->orderBy('acc_voucher_entries.id', 'ASC')
+                  ->get();
+
+        $out = [];
+        foreach ($rows ?: [] as $r){
+            $type = $r['voucher_type'];
+            if ($type === 'ke_toan'){
+                $dr = (int) $r['debit_account_id'];
+                $cr = (int) $r['credit_account_id'];
+            } elseif ($type === 'thu'){
+                $dr = (int) $r['cash_account_id'];
+                $cr = (int) $r['account_id'];
+            } else { // chi
+                $dr = (int) $r['account_id'];
+                $cr = (int) $r['cash_account_id'];
+            }
+
+            if ($accountId > 0 && $dr !== $accountId && $cr !== $accountId) continue;
+
+            $out[] = [
+                'voucher_no'        => $r['voucher_no'],
+                'voucher_date'      => $r['voucher_date'],
+                'voucher_type'      => $type,
+                'partner_id'        => $r['partner_id'] !== null ? (int) $r['partner_id'] : null,
+                'partner_name'      => $r['partner_name'],
+                'reason'            => $r['reason'],
+                'description'       => $r['description'],
+                'debit_account_id'  => $dr,
+                'credit_account_id' => $cr,
+                'amount'            => (float) $r['amount'],
+            ];
+        }
+        return $out;
+    }
+
     /** Định khoản của phiếu kế toán (Nợ/Có tự do) — trả về raw, controller tự map tên TK */
     public function getJournalByVoucher($voucherId){
         return $this->table($this->_table)

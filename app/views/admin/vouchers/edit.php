@@ -111,12 +111,22 @@ $posted = ((int) $item['status'] === 1);
                         {!! !empty($errors['cash_account_id'])?'<small class="text-danger">'.e($errors['cash_account_id']).'</small>':false !!}
                     </div>
                 </div>
+                <?php $selPartner = isset($old['partner_id']) ? $old['partner_id'] : $item['partner_id']; ?>
                 <div class="form-row">
-                    <div class="form-group col-md-6">
-                        <label>Đối tượng (khách/NCC)</label>
+                    <div class="form-group col-md-4">
+                        <label>Đối tượng</label>
+                        <select name="partner_id" class="form-control">
+                            <option value="">— Chọn / vãng lai —</option>
+                            @foreach ($partners as $pn)
+                            <option value="{{$pn['id']}}" {{$selPartner==$pn['id']?'selected':''}}>{{$pn['code'].' - '.$pn['name']}}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Tên (nếu vãng lai)</label>
                         <input type="text" name="partner_name" class="form-control" value="{{isset($old['partner_name'])?$old['partner_name']:(!empty($item['partner_name'])?$item['partner_name']:'')}}"/>
                     </div>
-                    <div class="form-group col-md-6">
+                    <div class="form-group col-md-4">
                         <label>Lý do</label>
                         <input type="text" name="reason" class="form-control" value="{{isset($old['reason'])?$old['reason']:(!empty($item['reason'])?$item['reason']:'')}}"/>
                     </div>

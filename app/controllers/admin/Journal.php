@@ -13,7 +13,7 @@ use App\core\Session;
 class Journal extends Controller {
 
     private $__data = [];
-    private $__model, $__entryModel, $__accModel, $__request, $__response;
+    private $__model, $__entryModel, $__accModel, $__partnerModel, $__request, $__response;
 
     private $routeBase = 'journal';
     private $labelOne  = 'phiếu kế toán';
@@ -24,6 +24,7 @@ class Journal extends Controller {
         $this->__model      = $this->model('AccVouchersModel');
         $this->__entryModel = $this->model('AccVoucherEntriesModel');
         $this->__accModel   = $this->model('AccAccountsModel');
+        $this->__partnerModel = $this->model('PartnersModel');
         $this->__request    = new Request();
         $this->__response   = new Response();
     }
@@ -68,6 +69,7 @@ class Journal extends Controller {
         $this->baseData();
         $this->__data['content']['page_name'] = 'Lập ' . $this->labelOne;
         $this->__data['content']['accounts']  = $this->__accModel->getDetailAccounts();
+        $this->__data['content']['partners']  = $this->__partnerModel->getActive();
         $this->__data['content']['today']     = date('Y-m-d');
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['errors']    = Session::flash('errors');
@@ -89,6 +91,7 @@ class Journal extends Controller {
             'voucher_type'    => 'ke_toan',
             'voucher_date'    => $f['voucher_date'],
             'cash_account_id' => null,
+            'partner_id'      => $this->partnerId(),
             'partner_name'    => !empty($f['partner_name']) ? trim($f['partner_name']) : null,
             'reason'          => !empty($f['reason']) ? trim($f['reason']) : null,
             'amount'          => $total,
@@ -115,6 +118,7 @@ class Journal extends Controller {
         $this->__data['content']['page_name']  = 'Phiếu ' . $item['voucher_no'];
         $this->__data['content']['item']       = $item;
         $this->__data['content']['accounts']   = $this->__accModel->getDetailAccounts();
+        $this->__data['content']['partners']   = $this->__partnerModel->getActive();
         $this->__data['content']['entries']    = $this->__entryModel->getJournalByVoucher($id);
         $this->__data['content']['accountMap'] = $this->accountMap();
         $this->__data['content']['msg']        = Session::flash('msg');
@@ -144,6 +148,7 @@ class Journal extends Controller {
 
         $this->__model->edit([
             'voucher_date' => $f['voucher_date'],
+            'partner_id'   => $this->partnerId(),
             'partner_name' => !empty($f['partner_name']) ? trim($f['partner_name']) : null,
             'reason'       => !empty($f['reason']) ? trim($f['reason']) : null,
             'amount'       => $total,
@@ -242,6 +247,13 @@ class Journal extends Controller {
     private function parseMoney($val){
         $digits = preg_replace('/[^\d]/', '', (string) $val);
         return $digits === '' ? 0 : (float) $digits;
+    }
+
+    private function partnerId(){
+        $f = $this->__request->getFields();
+        $id = !empty($f['partner_id']) ? (int) $f['partner_id'] : 0;
+        if ($id <= 0) return null;
+        return !empty($this->__partnerModel->getDetail($id)) ? $id : null;
     }
 
     private function flash($errors, $back){

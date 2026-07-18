@@ -14,7 +14,7 @@ use App\core\Session;
 class Vouchers extends Controller {
 
     private $__data = [];
-    private $__model, $__entryModel, $__accModel, $__costModel, $__projModel, $__request, $__response;
+    private $__model, $__entryModel, $__accModel, $__costModel, $__projModel, $__partnerModel, $__request, $__response;
 
     private $routeBase = 'vouchers';
     private $labelOne  = 'phiếu';
@@ -27,6 +27,7 @@ class Vouchers extends Controller {
         $this->__accModel   = $this->model('AccAccountsModel');
         $this->__costModel  = $this->model('AccCostItemsModel');
         $this->__projModel  = $this->model('AccProjectsModel');
+        $this->__partnerModel = $this->model('PartnersModel');
         $this->__request    = new Request();
         $this->__response   = new Response();
     }
@@ -42,6 +43,15 @@ class Vouchers extends Controller {
         $this->__data['content']['cashAccounts'] = $this->__accModel->getCashAccounts();
         $this->__data['content']['costItems']    = $this->__costModel->getLists();
         $this->__data['content']['projects']     = $this->__projModel->getLists();
+        $this->__data['content']['partners']     = $this->__partnerModel->getActive();
+    }
+
+    /** partner_id hợp lệ (tồn tại) hoặc null */
+    private function partnerId(){
+        $f = $this->__request->getFields();
+        $id = !empty($f['partner_id']) ? (int) $f['partner_id'] : 0;
+        if ($id <= 0) return null;
+        return !empty($this->__partnerModel->getDetail($id)) ? $id : null;
     }
 
     public function index(){
@@ -95,6 +105,7 @@ class Vouchers extends Controller {
             'voucher_type'    => $type,
             'voucher_date'    => $f['voucher_date'],
             'cash_account_id' => (int) $f['cash_account_id'],
+            'partner_id'      => $this->partnerId(),
             'partner_name'    => !empty($f['partner_name']) ? trim($f['partner_name']) : null,
             'reason'          => !empty($f['reason']) ? trim($f['reason']) : null,
             'amount'          => $total,
@@ -151,6 +162,7 @@ class Vouchers extends Controller {
         $this->__model->edit([
             'voucher_date'    => $f['voucher_date'],
             'cash_account_id' => (int) $f['cash_account_id'],
+            'partner_id'      => $this->partnerId(),
             'partner_name'    => !empty($f['partner_name']) ? trim($f['partner_name']) : null,
             'reason'          => !empty($f['reason']) ? trim($f['reason']) : null,
             'amount'          => $total,

@@ -71,6 +71,15 @@ class AccAccountsModel extends Model {
                     ->get();
     }
 
+    /** id các tài khoản có mã bắt đầu bằng $prefix (vd '131', '331') */
+    public function getIdsByCodePrefix($prefix){
+        $rows = $this->table($this->_table)
+                     ->select('`id`')
+                     ->whereLike('code', $prefix . '%')
+                     ->get();
+        return array_map(function($r){ return (int) $r['id']; }, $rows ?: []);
+    }
+
     public function getDescendantIds($id){
         $all = $this->table($this->_table)->select('`id`, `parent_id`')->get();
         $byParent = [];

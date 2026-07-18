@@ -59,11 +59,20 @@ $selType = !empty($old['type']) ? $old['type'] : 'thu';
                 </div>
             </div>
             <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label>Đối tượng (khách/NCC)</label>
+                <div class="form-group col-md-4">
+                    <label>Đối tượng</label>
+                    <select name="partner_id" class="form-control">
+                        <option value="">— Chọn / vãng lai —</option>
+                        @foreach ($partners as $pn)
+                        <option value="{{$pn['id']}}" {{(!empty($old['partner_id']) && $old['partner_id']==$pn['id'])?'selected':''}}>{{$pn['code'].' - '.$pn['name']}}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label>Tên (nếu vãng lai)</label>
                     <input type="text" name="partner_name" class="form-control" value="{{!empty($old['partner_name'])?$old['partner_name']:''}}"/>
                 </div>
-                <div class="form-group col-md-6">
+                <div class="form-group col-md-4">
                     <label>Lý do</label>
                     <input type="text" name="reason" class="form-control" value="{{!empty($old['reason'])?$old['reason']:''}}"/>
                 </div>
