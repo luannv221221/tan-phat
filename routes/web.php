@@ -183,6 +183,33 @@ Route::group('admin', function(){
    Route::get('ton-kho', 'admin/tonkho');
    Route::get('the-kho', 'admin/thekho');
 
+   /* =========================================================
+    * BÁN HÀNG (SAL) — khép vòng doanh thu + công nợ khách
+    *
+    * Báo giá (không tác động kế toán) + Hoá đơn bán (ghi sổ sinh bút toán
+    * doanh thu/thuế/giá vốn + trừ tồn). Công nợ khách xem ở admin/debt.
+    * ========================================================= */
+   $salModules = [
+       'quotations'     => 'quotations',    // Báo giá
+       'sales-invoices' => 'salesinvoices', // Hoá đơn bán
+   ];
+   foreach ($salModules as $url => $controller){
+       Route::get($url,                 'admin/'.$controller);
+       Route::get($url.'/add',          'admin/'.$controller.'/add');
+       Route::post($url.'/add',         'admin/'.$controller.'/postAdd');
+       Route::get($url.'/edit/(\d+)',   'admin/'.$controller.'/edit/$1');
+       Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
+       Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
+   }
+   // Báo giá: đổi trạng thái + chuyển thành hoá đơn
+   Route::get('quotations/set-status/(\d+)', 'admin/quotations/setStatus/$1');
+   Route::get('quotations/convert/(\d+)',    'admin/quotations/convert/$1');
+   // Hoá đơn: ghi sổ / huỷ ghi sổ (KT-6 + trừ tồn)
+   Route::get('sales-invoices/post/(\d+)',   'admin/salesinvoices/post/$1');
+   Route::get('sales-invoices/unpost/(\d+)', 'admin/salesinvoices/unpost/$1');
+   // Báo cáo bán hàng (chỉ xem)
+   Route::get('bao-cao-ban-hang', 'admin/salesreport');
+
    Route::get('khong-co-quyen', 'admin/dashboard/noPermission');
 
 });

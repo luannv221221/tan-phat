@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Trạng thái** | ✅ **Kho — XONG + verify** (18/07/2026): danh mục kho · phiếu nhập/xuất (bình quân gia quyền + tự sinh bút toán KT-6) · tồn kho · thẻ kho. Bán hàng — sau. |
+| **Trạng thái** | ✅ **Kho + Bán hàng — XONG + verify** (18/07/2026). Kho: danh mục kho · nhập/xuất bình quân gia quyền + KT-6 · tồn kho · thẻ kho. Bán hàng: báo giá · hoá đơn bán (doanh thu Nợ131/Có511+3331 + giá vốn Nợ632/Có156 + trừ tồn) · công nợ khách (admin/debt) · báo cáo bán hàng. **KT-6 đã khép vòng.** |
 | **Nguồn** | `SRS_ERP_TanPhat.md` mục 3.10 (Kinh doanh SAL-01→13), 3.11 (Kho WH-01→12), 3.14 (biểu mẫu) |
 | **Quyết định phạm vi (đã chốt với chủ dự án)** | ① Làm **Kho trước**, Bán hàng sau · ② Kho **phẳng 1 cấp** + vị trí ghi text · ③ Giá vốn **bình quân gia quyền tức thời** · ④ **Nối KT-6 luôn** (ghi sổ phiếu → tự sinh bút toán) |
 
@@ -55,9 +55,21 @@ Khi **ghi sổ**, hệ thống tạo 1 **phiếu kế toán** (`acc_vouchers.vou
 | Tồn kho | `admin/ton-kho` | WH-09/11 |
 | Thẻ kho | `admin/the-kho` | WH-08 |
 
-## 5. Hoãn sang tăng phần Kho-2 / Bán hàng
+## 5. Bán hàng (đã làm — migration 000017)
 
-- Điều chuyển kho (WH-05), Kiểm kê (WH-07), Hàng tồn lâu (WH-12), báo cáo đồ thị.
-- Phân cấp kho 5 tầng (Nhà kho→Dãy→Khoang→Tầng).
-- Bán hàng: báo giá → đơn hàng → hoá đơn (doanh thu + 131/511/3331) → công nợ KH.
-- TASK_79 (ẩn tồn theo quyền) & TASK_92 (facet) — sau khi có tồn kho + storefront.
+| Màn hình | URL | Nội dung |
+|---|---|---|
+| Báo giá | `admin/quotations` | trạng thái nháp/gửi/chấp nhận/từ chối; tự điền đơn giá từ phụ tùng; **chuyển thành hoá đơn** |
+| Hoá đơn bán | `admin/sales-invoices` | ghi sổ → 1 phiếu kế toán: Nợ131/Có511 (doanh thu) · Nợ131/Có3331 (thuế) · Nợ632/Có156 (giá vốn) + **trừ tồn**; huỷ ghi sổ hoàn tất |
+| Công nợ khách | `admin/debt` | (KT-4, dùng lại) — 131 tự lên từ hoá đơn |
+| Báo cáo bán hàng | `admin/bao-cao-ban-hang` | doanh thu/giá vốn/lãi gộp theo khách + theo nhân viên |
+
+- Giá vốn tính lúc ghi sổ (bình quân gia quyền, tái dùng `StocksModel::applyOut`, doc_type='sale_invoice').
+- Báo giá KHÔNG tác động tồn/kế toán. Thuế GTGT 1 mức/hoá đơn (mặc định 10%).
+- Đối tượng khách hàng dùng chung `partners`. **KT-6 đã khép vòng** (nhập/xuất kho + bán hàng đều tự sinh bút toán).
+
+## 6. Hoãn sang đợt sau
+
+- Kho-2: điều chuyển kho (WH-05), kiểm kê (WH-07), hàng tồn lâu (WH-12), báo cáo đồ thị; phân cấp kho 5 tầng.
+- Bán hàng: hợp đồng (theo yêu cầu "không cần làm hợp đồng"), chiết khấu dòng, hoá đơn điện tử.
+- TASK_79 (ẩn tồn theo quyền) & TASK_92 (facet) — cần storefront website.

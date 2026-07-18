@@ -94,10 +94,14 @@ class PartsModel extends Model {
         return $this->table($this->_table)->where('slug', '=', $slug)->first();
     }
 
-    /** Phụ tùng đang bật cho dropdown dòng hàng (nhập/xuất kho) — id, code, name, đơn vị */
+    /**
+     * Phụ tùng đang bật cho dropdown dòng hàng (nhập/xuất kho, báo giá, hoá đơn).
+     * Kèm đơn vị + giá bán (price/sale_price) để form tự điền đơn giá khi chọn.
+     */
     public function getForSelect(){
         return $this->table($this->_table)
-            ->select('`parts`.`id`, `parts`.`code`, `parts`.`name`, `product_units`.`name` AS unit_name')
+            ->select('`parts`.`id`, `parts`.`code`, `parts`.`name`, `parts`.`price`, '
+                   . '`parts`.`sale_price`, `product_units`.`name` AS unit_name')
             ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id')
             ->where('parts.status', '=', 1)
             ->orderBy('parts.name', 'ASC')->get();
