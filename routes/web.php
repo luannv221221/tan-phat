@@ -155,6 +155,34 @@ Route::group('admin', function(){
    Route::get('nhat-ky-chung', 'admin/generaljournal');
    Route::get('so-cai', 'admin/ledger');
 
+   /* =========================================================
+    * KHO (WH) — theo KHO_BAN_HANG_SPEC.md
+    *
+    * Danh mục kho + phiếu nhập/xuất (CRUD giống nhau) + báo cáo tồn/thẻ kho.
+    * URL gạch ngang -> controller viết liền (App::handleUrl chỉ ucfirst đoạn cuối).
+    * ========================================================= */
+   $whModules = [
+       'warehouses'     => 'warehouses',      // Danh mục kho
+       'goods-receipts' => 'goodsreceipts',   // Phiếu nhập kho
+       'goods-issues'   => 'goodsissues',     // Phiếu xuất kho
+   ];
+   foreach ($whModules as $url => $controller){
+       Route::get($url,                 'admin/'.$controller);
+       Route::get($url.'/add',          'admin/'.$controller.'/add');
+       Route::post($url.'/add',         'admin/'.$controller.'/postAdd');
+       Route::get($url.'/edit/(\d+)',   'admin/'.$controller.'/edit/$1');
+       Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
+       Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
+   }
+   // Phiếu nhập/xuất: ghi sổ / huỷ ghi sổ (cập nhật tồn + KT-6)
+   Route::get('goods-receipts/post/(\d+)',   'admin/goodsreceipts/post/$1');
+   Route::get('goods-receipts/unpost/(\d+)', 'admin/goodsreceipts/unpost/$1');
+   Route::get('goods-issues/post/(\d+)',     'admin/goodsissues/post/$1');
+   Route::get('goods-issues/unpost/(\d+)',   'admin/goodsissues/unpost/$1');
+   // Báo cáo kho (chỉ xem)
+   Route::get('ton-kho', 'admin/tonkho');
+   Route::get('the-kho', 'admin/thekho');
+
    Route::get('khong-co-quyen', 'admin/dashboard/noPermission');
 
 });

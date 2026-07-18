@@ -19,6 +19,7 @@ $menuGroups = [
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
     'Danh mục phụ tùng'  => ['part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
     'Nội dung'           => ['products', 'news'],
+    'Kho'                => ['goods-receipts', 'goods-issues', 'ton-kho', 'the-kho', 'warehouses'],
     'Kế toán'            => ['vouchers', 'journal', 'cash-book', 'debt', 'nhat-ky-chung', 'so-cai', 'partners', 'accounts', 'cost-items', 'projects'],
     'Hệ thống'           => ['users', 'groups'],
 ];
@@ -27,6 +28,7 @@ $groupIcons = [
     'Danh mục xe'        => 'fa-car',
     'Danh mục phụ tùng'  => 'fa-cogs',
     'Nội dung'           => 'fa-folder-open',
+    'Kho'                => 'fa-warehouse',
     'Kế toán'            => 'fa-calculator',
     'Hệ thống'           => 'fa-sliders-h',
 ];
@@ -46,6 +48,11 @@ $itemIcons = [
     'product-units'         => 'fa-ruler-combined',
     'products'              => 'fa-box',
     'news'                  => 'fa-newspaper',
+    'warehouses'            => 'fa-warehouse',
+    'goods-receipts'        => 'fa-dolly-flatbed',
+    'goods-issues'          => 'fa-dolly',
+    'ton-kho'               => 'fa-boxes',
+    'the-kho'               => 'fa-clipboard-list',
     'users'                 => 'fa-users',
     'groups'               => 'fa-user-shield',
     'vouchers'              => 'fa-receipt',

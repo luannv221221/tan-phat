@@ -81,6 +81,21 @@ class AccVoucherEntriesModel extends Model {
         return $out;
     }
 
+    /**
+     * Chèn 1 dòng định khoản Nợ/Có KHÔNG mở transaction — dùng khi ghi sổ phiếu
+     * kho (KT-6): controller đã bọc cả phiên trong 1 transaction, không lồng được.
+     */
+    public function addJournalLine($voucherId, $debitId, $creditId, $amount, $description = null){
+        $this->insert('acc_voucher_entries', [
+            'voucher_id'        => (int) $voucherId,
+            'debit_account_id'  => (int) $debitId,
+            'credit_account_id' => (int) $creditId,
+            'amount'            => (float) $amount,
+            'description'       => $description,
+            'create_at'         => date('Y-m-d H:i:s'),
+        ]);
+    }
+
     /** Định khoản của phiếu kế toán (Nợ/Có tự do) — trả về raw, controller tự map tên TK */
     public function getJournalByVoucher($voucherId){
         return $this->table($this->_table)

@@ -94,6 +94,15 @@ class PartsModel extends Model {
         return $this->table($this->_table)->where('slug', '=', $slug)->first();
     }
 
+    /** Phụ tùng đang bật cho dropdown dòng hàng (nhập/xuất kho) — id, code, name, đơn vị */
+    public function getForSelect(){
+        return $this->table($this->_table)
+            ->select('`parts`.`id`, `parts`.`code`, `parts`.`name`, `product_units`.`name` AS unit_name')
+            ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id')
+            ->where('parts.status', '=', 1)
+            ->orderBy('parts.name', 'ASC')->get();
+    }
+
     /**
      * Tìm nhanh phụ tùng theo tên/mã — cho ô chọn "phụ kiện đi kèm" (TASK_81).
      * Trả về tối đa $limit dòng gồm id, code, name.
