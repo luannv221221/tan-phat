@@ -19,7 +19,7 @@ $menuGroups = [
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
     'Danh mục phụ tùng'  => ['part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
     'Nội dung'           => ['products', 'news'],
-    'Kế toán'            => ['vouchers', 'journal', 'cash-book', 'debt', 'partners', 'accounts', 'cost-items', 'projects'],
+    'Kế toán'            => ['vouchers', 'journal', 'cash-book', 'debt', 'nhat-ky-chung', 'so-cai', 'partners', 'accounts', 'cost-items', 'projects'],
     'Hệ thống'           => ['users', 'groups'],
 ];
 
@@ -51,6 +51,8 @@ $itemIcons = [
     'vouchers'              => 'fa-receipt',
     'journal'               => 'fa-file-invoice',
     'debt'                  => 'fa-hand-holding-usd',
+    'nhat-ky-chung'         => 'fa-book-open',
+    'so-cai'                => 'fa-book',
     'partners'              => 'fa-address-book',
     'cash-book'             => 'fa-book',
     'accounts'              => 'fa-landmark',

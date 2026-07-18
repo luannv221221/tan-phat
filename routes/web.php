@@ -151,6 +151,9 @@ Route::group('admin', function(){
    Route::get('cash-book', 'admin/cashbook');
    // Công nợ (chỉ xem) - KT-4
    Route::get('debt', 'admin/debt');
+   // Sổ sách (chỉ xem) - KT-5
+   Route::get('nhat-ky-chung', 'admin/generaljournal');
+   Route::get('so-cai', 'admin/ledger');
 
    Route::get('khong-co-quyen', 'admin/dashboard/noPermission');
 
