@@ -210,6 +210,32 @@ Route::group('admin', function(){
    // Báo cáo bán hàng (chỉ xem)
    Route::get('bao-cao-ban-hang', 'admin/salesreport');
 
+   /* =========================================================
+    * CSKH (Chăm sóc khách hàng) — theo CSKH_SPEC
+    * ========================================================= */
+   $cskhModules = [
+       'warranty'        => 'warranty',        // Phiếu bảo hành
+       'customer-groups' => 'customergroups',  // Nhóm khách hàng
+   ];
+   foreach ($cskhModules as $url => $controller){
+       Route::get($url,                 'admin/'.$controller);
+       Route::get($url.'/add',          'admin/'.$controller.'/add');
+       Route::post($url.'/add',         'admin/'.$controller.'/postAdd');
+       Route::get($url.'/edit/(\d+)',   'admin/'.$controller.'/edit/$1');
+       Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
+       Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
+   }
+   // Phiếu bảo hành: đổi trạng thái
+   Route::get('warranty/set-status/(\d+)', 'admin/warranty/setStatus/$1');
+   // Lịch bảo hành + Báo cáo CSKH (chỉ xem)
+   Route::get('lich-bao-hanh', 'admin/warrantyschedule');
+   Route::get('bao-cao-cskh',  'admin/cskhreport');
+   // Kiểm duyệt đánh giá (TASK_84)
+   Route::get('reviews', 'admin/reviews');
+   Route::get('reviews/approve/(\d+)', 'admin/reviews/approve/$1');
+   Route::get('reviews/hide/(\d+)',    'admin/reviews/hide/$1');
+   Route::get('reviews/delete/(\d+)',  'admin/reviews/delete/$1');
+
    Route::get('khong-co-quyen', 'admin/dashboard/noPermission');
 
 });
@@ -229,6 +255,7 @@ Route::get('dang-xuat', 'auth/logout');
 
 // Danh sách + chi tiết sản phẩm (facet — TASK_92; gate tồn kho — TASK_79)
 Route::get('san-pham', 'shop/index');
+Route::post('san-pham/danh-gia', 'shop/postReview');   // gửi đánh giá (TASK_84)
 Route::get('san-pham/([a-z0-9\-]+)', 'shop/detail/$1');
 
 // Giỏ hàng -> yêu cầu báo giá (TASK_83/94)

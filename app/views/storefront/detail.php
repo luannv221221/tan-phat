@@ -86,3 +86,53 @@ $stockNum    = rtrim(rtrim(number_format((float) $stock, 3, ',', '.'), '0'), ','
     </div>
 </div></div>
 @endif
+
+<?php
+$avgStars = str_repeat('★', (int) round($reviewSummary['avg'])) . str_repeat('☆', 5 - (int) round($reviewSummary['avg']));
+?>
+<div class="card mt"><div class="hd">Đánh giá sản phẩm
+    @if ($reviewSummary['count'] > 0)
+    <span style="color:#f39c12;font-weight:400;margin-left:8px">{!! $avgStars !!} {{$reviewSummary['avg']}}/5 ({{(int)$reviewSummary['count']}} đánh giá)</span>
+    @endif
+</div><div class="bd">
+    @if (!empty($reviewMsg))
+    <div class="alert alert-ok">{{$reviewMsg}}</div>
+    @endif
+
+    @if (!empty($reviews))
+        @foreach ($reviews as $rv)
+        <?php $stars = str_repeat('★', (int) $rv['rating']) . str_repeat('☆', 5 - (int) $rv['rating']); ?>
+        <div style="border-bottom:1px solid #eee;padding:10px 0">
+            <b>{{$rv['author_name']}}</b> <span style="color:#f39c12">{!! $stars !!}</span>
+            <div class="muted" style="font-size:13px">{{$rv['create_at']}}</div>
+            <div>{{$rv['comment']}}</div>
+        </div>
+        @endforeach
+    @else
+        <p class="muted">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+    @endif
+
+    <div class="mt" style="margin-top:18px">
+    @if ($isMember)
+        <form method="post" action="{{_WEB_URL.'/san-pham/danh-gia'}}">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="part_id" value="{{(int)$part['id']}}"/>
+            <div style="margin-bottom:10px">
+                <label style="font-weight:600;font-size:14px;margin-right:8px">Chấm điểm</label>
+                <select name="rating" style="padding:6px;border:1px solid #e6e6e6;border-radius:5px">
+                    <option value="5">5 — Rất tốt</option>
+                    <option value="4">4 — Tốt</option>
+                    <option value="3">3 — Bình thường</option>
+                    <option value="2">2 — Tạm</option>
+                    <option value="1">1 — Kém</option>
+                </select>
+            </div>
+            <textarea name="comment" rows="3" placeholder="Chia sẻ cảm nhận của bạn..." style="width:100%;max-width:600px;padding:9px;border:1px solid #e6e6e6;border-radius:6px"></textarea>
+            <div class="mt"><button class="btn btn-brand" type="submit">Gửi đánh giá</button></div>
+        </form>
+    @else
+        <div class="alert alert-info" style="margin-bottom:0">🔒 <a href="{{_WEB_URL.'/thanh-vien/dang-nhap'}}"><b>Đăng nhập thành viên</b></a> để viết đánh giá.</div>
+    @endif
+    </div>
+</div></div>
+

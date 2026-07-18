@@ -22,6 +22,7 @@ $menuGroups = [
     'Bán hàng'           => ['quotations', 'sales-invoices', 'bao-cao-ban-hang'],
     'Kho'                => ['goods-receipts', 'goods-issues', 'ton-kho', 'the-kho', 'warehouses'],
     'Kế toán'            => ['vouchers', 'journal', 'cash-book', 'debt', 'nhat-ky-chung', 'so-cai', 'partners', 'accounts', 'cost-items', 'projects'],
+    'CSKH'               => ['warranty', 'lich-bao-hanh', 'customer-groups', 'reviews', 'bao-cao-cskh'],
     'Hệ thống'           => ['users', 'groups'],
 ];
 
@@ -32,6 +33,7 @@ $groupIcons = [
     'Bán hàng'           => 'fa-cash-register',
     'Kho'                => 'fa-warehouse',
     'Kế toán'            => 'fa-calculator',
+    'CSKH'               => 'fa-headset',
     'Hệ thống'           => 'fa-sliders-h',
 ];
 
@@ -58,6 +60,11 @@ $itemIcons = [
     'quotations'            => 'fa-file-invoice-dollar',
     'sales-invoices'        => 'fa-file-invoice',
     'bao-cao-ban-hang'      => 'fa-chart-line',
+    'warranty'              => 'fa-tools',
+    'lich-bao-hanh'         => 'fa-calendar-check',
+    'customer-groups'       => 'fa-user-friends',
+    'reviews'               => 'fa-star',
+    'bao-cao-cskh'          => 'fa-chart-pie',
     'users'                 => 'fa-users',
     'groups'               => 'fa-user-shield',
     'vouchers'              => 'fa-receipt',

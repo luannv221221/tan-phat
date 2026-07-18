@@ -13,7 +13,7 @@ class Shop extends Controller {
 
     private $__data = [];
     private $__part, $__cat, $__pbrand, $__origin, $__cbrand, $__cmodel, $__stock;
-    private $__img, $__attr, $__related, $__fitment;
+    private $__img, $__attr, $__related, $__fitment, $__review, $__member;
 
     function __construct(){
         $this->__part    = $this->model('PartsModel');
@@ -27,6 +27,8 @@ class Shop extends Controller {
         $this->__attr    = $this->model('PartAttributeValuesModel');
         $this->__related = $this->model('PartRelatedModel');
         $this->__fitment = $this->model('PartFitmentsModel');
+        $this->__review  = $this->model('ProductReviewsModel');
+        $this->__member  = $this->model('MembersModel');
     }
 
     private function isMember(){ return !empty(Session::get('dataMember')); }
@@ -100,8 +102,48 @@ class Shop extends Controller {
         $c['fitments'] = $this->__fitment->getCarYearsByPart($pid);
         $c['isMember'] = $this->isMember();
         $c['stock']    = $this->isMember() ? $this->__stock->totalByPart($pid) : null;
+        $c['reviews']  = $this->__review->getApprovedByPart($pid);
+        $c['reviewSummary'] = $this->__review->summary($pid);
+        $c['reviewMsg']  = Session::flash('reviewMsg');
 
         $this->render('layouts/storefront/master', $this->__data);
+    }
+
+    /** Thành viên gửi đánh giá sản phẩm (TASK_84) — chờ admin duyệt */
+    public function postReview(){
+        $f = $_POST;
+        $partId = !empty($f['part_id']) ? (int) $f['part_id'] : 0;
+        $part = $partId > 0 ? $this->__part->getDetail($partId) : null;
+        if (empty($part)){ $this->__responseRedirect('san-pham'); return; }
+
+        $backUrl = 'san-pham/' . $part['slug'];
+        $memberId = Session::get('dataMember');
+        if (empty($memberId)){
+            Session::flash('reviewMsg', 'Vui lòng đăng nhập thành viên để đánh giá.');
+            $this->__responseRedirect($backUrl); return;
+        }
+        $member = $this->__member->getDetail($memberId);
+        $rating = isset($f['rating']) ? (int) $f['rating'] : 5;
+        if ($rating < 1) $rating = 1; if ($rating > 5) $rating = 5;
+        $comment = isset($f['comment']) ? trim($f['comment']) : '';
+        if ($comment === ''){
+            Session::flash('reviewMsg', 'Vui lòng nhập nội dung đánh giá.');
+            $this->__responseRedirect($backUrl); return;
+        }
+
+        $this->__review->submit([
+            'part_id'     => $partId,
+            'member_id'   => (int) $memberId,
+            'author_name' => !empty($member['name']) ? $member['name'] : 'Thành viên',
+            'rating'      => $rating,
+            'comment'     => $comment,
+        ]);
+        Session::flash('reviewMsg', 'Cảm ơn! Đánh giá của bạn sẽ hiển thị sau khi được duyệt.');
+        $this->__responseRedirect($backUrl);
+    }
+
+    private function __responseRedirect($path){
+        (new \App\core\Response())->redirect($path);
     }
 
     private function intArray($v){
