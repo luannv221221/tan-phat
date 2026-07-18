@@ -28,9 +28,30 @@ class PartsModel extends Model {
      * Danh sách phụ tùng, lọc theo danh mục/thương hiệu + tìm theo từ khoá.
      * TASK_90 (lọc theo danh mục), TASK_91 (tìm kiếm).
      */
-    public function getLists($filters = [], $keyword = ''){
+    public function getLists($filters = [], $keyword = '', $limit = 0, $offset = 0){
         $q = $this->selectWithJoins();
+        $q = $this->applyFilters($q, $filters, $keyword);
+        $q = $q->orderBy('parts.name', 'ASC');
 
+        if ($limit > 0){
+            $q = $q->limit((int) $limit, (int) $offset);
+        }
+
+        return $q->get();
+    }
+
+    /** Đếm tổng số phụ tùng khớp bộ lọc — cho phân trang */
+    public function countLists($filters = [], $keyword = ''){
+        // Không cần join: mọi cột lọc/tìm đều thuộc `parts`.
+        $q = $this->table($this->_table)->select('COUNT(*) AS total');
+        $q = $this->applyFilters($q, $filters, $keyword);
+        $r = $q->first();
+
+        return (int) ($r['total'] ?? 0);
+    }
+
+    /** Áp bộ lọc + từ khoá (dùng chung cho getLists và countLists) */
+    private function applyFilters($q, $filters, $keyword){
         foreach ($filters as $field => $value){
             $q = $q->where($field, '=', $value);
         }
@@ -45,7 +66,11 @@ class PartsModel extends Model {
             });
         }
 
-        return $q->orderBy('parts.name', 'ASC')->get();
+        return $q;
+    }
+
+    public function findBySlug($slug){
+        return $this->table($this->_table)->where('slug', '=', $slug)->first();
     }
 
     /**

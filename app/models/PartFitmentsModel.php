@@ -106,6 +106,16 @@ class PartFitmentsModel extends Model {
             ->get();
     }
 
+    /** Danh sách id đời xe đã gán cho 1 phụ tùng — để tick sẵn checkbox khi sửa */
+    public function getCarYearIds($partId){
+        $rows = $this->table($this->_table)
+                     ->select('`car_year_id`')
+                     ->where('part_id', '=', $partId)
+                     ->get();
+
+        return array_map(function($r){ return (int) $r['car_year_id']; }, $rows ?: []);
+    }
+
     /** Số phụ tùng lắp được cho 1 đời xe */
     public function countPartsByCarYear($carYearId){
         $r = $this->table($this->_table)
