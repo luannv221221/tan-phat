@@ -126,7 +126,7 @@ Nhưng ở máy nhà **phải tự tạo `.env`**: copy `.env.example` → `.env
 
 ### Còn treo trong SRS
 
-- **Phân hệ Kế toán**: đã soạn `KE_TOAN_SPEC_DE_XUAT.md` + **đã code KT-1 + KT-2** (18/07): danh mục tài khoản (cây, seed 19 TK) · mã phí · mã vụ việc · phiếu thu/chi (bút toán kép, tự đánh số, ghi sổ/huỷ ghi sổ + khoá) · sổ quỹ (số dư đầu/cuối kỳ + luỹ kế). Nhóm menu "Kế toán". **KT-3→KT-6 chờ chốt 8 câu hỏi trong spec** (TT200/133, đối tượng công nợ, liên thông Kho/Bán hàng...).
+- **Phân hệ Kế toán**: đã soạn `KE_TOAN_SPEC_DE_XUAT.md` + **đã code KT-1 + KT-2** (18/07): danh mục tài khoản (cây, seed 19 TK) · mã phí · mã vụ việc · phiếu thu/chi (bút toán kép, tự đánh số, ghi sổ/huỷ ghi sổ + khoá) · sổ quỹ (số dư đầu/cuối kỳ + luỹ kế). Nhóm menu "Kế toán". **KT-3** (18/07): Phiếu kế toán (định khoản tự do Nợ/Có, cho điều chuyển/kết chuyển). **Đã chốt 8 câu hỏi**: TT133 · công nợ dùng bảng `partners` chung · VND · nhập tay. **Tiếp theo: KT-4 (công nợ + partners), KT-5 (sổ sách: nhật ký chung, sổ cái)**; KT-6 (liên thông Kho/Bán hàng) hoãn.
 - **~48 dòng trong Tracking không có trạng thái** → con số "Total 68" không phản ánh quy mô thật (>130 hạng mục).
 
 ---
