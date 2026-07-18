@@ -74,6 +74,28 @@ class PartsModel extends Model {
     }
 
     /**
+     * Tìm nhanh phụ tùng theo tên/mã — cho ô chọn "phụ kiện đi kèm" (TASK_81).
+     * Trả về tối đa $limit dòng gồm id, code, name.
+     */
+    public function search($keyword, $excludeId = 0, $limit = 20){
+        $q = $this->table($this->_table)->select('`id`, `code`, `name`');
+
+        if ($excludeId > 0){
+            $q = $q->where('id', '!=', (int) $excludeId);
+        }
+
+        if ($keyword !== ''){
+            $q = $q->where(function($sub) use ($keyword){
+                $like = '%' . $keyword . '%';
+                $sub->whereLike('name', $like);
+                $sub->whereOrLike('code', $like);
+            });
+        }
+
+        return $q->orderBy('name', 'ASC')->limit((int) $limit, 0)->get();
+    }
+
+    /**
      * ⭐ TASK_87 — "Chọn xe sẽ lọc ra các phụ tùng".
      *
      * Trả về phụ tùng lắp được cho một ĐỜI XE cụ thể.

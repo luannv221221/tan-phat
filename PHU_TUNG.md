@@ -121,7 +121,7 @@ Chưa có phụ tùng thật nào — cần nhập liệu hoặc import.
 | ~~Import Excel~~ | TASK_78 | ✅ Xong 18/07 — `core/SpreadsheetReader` đọc `.xlsx`+`.csv` (không cần thư viện); upsert theo `code` |
 | Ẩn/hiện theo phân quyền | TASK_79 | VD: chỉ thành viên thấy tồn kho |
 | Tự động nhóm danh mục | TASK_80 | VD: danh mục "Khuyến mại" tự gom SP có `sale_price` |
-| Phụ kiện đi kèm | TASK_81 | Cần bảng `part_related` |
+| ~~Phụ kiện đi kèm~~ | TASK_81 | ✅ Xong 18/07 — bảng `part_related`, picker tìm kiếm AJAX (`products/search-json`), `syncForPart` chặn tự tham chiếu |
 | Lọc theo thông số kỹ thuật | TASK_90 | Cần `attributes` / `attribute_values` — mới có lọc theo danh mục |
 | Gợi ý khi gõ tìm kiếm | TASK_91 | Mới có tìm cơ bản |
 | Lọc tích chọn (facet) | TASK_92 | |

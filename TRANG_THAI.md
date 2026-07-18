@@ -110,7 +110,7 @@ Nhưng ở máy nhà **phải tự tạo `.env`**: copy `.env.example` → `.env
 - [x] **Phân trang** (18/07) — 20 dòng/trang + tìm kiếm (tên/mã/OEM) + lọc theo danh mục
 - [x] **TASK_77 thư viện ảnh** (18/07) — upload nhiều ảnh/phụ tùng, đặt ảnh đại diện, xoá (kèm file); bảng `part_images`
 - [x] **TASK_78 import Excel/CSV** (18/07) — reader `.xlsx` tự viết (zip+XML, không cần thư viện) + `.csv`; upsert theo `code`, map FK theo slug
-- [ ] TASK_81 phụ kiện đi kèm (cần bảng `part_related`)
+- [x] **TASK_81 phụ kiện đi kèm** (18/07) — bảng `part_related` (tự tham chiếu có hướng, CASCADE), picker tìm kiếm AJAX trong form phụ tùng, chặn tự tham chiếu
 
 ### Ưu tiên 3 — cần người có quyền, không phải code
 

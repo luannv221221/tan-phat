@@ -173,6 +173,31 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
         </div>
     </div>
 
+    <!-- Phụ kiện đi kèm (TASK_81) — nằm trong form chính, gửi qua related[] -->
+    <div class="card card-outline card-secondary">
+        <div class="card-header"><h3 class="card-title"><i class="fas fa-plus-square mr-2"></i>Phụ kiện đi kèm</h3></div>
+        <div class="card-body">
+            <div class="position-relative" style="max-width:520px">
+                <input type="text" id="rel-search" class="form-control" autocomplete="off"
+                       placeholder="Gõ tên hoặc mã phụ tùng để thêm..."
+                       data-url="{{_WEB_URL.'/admin/products/search-json'}}" data-exclude="0"/>
+                <div id="rel-results" class="list-group position-absolute w-100 shadow-sm" style="z-index:30;max-height:240px;overflow:auto;display:none"></div>
+            </div>
+            <div id="rel-selected" class="mt-2 d-flex flex-wrap">
+                @if (!empty($relatedParts))
+                    @foreach ($relatedParts as $rp)
+                    <span class="badge badge-light border p-2 mr-1 mb-1 rel-chip" data-id="{{$rp['id']}}">
+                        {{$rp['code'].' — '.$rp['name']}}
+                        <input type="hidden" name="related[]" value="{{$rp['id']}}"/>
+                        <a href="#" class="text-danger ml-1 rel-remove">&times;</a>
+                    </span>
+                    @endforeach
+                @endif
+            </div>
+            <small class="text-muted">Chọn các phụ tùng gợi ý bán kèm sản phẩm này.</small>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-body">
             <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Thêm phụ tùng</button>
@@ -194,6 +219,80 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
             var any = g.querySelector('.fit-item:not([style*="none"])');
             g.style.display = any ? '' : 'none';
         });
+    });
+})();
+</script>
+
+<script>
+(function () {
+    var input = document.getElementById('rel-search');
+    if (!input) return;
+    var results  = document.getElementById('rel-results');
+    var selected = document.getElementById('rel-selected');
+    var url      = input.getAttribute('data-url');
+    var exclude  = input.getAttribute('data-exclude') || '0';
+    var timer    = null;
+
+    function selectedIds() {
+        return Array.prototype.map.call(
+            selected.querySelectorAll('input[name="related[]"]'),
+            function (i) { return i.value; }
+        );
+    }
+    function hideResults() { results.style.display = 'none'; results.innerHTML = ''; }
+    function addChip(id, label) {
+        if (selectedIds().indexOf(String(id)) !== -1) return;
+        var span = document.createElement('span');
+        span.className = 'badge badge-light border p-2 mr-1 mb-1 rel-chip';
+        span.setAttribute('data-id', id);
+        span.appendChild(document.createTextNode(label + ' '));
+        var inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'related[]'; inp.value = id;
+        span.appendChild(inp);
+        var rm = document.createElement('a');
+        rm.href = '#'; rm.className = 'text-danger ml-1 rel-remove'; rm.textContent = '×';
+        span.appendChild(rm);
+        selected.appendChild(span);
+    }
+
+    input.addEventListener('input', function () {
+        var q = this.value.trim();
+        clearTimeout(timer);
+        if (q === '') { hideResults(); return; }
+        timer = setTimeout(function () {
+            fetch(url + '?q=' + encodeURIComponent(q) + '&exclude=' + encodeURIComponent(exclude))
+                .then(function (r) { return r.json(); })
+                .then(function (list) {
+                    results.innerHTML = '';
+                    if (!list || !list.length) { hideResults(); return; }
+                    list.forEach(function (p) {
+                        var a = document.createElement('a');
+                        a.href = '#';
+                        a.className = 'list-group-item list-group-item-action py-1 px-2';
+                        a.textContent = p.code + ' — ' + p.name;
+                        a.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            addChip(p.id, p.code + ' — ' + p.name);
+                            input.value = ''; hideResults();
+                        });
+                        results.appendChild(a);
+                    });
+                    results.style.display = 'block';
+                })
+                .catch(function () { hideResults(); });
+        }, 250);
+    });
+
+    selected.addEventListener('click', function (e) {
+        if (e.target && e.target.classList.contains('rel-remove')) {
+            e.preventDefault();
+            var chip = e.target.closest('.rel-chip');
+            if (chip) chip.remove();
+        }
+    });
+
+    document.addEventListener('click', function (e) {
+        if (e.target !== input && !results.contains(e.target)) hideResults();
     });
 })();
 </script>

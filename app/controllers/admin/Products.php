@@ -17,7 +17,7 @@ class Products extends Controller {
 
     private $__data = [];
     private $__model, $__fitment, $__request, $__response;
-    private $__catModel, $__brandModel, $__mnfModel, $__originModel, $__unitModel, $__yearModel, $__imgModel;
+    private $__catModel, $__brandModel, $__mnfModel, $__originModel, $__unitModel, $__yearModel, $__imgModel, $__relatedModel;
 
     // Upload ảnh phụ tùng (TASK_77)
     private $imgDir      = 'public/assets/uploads/parts/';
@@ -41,6 +41,7 @@ class Products extends Controller {
         $this->__unitModel   = $this->model('ProductUnitsModel');
         $this->__yearModel   = $this->model('CarYearsModel');
         $this->__imgModel    = $this->model('PartImagesModel');
+        $this->__relatedModel= $this->model('PartRelatedModel');
         $this->__request     = new Request();
         $this->__response    = new Response();
     }
@@ -110,6 +111,7 @@ class Products extends Controller {
         $this->formData();
         $this->__data['content']['page_name']     = 'Thêm ' . $this->labelOne;
         $this->__data['content']['selFitments']   = [];
+        $this->__data['content']['relatedParts']  = [];
         $this->__data['content']['msg']           = Session::flash('msg');
         $this->__data['content']['errors']        = Session::flash('errors');
         $this->__data['content']['old']           = Session::flash('old');
@@ -128,6 +130,7 @@ class Products extends Controller {
         $partId  = $this->__model->add($data);
 
         $this->syncFitments($partId);
+        $this->syncRelated($partId);
 
         Session::flash('msg', 'Thêm ' . $this->labelOne . ' thành công');
         $this->__response->redirect('admin/' . $this->routeBase);
@@ -152,6 +155,7 @@ class Products extends Controller {
         $this->__data['content']['item']        = $item;
         $this->__data['content']['selFitments'] = $this->__fitment->getCarYearIds($id);
         $this->__data['content']['images']      = $this->__imgModel->getByPart($id);
+        $this->__data['content']['relatedParts']= $this->__relatedModel->getRelatedParts($id);
         $this->__data['content']['msg']         = Session::flash('msg');
         $this->__data['content']['errors']      = Session::flash('errors');
         $this->__data['content']['old']         = Session::flash('old');
@@ -174,6 +178,7 @@ class Products extends Controller {
 
         $this->__model->edit($this->buildData(), $id);
         $this->syncFitments($id);
+        $this->syncRelated($id);
 
         Session::flash('msg', 'Cập nhật ' . $this->labelOne . ' thành công');
         $this->__response->redirect('admin/' . $this->routeBase);
@@ -607,6 +612,37 @@ class Products extends Controller {
         }
 
         $this->__fitment->syncForPart($partId, $valid);
+    }
+
+    /** Gán phụ kiện đi kèm được chọn (lọc bỏ id không tồn tại + chính nó) — TASK_81 */
+    private function syncRelated($partId){
+        $f      = $this->__request->getFields();
+        $picked = isset($f['related']) && is_array($f['related']) ? $f['related'] : [];
+
+        $valid = [];
+        foreach ($picked as $rid){
+            $rid = (int) $rid;
+            if ($rid > 0 && $rid !== (int) $partId && !empty($this->__model->getDetail($rid))){
+                $valid[] = $rid;
+            }
+        }
+
+        $this->__relatedModel->syncForPart($partId, $valid);
+    }
+
+    /** Tìm phụ tùng (JSON) cho ô chọn phụ kiện đi kèm — TASK_81 */
+    public function searchJson(){
+        $f       = $this->__request->getFields();
+        $keyword = isset($f['q']) ? trim($f['q']) : '';
+        $exclude = isset($f['exclude']) ? (int) $f['exclude'] : 0;
+
+        $rows = ($keyword === '') ? [] : $this->__model->search($keyword, $exclude, 20);
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(array_map(function($r){
+            return ['id' => (int) $r['id'], 'code' => $r['code'], 'name' => $r['name']];
+        }, $rows ?: []), JSON_UNESCAPED_UNICODE);
+        exit;
     }
 
     /** id hợp lệ (tồn tại) thì giữ, không thì trả null — tránh lỗi khoá ngoại */

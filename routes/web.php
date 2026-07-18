@@ -65,6 +65,8 @@ Route::group('admin', function(){
    Route::get('products/import', 'admin/products/import');
    Route::post('products/import', 'admin/products/postImport');
    Route::get('products/import-template', 'admin/products/importTemplate');
+   // Tìm phụ tùng (JSON) cho ô chọn phụ kiện đi kèm (TASK_81)
+   Route::get('products/search-json', 'admin/products/searchJson');
 
    //Route news
    Route::get('news', 'admin/news');
