@@ -1,0 +1,74 @@
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card card-outline card-primary">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>{{$page_name}}</h3>
+            </div>
+
+            <form action="" method="post">
+                <?php echo csrf_field(); ?>
+                <div class="card-body">
+                    @if (!empty($msg))
+                    <div class="alert alert-danger"><i class="fas fa-exclamation-circle mr-1"></i> {{$msg}}</div>
+                    @endif
+
+                    <div class="form-group">
+                        <label>Hãng xe <span class="text-danger">*</span></label>
+                        <select name="brand_id" class="form-control">
+                            <option value="">— Chọn hãng —</option>
+                            @if (!empty($brands))
+                                @foreach ($brands as $b)
+                                <option value="{{$b['id']}}" {{(!empty($old['brand_id']) && $old['brand_id']==$b['id'])?'selected':''}}>{{$b['name']}}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                        {!! !empty($errors['brand_id'])?'<small class="text-danger">'.e($errors['brand_id']).'</small>':false !!}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tên model <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" placeholder="VD: Vios" value="{{!empty($old['name'])?$old['name']:''}}"/>
+                        {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Đường dẫn (slug)</label>
+                        <input type="text" class="form-control" name="slug" placeholder="Bỏ trống sẽ tự sinh từ tên" value="{{!empty($old['slug'])?$old['slug']:''}}"/>
+                        <small class="form-text text-muted">Chỉ cần duy nhất trong cùng một hãng.</small>
+                        {!! !empty($errors['slug'])?'<small class="text-danger">'.e($errors['slug']).'</small>':false !!}
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kiểu dáng (dòng xe)</label>
+                        <select name="body_type_id" class="form-control">
+                            <option value="">— Không xác định —</option>
+                            @if (!empty($bodyTypes))
+                                @foreach ($bodyTypes as $bt)
+                                <option value="{{$bt['id']}}" {{(!empty($old['body_type_id']) && $old['body_type_id']==$bt['id'])?'selected':''}}>{{$bt['name']}}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Thứ tự hiển thị</label>
+                        <input type="number" class="form-control" name="sort_order" style="max-width:150px" value="{{!empty($old['sort_order'])?$old['sort_order']:'0'}}"/>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="d-block">Trạng thái</label>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" name="status" id="status" value="1" checked/>
+                            <label class="custom-control-label" for="status">Hiển thị</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Thêm mới</button>
+                    <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-default"><i class="fas fa-arrow-left mr-1"></i> Quay lại</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
