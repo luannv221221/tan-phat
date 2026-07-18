@@ -164,6 +164,14 @@ class StocksModel extends Model {
         }
     }
 
+    /** Tổng tồn của 1 phụ tùng trên MỌI kho (cho storefront — TASK_79) */
+    public function totalByPart($partId){
+        $r = $this->table($this->_table)
+                  ->select('SUM(`quantity`) AS total')
+                  ->where('part_id', '=', (int) $partId)->first();
+        return (float) ($r['total'] ?? 0);
+    }
+
     // ---------- Báo cáo ----------
 
     /** Tồn kho hiện tại kèm thông tin phụ tùng; lọc theo kho + từ khoá */

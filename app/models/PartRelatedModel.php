@@ -28,7 +28,7 @@ class PartRelatedModel extends Model {
     /** Phụ tùng đi kèm kèm mã + tên (để hiển thị chip đã chọn) */
     public function getRelatedParts($partId){
         return $this->table($this->_table)
-            ->select('`part_related`.`related_part_id` AS id, `parts`.`code`, `parts`.`name`')
+            ->select('`part_related`.`related_part_id` AS id, `parts`.`code`, `parts`.`name`, `parts`.`slug`')
             ->joinOn('parts', 'part_related.related_part_id', 'parts.id')
             ->where('part_related.part_id', '=', $partId)
             ->orderBy('part_related.sort_order', 'ASC')

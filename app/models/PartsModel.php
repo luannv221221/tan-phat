@@ -94,6 +94,75 @@ class PartsModel extends Model {
         return $this->table($this->_table)->where('slug', '=', $slug)->first();
     }
 
+    /** Chi tiết 1 phụ tùng kèm tên danh mục/thương hiệu/xuất xứ/đơn vị — cho storefront */
+    public function getBySlugFull($slug){
+        return $this->selectWithJoins()
+            ->where('parts.slug', '=', $slug)
+            ->where('parts.status', '=', 1)
+            ->first();
+    }
+
+    /**
+     * ⭐ STOREFRONT — danh sách sản phẩm công khai + LỌC FACET (TASK_92).
+     *
+     * @param array $filters khoá hỗ trợ:
+     *   categoryIds[], brandIds[], originIds[] : whereIn
+     *   priceMin, priceMax : khoảng giá
+     *   promo (bool)       : chỉ hàng có sale_price
+     *   keyword            : tên/mã/oem
+     *   carModelId         : chỉ phụ tùng lắp cho model xe này (qua fitment)
+     *   sort               : 'new'|'price_asc'|'price_desc'|'name'
+     */
+    public function storefront($filters = [], $limit = 0, $offset = 0){
+        $q = $this->applyStorefront($this->selectWithJoins(), $filters);
+
+        switch ($filters['sort'] ?? '') {
+            case 'price_asc':  $q = $q->orderBy('parts.price', 'ASC'); break;
+            case 'price_desc': $q = $q->orderBy('parts.price', 'DESC'); break;
+            case 'new':        $q = $q->orderBy('parts.id', 'DESC'); break;
+            default:           $q = $q->orderBy('parts.name', 'ASC');
+        }
+        if ($limit > 0) $q = $q->limit((int) $limit, (int) $offset);
+        return $q->get();
+    }
+
+    public function storefrontCount($filters = []){
+        $q = $this->applyStorefront($this->table($this->_table)->select('COUNT(DISTINCT `parts`.`id`) AS total'), $filters);
+        $r = $q->first();
+        return (int) ($r['total'] ?? 0);
+    }
+
+    private function applyStorefront($q, $filters){
+        $q = $q->where('parts.status', '=', 1);
+
+        if (!empty($filters['categoryIds'])) $q = $q->whereIn('parts.category_id', $filters['categoryIds']);
+        if (!empty($filters['brandIds']))    $q = $q->whereIn('parts.brand_id', $filters['brandIds']);
+        if (!empty($filters['originIds']))    $q = $q->whereIn('parts.origin_id', $filters['originIds']);
+
+        if (isset($filters['priceMin']) && $filters['priceMin'] !== '') $q = $q->where('parts.price', '>=', (float) $filters['priceMin']);
+        if (isset($filters['priceMax']) && $filters['priceMax'] !== '') $q = $q->where('parts.price', '<=', (float) $filters['priceMax']);
+
+        if (!empty($filters['promo'])) $q = $q->whereNotNull('parts.sale_price');
+
+        if (!empty($filters['keyword'])){
+            $q = $q->where(function($sub) use ($filters){
+                $like = '%' . $filters['keyword'] . '%';
+                $sub->whereLike('parts.name', $like);
+                $sub->whereOrLike('parts.code', $like);
+                $sub->whereOrLike('parts.oem_code', $like);
+            });
+        }
+
+        // Lọc theo model xe (phụ tùng lắp cho đời xe thuộc model) — TASK_87/93
+        if (!empty($filters['carModelId'])){
+            $q = $q->joinOn('part_fitments', 'parts.id', 'part_fitments.part_id')
+                   ->joinOn('car_years', 'part_fitments.car_year_id', 'car_years.id')
+                   ->where('car_years.model_id', '=', (int) $filters['carModelId'])
+                   ->groupBy('parts.id');
+        }
+        return $q;
+    }
+
     /**
      * Phụ tùng đang bật cho dropdown dòng hàng (nhập/xuất kho, báo giá, hoá đơn).
      * Kèm đơn vị + giá bán (price/sale_price) để form tự điền đơn giá khi chọn.

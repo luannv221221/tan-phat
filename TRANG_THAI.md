@@ -115,8 +115,8 @@ Nhưng ở máy nhà **phải tự tạo `.env`**: copy `.env.example` → `.env
 - [x] **TASK_90 thông số kỹ thuật** (18/07) — bảng `attributes` + `part_attribute_values`, CRUD thông số, gán giá trị + lọc theo thông số
 - [x] **TASK_91 gợi ý tìm kiếm** (18/07) — autocomplete ở ô tìm (dùng `products/search-json`)
 - [x] **TASK_85 tải catalogue** (18/07) — xuất CSV theo bộ lọc (`products/export`)
-- [ ] **TASK_79 ẩn tồn kho theo quyền** — ⏸ HOÃN: parts chưa có trường tồn kho + chưa có hệ thống thành viên website
-- [ ] **TASK_92 lọc facet** — ⏸ HOÃN: tính năng website khách hàng, chưa có storefront
+- [x] **TASK_79 ẩn tồn kho theo quyền** (18/07) — ✅ storefront gate tồn kho: chỉ thành viên đăng nhập mới thấy (bảng `members`, `StocksModel::totalByPart`)
+- [x] **TASK_92 lọc facet** (18/07) — ✅ storefront lọc facet checkbox (danh mục/thương hiệu/xuất xứ/xe/giá/KM), `PartsModel::storefront()`
 
 ### Ưu tiên 3 — cần người có quyền, không phải code
 
@@ -127,6 +127,7 @@ Nhưng ở máy nhà **phải tự tạo `.env`**: copy `.env.example` → `.env
 ### Còn treo trong SRS
 
 - **Phân hệ Kế toán**: đã soạn `KE_TOAN_SPEC_DE_XUAT.md` + **đã code KT-1 + KT-2** (18/07): danh mục tài khoản (cây, seed 19 TK) · mã phí · mã vụ việc · phiếu thu/chi (bút toán kép, tự đánh số, ghi sổ/huỷ ghi sổ + khoá) · sổ quỹ (số dư đầu/cuối kỳ + luỹ kế). Nhóm menu "Kế toán". **KT-3** (18/07): Phiếu kế toán (định khoản tự do Nợ/Có, cho điều chuyển/kết chuyển). **Đã chốt 8 câu hỏi**: TT133 · công nợ dùng bảng `partners` chung · VND · nhập tay. **KT-4** (18/07): bảng `partners` (khách/NCC dùng chung) gắn vào phiếu, **công nợ** (tổng hợp số dư + sổ chi tiết 1 đối tượng, theo TK 131/331). **KT-5** (18/07): Nhật ký chung + Sổ cái/chi tiết 1 TK (số dư đầu/cuối kỳ + luỹ kế, tính động). **→ Toàn bộ KT-1→KT-5 XONG.** KT-6 (tự sinh bút toán từ Kho/Bán hàng) hoãn tới khi có 2 phân hệ đó.
+- **Storefront website (Phần B)**: ✅ **XONG nền storefront** (18/07, migration `000018`, `STOREFRONT_SPEC.md`): bề mặt công khai (controller gốc, CSS tự chứa) — trang chủ · danh sách + **lọc facet TASK_92** · chi tiết SP (thông số/xe tương thích/phụ kiện) · **thành viên `members` + gate tồn kho TASK_79** · giỏ hàng → gửi yêu cầu báo giá (tạo `quotations` sent → NVKD). **Mở khoá TASK_79 + TASK_92.** Hoãn: SEO/menu CMS/tin-video-dự án/analytics/webchat/thanh toán/CSKH.
 - **Phân hệ Bán hàng (SAL)**: ✅ **XONG lát cắt Bán hàng-1** (18/07, migration `000017`, `KHO_BAN_HANG_SPEC.md`): báo giá (trạng thái + chuyển thành hoá đơn) · hoá đơn bán (ghi sổ sinh 1 phiếu kế toán **Nợ131/Có511 + Nợ131/Có3331 + Nợ632/Có156** và trừ tồn) · công nợ khách (dùng lại `admin/debt`) · báo cáo bán hàng (doanh thu/giá vốn/lãi gộp theo khách + NV). **KT-6 ĐÃ KHÉP VÒNG.** Hoãn: hợp đồng, chiết khấu dòng, HĐĐT.
 - **Phân hệ Kho (WH)**: ✅ **XONG lát cắt Kho-1** (18/07, migration `000016`, `KHO_BAN_HANG_SPEC.md`): danh mục kho (phẳng, kho mặc định) · phiếu nhập kho (nhap_mua/khac/tra) · phiếu xuất kho (xuat_ban/khac/tra) · **tồn kho bình quân gia quyền tức thời** · thẻ kho · tồn kho tổng hợp. **Nối KT-6 luôn**: ghi sổ phiếu tự sinh phiếu kế toán (nhập: Nợ 156/Có 331; xuất: Nợ 632/Có 156) chảy vào Nhật ký chung/Sổ cái/Công nợ. Huỷ ghi sổ khôi phục bình quân chính xác (chỉ khi là phát sinh cuối). Đã mở khoá tồn kho cho **TASK_79**. Nhóm menu "Kho". Hoãn: điều chuyển/kiểm kê/hàng tồn lâu, phân cấp kho 5 tầng, phân hệ Bán hàng.
 - **~48 dòng trong Tracking không có trạng thái** → con số "Total 68" không phản ánh quy mô thật (>130 hạng mục).

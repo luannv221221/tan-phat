@@ -219,3 +219,30 @@ Route::get('dang-nhap', 'auth/login');
 Route::post('dang-nhap', 'auth/postLogin');
 
 Route::get('dang-xuat', 'auth/logout');
+
+/* =========================================================
+ * STOREFRONT (website công khai) — không thuộc group admin
+ * nên KHÔNG bị AuthMiddleware/RoleMiddleware chặn.
+ *
+ * Trang chủ '/' -> controller mặc định Home (App::$controller='home').
+ * ========================================================= */
+
+// Danh sách + chi tiết sản phẩm (facet — TASK_92; gate tồn kho — TASK_79)
+Route::get('san-pham', 'shop/index');
+Route::get('san-pham/([a-z0-9\-]+)', 'shop/detail/$1');
+
+// Giỏ hàng -> yêu cầu báo giá (TASK_83/94)
+Route::get('gio-hang', 'cart/index');
+Route::post('gio-hang/them', 'cart/add');
+Route::post('gio-hang/cap-nhat', 'cart/update');
+Route::get('gio-hang/xoa/(\d+)', 'cart/remove/$1');
+Route::post('gio-hang/gui', 'cart/submit');
+Route::get('gio-hang/hoan-tat', 'cart/done');
+
+// Thành viên
+Route::get('thanh-vien', 'member/account');
+Route::get('thanh-vien/dang-nhap', 'member/login');
+Route::post('thanh-vien/dang-nhap', 'member/postLogin');
+Route::get('thanh-vien/dang-ky', 'member/register');
+Route::post('thanh-vien/dang-ky', 'member/postRegister');
+Route::get('thanh-vien/dang-xuat', 'member/logout');
