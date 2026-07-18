@@ -18,6 +18,7 @@ class Products extends Controller {
     private $__data = [];
     private $__model, $__fitment, $__request, $__response;
     private $__catModel, $__brandModel, $__mnfModel, $__originModel, $__unitModel, $__yearModel, $__imgModel, $__relatedModel;
+    private $__attrModel, $__attrValModel;
 
     // Upload ảnh phụ tùng (TASK_77)
     private $imgDir      = 'public/assets/uploads/parts/';
@@ -42,6 +43,8 @@ class Products extends Controller {
         $this->__yearModel   = $this->model('CarYearsModel');
         $this->__imgModel    = $this->model('PartImagesModel');
         $this->__relatedModel= $this->model('PartRelatedModel');
+        $this->__attrModel   = $this->model('AttributesModel');
+        $this->__attrValModel= $this->model('PartAttributeValuesModel');
         $this->__request     = new Request();
         $this->__response    = new Response();
     }
@@ -59,6 +62,7 @@ class Products extends Controller {
         $this->__data['content']['origins']      = $this->__originModel->getLists();
         $this->__data['content']['units']        = $this->__unitModel->getLists();
         $this->__data['content']['carYears']     = $this->__yearModel->getLists(); // kèm brand_name, model_name
+        $this->__data['content']['attributes']   = $this->__attrModel->getActive();  // thông số kỹ thuật đang bật
     }
 
     // ================= Danh sách (có phân trang) =================
@@ -72,6 +76,9 @@ class Products extends Controller {
         $f       = $this->__request->getFields();
         $keyword = isset($f['keyword']) ? trim($f['keyword']) : '';
         $catId   = isset($f['category_id']) && $f['category_id'] !== '' ? (int) $f['category_id'] : 0;
+        $promo   = !empty($f['promo']);
+        $attrId  = isset($f['attr_id']) && $f['attr_id'] !== '' ? (int) $f['attr_id'] : 0;
+        $attrVal = isset($f['attr_val']) ? trim($f['attr_val']) : '';
         $page    = isset($f['page']) && (int) $f['page'] > 0 ? (int) $f['page'] : 1;
 
         $filters = [];
@@ -79,19 +86,23 @@ class Products extends Controller {
             $filters['parts.category_id'] = $catId;
         }
 
-        $total      = $this->__model->countLists($filters, $keyword);
+        $total      = $this->__model->countLists($filters, $keyword, $promo, $attrId, $attrVal);
         $totalPages = (int) ceil($total / $this->perPage);
         if ($totalPages > 0 && $page > $totalPages){
             $page = $totalPages;
         }
         $offset = ($page - 1) * $this->perPage;
 
-        $this->__data['content']['page_name']    = $this->labelMany;
-        $this->__data['content']['dataList']     = $this->__model->getLists($filters, $keyword, $this->perPage, $offset);
-        $this->__data['content']['categories']   = $this->__catModel->getTree();
-        $this->__data['content']['keyword']      = $keyword;
-        $this->__data['content']['filterCat']    = $catId;
-        $this->__data['content']['page']         = $page;
+        $this->__data['content']['page_name']     = $this->labelMany;
+        $this->__data['content']['dataList']      = $this->__model->getLists($filters, $keyword, $this->perPage, $offset, $promo, $attrId, $attrVal);
+        $this->__data['content']['categories']    = $this->__catModel->getTree();
+        $this->__data['content']['attributes']    = $this->__attrModel->getActive();
+        $this->__data['content']['keyword']       = $keyword;
+        $this->__data['content']['filterCat']     = $catId;
+        $this->__data['content']['filterPromo']   = $promo;
+        $this->__data['content']['filterAttrId']  = $attrId;
+        $this->__data['content']['filterAttrVal'] = $attrVal;
+        $this->__data['content']['page']          = $page;
         $this->__data['content']['perPage']      = $this->perPage;
         $this->__data['content']['total']        = $total;
         $this->__data['content']['totalPages']   = $totalPages;
@@ -112,6 +123,7 @@ class Products extends Controller {
         $this->__data['content']['page_name']     = 'Thêm ' . $this->labelOne;
         $this->__data['content']['selFitments']   = [];
         $this->__data['content']['relatedParts']  = [];
+        $this->__data['content']['attrValues']    = [];
         $this->__data['content']['msg']           = Session::flash('msg');
         $this->__data['content']['errors']        = Session::flash('errors');
         $this->__data['content']['old']           = Session::flash('old');
@@ -131,6 +143,7 @@ class Products extends Controller {
 
         $this->syncFitments($partId);
         $this->syncRelated($partId);
+        $this->syncAttrs($partId);
 
         Session::flash('msg', 'Thêm ' . $this->labelOne . ' thành công');
         $this->__response->redirect('admin/' . $this->routeBase);
@@ -156,6 +169,7 @@ class Products extends Controller {
         $this->__data['content']['selFitments'] = $this->__fitment->getCarYearIds($id);
         $this->__data['content']['images']      = $this->__imgModel->getByPart($id);
         $this->__data['content']['relatedParts']= $this->__relatedModel->getRelatedParts($id);
+        $this->__data['content']['attrValues']  = $this->__attrValModel->getValuesMap($id);
         $this->__data['content']['msg']         = Session::flash('msg');
         $this->__data['content']['errors']      = Session::flash('errors');
         $this->__data['content']['old']         = Session::flash('old');
@@ -179,6 +193,7 @@ class Products extends Controller {
         $this->__model->edit($this->buildData(), $id);
         $this->syncFitments($id);
         $this->syncRelated($id);
+        $this->syncAttrs($id);
 
         Session::flash('msg', 'Cập nhật ' . $this->labelOne . ' thành công');
         $this->__response->redirect('admin/' . $this->routeBase);
@@ -516,6 +531,48 @@ class Products extends Controller {
         exit;
     }
 
+    /** TASK_85 — Xuất catalogue phụ tùng ra CSV (theo bộ lọc hiện tại) */
+    public function export(){
+        $f       = $this->__request->getFields();
+        $keyword = isset($f['keyword']) ? trim($f['keyword']) : '';
+        $catId   = isset($f['category_id']) && $f['category_id'] !== '' ? (int) $f['category_id'] : 0;
+        $promo   = !empty($f['promo']);
+        $attrId  = isset($f['attr_id']) && $f['attr_id'] !== '' ? (int) $f['attr_id'] : 0;
+        $attrVal = isset($f['attr_val']) ? trim($f['attr_val']) : '';
+
+        $filters = [];
+        if ($catId > 0){
+            $filters['parts.category_id'] = $catId;
+        }
+
+        // limit=0 -> lấy tất cả dòng khớp bộ lọc
+        $rows = $this->__model->getLists($filters, $keyword, 0, 0, $promo, $attrId, $attrVal);
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="catalogue-phu-tung.csv"');
+        echo "\xEF\xBB\xBF"; // BOM để Excel mở đúng tiếng Việt
+        $out = fopen('php://output', 'w');
+        fputcsv($out, ['code', 'oem_code', 'name', 'category', 'brand', 'origin', 'unit',
+                       'price', 'sale_price', 'warranty_month', 'status']);
+        foreach ($rows as $r){
+            fputcsv($out, [
+                $r['code'],
+                $r['oem_code'],
+                $r['name'],
+                $r['category_name'] ?? '',
+                $r['brand_name'] ?? '',
+                $r['origin_name'] ?? '',
+                $r['unit_name'] ?? '',
+                (int) $r['price'],
+                $r['sale_price'] !== null ? (int) $r['sale_price'] : '',
+                $r['warranty_month'],
+                (int) $r['status'] === 1 ? 'hiện' : 'ẩn',
+            ]);
+        }
+        fclose($out);
+        exit;
+    }
+
     private function normalizeHeader($title){
         $s = trim(mb_strtolower((string) $title));
         $s = str_replace([' ', '-'], '_', $s);
@@ -628,6 +685,13 @@ class Products extends Controller {
         }
 
         $this->__relatedModel->syncForPart($partId, $valid);
+    }
+
+    /** Lưu giá trị thông số kỹ thuật được nhập (attr[attribute_id] = value) — TASK_90 */
+    private function syncAttrs($partId){
+        $f   = $this->__request->getFields();
+        $map = isset($f['attr']) && is_array($f['attr']) ? $f['attr'] : [];
+        $this->__attrValModel->syncForPart($partId, $map);
     }
 
     /** Tìm phụ tùng (JSON) cho ô chọn phụ kiện đi kèm — TASK_81 */

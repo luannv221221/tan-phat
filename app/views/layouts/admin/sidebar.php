@@ -17,7 +17,7 @@ $isActive = function ($link) use ($currentUrl) {
 // Nhóm menu (thứ tự hiển thị) => các link thuộc nhóm
 $menuGroups = [
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
-    'Danh mục phụ tùng'  => ['part-categories', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
+    'Danh mục phụ tùng'  => ['part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
     'Nội dung'           => ['products', 'news'],
     'Hệ thống'           => ['users', 'groups'],
 ];
@@ -34,6 +34,7 @@ $itemIcons = [
     'car-models'            => 'fa-car-side',
     'car-years'             => 'fa-calendar-alt',
     'part-categories'       => 'fa-sitemap',
+    'attributes'            => 'fa-ruler-horizontal',
     'car-body-types'        => 'fa-truck-pickup',
     'car-fuels'             => 'fa-gas-pump',
     'car-colors'            => 'fa-palette',

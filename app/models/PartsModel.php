@@ -28,9 +28,10 @@ class PartsModel extends Model {
      * Danh sách phụ tùng, lọc theo danh mục/thương hiệu + tìm theo từ khoá.
      * TASK_90 (lọc theo danh mục), TASK_91 (tìm kiếm).
      */
-    public function getLists($filters = [], $keyword = '', $limit = 0, $offset = 0){
+    public function getLists($filters = [], $keyword = '', $limit = 0, $offset = 0, $promoOnly = false, $attrId = 0, $attrVal = ''){
         $q = $this->selectWithJoins();
-        $q = $this->applyFilters($q, $filters, $keyword);
+        $q = $this->applyFilters($q, $filters, $keyword, $promoOnly);
+        $q = $this->applyAttr($q, $attrId, $attrVal);
         $q = $q->orderBy('parts.name', 'ASC');
 
         if ($limit > 0){
@@ -41,19 +42,39 @@ class PartsModel extends Model {
     }
 
     /** Đếm tổng số phụ tùng khớp bộ lọc — cho phân trang */
-    public function countLists($filters = [], $keyword = ''){
-        // Không cần join: mọi cột lọc/tìm đều thuộc `parts`.
+    public function countLists($filters = [], $keyword = '', $promoOnly = false, $attrId = 0, $attrVal = ''){
         $q = $this->table($this->_table)->select('COUNT(*) AS total');
-        $q = $this->applyFilters($q, $filters, $keyword);
+        $q = $this->applyFilters($q, $filters, $keyword, $promoOnly);
+        $q = $this->applyAttr($q, $attrId, $attrVal);
         $r = $q->first();
 
         return (int) ($r['total'] ?? 0);
     }
 
+    /** TASK_90 — lọc theo thông số kỹ thuật (join part_attribute_values) */
+    private function applyAttr($q, $attrId, $attrVal){
+        $attrId = (int) $attrId;
+        if ($attrId > 0){
+            // INNER JOIN: chỉ giữ phụ tùng CÓ thông số này. UNIQUE(part_id,attribute_id)
+            // đảm bảo mỗi phụ tùng khớp tối đa 1 dòng -> không nhân bản.
+            $q = $q->joinOn('part_attribute_values', 'parts.id', 'part_attribute_values.part_id')
+                   ->where('part_attribute_values.attribute_id', '=', $attrId);
+            if ($attrVal !== ''){
+                $q = $q->whereLike('part_attribute_values.value', '%' . $attrVal . '%');
+            }
+        }
+        return $q;
+    }
+
     /** Áp bộ lọc + từ khoá (dùng chung cho getLists và countLists) */
-    private function applyFilters($q, $filters, $keyword){
+    private function applyFilters($q, $filters, $keyword, $promoOnly = false){
         foreach ($filters as $field => $value){
             $q = $q->where($field, '=', $value);
+        }
+
+        // TASK_80 — chỉ hàng khuyến mãi (có sale_price)
+        if ($promoOnly){
+            $q = $q->whereNotNull('parts.sale_price');
         }
 
         if ($keyword !== ''){

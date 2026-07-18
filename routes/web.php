@@ -67,6 +67,8 @@ Route::group('admin', function(){
    Route::get('products/import-template', 'admin/products/importTemplate');
    // Tìm phụ tùng (JSON) cho ô chọn phụ kiện đi kèm (TASK_81)
    Route::get('products/search-json', 'admin/products/searchJson');
+   // Xuất catalogue CSV (TASK_85)
+   Route::get('products/export', 'admin/products/export');
 
    //Route news
    Route::get('news', 'admin/news');
@@ -107,6 +109,7 @@ Route::group('admin', function(){
        'car-models'      => 'carmodels',       // Model xe (dropdown hãng + kiểu dáng)
        'car-years'       => 'caryears',        // Đời xe (cascade hãng -> model)
        'part-categories' => 'partcategories',  // Danh mục phụ tùng (cây cha-con)
+       'attributes'      => 'attributes',       // Thông số kỹ thuật (TASK_90)
    ];
 
    $lookupModules = array_merge($lookupModules, $relationalModules);

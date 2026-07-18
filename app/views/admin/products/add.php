@@ -170,6 +170,25 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                     @endif
                 </div>
             </div>
+
+            <!-- Thông số kỹ thuật (TASK_90) — gửi qua attr[attribute_id] -->
+            <div class="card card-outline card-info">
+                <div class="card-header"><h3 class="card-title"><i class="fas fa-ruler-horizontal mr-2"></i>Thông số kỹ thuật</h3></div>
+                <div class="card-body">
+                    @if (empty($attributes))
+                    <p class="text-muted mb-0"><i class="fas fa-info-circle mr-1"></i> Chưa có thông số nào. Tạo ở menu <b>Thông số kỹ thuật</b>.</p>
+                    @else
+                        @foreach ($attributes as $at)
+                        <div class="form-group row mb-2">
+                            <label class="col-5 col-form-label col-form-label-sm">{{$at['name']}}{!! !empty($at['unit']) ? ' <span class="text-muted">('.e($at['unit']).')</span>' : '' !!}</label>
+                            <div class="col-7">
+                                <input type="text" class="form-control form-control-sm" name="attr[{{$at['id']}}]" value="{{ isset($attrValues[$at['id']]) ? $attrValues[$at['id']] : '' }}"/>
+                            </div>
+                        </div>
+                        @endforeach
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 
