@@ -117,8 +117,8 @@ Chưa có phụ tùng thật nào — cần nhập liệu hoặc import.
 |---|---|---|
 | **Controller + view CRUD** | — | Model + DB xong; chưa có màn hình |
 | **Thêm vào bảng `modules`** | — | Để phân quyền được |
-| Thư viện ảnh theo slide | TASK_77 | Cần bảng `part_images` |
-| Import Excel | TASK_78 | Cập nhật thông số bằng file Excel |
+| ~~Thư viện ảnh theo slide~~ | TASK_77 | ✅ Xong 18/07 — bảng `part_images`, upload nhiều ảnh + ảnh đại diện, ở màn hình sửa phụ tùng |
+| ~~Import Excel~~ | TASK_78 | ✅ Xong 18/07 — `core/SpreadsheetReader` đọc `.xlsx`+`.csv` (không cần thư viện); upsert theo `code` |
 | Ẩn/hiện theo phân quyền | TASK_79 | VD: chỉ thành viên thấy tồn kho |
 | Tự động nhóm danh mục | TASK_80 | VD: danh mục "Khuyến mại" tự gom SP có `sale_price` |
 | Phụ kiện đi kèm | TASK_81 | Cần bảng `part_related` |

@@ -50,8 +50,21 @@ Route::group('admin', function(){
 
    Route::get('users/delete/(\d+)', 'admin/users/delete/$1');
 
-   //Route products
+   //Route products (Quản lý phụ tùng — CRUD đầy đủ + gán đời xe)
    Route::get('products', 'admin/products');
+   Route::get('products/add', 'admin/products/add');
+   Route::post('products/add', 'admin/products/postAdd');
+   Route::get('products/edit/(\d+)', 'admin/products/edit/$1');
+   Route::post('products/edit/(\d+)', 'admin/products/postEdit/$1');
+   Route::get('products/delete/(\d+)', 'admin/products/delete/$1');
+   // Thư viện ảnh phụ tùng (TASK_77)
+   Route::post('products/images/(\d+)', 'admin/products/postImages/$1');
+   Route::get('products/image-delete/(\d+)', 'admin/products/imageDelete/$1');
+   Route::get('products/image-primary/(\d+)', 'admin/products/imagePrimary/$1');
+   // Import phụ tùng từ Excel/CSV (TASK_78)
+   Route::get('products/import', 'admin/products/import');
+   Route::post('products/import', 'admin/products/postImport');
+   Route::get('products/import-template', 'admin/products/importTemplate');
 
    //Route news
    Route::get('news', 'admin/news');
@@ -59,12 +72,16 @@ Route::group('admin', function(){
    /* =========================================================
     * DANH MỤC XE + DANH MỤC PHỤ TÙNG
     *
-    * 7 danh mục này dùng chung App\core\LookupCrudController
-    * và chung view app/views/admin/lookup/*.
+    * Mỗi danh mục có controller riêng trong app/controllers/admin/
+    * (kế thừa thẳng App\core\Controller) và view riêng
+    * app/views/admin/<route-base>/*.
     *
     * URL dùng gạch ngang (car-body-types) cho đẹp; controller đích
     * phải viết liền vì App::handleUrl() chỉ ucfirst() đoạn cuối
     * để tìm file (car-body-types -> Car-body-types.php, không tồn tại).
+    *
+    * Vòng lặp dưới chỉ nối URL -> controller; 6 route/danh mục giống
+    * hệt nhau nên gom lại cho gọn, không liên quan tới base class.
     * ========================================================= */
 
    $lookupModules = [
@@ -76,6 +93,21 @@ Route::group('admin', function(){
        'product-manufacturers' => 'productmanufacturers',
        'product-units'         => 'productunits',
    ];
+
+   /* =========================================================
+    * DANH MỤC XE CÓ QUAN HỆ (Ưu tiên 1)
+    *
+    * Cùng dạng 6 route/controller như trên, nhưng controller phức tạp hơn
+    * (dropdown phụ thuộc, upload logo, cây cha-con) — xem từng file controller.
+    * ========================================================= */
+   $relationalModules = [
+       'car-brands'      => 'carbrands',       // Hãng xe (upload logo)
+       'car-models'      => 'carmodels',       // Model xe (dropdown hãng + kiểu dáng)
+       'car-years'       => 'caryears',        // Đời xe (cascade hãng -> model)
+       'part-categories' => 'partcategories',  // Danh mục phụ tùng (cây cha-con)
+   ];
+
+   $lookupModules = array_merge($lookupModules, $relationalModules);
 
    foreach ($lookupModules as $url => $controller){
        Route::get($url,                    'admin/'.$controller);

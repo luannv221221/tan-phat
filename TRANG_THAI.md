@@ -76,7 +76,7 @@ Nhưng ở máy nhà **phải tự tạo `.env`**: copy `.env.example` → `.env
 |---|---|---|
 | **Cây danh mục xe** | 6 bảng: hãng, kiểu dáng, model, đời, nhiên liệu, màu | `CAY_DANH_MUC_XE.md` |
 | **Phụ tùng + liên kết xe** | 7 bảng; TASK_86/87/90/91/93 | `PHU_TUNG.md` |
-| **CRUD 7 danh mục** | Màn hình quản trị + menu + phân quyền | `CRUD_DANH_MUC.md` |
+| **CRUD 7 danh mục** | Màn hình quản trị + menu + phân quyền. **18/07: đã tách mỗi danh mục thành controller độc lập kế thừa `Controller` + view riêng, bỏ `LookupCrudController`** | `CRUD_DANH_MUC.md` |
 
 ### Tài liệu
 
@@ -93,20 +93,24 @@ Nhưng ở máy nhà **phải tự tạo `.env`**: copy `.env.example` → `.env
 
 ## ⬜ CHƯA LÀM — việc tiếp theo
 
-### Ưu tiên 1 — để người dùng nhập được dữ liệu xe
+### Ưu tiên 1 — để người dùng nhập được dữ liệu xe ✅ XONG (18/07/2026)
 
-- [ ] **CRUD Hãng xe** (`car_brands`) — có upload logo
-- [ ] **CRUD Model xe** (`car_models`) — dropdown phụ thuộc: chọn hãng → lọc kiểu dáng
-- [ ] **CRUD Đời xe** (`car_years`) — chọn model → nhập khoảng năm
-- [ ] **CRUD Danh mục phụ tùng** (`part_categories`) — có phân cấp cha-con
+- [x] **CRUD Hãng xe** (`car_brands`) — có **upload logo** (validate ảnh thật, sinh tên an toàn, xoá file khi xoá/thay)
+- [x] **CRUD Model xe** (`car_models`) — dropdown hãng (bắt buộc) + kiểu dáng (tuỳ chọn), slug duy nhất theo hãng, lọc danh sách theo hãng
+- [x] **CRUD Đời xe** (`car_years`) — **cascade hãng → model** (JS, dữ liệu nhúng), năm from/to, tên tự sinh
+- [x] **CRUD Danh mục phụ tùng** (`part_categories`) — **cây cha-con** thụt lề, chặn vòng lặp khi chọn cha, RESTRICT khi xoá cha còn con
 
-> 4 màn hình này **không dùng lại được** `LookupCrudController` vì có quan hệ/dropdown phụ thuộc.
+> 4 màn hình viết controller độc lập riêng (kế thừa `Controller`) + view riêng theo card AdminLTE.
+> Đã verify end-to-end (thêm/sửa/xoá, upload, cascade, RESTRICT) + 383 test PASS.
+> Route đăng ký trong `$relationalModules` (`routes/web.php`); quyền cấp qua migration `000007`.
 
 ### Ưu tiên 2 — phụ tùng
 
-- [ ] **CRUD Phụ tùng** — form gán nhiều đời xe (`PartFitmentsModel::syncForPart` đã sẵn sàng)
-- [ ] Phân trang (bắt buộc — phụ tùng sẽ hàng nghìn dòng)
-- [ ] TASK_77 thư viện ảnh · TASK_78 import Excel · TASK_81 phụ kiện đi kèm
+- [x] **CRUD Phụ tùng** (18/07) — controller `Products` (URL `admin/products`), form gán nhiều đời xe (`syncForPart`), nhiều dropdown FK, giá VND
+- [x] **Phân trang** (18/07) — 20 dòng/trang + tìm kiếm (tên/mã/OEM) + lọc theo danh mục
+- [x] **TASK_77 thư viện ảnh** (18/07) — upload nhiều ảnh/phụ tùng, đặt ảnh đại diện, xoá (kèm file); bảng `part_images`
+- [x] **TASK_78 import Excel/CSV** (18/07) — reader `.xlsx` tự viết (zip+XML, không cần thư viện) + `.csv`; upsert theo `code`, map FK theo slug
+- [ ] TASK_81 phụ kiện đi kèm (cần bảng `part_related`)
 
 ### Ưu tiên 3 — cần người có quyền, không phải code
 

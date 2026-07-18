@@ -27,3 +27,9 @@ Thumbs.db
 
 # Composer
 /vendor/
+
+# Uploads — file nguoi dung tai len (logo hang, anh phu tung). Giu thu muc, bo qua noi dung.
+public/assets/uploads/brands/*
+!public/assets/uploads/brands/.gitkeep
+public/assets/uploads/parts/*
+!public/assets/uploads/parts/.gitkeep

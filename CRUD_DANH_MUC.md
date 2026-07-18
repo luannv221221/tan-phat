@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Ngày** | 17/07/2026 |
+| **Ngày** | 17/07/2026 · cập nhật 18/07/2026 (tách controller độc lập) |
 | **Trạng thái** | ✅ Đã kiểm chứng end-to-end trên trình duyệt + MySQL 8.0.44 thật |
 | **Test** | 381 test, 0 fail |
 
@@ -24,30 +24,44 @@
 
 ---
 
-## 2. Viết 1 lần, dùng 7 chỗ
+## 2. Mỗi danh mục = 1 controller độc lập
 
-`App\core\LookupCrudController` chứa toàn bộ CRUD. Mỗi controller cụ thể chỉ **6 dòng**:
+> **Đổi so với bản cũ (18/07/2026):** trước đây 7 danh mục dùng chung lớp cha
+> `App\core\LookupCrudController` (đặt ở `core/`, mỗi controller con chỉ 6 dòng).
+> Nay **đã bỏ** pattern đó — mỗi danh mục có controller riêng, tự chứa CRUD, và
+> **view riêng**, để tự do tùy biến từng màn hình. Xem `catalog-crud-standalone` trong memory.
+
+Mỗi danh mục là 1 controller trong `app/controllers/admin/`, kế thừa thẳng
+`App\core\Controller` và tự chứa toàn bộ CRUD (`index/add/postAdd/edit/postEdit/delete`):
 
 ```php
-class Carfuels extends \App\core\LookupCrudController {
-    protected $modelName = 'CarFuelsModel';
-    protected $routeBase = 'car-fuels';
-    protected $labelOne  = 'nhiên liệu';
-    protected $labelMany = 'Nhiên liệu (động cơ xe)';
+class Carfuels extends \App\core\Controller {
+    private $routeBase = 'car-fuels';
+    private $labelOne  = 'nhiên liệu';
+    private $labelMany = 'Nhiên liệu (động cơ xe)';
+    private $viewDir   = 'admin/car-fuels';
+
+    function __construct(){ $this->__model = $this->model('CarFuelsModel'); /* ... */ }
+    // index / add / postAdd / edit / postEdit / delete ...
 }
 ```
 
-Ba view dùng chung: `app/views/admin/lookup/{lists,add,edit}.php`.
+Mỗi danh mục có **view riêng**: `app/views/admin/<route-base>/{lists,add,edit}.php`
+(vd `app/views/admin/car-fuels/`). Danh mục có mã màu (`car-colors`) thì view +
+`buildData()` thêm cột `hex`; 6 danh mục còn lại không có.
 
-Đặt lớp cha ở `core/` (không phải `app/controllers/`) để **URL không với tới được** — `App::handleUrl()` chỉ tìm file trong `app/controllers/`.
+Model **vẫn dùng chung** `LookupModel` (tầng DB `name/slug/sort_order/status` giống
+hệt nhau, không chép lại):
+`class XxxModel extends LookupModel { protected $_table = 'xxx'; }`
 
 ### Thêm danh mục tra cứu mới
 
 1. Tạo bảng bằng migration (cột: `name`, `slug`, `sort_order`, `status`)
 2. Model: `class XxxModel extends LookupModel { protected $_table = 'xxx'; }`
-3. Controller: 6 dòng như trên
-4. Thêm 1 dòng vào `$lookupModules` trong `routes/web.php`
-5. Migration đăng ký vào bảng `modules` + cấp quyền Admin
+3. Controller riêng trong `app/controllers/admin/` — copy mẫu từ `Carfuels.php`
+4. View riêng `app/views/admin/xxx/{lists,add,edit}.php` — copy từ thư mục `car-fuels`
+5. Thêm 1 dòng vào `$lookupModules` trong `routes/web.php`
+6. Migration đăng ký vào bảng `modules` + cấp quyền Admin
 
 ---
 
@@ -131,8 +145,8 @@ Ký tự đặc biệt bị **bỏ hẳn** (không đổi thành gạch), giốn
 
 | Việc | Ghi chú |
 |---|---|
-| **CRUD Hãng xe / Model xe / Đời xe** | Phức tạp hơn (có dropdown phụ thuộc), chưa dùng được `LookupCrudController` |
-| **CRUD Phụ tùng** | Cần form gán nhiều đời xe (`syncForPart`) |
-| **CRUD Danh mục phụ tùng** | Có phân cấp cha-con |
-| Phân trang | Danh mục ít bản ghi nên chưa cần; phụ tùng thì bắt buộc |
-| Upload logo | `car_brands.logo`, `product_brands.logo` đã có cột, chưa có form |
+| ~~CRUD Hãng xe / Model xe / Đời xe~~ | ✅ Xong 18/07 — controller độc lập, cascade hãng→model, upload logo hãng |
+| ~~CRUD Danh mục phụ tùng~~ | ✅ Xong 18/07 — cây cha-con, chặn vòng lặp + RESTRICT |
+| ~~Upload logo~~ | ✅ Xong cho `car_brands.logo` (validate ảnh, tên an toàn). `product_brands.logo` vẫn chưa có form |
+| ~~CRUD Phụ tùng~~ | ✅ Xong 18/07 — `admin/products`, gán nhiều đời xe (`syncForPart`), nhiều FK, giá VND |
+| ~~Phân trang~~ | ✅ Xong 18/07 cho phụ tùng (20/trang + tìm kiếm + lọc danh mục) |
