@@ -126,7 +126,7 @@ Nhưng ở máy nhà **phải tự tạo `.env`**: copy `.env.example` → `.env
 
 ### Còn treo trong SRS
 
-- **Phân hệ Kế toán không có trong file Tracking** dù sheet Help liệt kê là 1 trong 6 đầu việc chính, và sheet Biểu mẫu/MENU đặc tả rất chi tiết. → **Đã soạn `KE_TOAN_SPEC_DE_XUAT.md`** (18/07) đề xuất phạm vi + mô hình dữ liệu + 8 câu hỏi cần BA/Kế toán chốt trước khi code.
+- **Phân hệ Kế toán**: đã soạn `KE_TOAN_SPEC_DE_XUAT.md` + **đã code KT-1 + KT-2** (18/07): danh mục tài khoản (cây, seed 19 TK) · mã phí · mã vụ việc · phiếu thu/chi (bút toán kép, tự đánh số, ghi sổ/huỷ ghi sổ + khoá) · sổ quỹ (số dư đầu/cuối kỳ + luỹ kế). Nhóm menu "Kế toán". **KT-3→KT-6 chờ chốt 8 câu hỏi trong spec** (TT200/133, đối tượng công nợ, liên thông Kho/Bán hàng...).
 - **~48 dòng trong Tracking không có trạng thái** → con số "Total 68" không phản ánh quy mô thật (>130 hạng mục).
 
 ---

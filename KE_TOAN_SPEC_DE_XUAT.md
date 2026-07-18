@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Trạng thái** | 📝 Bản đề xuất để BA / Kế toán duyệt — **CHƯA code** |
+| **Trạng thái** | ✅ Đã duyệt · **KT-1 + KT-2 đã code + verify** (18/07) · KT-3→KT-6 chờ chốt câu hỏi mục 4 |
 | **Ngày** | 18/07/2026 |
 | **Nguồn** | Dựng lại từ `SRS_ERP_TanPhat.md` (mục "Module Kế toán", "Quản lý quỹ", "Sổ sách kế toán", "Công nợ", "Danh mục kế toán") |
 
@@ -57,8 +57,8 @@ Theo nguyên tắc **bút toán kép** (mỗi chứng từ sinh ≥1 cặp Nợ/
 
 | GĐ | Nội dung | Ghi chú |
 |---|---|---|
-| **KT-1** | Danh mục tài khoản (cây), mã phí, mã vụ việc | Nền tảng — dựng như CRUD danh mục đã có |
-| **KT-2** | Phiếu thu / Phiếu chi (quản lý quỹ tiền mặt) + Sổ quỹ | Nghiệp vụ quỹ cơ bản, bút toán kép |
+| ~~**KT-1**~~ | Danh mục tài khoản (cây), mã phí, mã vụ việc | ✅ Xong 18/07 — seed 19 TK lõi, CRUD đầy đủ |
+| ~~**KT-2**~~ | Phiếu thu / Phiếu chi (quản lý quỹ tiền mặt) + Sổ quỹ | ✅ Xong 18/07 — bút toán kép, tự đánh số, ghi sổ/huỷ ghi sổ + khoá, sổ quỹ luỹ kế |
 | **KT-3** | Giấy báo có / báo nợ (ngân hàng), Phiếu kế toán, điều chuyển, tạm ứng | Mở rộng chứng từ |
 | **KT-4** | Công nợ (sổ chi tiết, tổng hợp số dư, cân đối phát sinh) | Cần chốt đối tượng công nợ |
 | **KT-5** | Sổ sách: Nhật ký chung, Sổ cái/chi tiết TK, chữ T | Báo cáo tổng hợp |
