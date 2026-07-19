@@ -13,6 +13,9 @@ $cart = Session::get('cart');
 $cartCount = 0;
 if (!empty($cart) && is_array($cart)){ foreach ($cart as $q){ $cartCount += (int) $q; } }
 
+// Ghi log lượt xem trang khách (TASK_109-111)
+$this->model('VisitsModel')->log($memberId);
+
 // ----- SEO / cấu hình site -----
 $settings = $this->model('SettingsModel')->map();
 $seo = (isset($content['seo']) && is_array($content['seo'])) ? $content['seo'] : [];

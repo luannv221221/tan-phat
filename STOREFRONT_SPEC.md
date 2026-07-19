@@ -58,6 +58,11 @@ Bề mặt **công khai** — controller gốc `app/controllers/` (KHÔNG thuộ
 - `menus` (cây cha-con 1 cấp: label/url/target/sort/status), seed 6 mục (Trang chủ/Sản phẩm/Khuyến mãi/Dự án/Thư viện/Tin tức). Admin `admin/menus` CRUD (list cây, dropdown chọn cha).
 - Storefront nav render động từ `MenusModel::getActiveTree()` (thay nav hardcode), có **dropdown submenu** (CSS hover). Helper `nav_url()`.
 
+## Thống kê truy cập (đã làm — migration 000028, TASK_109-111)
+
+- `visits` (url/referrer/keyword/ip/user_agent/member_id). Log ngay trong layout storefront (`VisitsModel::log`) → chỉ trang khách (không admin/asset/POST).
+- Admin `admin/thong-ke`: tổng lượt + khách (IP) theo 7/30/90 ngày · biểu đồ cột lượt/ngày · top trang · nguồn giới thiệu (loại domain nhà) · từ khoá tìm kiếm. Gộp bằng PHP (tránh quirk QueryBuilder).
+
 ## Hoãn (các đợt web sau)
 
-Thống kê truy cập (109–111) · webchat/hotline (112–113) · cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · tự trừ tồn ngay khi đặt (hiện admin bấm tạo+ghi sổ hoá đơn).
+**webchat** (TASK_112-113 — cần polling/websocket + widget + inbox admin) · cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · tự trừ tồn ngay khi đặt (hiện admin bấm tạo+ghi sổ hoá đơn).

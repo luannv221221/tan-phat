@@ -300,6 +300,9 @@ Route::group('admin', function(){
    Route::get('orders/invoice/(\d+)', 'admin/orders/invoice/$1');
    Route::get('orders/delete/(\d+)', 'admin/orders/delete/$1');
 
+   // Thống kê truy cập
+   Route::get('thong-ke', 'admin/thongke');
+
    // Cấu hình website (SEO)
    Route::get('settings', 'admin/settings');
    Route::post('settings/save', 'admin/settings/save');

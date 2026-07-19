@@ -24,7 +24,7 @@ $menuGroups = [
     'Kế toán'            => ['vouchers', 'journal', 'cash-book', 'debt', 'nhat-ky-chung', 'so-cai', 'partners', 'accounts', 'cost-items', 'projects'],
     'CSKH'               => ['warranty', 'lich-bao-hanh', 'customer-groups', 'reviews', 'bao-cao-cskh'],
     'Nhân sự'            => ['employees', 'departments', 'positions', 'leave-requests'],
-    'Hệ thống'           => ['users', 'groups', 'settings'],
+    'Hệ thống'           => ['users', 'groups', 'settings', 'thong-ke'],
 ];
 
 $groupIcons = [
@@ -81,6 +81,7 @@ $itemIcons = [
     'users'                 => 'fa-users',
     'groups'               => 'fa-user-shield',
     'settings'              => 'fa-cog',
+    'thong-ke'              => 'fa-chart-area',
     'vouchers'              => 'fa-receipt',
     'journal'               => 'fa-file-invoice',
     'debt'                  => 'fa-hand-holding-usd',
