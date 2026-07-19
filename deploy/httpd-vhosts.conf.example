@@ -1,0 +1,43 @@
+# ============================================================
+#  VirtualHost cho Tan Phat ERP tren XAMPP/Apache (Windows Server)
+#
+#  Dan noi dung nay vao:  C:\xampp\apache\conf\extra\httpd-vhosts.conf
+#  Sua duong dan + ServerName cho dung, roi restart Apache.
+#  (httpd-vhosts.conf da duoc include san trong httpd.conf cua XAMPP.)
+# ============================================================
+
+# ---- HTTP (cong 80) ----
+<VirtualHost *:80>
+    ServerName erp.tanphat.vn
+    # Tro thang vao thu muc du an (KHONG phai htdocs)
+    DocumentRoot "C:/tanphat/app-erp"
+
+    <Directory "C:/tanphat/app-erp">
+        # BAT BUOC: cho phep .htaccess cua du an hoat dong (rewrite + chan .env)
+        AllowOverride All
+        Require all granted
+        Options -Indexes +FollowSymLinks
+    </Directory>
+
+    ErrorLog  "logs/tanphat-error.log"
+    CustomLog "logs/tanphat-access.log" common
+</VirtualHost>
+
+# ---- HTTPS (cong 443) — bo comment khi da co chung chi SSL ----
+# <VirtualHost *:443>
+#     ServerName erp.tanphat.vn
+#     DocumentRoot "C:/tanphat/app-erp"
+#
+#     SSLEngine on
+#     SSLCertificateFile      "conf/ssl.crt/tanphat.crt"
+#     SSLCertificateKeyFile   "conf/ssl.key/tanphat.key"
+#
+#     <Directory "C:/tanphat/app-erp">
+#         AllowOverride All
+#         Require all granted
+#         Options -Indexes +FollowSymLinks
+#     </Directory>
+#
+#     ErrorLog  "logs/tanphat-ssl-error.log"
+#     CustomLog "logs/tanphat-ssl-access.log" common
+# </VirtualHost>
