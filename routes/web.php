@@ -291,6 +291,7 @@ Route::group('admin', function(){
    Route::get('orders', 'admin/orders');
    Route::get('orders/edit/(\d+)', 'admin/orders/edit/$1');
    Route::get('orders/set-status/(\d+)', 'admin/orders/setStatus/$1');
+   Route::get('orders/invoice/(\d+)', 'admin/orders/invoice/$1');
    Route::get('orders/delete/(\d+)', 'admin/orders/delete/$1');
 
    // Cấu hình website (SEO)

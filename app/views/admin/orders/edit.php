@@ -2,6 +2,9 @@
 @if (!empty($msg))
 <div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fas fa-check-circle mr-1"></i> {{$msg}}</div>
 @endif
+@if (!empty($msgError))
+<div class="alert alert-danger alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fas fa-exclamation-circle mr-1"></i> {{$msgError}}</div>
+@endif
 
 <div class="card card-outline card-primary">
     <div class="card-header">
@@ -57,6 +60,13 @@
 </div>
 
 <div class="card"><div class="card-body">
+    @if (!empty($invoice))
+    <a href="{{_WEB_URL.'/admin/sales-invoices/edit/'.$invoice['id']}}" class="btn btn-info"><i class="fas fa-file-invoice mr-1"></i> Hoá đơn {{$invoice['invoice_no']}} {!! $invoice['status']==1 ? '<span class="badge badge-light ml-1">đã ghi sổ</span>' : '<span class="badge badge-light ml-1">nháp</span>' !!}</a>
+    @else
+        @if (route('admin/'.$routeBase.'/edit/'.$item['id']) && route('admin/sales-invoices/add'))
+        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/invoice/'.$item['id']}}" onclick="return confirm('Tạo hoá đơn bán từ đơn này? (ghi sổ hoá đơn sẽ trừ tồn kho & ghi doanh thu)')" class="btn btn-success"><i class="fas fa-file-invoice-dollar mr-1"></i> Tạo hoá đơn bán</a>
+        @endif
+    @endif
     @if (route('admin/'.$routeBase.'/delete/'.$item['id']))
     <a href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" onclick="return confirm('Xoá đơn này?')" class="btn btn-outline-danger"><i class="fas fa-trash mr-1"></i> Xoá đơn</a>
     @endif

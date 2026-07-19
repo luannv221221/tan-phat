@@ -46,7 +46,8 @@ Bề mặt **công khai** — controller gốc `app/controllers/` (KHÔNG thuộ
 - Thanh toán: **chuyển khoản** / **COD**. Thông tin ngân hàng ở `site_settings` (bank_name/account/holder), sửa ở màn Cấu hình.
 - Admin `orders`: danh sách (badge đơn mới) + chi tiết + luồng trạng thái Mới→Xác nhận→Đang giao→Hoàn tất/Huỷ. Nhóm menu "Bán hàng".
 - Giỏ vẫn giữ song song nút "Gửi yêu cầu báo giá" (tạo quotation).
+- **Nối đơn ↔ hoá đơn (migration 000025)**: đơn có `sales_invoice_id`; admin bấm "Tạo hoá đơn bán" → sinh hoá đơn nháp từ dòng đơn (vat_rate=0, giá web là giá cuối) → ghi sổ hoá đơn **trừ tồn + doanh thu Nợ131/Có511 + giá vốn Nợ632/Có156 (KT-6)**. Khép vòng web → back-office.
 
 ## Hoãn (các đợt web sau)
 
-Quản lý menu (105–108) · thống kê truy cập (109–111) · webchat/hotline (112–113) · video/thư viện ảnh · cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · sitemap.xml · trừ tồn kho khi đặt (hiện đơn chỉ ghi nhận, chưa liên thông kho/hoá đơn).
+Quản lý menu (105–108) · thống kê truy cập (109–111) · webchat/hotline (112–113) · video/thư viện ảnh · cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · sitemap.xml · tự trừ tồn ngay khi đặt (hiện cần admin bấm tạo+ghi sổ hoá đơn).
