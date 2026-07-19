@@ -20,8 +20,9 @@ class Goodsreceipts extends Controller {
     const DOC_TYPE = 'receipt';
 
     private $__data = [];
-    private $__model, $__itemModel, $__stock, $__warehouse, $__partner, $__part;
+    private $__model, $__itemModel, $__stock, $__warehouse, $__partner, $__part, $__location;
     private $__accModel, $__voucherModel, $__entryModel, $__request, $__response;
+    private $__locMap = null;
 
     private $routeBase = 'goods-receipts';
     private $labelOne  = 'phiếu nhập';
@@ -35,6 +36,7 @@ class Goodsreceipts extends Controller {
         $this->__warehouse    = $this->model('WarehousesModel');
         $this->__partner      = $this->model('PartnersModel');
         $this->__part         = $this->model('PartsModel');
+        $this->__location     = $this->model('WarehouseLocationsModel');
         $this->__accModel     = $this->model('AccAccountsModel');
         $this->__voucherModel = $this->model('AccVouchersModel');
         $this->__entryModel   = $this->model('AccVoucherEntriesModel');
@@ -53,8 +55,19 @@ class Goodsreceipts extends Controller {
         $this->__data['content']['partners']   = $this->__partner->getActive();
         $this->__data['content']['parts']      = $this->__part->getForSelect();
         $this->__data['content']['accounts']   = $this->__accModel->getDetailAccounts();
-        // KHO-3: gợi ý vị trí trong kho (datalist) cho ô "Vị trí" dòng hàng
-        $this->__data['content']['locations']  = $this->model('WarehouseLocationsModel')->getActivePaths();
+        // KHO-3: vị trí trong kho (select phụ thuộc kho) cho ô "Vị trí" dòng hàng
+        $this->__data['content']['locations']  = $this->__location->getActiveList();
+    }
+
+    /** Map id vị trí -> row (dùng khi build dòng + validate) */
+    private function locMap(){
+        if ($this->__locMap === null){
+            $this->__locMap = [];
+            foreach ($this->__location->getActiveList() as $l){
+                $this->__locMap[(int) $l['id']] = $l;
+            }
+        }
+        return $this->__locMap;
     }
 
     public function index(){
@@ -344,8 +357,19 @@ class Goodsreceipts extends Controller {
         if (empty($f['receipt_date'])){
             $errors['receipt_date'] = 'Chọn ngày phiếu';
         }
-        if (empty($this->buildLines())){
+        $lines = $this->buildLines();
+        if (empty($lines)){
             $errors['lines'] = 'Phiếu phải có ít nhất 1 dòng hàng (phụ tùng + số lượng > 0)';
+        } elseif ($whId > 0 && $this->__location->countActiveInWarehouse($whId) > 0){
+            // Kho có khai báo vị trí -> mỗi dòng BẮT BUỘC chọn vị trí đúng kho
+            $map = $this->locMap();
+            foreach ($lines as $ln){
+                $lid = !empty($ln['location_id']) ? (int) $ln['location_id'] : 0;
+                if ($lid <= 0 || !isset($map[$lid]) || (int) $map[$lid]['warehouse_id'] !== $whId){
+                    $errors['lines'] = 'Kho này đã khai báo vị trí — mỗi dòng hàng phải chọn vị trí thuộc kho đã chọn.';
+                    break;
+                }
+            }
         }
         return $errors;
     }
@@ -353,11 +377,12 @@ class Goodsreceipts extends Controller {
     /** Ghép mảng song song line_part[]/line_qty[]/line_cost[]... thành dòng hợp lệ */
     private function buildLines(){
         $f     = $this->__request->getFields();
-        $parts = isset($f['line_part']) && is_array($f['line_part']) ? $f['line_part'] : [];
-        $qtys  = isset($f['line_qty'])  && is_array($f['line_qty'])  ? $f['line_qty']  : [];
-        $costs = isset($f['line_cost']) && is_array($f['line_cost']) ? $f['line_cost'] : [];
-        $locs  = isset($f['line_loc'])  && is_array($f['line_loc'])  ? $f['line_loc']  : [];
-        $notes = isset($f['line_note']) && is_array($f['line_note']) ? $f['line_note'] : [];
+        $parts   = isset($f['line_part'])   && is_array($f['line_part'])   ? $f['line_part']   : [];
+        $qtys    = isset($f['line_qty'])    && is_array($f['line_qty'])    ? $f['line_qty']    : [];
+        $costs   = isset($f['line_cost'])   && is_array($f['line_cost'])   ? $f['line_cost']   : [];
+        $locIds  = isset($f['line_loc_id']) && is_array($f['line_loc_id']) ? $f['line_loc_id'] : [];
+        $notes   = isset($f['line_note'])   && is_array($f['line_note'])   ? $f['line_note']   : [];
+        $map     = $this->locMap();
 
         $lines = [];
         foreach ($parts as $i => $p){
@@ -365,12 +390,16 @@ class Goodsreceipts extends Controller {
             $qty    = $this->parseNum(isset($qtys[$i]) ? $qtys[$i] : 0);
             $cost   = $this->parseMoney(isset($costs[$i]) ? $costs[$i] : 0);
             if ($partId <= 0 || $qty <= 0) continue;
+
+            $locId  = isset($locIds[$i]) ? (int) $locIds[$i] : 0;
+            $locTxt = ($locId > 0 && isset($map[$locId])) ? $map[$locId]['full_path'] : '';
             $lines[] = [
-                'part_id'   => $partId,
-                'quantity'  => $qty,
-                'unit_cost' => $cost,
-                'location'  => isset($locs[$i]) ? trim($locs[$i]) : '',
-                'note'      => isset($notes[$i]) ? trim($notes[$i]) : '',
+                'part_id'     => $partId,
+                'quantity'    => $qty,
+                'unit_cost'   => $cost,
+                'location'    => $locTxt,
+                'location_id' => ($locId > 0 && isset($map[$locId])) ? $locId : null,
+                'note'        => isset($notes[$i]) ? trim($notes[$i]) : '',
             ];
         }
         return $lines;

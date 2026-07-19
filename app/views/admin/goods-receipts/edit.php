@@ -11,7 +11,7 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
             'part_id'  => (int) $p,
             'qty'      => isset($old['line_qty'][$i]) ? $old['line_qty'][$i] : '',
             'cost'     => isset($old['line_cost'][$i]) ? $old['line_cost'][$i] : '',
-            'location' => isset($old['line_loc'][$i]) ? $old['line_loc'][$i] : '',
+            'loc_id'   => isset($old['line_loc_id'][$i]) ? (int) $old['line_loc_id'][$i] : 0,
             'note'     => isset($old['line_note'][$i]) ? $old['line_note'][$i] : '',
         ];
     }
@@ -21,10 +21,14 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
             'part_id'  => (int) $it['part_id'],
             'qty'      => rtrim(rtrim((string) $it['quantity'], '0'), '.'),
             'cost'     => (int) $it['unit_cost'],
-            'location' => $it['location'],
+            'loc_id'   => !empty($it['location_id']) ? (int) $it['location_id'] : 0,
             'note'     => $it['note'],
         ];
     }
+}
+$locJs = [];
+foreach ($locations as $l){
+    $locJs[] = ['id' => (int) $l['id'], 'wh' => (int) $l['warehouse_id'], 'path' => $l['full_path']];
 }
 $posted = ((int) $item['status'] === 1);
 $sel = function($field, $default = '') use ($old, $item){
@@ -185,6 +189,16 @@ $sel = function($field, $default = '') use ($old, $item){
     (function () {
         var PARTS = {!! json_encode($partJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
         var INIT  = {!! json_encode($initRows, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+        var LOCS  = {!! json_encode($locJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+        var whSelect = document.querySelector('select[name="warehouse_id"]');
+        function currentWh(){ return whSelect ? whSelect.value : ''; }
+        function locsOfWh(){ var wh = currentWh(); return LOCS.filter(function(l){ return String(l.wh)===String(wh); }); }
+        function fillLocSelect(sel, selected){
+            var opts = locsOfWh(); sel.innerHTML='';
+            var o0 = document.createElement('option'); o0.value=''; o0.textContent = opts.length ? '— Chọn vị trí —' : '(kho chưa khai báo vị trí)'; sel.appendChild(o0);
+            opts.forEach(function (l){ var o=document.createElement('option'); o.value=l.id; o.textContent=l.path; if (String(l.id)===String(selected)) o.selected=true; sel.appendChild(o); });
+            sel.required = opts.length > 0;
+        }
         var tbody = document.getElementById('lines');
         var totalEl = document.getElementById('lines-total');
         function fmt(n){ return (n || 0).toLocaleString('vi-VN'); }
@@ -215,7 +229,7 @@ $sel = function($field, $default = '') use ($old, $item){
             var amtTd = document.createElement('td'); amtTd.className='text-right align-middle';
             var amtSpan = document.createElement('span'); amtSpan.className='amt'; amtSpan.textContent='0'; amtTd.appendChild(amtSpan); tr.appendChild(amtTd);
             var wrap = document.createElement('div'); wrap.className='d-flex';
-            var loc = inp('line_loc[]','mr-1',data.location); loc.placeholder='Vị trí'; loc.style.maxWidth='90px';
+            var loc = document.createElement('select'); loc.name='line_loc_id[]'; loc.className='form-control form-control-sm loc-sel mr-1'; loc.style.maxWidth='150px'; fillLocSelect(loc, data.loc_id);
             var note = inp('line_note[]','',data.note); note.placeholder='Ghi chú';
             wrap.appendChild(loc); wrap.appendChild(note); tr.appendChild(td(wrap));
             var rm = document.createElement('button'); rm.type='button'; rm.className='btn btn-sm btn-outline-danger rm-row'; rm.innerHTML='&times;';
@@ -224,6 +238,7 @@ $sel = function($field, $default = '') use ($old, $item){
         }
         document.getElementById('add-line').addEventListener('click', function (){ addRow(); });
         tbody.addEventListener('click', function (e){ if (e.target && e.target.classList.contains('rm-row')){ var r=e.target.closest('.line-row'); if (r) r.remove(); recompute(); } });
+        if (whSelect){ whSelect.addEventListener('change', function (){ tbody.querySelectorAll('.loc-sel').forEach(function (sel){ fillLocSelect(sel, sel.value); }); }); }
         if (INIT.length){ INIT.forEach(addRow); } else { addRow(); }
     })();
     </script>

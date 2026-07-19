@@ -229,6 +229,7 @@ Route::group('admin', function(){
    Route::post('warehouse-locations/edit/(\d+)',  'admin/warehouselocations/postEdit/$1');
    Route::get('warehouse-locations/delete/(\d+)', 'admin/warehouselocations/delete/$1');
    Route::get('ton-kho-lau', 'admin/tonkholau');
+   Route::get('bien-dong-ton', 'admin/biendongton');
 
    /* =========================================================
     * BÁN HÀNG (SAL) — khép vòng doanh thu + công nợ khách

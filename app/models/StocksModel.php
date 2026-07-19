@@ -253,6 +253,54 @@ class StocksModel extends Model {
         return $out;
     }
 
+    /**
+     * KHO-3 — Biến động tồn theo ngày cho 1 phụ tùng (dựng biểu đồ).
+     * Gộp nhập/xuất theo ngày + số dư cuối ngày (cộng dồn từ tồn đầu kỳ).
+     * @return array ['opening'=>float, 'rows'=>[['date','in','out','balance'],...]]
+     */
+    public function getMovementByDay($partId, $warehouseId = 0, $from = '', $to = ''){
+        $partId = (int) $partId;
+
+        // Tồn đầu kỳ (trước 'from')
+        $opening = 0.0;
+        if ($from !== ''){
+            if ($warehouseId > 0){
+                $opening = $this->getBalanceBefore($partId, (int) $warehouseId, $from)['qty'];
+            } else {
+                $whs = $this->table('stock_cards')->select('DISTINCT `warehouse_id`')
+                            ->where('part_id', '=', $partId)->get();
+                foreach ($whs ?: [] as $w){
+                    $opening += $this->getBalanceBefore($partId, (int) $w['warehouse_id'], $from)['qty'];
+                }
+            }
+        }
+
+        $q = $this->table('stock_cards')
+                  ->select('`move_date`, `qty_in`, `qty_out`')
+                  ->where('part_id', '=', $partId);
+        if ($warehouseId > 0) $q = $q->where('warehouse_id', '=', (int) $warehouseId);
+        if ($from !== '')     $q = $q->where('move_date', '>=', $from);
+        if ($to !== '')       $q = $q->where('move_date', '<=', $to);
+        $cards = $q->orderBy('move_date', 'ASC')->orderBy('id', 'ASC')->get();
+
+        $byDay = [];
+        foreach ($cards ?: [] as $c){
+            $d = substr($c['move_date'], 0, 10);
+            if (!isset($byDay[$d])) $byDay[$d] = ['in' => 0.0, 'out' => 0.0];
+            $byDay[$d]['in']  += (float) $c['qty_in'];
+            $byDay[$d]['out'] += (float) $c['qty_out'];
+        }
+        ksort($byDay);
+
+        $rows = [];
+        $bal  = $opening;
+        foreach ($byDay as $d => $v){
+            $bal += $v['in'] - $v['out'];
+            $rows[] = ['date' => $d, 'in' => $v['in'], 'out' => $v['out'], 'balance' => round($bal, 3)];
+        }
+        return ['opening' => round($opening, 3), 'rows' => $rows];
+    }
+
     /** Số ngày lịch giữa 2 mốc (chỉ tính phần ngày, tránh lệch do DST) */
     private function daysBetween($fromDate, $toDate){
         try {

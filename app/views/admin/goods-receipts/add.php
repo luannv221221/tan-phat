@@ -13,18 +13,18 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
             'part_id'  => (int) $p,
             'qty'      => isset($old['line_qty'][$i]) ? $old['line_qty'][$i] : '',
             'cost'     => isset($old['line_cost'][$i]) ? $old['line_cost'][$i] : '',
-            'location' => isset($old['line_loc'][$i]) ? $old['line_loc'][$i] : '',
+            'loc_id'   => isset($old['line_loc_id'][$i]) ? (int) $old['line_loc_id'][$i] : 0,
             'note'     => isset($old['line_note'][$i]) ? $old['line_note'][$i] : '',
         ];
     }
 }
+// Vị trí trong kho cho select (id, kho, đường dẫn)
+$locJs = [];
+foreach ($locations as $l){
+    $locJs[] = ['id' => (int) $l['id'], 'wh' => (int) $l['warehouse_id'], 'path' => $l['full_path']];
+}
 $selType = !empty($old['type']) ? $old['type'] : 'nhap_mua';
 ?>
-<datalist id="loc-list">
-    @foreach ($locations as $loc)
-    <option value="{{$loc['full_path']}}">{{$loc['warehouse_code']}}</option>
-    @endforeach
-</datalist>
 <form action="" method="post">
     <?php echo csrf_field(); ?>
 
@@ -129,6 +129,29 @@ $selType = !empty($old['type']) ? $old['type'] : 'nhap_mua';
 (function () {
     var PARTS = {!! json_encode($partJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
     var INIT  = {!! json_encode($initRows, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+    var LOCS  = {!! json_encode($locJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+    var whSelect = document.querySelector('select[name="warehouse_id"]');
+
+    // Vị trí đang bật của kho đang chọn
+    function currentWh(){ return whSelect ? whSelect.value : ''; }
+    function locsOfWh(){ var wh = currentWh(); return LOCS.filter(function(l){ return String(l.wh) === String(wh); }); }
+    function whHasLocs(){ return locsOfWh().length > 0; }
+
+    // Dựng/nạp lại 1 select vị trí, giữ lựa chọn cũ nếu còn hợp lệ
+    function fillLocSelect(sel, selected){
+        var opts = locsOfWh();
+        sel.innerHTML = '';
+        var o0 = document.createElement('option');
+        o0.value = '';
+        o0.textContent = opts.length ? '— Chọn vị trí —' : '(kho chưa khai báo vị trí)';
+        sel.appendChild(o0);
+        opts.forEach(function(l){
+            var o = document.createElement('option'); o.value = l.id; o.textContent = l.path;
+            if (String(l.id) === String(selected)) o.selected = true;
+            sel.appendChild(o);
+        });
+        sel.required = opts.length > 0;
+    }
 
     var tbody = document.getElementById('lines');
     var totalEl = document.getElementById('lines-total');
@@ -172,7 +195,8 @@ $selType = !empty($old['type']) ? $old['type'] : 'nhap_mua';
         tr.appendChild(amtTd);
 
         var wrap = document.createElement('div'); wrap.className='d-flex';
-        var loc = inp('line_loc[]', 'mr-1', data.location); loc.placeholder='Vị trí'; loc.style.maxWidth='120px'; loc.setAttribute('list','loc-list');
+        var loc = document.createElement('select'); loc.name='line_loc_id[]'; loc.className='form-control form-control-sm loc-sel mr-1'; loc.style.maxWidth='150px';
+        fillLocSelect(loc, data.loc_id);
         var note = inp('line_note[]', '', data.note); note.placeholder='Ghi chú';
         wrap.appendChild(loc); wrap.appendChild(note);
         tr.appendChild(td(wrap));
@@ -185,6 +209,8 @@ $selType = !empty($old['type']) ? $old['type'] : 'nhap_mua';
 
     document.getElementById('add-line').addEventListener('click', function (){ addRow(); });
     tbody.addEventListener('click', function (e){ if (e.target && e.target.classList.contains('rm-row')){ var r=e.target.closest('.line-row'); if (r) r.remove(); recompute(); } });
+    // Đổi kho -> nạp lại danh sách vị trí cho mọi dòng
+    if (whSelect){ whSelect.addEventListener('change', function (){ tbody.querySelectorAll('.loc-sel').forEach(function (sel){ fillLocSelect(sel, sel.value); }); }); }
     if (INIT.length){ INIT.forEach(addRow); } else { addRow(); }
 })();
 </script>

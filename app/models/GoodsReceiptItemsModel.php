@@ -39,13 +39,14 @@ class GoodsReceiptItemsModel extends Model {
                 if ($partId <= 0 || $qty <= 0) continue;
                 $amount = round($qty * $cost, 2);
                 $db->insert('goods_receipt_items', [
-                    'receipt_id' => $receiptId,
-                    'part_id'    => $partId,
-                    'quantity'   => $qty,
-                    'unit_cost'  => $cost,
-                    'amount'     => $amount,
-                    'location'   => !empty($ln['location']) ? $ln['location'] : null,
-                    'note'       => !empty($ln['note']) ? $ln['note'] : null,
+                    'receipt_id'  => $receiptId,
+                    'part_id'     => $partId,
+                    'quantity'    => $qty,
+                    'unit_cost'   => $cost,
+                    'amount'      => $amount,
+                    'location'    => !empty($ln['location']) ? $ln['location'] : null,
+                    'location_id' => !empty($ln['location_id']) ? (int) $ln['location_id'] : null,
+                    'note'        => !empty($ln['note']) ? $ln['note'] : null,
                 ]);
                 $total += $amount;
             }

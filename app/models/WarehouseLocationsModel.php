@@ -45,6 +45,23 @@ class WarehouseLocationsModel extends Model {
             ->orderBy('warehouse_locations.full_path', 'ASC')->get();
     }
 
+    /** Vị trí đang bật (id, kho, full_path, code) — cho select trên phiếu nhập */
+    public function getActiveList(){
+        return $this->table($this->_table)
+            ->select('`id`, `warehouse_id`, `code`, `full_path`, `level`')
+            ->where('status', '=', 1)
+            ->orderBy('warehouse_id', 'ASC')
+            ->orderBy('full_path', 'ASC')->get();
+    }
+
+    /** Có vị trí đang bật nào trong kho này không? (để biết có bắt buộc chọn) */
+    public function countActiveInWarehouse($warehouseId){
+        $r = $this->table($this->_table)->select('COUNT(*) AS c')
+                  ->where('warehouse_id', '=', (int) $warehouseId)
+                  ->where('status', '=', 1)->first();
+        return (int) ($r['c'] ?? 0);
+    }
+
     /** Tính level + full_path từ vị trí cha (null = gốc) */
     public function resolvePath($name, $parentId){
         $name = trim($name);
