@@ -9,7 +9,7 @@ use App\core\Session;
 class Orders extends Controller {
 
     private $__data = [];
-    private $__model, $__itemModel, $__inv, $__invItem, $__warehouse, $__request, $__response;
+    private $__model, $__itemModel, $__inv, $__invItem, $__warehouse, $__reservation, $__request, $__response;
     private $routeBase = 'orders';
     private $labelOne  = 'đơn hàng';
     private $labelMany = 'Đơn hàng';
@@ -21,6 +21,7 @@ class Orders extends Controller {
         $this->__inv       = $this->model('SalesInvoicesModel');
         $this->__invItem   = $this->model('SalesInvoiceItemsModel');
         $this->__warehouse = $this->model('WarehousesModel');
+        $this->__reservation = $this->model('StockReservationsModel');
         $this->__request   = new Request();
         $this->__response  = new Response();
     }
@@ -59,6 +60,7 @@ class Orders extends Controller {
         $this->__data['content']['item']      = $item;
         $this->__data['content']['items']     = $this->__itemModel->getByOrder($id);
         $this->__data['content']['invoice']   = !empty($item['sales_invoice_id']) ? $this->__inv->getDetail($item['sales_invoice_id']) : null;
+        $this->__data['content']['reserving'] = $this->__reservation->hasForOrder($id);
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['msgError']  = Session::flash('msgError');
         $this->render('layouts/admin/master_admin', $this->__data);
@@ -105,6 +107,9 @@ class Orders extends Controller {
         $this->__inv->edit(['subtotal' => $subtotal, 'tax_amount' => 0, 'total_amount' => $subtotal], $invId);
         $this->__model->edit(['sales_invoice_id' => $invId], $id);
 
+        // Nhả giữ tồn: từ đây hàng do hoá đơn quản (ghi sổ hoá đơn sẽ trừ tồn thật)
+        $this->__reservation->releaseForOrder($id);
+
         Session::flash('msg', 'Đã tạo hoá đơn nháp từ đơn ' . $item['order_no'] . '. Kiểm tra rồi "Ghi sổ" để trừ tồn & ghi doanh thu.');
         $this->__response->redirect('admin/sales-invoices/edit/' . $invId);
     }
@@ -118,6 +123,8 @@ class Orders extends Controller {
         $st = isset($f['status']) ? $f['status'] : '';
         if (!isset(OrdersModel::$statuses[$st])){ Session::flash('msgError', 'Trạng thái không hợp lệ'); $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return; }
         $this->__model->edit(['status' => $st], $id);
+        // Huỷ đơn -> nhả giữ tồn
+        if ($st === 'cancelled') $this->__reservation->releaseForOrder($id);
         Session::flash('msg', 'Đã chuyển trạng thái: ' . OrdersModel::$statuses[$st]);
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }

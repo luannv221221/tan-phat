@@ -172,6 +172,20 @@ class StocksModel extends Model {
         return (float) ($r['total'] ?? 0);
     }
 
+    /**
+     * Tồn KHẢ DỤNG bán = tổng tồn - tổng đang giữ (đơn web chưa xuất hoá đơn).
+     * Dùng cho hiển thị tồn ở storefront để không bán quá phần đã giữ.
+     */
+    public function sellableByPart($partId){
+        $total = $this->totalByPart($partId);
+        $r = $this->table('stock_reservations')
+                  ->select('SUM(`quantity`) AS total')
+                  ->where('part_id', '=', (int) $partId)->first();
+        $reserved = (float) ($r['total'] ?? 0);
+        $avail = $total - $reserved;
+        return $avail > 0 ? $avail : 0.0;
+    }
+
     // ---------- Báo cáo ----------
 
     /** Tồn kho hiện tại kèm thông tin phụ tùng; lọc theo kho + từ khoá */

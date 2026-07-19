@@ -12,7 +12,7 @@ use App\core\Session;
 class Cart extends Controller {
 
     private $__data = [];
-    private $__part, $__quote, $__quoteItem, $__member, $__order, $__orderItem, $__settings, $__request, $__response;
+    private $__part, $__quote, $__quoteItem, $__member, $__order, $__orderItem, $__reservation, $__settings, $__request, $__response;
 
     function __construct(){
         $this->__part      = $this->model('PartsModel');
@@ -21,6 +21,7 @@ class Cart extends Controller {
         $this->__member    = $this->model('MembersModel');
         $this->__order     = $this->model('OrdersModel');
         $this->__orderItem = $this->model('OrderItemsModel');
+        $this->__reservation = $this->model('StockReservationsModel');
         $this->__settings  = $this->model('SettingsModel');
         $this->__request   = new Request();
         $this->__response  = new Response();
@@ -212,6 +213,13 @@ class Cart extends Controller {
         ]);
         $total = $this->__orderItem->syncForOrder($orderId, $data['rows']);
         $this->__order->edit(['subtotal' => $total, 'total_amount' => $total], $orderId);
+
+        // Giữ tồn (đặt trước) theo phụ tùng — chưa trừ tồn thật
+        $resv = [];
+        foreach ($data['rows'] as $r){
+            if (!empty($r['part']['id'])) $resv[] = ['part_id' => (int) $r['part']['id'], 'quantity' => (float) $r['qty']];
+        }
+        if (!empty($resv)) $this->__reservation->reserveForOrder($orderId, $resv);
 
         Session::remove('cart');
         $order = $this->__order->getDetail($orderId);

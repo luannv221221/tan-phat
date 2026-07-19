@@ -9,7 +9,7 @@
 <div class="card card-outline card-primary">
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-shopping-bag mr-2"></i>Đơn <code>{{$item['order_no']}}</code></h3>
-        <div class="card-tools"><span class="badge badge-{{$badge[$item['status']] ?? 'secondary'}} p-2">{{$statuses[$item['status']] ?? $item['status']}}</span></div>
+        <div class="card-tools">{!! !empty($reserving) ? '<span class="badge badge-secondary p-2 mr-1" title="Đang giữ tồn cho đơn này"><i class="fas fa-lock mr-1"></i>Đang giữ tồn</span>' : '' !!}<span class="badge badge-{{$badge[$item['status']] ?? 'secondary'}} p-2">{{$statuses[$item['status']] ?? $item['status']}}</span></div>
     </div>
     <div class="card-body py-2">
         <span class="mr-2 small text-muted">Chuyển trạng thái:</span>

@@ -55,7 +55,7 @@ class Shop extends Controller {
         // Tồn kho: chỉ tính cho thành viên (TASK_79)
         $stockMap = [];
         if ($this->isMember()){
-            foreach ($list as $p){ $stockMap[(int) $p['id']] = $this->__stock->totalByPart((int) $p['id']); }
+            foreach ($list as $p){ $stockMap[(int) $p['id']] = $this->__stock->sellableByPart((int) $p['id']); }
         }
 
         $this->__data['sub_content'] = 'storefront/list';
@@ -101,7 +101,7 @@ class Shop extends Controller {
         $c['related']  = $this->__related->getRelatedParts($pid);
         $c['fitments'] = $this->__fitment->getCarYearsByPart($pid);
         $c['isMember'] = $this->isMember();
-        $c['stock']    = $this->isMember() ? $this->__stock->totalByPart($pid) : null;
+        $c['stock']    = $this->isMember() ? $this->__stock->sellableByPart($pid) : null;
         $c['reviews']  = $this->__review->getApprovedByPart($pid);
         $c['reviewSummary'] = $this->__review->summary($pid);
         $c['reviewMsg']  = Session::flash('reviewMsg');
