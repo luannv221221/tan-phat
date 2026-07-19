@@ -135,6 +135,23 @@ footer .cols{display:flex;flex-wrap:wrap;gap:30px;justify-content:space-between}
 footer h4{color:#fff;font-size:15px;margin:0 0 10px}
 .muted{color:var(--muted)}.mt{margin-top:16px}.tr{text-align:right}.tc{text-align:center}
 @media(max-width:860px){.wrap{flex-direction:column}.sidebar{width:100%;flex:auto}.hdr-actions .lbl{display:none}}
+/* chat widget */
+#cw-btn{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;background:var(--brand);color:#fff;font-size:26px;border:0;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:60}
+#cw-panel{position:fixed;right:20px;bottom:86px;width:330px;max-width:calc(100vw - 40px);height:440px;max-height:70vh;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.25);z-index:60;display:none;flex-direction:column;overflow:hidden}
+#cw-panel.open{display:flex}
+#cw-head{background:var(--brand);color:#fff;padding:12px 14px;font-weight:600}
+#cw-head small{display:block;font-weight:400;opacity:.85;font-size:12px}
+#cw-msgs{flex:1;overflow-y:auto;padding:12px;background:#f5f6f8}
+.cw-m{margin-bottom:8px;display:flex}
+.cw-m .b{max-width:78%;padding:8px 11px;border-radius:12px;font-size:14px;line-height:1.35;word-wrap:break-word}
+.cw-m.customer{justify-content:flex-end}
+.cw-m.customer .b{background:var(--brand);color:#fff;border-bottom-right-radius:3px}
+.cw-m.staff .b{background:#fff;border:1px solid #e6e6e6;border-bottom-left-radius:3px}
+#cw-foot{border-top:1px solid #eee;padding:8px;display:flex;gap:6px}
+#cw-foot input{flex:1;padding:9px;border:1px solid #e6e6e6;border-radius:20px;font-size:14px}
+#cw-foot button{border:0;background:var(--brand);color:#fff;border-radius:50%;width:38px;height:38px;cursor:pointer}
+#cw-info{padding:8px;display:flex;gap:6px;border-top:1px solid #eee}
+#cw-info input{flex:1;padding:7px;border:1px solid #e6e6e6;border-radius:6px;font-size:13px}
 </style>
 </head>
 <body>
@@ -203,6 +220,60 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
         <?php if (!empty($settings['address'])): ?><div class="muted"><?php echo e($settings['address']); ?></div><?php endif; ?>
     </div>
 </div></footer>
+
+<button id="cw-btn" title="Chat hỗ trợ">💬</button>
+<div id="cw-panel">
+    <div id="cw-head">Hỗ trợ trực tuyến<small>Tân Phát thường trả lời trong ít phút</small></div>
+    <div id="cw-msgs"></div>
+    <div id="cw-info">
+        <input type="text" id="cw-name" placeholder="Tên của bạn"/>
+        <input type="text" id="cw-phone" placeholder="SĐT"/>
+    </div>
+    <div id="cw-foot">
+        <input type="text" id="cw-input" placeholder="Nhập tin nhắn..." maxlength="2000"/>
+        <button id="cw-send" title="Gửi">➤</button>
+    </div>
+</div>
+<script>
+(function(){
+    var WEB = "<?php echo _WEB_URL; ?>";
+    var TOKEN = "<?php echo csrf_token(); ?>";
+    var btn=document.getElementById('cw-btn'), panel=document.getElementById('cw-panel');
+    var msgs=document.getElementById('cw-msgs'), input=document.getElementById('cw-input'), send=document.getElementById('cw-send');
+    var nameEl=document.getElementById('cw-name'), phoneEl=document.getElementById('cw-phone'), info=document.getElementById('cw-info');
+    var lastId=0, timer=null, started=false;
+
+    function addMsg(m){
+        var row=document.createElement('div'); row.className='cw-m '+(m.sender==='staff'?'staff':'customer');
+        var b=document.createElement('div'); b.className='b'; b.textContent=m.body; row.appendChild(b);
+        msgs.appendChild(row); msgs.scrollTop=msgs.scrollHeight;
+        if(m.id && m.id>lastId) lastId=m.id;
+    }
+    function poll(){
+        fetch(WEB+'/chat/poll?after='+lastId,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
+            if(d && d.messages){ d.messages.forEach(function(m){ addMsg(m); if(m.sender==='staff') info.style.display='none'; }); }
+        }).catch(function(){});
+    }
+    function open(){
+        panel.classList.add('open');
+        if(!started){ started=true; poll(); timer=setInterval(poll,4000); }
+    }
+    btn.addEventListener('click',function(){ panel.classList.contains('open')?panel.classList.remove('open'):open(); });
+
+    function doSend(){
+        var body=input.value.trim(); if(!body) return;
+        var fd=new FormData(); fd.append('_token',TOKEN); fd.append('body',body);
+        if(nameEl.value.trim()) fd.append('name',nameEl.value.trim());
+        if(phoneEl.value.trim()) fd.append('phone',phoneEl.value.trim());
+        input.value='';
+        fetch(WEB+'/chat/send',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
+            if(d && d.ok){ addMsg({id:d.id,sender:'customer',body:d.body}); info.style.display='none'; }
+        }).catch(function(){});
+    }
+    send.addEventListener('click',doSend);
+    input.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); doSend(); } });
+})();
+</script>
 
 </body>
 </html>

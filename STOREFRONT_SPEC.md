@@ -63,6 +63,12 @@ Bề mặt **công khai** — controller gốc `app/controllers/` (KHÔNG thuộ
 - `visits` (url/referrer/keyword/ip/user_agent/member_id). Log ngay trong layout storefront (`VisitsModel::log`) → chỉ trang khách (không admin/asset/POST).
 - Admin `admin/thong-ke`: tổng lượt + khách (IP) theo 7/30/90 ngày · biểu đồ cột lượt/ngày · top trang · nguồn giới thiệu (loại domain nhà) · từ khoá tìm kiếm. Gộp bằng PHP (tránh quirk QueryBuilder).
 
-## Hoãn (các đợt web sau)
+## Webchat (đã làm — migration 000029, TASK_112-113)
 
-**webchat** (TASK_112-113 — cần polling/websocket + widget + inbox admin) · cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · tự trừ tồn ngay khi đặt (hiện admin bấm tạo+ghi sổ hoá đơn).
+- **Polling** (không websocket). `chat_conversations` (theo session_key/member) + `chat_messages` (customer/staff). Widget nổi trong layout storefront (nút 💬 + panel + JS poll 4s + gửi qua `/chat/send`, nhận qua `/chat/poll` JSON). Admin inbox `admin/chat` (danh sách + badge chưa đọc) → xem hội thoại + trả lời + đóng/mở. Nhóm menu CSKH.
+
+## Hoãn (không thuộc SRS Phần B chính)
+
+Cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · tự trừ tồn ngay khi đặt (hiện admin bấm tạo+ghi sổ hoá đơn) · webchat websocket real-time (hiện polling).
+
+> **Storefront Phần B (36 task): về cơ bản đã phủ hết** — sản phẩm/facet/thành viên/giỏ/đặt hàng/đánh giá/tin/dự án/thư viện/menu/SEO/sitemap/thống kê/webchat.

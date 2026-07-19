@@ -300,6 +300,13 @@ Route::group('admin', function(){
    Route::get('orders/invoice/(\d+)', 'admin/orders/invoice/$1');
    Route::get('orders/delete/(\d+)', 'admin/orders/delete/$1');
 
+   // Hỗ trợ / Chat (inbox)
+   Route::get('chat', 'admin/chatadmin');
+   Route::get('chat/view/(\d+)', 'admin/chatadmin/view/$1');
+   Route::post('chat/reply/(\d+)', 'admin/chatadmin/reply/$1');
+   Route::get('chat/set-status/(\d+)', 'admin/chatadmin/setStatus/$1');
+   Route::get('chat/delete/(\d+)', 'admin/chatadmin/delete/$1');
+
    // Thống kê truy cập
    Route::get('thong-ke', 'admin/thongke');
 
@@ -350,6 +357,10 @@ Route::get('du-an/([a-z0-9\-]+)', 'duan/detail/$1');
 Route::get('thu-vien', 'thuvien/index');
 Route::get('thu-vien/([a-z0-9\-]+)', 'thuvien/detail/$1');
 Route::get('sitemap.xml', 'sitemap/index');
+
+// Webchat khách (JSON, polling)
+Route::post('chat/send', 'chat/send');
+Route::get('chat/poll', 'chat/poll');
 
 // Thành viên
 Route::get('thanh-vien', 'member/account');
