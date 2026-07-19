@@ -13,6 +13,7 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
         $initRows[] = ['part_id' => (int) $p,
             'qty'   => isset($old['line_qty'][$i]) ? $old['line_qty'][$i] : '',
             'price' => isset($old['line_price'][$i]) ? $old['line_price'][$i] : '',
+            'disc'  => isset($old['line_disc'][$i]) ? $old['line_disc'][$i] : '',
             'note'  => isset($old['line_note'][$i]) ? $old['line_note'][$i] : ''];
     }
 } else {
@@ -20,6 +21,7 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
         $initRows[] = ['part_id' => (int) $it['part_id'],
             'qty'   => rtrim(rtrim((string) $it['quantity'], '0'), '.'),
             'price' => (int) $it['unit_price'],
+            'disc'  => rtrim(rtrim((string) $it['discount_percent'], '0'), '.'),
             'note'  => $it['note']];
     }
 }
@@ -65,19 +67,55 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
         <div class="card-header"><h3 class="card-title">Dòng hàng đã bán</h3></div>
         <div class="card-body table-responsive p-0">
             <table class="table table-sm mb-0">
-                <thead><tr><th>Phụ tùng</th><th class="text-right">SL</th><th class="text-right">Đơn giá</th><th class="text-right">Thành tiền</th><th class="text-right">Giá vốn/đv</th></tr></thead>
+                <thead><tr><th>Phụ tùng</th><th class="text-right">SL</th><th class="text-right">Đơn giá</th><th class="text-right">CK %</th><th class="text-right">Thành tiền</th><th class="text-right">Giá vốn/đv</th></tr></thead>
                 <tbody>
                 @foreach ($items as $it)
                 <tr>
                     <td><code>{{$it['part_code']}}</code> {{$it['part_name']}}</td>
                     <td class="text-right">{{rtrim(rtrim(number_format((float)$it['quantity'],3,',','.'),'0'),',')}} {{$it['unit_name']}}</td>
                     <td class="text-right">{{number_format((float)$it['unit_price'],0,',','.')}}</td>
+                    <td class="text-right">{{(float)$it['discount_percent']>0?rtrim(rtrim(number_format((float)$it['discount_percent'],2,'.',''),'0'),'.').'%':'—'}}</td>
                     <td class="text-right">{{number_format((float)$it['amount'],0,',','.')}}</td>
                     <td class="text-right text-muted">{{number_format((float)$it['unit_cost'],0,',','.')}}</td>
                 </tr>
                 @endforeach
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="card card-outline card-warning">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-file-code mr-2"></i>Hoá đơn điện tử</h3>
+            <div class="card-tools">{!! $item['einvoice_status']==='issued' ? '<span class="badge badge-success p-2">Đã phát hành</span>' : '<span class="badge badge-secondary p-2">Chưa phát hành</span>' !!}</div>
+        </div>
+        <div class="card-body">
+        @if ($item['einvoice_status']==='issued')
+            <dl class="row mb-2">
+                <dt class="col-sm-3">Ký hiệu</dt><dd class="col-sm-9"><code>{{$item['einvoice_serial']}}</code></dd>
+                <dt class="col-sm-3">Mẫu số</dt><dd class="col-sm-9">{{$item['einvoice_form']}}</dd>
+                <dt class="col-sm-3">Số hoá đơn</dt><dd class="col-sm-9"><b>{{$item['einvoice_no']}}</b></dd>
+                <dt class="col-sm-3">Ngày phát hành</dt><dd class="col-sm-9">{{$item['einvoice_issued_at']}}</dd>
+            </dl>
+            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/einvoice-xml/'.$item['id']}}" class="btn btn-primary"><i class="fas fa-download mr-1"></i> Xuất XML</a>
+            @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
+            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/einvoice-revoke/'.$item['id']}}" onclick="return confirm('Thu hồi HĐĐT này?')" class="btn btn-outline-danger"><i class="fas fa-undo mr-1"></i> Thu hồi</a>
+            @endif
+            <p class="text-muted small mt-2 mb-0"><i class="fas fa-info-circle mr-1"></i> XML theo cấu trúc tham khảo (TT78/NĐ123) để nộp phần mềm HĐĐT. Hệ thống không nối trực tiếp nhà cung cấp HĐĐT.</p>
+        @else
+            @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
+            <form action="{{_WEB_URL.'/admin/'.$routeBase.'/einvoice/'.$item['id']}}" method="post" class="form-row align-items-end">
+                <?php echo csrf_field(); ?>
+                <div class="form-group col-md-3"><label class="small mb-1">Ký hiệu</label><input type="text" name="einvoice_serial" class="form-control form-control-sm" value="{{$eiDefaults['serial']}}"/></div>
+                <div class="form-group col-md-2"><label class="small mb-1">Mẫu số</label><input type="text" name="einvoice_form" class="form-control form-control-sm" value="{{$eiDefaults['form']}}"/></div>
+                <div class="form-group col-md-3"><label class="small mb-1">Số hoá đơn</label><input type="text" name="einvoice_no" class="form-control form-control-sm" value="{{$eiDefaults['nextNo']}}"/></div>
+                <div class="form-group col-md-3"><button class="btn btn-sm btn-warning"><i class="fas fa-stamp mr-1"></i> Phát hành HĐĐT</button></div>
+            </form>
+            <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Phát hành để gán số hoá đơn điện tử rồi xuất XML nộp phần mềm HĐĐT.</p>
+            @else
+            <p class="text-muted mb-0">Bạn không có quyền phát hành HĐĐT.</p>
+            @endif
+        @endif
         </div>
     </div>
 
@@ -142,18 +180,19 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
             <div class="card-body table-responsive p-0">
                 <table class="table table-sm mb-0">
                     <thead><tr>
-                        <th style="width:34%">Phụ tùng</th>
-                        <th style="width:12%" class="text-right">Số lượng</th>
-                        <th style="width:16%" class="text-right">Đơn giá bán</th>
-                        <th style="width:16%" class="text-right">Thành tiền</th>
+                        <th style="width:30%">Phụ tùng</th>
+                        <th style="width:11%" class="text-right">Số lượng</th>
+                        <th style="width:15%" class="text-right">Đơn giá bán</th>
+                        <th style="width:9%" class="text-right">CK %</th>
+                        <th style="width:15%" class="text-right">Thành tiền</th>
                         <th>Ghi chú</th>
                         <th style="width:44px"></th>
                     </tr></thead>
                     <tbody id="lines"></tbody>
                     <tfoot>
-                        <tr><th colspan="3" class="text-right">Cộng chưa thuế</th><th class="text-right"><span id="sub-total">0</span> ₫</th><th colspan="2"></th></tr>
-                        <tr><th colspan="3" class="text-right">Thuế GTGT</th><th class="text-right"><span id="tax-total">0</span> ₫</th><th colspan="2"></th></tr>
-                        <tr><th colspan="3" class="text-right">Tổng thanh toán</th><th class="text-right"><span id="grand-total">0</span> ₫</th><th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right">Cộng chưa thuế</th><th class="text-right"><span id="sub-total">0</span> ₫</th><th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right">Thuế GTGT</th><th class="text-right"><span id="tax-total">0</span> ₫</th><th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right">Tổng thanh toán</th><th class="text-right"><span id="grand-total">0</span> ₫</th><th colspan="2"></th></tr>
                     </tfoot>
                 </table>
             </div>
@@ -176,16 +215,20 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
     (function () {
         var PARTS = {!! json_encode($partJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
         var INIT  = {!! json_encode($initRows, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+        var DISC  = {!! json_encode((object)$partnerDiscounts, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
         var tbody = document.getElementById('lines');
         var subEl = document.getElementById('sub-total'), taxEl = document.getElementById('tax-total'), grEl = document.getElementById('grand-total');
         var vatEl = document.getElementById('vat_rate');
+        var custSel = document.querySelector('select[name="customer_id"]');
+        function groupDisc(){ var v = custSel ? custSel.value : ''; return (v && DISC[v] != null) ? parseFloat(DISC[v]) : 0; }
         function fmt(n){ return (n || 0).toLocaleString('vi-VN'); }
         function num(v){ return parseFloat(String(v || '').replace(/[^\d.]/g, '')) || 0; }
         function money(v){ return parseInt(String(v || '').replace(/[^\d]/g, ''), 10) || 0; }
         function recompute(){
             var sub = 0;
             tbody.querySelectorAll('.line-row').forEach(function (r){
-                var amt = Math.round(num(r.querySelector('.qty').value) * money(r.querySelector('.price').value));
+                var d = num(r.querySelector('.disc').value); if (d < 0) d = 0; if (d > 100) d = 100;
+                var amt = Math.round(num(r.querySelector('.qty').value) * money(r.querySelector('.price').value) * (1 - d / 100));
                 r.querySelector('.amt').textContent = fmt(amt); sub += amt;
             });
             var rate = num(vatEl.value); var tax = Math.round(sub * rate / 100);
@@ -208,6 +251,9 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
             tr.appendChild(td(sel));
             var q = inp('line_qty[]','qty text-right', data.qty); q.addEventListener('input', recompute); tr.appendChild(td(q));
             price.addEventListener('input', recompute); tr.appendChild(td(price));
+            var discVal = (data.disc === 0 || data.disc) ? data.disc : '';
+            if (discVal === '' || discVal == null){ var gd = groupDisc(); if (gd > 0) discVal = gd; }
+            var disc = inp('line_disc[]','disc text-right', discVal); disc.addEventListener('input', recompute); tr.appendChild(td(disc));
             var amtTd = document.createElement('td'); amtTd.className='text-right align-middle';
             var amtSpan = document.createElement('span'); amtSpan.className='amt'; amtSpan.textContent='0'; amtTd.appendChild(amtSpan); tr.appendChild(amtTd);
             tr.appendChild(td(inp('line_note[]','', data.note)));
@@ -216,6 +262,7 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
             tbody.appendChild(tr); recompute();
         }
         document.getElementById('add-line').addEventListener('click', function (){ addRow(); });
+        if (custSel){ custSel.addEventListener('change', function (){ var gd = groupDisc(); tbody.querySelectorAll('.line-row .disc').forEach(function (d){ d.value = gd > 0 ? gd : ''; }); recompute(); }); }
         vatEl.addEventListener('input', recompute);
         tbody.addEventListener('click', function (e){ if (e.target && e.target.classList.contains('rm-row')){ var r=e.target.closest('.line-row'); if (r) r.remove(); recompute(); } });
         if (INIT.length){ INIT.forEach(addRow); } else { addRow(); }

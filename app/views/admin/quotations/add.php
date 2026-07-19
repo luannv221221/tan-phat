@@ -14,6 +14,7 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
             'part_id' => (int) $p,
             'qty'     => isset($old['line_qty'][$i]) ? $old['line_qty'][$i] : '',
             'price'   => isset($old['line_price'][$i]) ? $old['line_price'][$i] : '',
+            'disc'    => isset($old['line_disc'][$i]) ? $old['line_disc'][$i] : '',
             'note'    => isset($old['line_note'][$i]) ? $old['line_note'][$i] : '',
         ];
     }
@@ -74,18 +75,19 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '0';
         <div class="card-body table-responsive p-0">
             <table class="table table-sm mb-0">
                 <thead><tr>
-                    <th style="width:34%">Phụ tùng</th>
-                    <th style="width:12%" class="text-right">Số lượng</th>
-                    <th style="width:16%" class="text-right">Đơn giá</th>
-                    <th style="width:16%" class="text-right">Thành tiền</th>
+                    <th style="width:30%">Phụ tùng</th>
+                    <th style="width:11%" class="text-right">Số lượng</th>
+                    <th style="width:15%" class="text-right">Đơn giá</th>
+                    <th style="width:9%" class="text-right">CK %</th>
+                    <th style="width:15%" class="text-right">Thành tiền</th>
                     <th>Ghi chú</th>
                     <th style="width:44px"></th>
                 </tr></thead>
                 <tbody id="lines"></tbody>
                 <tfoot>
-                    <tr><th colspan="3" class="text-right">Cộng chưa thuế</th><th class="text-right"><span id="sub-total">0</span> ₫</th><th colspan="2"></th></tr>
-                    <tr><th colspan="3" class="text-right">Thuế GTGT</th><th class="text-right"><span id="tax-total">0</span> ₫</th><th colspan="2"></th></tr>
-                    <tr><th colspan="3" class="text-right">Tổng cộng</th><th class="text-right"><span id="grand-total">0</span> ₫</th><th colspan="2"></th></tr>
+                    <tr><th colspan="4" class="text-right">Cộng chưa thuế</th><th class="text-right"><span id="sub-total">0</span> ₫</th><th colspan="2"></th></tr>
+                    <tr><th colspan="4" class="text-right">Thuế GTGT</th><th class="text-right"><span id="tax-total">0</span> ₫</th><th colspan="2"></th></tr>
+                    <tr><th colspan="4" class="text-right">Tổng cộng</th><th class="text-right"><span id="grand-total">0</span> ₫</th><th colspan="2"></th></tr>
                 </tfoot>
             </table>
         </div>
@@ -102,16 +104,20 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '0';
 (function () {
     var PARTS = {!! json_encode($partJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
     var INIT  = {!! json_encode($initRows, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+    var DISC  = {!! json_encode((object)$partnerDiscounts, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
     var tbody = document.getElementById('lines');
     var subEl = document.getElementById('sub-total'), taxEl = document.getElementById('tax-total'), grEl = document.getElementById('grand-total');
     var vatEl = document.getElementById('vat_rate');
+    var custSel = document.querySelector('select[name="customer_id"]');
+    function groupDisc(){ var v = custSel ? custSel.value : ''; return (v && DISC[v] != null) ? parseFloat(DISC[v]) : 0; }
     function fmt(n){ return (n || 0).toLocaleString('vi-VN'); }
     function num(v){ return parseFloat(String(v || '').replace(/[^\d.]/g, '')) || 0; }
     function money(v){ return parseInt(String(v || '').replace(/[^\d]/g, ''), 10) || 0; }
     function recompute(){
         var sub = 0;
         tbody.querySelectorAll('.line-row').forEach(function (r){
-            var amt = Math.round(num(r.querySelector('.qty').value) * money(r.querySelector('.price').value));
+            var d = num(r.querySelector('.disc').value); if (d < 0) d = 0; if (d > 100) d = 100;
+            var amt = Math.round(num(r.querySelector('.qty').value) * money(r.querySelector('.price').value) * (1 - d / 100));
             r.querySelector('.amt').textContent = fmt(amt); sub += amt;
         });
         var rate = num(vatEl.value); var tax = Math.round(sub * rate / 100);
@@ -134,6 +140,9 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '0';
         tr.appendChild(td(sel));
         var q = inp('line_qty[]','qty text-right', data.qty); q.addEventListener('input', recompute); tr.appendChild(td(q));
         price.addEventListener('input', recompute); tr.appendChild(td(price));
+        var discVal = (data.disc === 0 || data.disc) ? data.disc : '';
+        if (discVal === '' || discVal == null){ var gd = groupDisc(); if (gd > 0) discVal = gd; }
+        var disc = inp('line_disc[]','disc text-right', discVal); disc.addEventListener('input', recompute); tr.appendChild(td(disc));
         var amtTd = document.createElement('td'); amtTd.className='text-right align-middle';
         var amtSpan = document.createElement('span'); amtSpan.className='amt'; amtSpan.textContent='0'; amtTd.appendChild(amtSpan); tr.appendChild(amtTd);
         tr.appendChild(td(inp('line_note[]','', data.note)));
@@ -142,6 +151,7 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '0';
         tbody.appendChild(tr); recompute();
     }
     document.getElementById('add-line').addEventListener('click', function (){ addRow(); });
+    if (custSel){ custSel.addEventListener('change', function (){ var gd = groupDisc(); tbody.querySelectorAll('.line-row .disc').forEach(function (d){ d.value = gd > 0 ? gd : ''; }); recompute(); }); }
     vatEl.addEventListener('input', recompute);
     tbody.addEventListener('click', function (e){ if (e.target && e.target.classList.contains('rm-row')){ var r=e.target.closest('.line-row'); if (r) r.remove(); recompute(); } });
     if (INIT.length){ INIT.forEach(addRow); } else { addRow(); }

@@ -255,6 +255,10 @@ Route::group('admin', function(){
    // Hoá đơn: ghi sổ / huỷ ghi sổ (KT-6 + trừ tồn)
    Route::get('sales-invoices/post/(\d+)',   'admin/salesinvoices/post/$1');
    Route::get('sales-invoices/unpost/(\d+)', 'admin/salesinvoices/unpost/$1');
+   // Hoá đơn điện tử nội bộ (phát hành / thu hồi / xuất XML)
+   Route::post('sales-invoices/einvoice/(\d+)',        'admin/salesinvoices/issueEinvoice/$1');
+   Route::get('sales-invoices/einvoice-revoke/(\d+)',  'admin/salesinvoices/revokeEinvoice/$1');
+   Route::get('sales-invoices/einvoice-xml/(\d+)',     'admin/salesinvoices/einvoiceXml/$1');
    // Báo cáo bán hàng (chỉ xem)
    Route::get('bao-cao-ban-hang', 'admin/salesreport');
 

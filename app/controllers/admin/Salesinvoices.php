@@ -23,7 +23,7 @@ class Salesinvoices extends Controller {
 
     private $__data = [];
     private $__model, $__itemModel, $__stock, $__warehouse, $__partner, $__part;
-    private $__accModel, $__voucherModel, $__entryModel, $__request, $__response;
+    private $__accModel, $__voucherModel, $__entryModel, $__settings, $__request, $__response;
 
     private $routeBase = 'sales-invoices';
     private $labelOne  = 'hoá đơn';
@@ -40,6 +40,7 @@ class Salesinvoices extends Controller {
         $this->__accModel     = $this->model('AccAccountsModel');
         $this->__voucherModel = $this->model('AccVouchersModel');
         $this->__entryModel   = $this->model('AccVoucherEntriesModel');
+        $this->__settings     = $this->model('SettingsModel');
         $this->__request      = new Request();
         $this->__response     = new Response();
     }
@@ -53,6 +54,7 @@ class Salesinvoices extends Controller {
         $this->__data['content']['warehouses'] = $this->__warehouse->getActive();
         $this->__data['content']['partners']   = $this->__partner->getActive();
         $this->__data['content']['parts']      = $this->__part->getForSelect();
+        $this->__data['content']['partnerDiscounts'] = $this->__partner->groupDiscountMap();
     }
 
     public function index(){
@@ -128,6 +130,11 @@ class Salesinvoices extends Controller {
         $this->__data['content']['items']     = $this->__itemModel->getByInvoice($id);
         $this->__data['content']['voucher']   = $item['acc_voucher_id']
             ? $this->__voucherModel->getDetail($item['acc_voucher_id']) : null;
+        $this->__data['content']['eiDefaults'] = [
+            'serial' => $this->__settings->val('einvoice_serial', 'K' . date('y') . 'TTP'),
+            'form'   => $this->__settings->val('einvoice_form', '1'),
+            'nextNo' => $this->__model->nextEinvoiceNo(),
+        ];
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['errors']    = Session::flash('errors');
         $this->__data['content']['old']       = Session::flash('old');
@@ -302,6 +309,143 @@ class Salesinvoices extends Controller {
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
 
+    // ===== HĐĐT nội bộ (ký hiệu/số HĐ + xuất XML, KHÔNG nối nhà cung cấp) =====
+
+    /** Phát hành HĐĐT: gán ký hiệu/mẫu số/số HĐ + đánh dấu đã phát hành (chỉ khi đã ghi sổ) */
+    public function issueEinvoice($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (!route('admin/' . $this->routeBase . '/edit/' . $id)){
+            $this->__response->redirect('admin/khong-co-quyen'); return;
+        }
+        if ((int) $item['status'] !== 1){
+            Session::flash('msgError', 'Phải ghi sổ hoá đơn trước khi phát hành HĐĐT.');
+            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
+        }
+        if ($item['einvoice_status'] === 'issued'){
+            Session::flash('msgError', 'Hoá đơn đã phát hành HĐĐT.');
+            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
+        }
+        $f      = $this->__request->getFields();
+        $serial = !empty($f['einvoice_serial']) ? trim($f['einvoice_serial']) : $this->__settings->val('einvoice_serial', 'K' . date('y') . 'TTP');
+        $form   = !empty($f['einvoice_form']) ? trim($f['einvoice_form']) : $this->__settings->val('einvoice_form', '1');
+        $no     = !empty($f['einvoice_no']) ? trim($f['einvoice_no']) : $this->__model->nextEinvoiceNo();
+
+        $this->__model->edit([
+            'einvoice_status'    => 'issued',
+            'einvoice_serial'    => $serial,
+            'einvoice_form'      => $form,
+            'einvoice_no'        => $no,
+            'einvoice_issued_at' => date('Y-m-d H:i:s'),
+        ], $id);
+        Session::flash('msg', 'Đã phát hành HĐĐT số ' . $no . ' (ký hiệu ' . $serial . ').');
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
+    }
+
+    /** Thu hồi HĐĐT (đưa về chưa phát hành) */
+    public function revokeEinvoice($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (!route('admin/' . $this->routeBase . '/edit/' . $id)){
+            $this->__response->redirect('admin/khong-co-quyen'); return;
+        }
+        $this->__model->edit([
+            'einvoice_status'    => 'none',
+            'einvoice_no'        => null,
+            'einvoice_issued_at' => null,
+        ], $id);
+        Session::flash('msg', 'Đã thu hồi HĐĐT ' . $item['invoice_no'] . '.');
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
+    }
+
+    /** Xuất XML HĐĐT để nộp phần mềm hoá đơn (tải file) */
+    public function einvoiceXml($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item) || !route('admin/' . $this->routeBase . '/edit/' . $id)){
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if ($item['einvoice_status'] !== 'issued'){
+            Session::flash('msgError', 'Hoá đơn chưa phát hành HĐĐT.');
+            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
+        }
+        $items = $this->__itemModel->getByInvoice($id);
+        $xml   = $this->buildEinvoiceXml($item, $items);
+
+        header('Content-Type: application/xml; charset=utf-8');
+        header('Content-Disposition: attachment; filename="HDDT_' . preg_replace('/[^A-Za-z0-9_\-]/', '', $item['invoice_no']) . '.xml"');
+        echo $xml;
+        exit;
+    }
+
+    /** Dựng XML HĐĐT (cấu trúc TĐiệp/HĐon tham khảo TT78/NĐ123 — nộp phần mềm HĐĐT) */
+    private function buildEinvoiceXml($item, $items){
+        $x = function($v){ return htmlspecialchars((string) $v, ENT_XML1 | ENT_QUOTES, 'UTF-8'); };
+        $sellerName = $this->__settings->val('site_name', 'CÔNG TY TÂN PHÁT');
+        $sellerTax  = $this->__settings->val('tax_code', '');
+        $sellerAddr = $this->__settings->val('contact_address', '');
+        $sellerTel  = $this->__settings->val('contact_phone', '');
+        $buyerName  = !empty($item['customer_name']) ? $item['customer_name'] : 'Khách lẻ';
+
+        $lines = '';
+        $stt = 0;
+        foreach ($items as $it){
+            $stt++;
+            $disc = (float) ($it['discount_percent'] ?? 0);
+            $lines .= '      <HHDVu>' . "\n"
+                . '        <STT>' . $stt . '</STT>' . "\n"
+                . '        <THHDVu>' . $x($it['part_name']) . '</THHDVu>' . "\n"
+                . '        <MHHDVu>' . $x($it['part_code']) . '</MHHDVu>' . "\n"
+                . '        <DVTinh>' . $x(!empty($it['unit_name']) ? $it['unit_name'] : '') . '</DVTinh>' . "\n"
+                . '        <SLuong>' . (float) $it['quantity'] . '</SLuong>' . "\n"
+                . '        <DGia>' . (float) $it['unit_price'] . '</DGia>' . "\n"
+                . '        <TLCKhau>' . $disc . '</TLCKhau>' . "\n"
+                . '        <ThTien>' . (float) $it['amount'] . '</ThTien>' . "\n"
+                . '      </HHDVu>' . "\n";
+        }
+
+        $subtotal = (float) $item['subtotal'];
+        $tax      = (float) $item['tax_amount'];
+        $total    = (float) $item['total_amount'];
+
+        $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        $xml .= '<HDon>' . "\n";
+        $xml .= '  <DLHDon>' . "\n";
+        $xml .= '    <TTChung>' . "\n";
+        $xml .= '      <KHMSHDon>' . $x($item['einvoice_form']) . '</KHMSHDon>' . "\n";
+        $xml .= '      <KHHDon>' . $x($item['einvoice_serial']) . '</KHHDon>' . "\n";
+        $xml .= '      <SHDon>' . $x($item['einvoice_no']) . '</SHDon>' . "\n";
+        $xml .= '      <NLap>' . $x($item['invoice_date']) . '</NLap>' . "\n";
+        $xml .= '      <DVTTe>VND</DVTTe>' . "\n";
+        $xml .= '    </TTChung>' . "\n";
+        $xml .= '    <NDHDon>' . "\n";
+        $xml .= '      <NBan>' . "\n";
+        $xml .= '        <Ten>' . $x($sellerName) . '</Ten>' . "\n";
+        $xml .= '        <MST>' . $x($sellerTax) . '</MST>' . "\n";
+        $xml .= '        <DChi>' . $x($sellerAddr) . '</DChi>' . "\n";
+        $xml .= '        <DThoai>' . $x($sellerTel) . '</DThoai>' . "\n";
+        $xml .= '      </NBan>' . "\n";
+        $xml .= '      <NMua>' . "\n";
+        $xml .= '        <Ten>' . $x($buyerName) . '</Ten>' . "\n";
+        $xml .= '      </NMua>' . "\n";
+        $xml .= '      <DSHHDVu>' . "\n" . $lines . '      </DSHHDVu>' . "\n";
+        $xml .= '      <TToan>' . "\n";
+        $xml .= '        <TgTCThue>' . $subtotal . '</TgTCThue>' . "\n";
+        $xml .= '        <TgTThue>' . $tax . '</TgTThue>' . "\n";
+        $xml .= '        <TSuat>' . (float) $item['vat_rate'] . '</TSuat>' . "\n";
+        $xml .= '        <TgTTTBSo>' . $total . '</TgTTTBSo>' . "\n";
+        $xml .= '      </TToan>' . "\n";
+        $xml .= '    </NDHDon>' . "\n";
+        $xml .= '  </DLHDon>' . "\n";
+        $xml .= '</HDon>' . "\n";
+        return $xml;
+    }
+
     public function delete($id){
         $item = $this->__model->getDetail($id);
         if (empty($item)){
@@ -362,6 +506,7 @@ class Salesinvoices extends Controller {
         $parts  = isset($f['line_part'])  && is_array($f['line_part'])  ? $f['line_part']  : [];
         $qtys   = isset($f['line_qty'])   && is_array($f['line_qty'])   ? $f['line_qty']   : [];
         $prices = isset($f['line_price']) && is_array($f['line_price']) ? $f['line_price'] : [];
+        $discs  = isset($f['line_disc'])  && is_array($f['line_disc'])  ? $f['line_disc']  : [];
         $notes  = isset($f['line_note'])  && is_array($f['line_note'])  ? $f['line_note']  : [];
 
         $lines = [];
@@ -371,6 +516,7 @@ class Salesinvoices extends Controller {
             $price  = $this->parseMoney(isset($prices[$i]) ? $prices[$i] : 0);
             if ($partId <= 0 || $qty <= 0) continue;
             $lines[] = ['part_id' => $partId, 'quantity' => $qty, 'unit_price' => $price,
+                        'discount_percent' => $this->parseRate(isset($discs[$i]) ? $discs[$i] : 0),
                         'note' => isset($notes[$i]) ? trim($notes[$i]) : ''];
         }
         return $lines;

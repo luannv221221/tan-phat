@@ -37,6 +37,17 @@ class SalesInvoicesModel extends Model {
         return 'HD-' . str_pad($n + 1, 6, '0', STR_PAD_LEFT);
     }
 
+    /** Số HĐĐT kế tiếp (max số đã phát hành + 1, đệm 8 chữ số theo TT78) */
+    public function nextEinvoiceNo(){
+        $row = $this->table($this->_table)
+            ->select('`einvoice_no`')
+            ->whereNotNull('einvoice_no')
+            ->orderBy('id', 'DESC')->first();
+        $n = 0;
+        if (!empty($row) && preg_match('/(\d+)/', $row['einvoice_no'], $m)){ $n = (int) $m[1]; }
+        return str_pad($n + 1, 8, '0', STR_PAD_LEFT);
+    }
+
     public function add($data){
         $data['create_at'] = date('Y-m-d H:i:s');
         $this->addNew($data);

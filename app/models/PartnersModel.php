@@ -34,6 +34,17 @@ class PartnersModel extends Model {
 
     public function getDetail($id){ return $this->getFirst($id); }
 
+    /** [partner_id => % chiết khấu nhóm KH] — cho auto-điền chiết khấu dòng */
+    public function groupDiscountMap(){
+        $rows = $this->table($this->_table)
+            ->select('`partners`.`id`, `customer_groups`.`discount_percent`')
+            ->joinOn('customer_groups', 'partners.group_id', 'customer_groups.id')
+            ->get();
+        $map = [];
+        foreach ($rows ?: [] as $r){ $map[(int) $r['id']] = (float) $r['discount_percent']; }
+        return $map;
+    }
+
     public function findByCode($code){
         return $this->table($this->_table)->where('code', '=', $code)->first();
     }

@@ -36,16 +36,19 @@ class SalesInvoiceItemsModel extends Model {
                 $qty    = isset($ln['quantity']) ? (float) $ln['quantity'] : 0;
                 $price  = isset($ln['unit_price']) ? (float) $ln['unit_price'] : 0;
                 if ($partId <= 0 || $qty <= 0) continue;
-                $amount = round($qty * $price, 2);
+                $disc   = isset($ln['discount_percent']) ? (float) $ln['discount_percent'] : 0;
+                if ($disc < 0) $disc = 0; if ($disc > 100) $disc = 100;
+                $amount = round($qty * $price * (1 - $disc / 100), 2);
                 $db->insert('sales_invoice_items', [
-                    'invoice_id' => $invoiceId,
-                    'part_id'    => $partId,
-                    'quantity'   => $qty,
-                    'unit_price' => $price,
-                    'amount'     => $amount,
-                    'unit_cost'  => 0,
-                    'cost_amount'=> 0,
-                    'note'       => !empty($ln['note']) ? $ln['note'] : null,
+                    'invoice_id'       => $invoiceId,
+                    'part_id'          => $partId,
+                    'quantity'         => $qty,
+                    'unit_price'       => $price,
+                    'discount_percent' => $disc,
+                    'amount'           => $amount,
+                    'unit_cost'        => 0,
+                    'cost_amount'      => 0,
+                    'note'             => !empty($ln['note']) ? $ln['note'] : null,
                 ]);
                 $total += $amount;
             }

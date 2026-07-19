@@ -39,6 +39,7 @@ class Quotations extends Controller {
     private function formData(){
         $this->__data['content']['partners'] = $this->__partner->getActive();
         $this->__data['content']['parts']    = $this->__part->getForSelect();
+        $this->__data['content']['partnerDiscounts'] = $this->__partner->groupDiscountMap();
     }
 
     public function index(){
@@ -198,7 +199,8 @@ class Quotations extends Controller {
         $lines = [];
         foreach ($items as $it){
             $lines[] = ['part_id' => (int) $it['part_id'], 'quantity' => (float) $it['quantity'],
-                        'unit_price' => (float) $it['unit_price'], 'note' => $it['note']];
+                        'unit_price' => (float) $it['unit_price'],
+                        'discount_percent' => (float) ($it['discount_percent'] ?? 0), 'note' => $it['note']];
         }
         $subtotal = $invItem->syncForInvoice($invId, $lines);
         $tax = round($subtotal * (float) $item['vat_rate'] / 100, 2);
@@ -261,6 +263,7 @@ class Quotations extends Controller {
         $parts  = isset($f['line_part'])  && is_array($f['line_part'])  ? $f['line_part']  : [];
         $qtys   = isset($f['line_qty'])   && is_array($f['line_qty'])   ? $f['line_qty']   : [];
         $prices = isset($f['line_price']) && is_array($f['line_price']) ? $f['line_price'] : [];
+        $discs  = isset($f['line_disc'])  && is_array($f['line_disc'])  ? $f['line_disc']  : [];
         $notes  = isset($f['line_note'])  && is_array($f['line_note'])  ? $f['line_note']  : [];
 
         $lines = [];
@@ -270,6 +273,7 @@ class Quotations extends Controller {
             $price  = $this->parseMoney(isset($prices[$i]) ? $prices[$i] : 0);
             if ($partId <= 0 || $qty <= 0) continue;
             $lines[] = ['part_id' => $partId, 'quantity' => $qty, 'unit_price' => $price,
+                        'discount_percent' => $this->parseRate(isset($discs[$i]) ? $discs[$i] : 0),
                         'note' => isset($notes[$i]) ? trim($notes[$i]) : ''];
         }
         return $lines;
