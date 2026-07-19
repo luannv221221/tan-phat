@@ -28,6 +28,16 @@ class PartImagesModel extends Model {
         return $this->getFirst($id);
     }
 
+    /** Tên file ảnh đại diện của phụ tùng (rỗng nếu chưa có) */
+    public function primaryFor($partId){
+        $r = $this->table($this->_table)
+                  ->where('part_id', '=', (int) $partId)
+                  ->orderBy('is_primary', 'DESC')
+                  ->orderBy('sort_order', 'ASC')
+                  ->orderBy('id', 'ASC')->first();
+        return !empty($r) ? $r['image'] : '';
+    }
+
     public function countByPart($partId){
         $r = $this->table($this->_table)
                   ->select('COUNT(*) AS total')

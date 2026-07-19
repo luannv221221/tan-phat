@@ -14,10 +14,19 @@ $stockNum    = rtrim(rtrim(number_format((float) $stock, 3, ',', '.'), '0'), ','
 
 <div class="card"><div class="bd">
 <div class="detail">
+    <?php $base = _WEB_URL . '/public/assets/uploads/parts/'; ?>
     <div class="gallery">
-        <div class="main-img">🔧</div>
         @if (!empty($images))
-        <div class="muted mt" style="font-size:13px">{{count($images)}} hình ảnh sản phẩm</div>
+        <div class="main-img"><img id="mainImg" src="{{$base.$images[0]['image']}}" alt="{{$part['name']}}"/></div>
+        @if (count($images) > 1)
+        <div class="thumbs">
+            @foreach ($images as $img)
+            <img src="{{$base.$img['image']}}" class="tn" onclick="document.getElementById('mainImg').src=this.src"/>
+            @endforeach
+        </div>
+        @endif
+        @else
+        <div class="main-img">🔧</div>
         @endif
     </div>
 

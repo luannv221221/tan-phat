@@ -436,4 +436,7 @@ $nCt=0; foreach($contacts as $c){ if($db->table('contact_messages')->where('name
     $db->insert('contact_messages',['name'=>$c[0],'email'=>$c[2],'phone'=>$c[1],'subject'=>$c[3],'message'=>$c[4],'status'=>$c[5],'ip'=>'127.0.0.1','create_at'=>$now]); $nCt++; }
 $log("- Ban tin: +$nSub | Lien he: +$nCt");
 
+// ---------- 15) Ảnh demo cho phụ tùng (SVG placeholder) ----------
+require __DIR__ . '/seed_part_images.php';
+
 $log("== HOAN TAT SEED DEMO ==");

@@ -58,6 +58,10 @@ class Shop extends Controller {
             foreach ($list as $p){ $stockMap[(int) $p['id']] = $this->__stock->sellableByPart((int) $p['id']); }
         }
 
+        // Ảnh đại diện cho thẻ sản phẩm
+        $imgMap = [];
+        foreach ($list as $p){ $imgMap[(int) $p['id']] = $this->__img->primaryFor((int) $p['id']); }
+
         $this->__data['sub_content'] = 'storefront/list';
         $this->__data['page_title']  = !empty($filters['keyword']) ? ('Tìm: ' . $filters['keyword']) : 'Sản phẩm';
 
@@ -70,6 +74,7 @@ class Shop extends Controller {
         $c['query']      = $g;
         $c['isMember']   = $this->isMember();
         $c['stockMap']   = $stockMap;
+        $c['imgMap']     = $imgMap;
         // Facet options
         $c['catOptions']    = $this->__cat->getTree();
         $c['brandOptions']  = $this->__pbrand->getLists();

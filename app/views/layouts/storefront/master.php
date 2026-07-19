@@ -112,6 +112,10 @@ nav.cats .submenu a:hover{background:#f5f6f8;color:var(--brand)}
 .detail{display:flex;gap:26px;flex-wrap:wrap}
 .detail .gallery{flex:0 0 380px;max-width:100%}
 .detail .gallery .main-img{aspect-ratio:1/1;background:#fafafa;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:70px;overflow:hidden}
+.detail .gallery .main-img img{width:100%;height:100%;object-fit:contain}
+.detail .gallery .thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.detail .gallery .thumbs .tn{width:64px;height:64px;object-fit:cover;border:1px solid var(--line);border-radius:6px;cursor:pointer;background:#fafafa}
+.detail .gallery .thumbs .tn:hover{border-color:var(--brand)}
 .detail .meta{flex:1;min-width:280px}
 .detail h1{font-size:24px;margin:0 0 8px}
 .detail .big-price{font-size:30px;color:var(--brand);font-weight:800}

@@ -102,9 +102,13 @@ $titleTxt = !empty($f['keyword']) ? 'Kết quả: ' . $f['keyword'] : 'Sản ph�
                 $stockBadge = $isMember
                     ? '<div><span class="badge '.($st > 0 ? 'badge-ok' : '').'">Tồn: '.rtrim(rtrim(number_format($st, 3, ',', '.'), '0'), ',').'</span></div>'
                     : '';
+                $imgFile = isset($imgMap[$pid]) ? $imgMap[$pid] : '';
+                $thumbInner = $imgFile !== ''
+                    ? '<img src="'.e(_WEB_URL.'/public/assets/uploads/parts/'.$imgFile).'" alt="'.e($p['name']).'" loading="lazy"/>'
+                    : '🔧';
                 ?>
                 <div class="pcard">
-                    <a class="thumb" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}">{!! $km !!}🔧</a>
+                    <a class="thumb" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}">{!! $km !!}{!! $thumbInner !!}</a>
                     <div class="info">
                         <a class="pname" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}">{{$p['name']}}</a>
                         <div class="code">Mã: {{$p['code']}}{!! $brandSuffix !!}</div>
