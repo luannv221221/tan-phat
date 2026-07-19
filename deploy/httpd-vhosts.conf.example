@@ -8,11 +8,11 @@
 
 # ---- HTTP (cong 80) ----
 <VirtualHost *:80>
-    ServerName erp.tanphat.vn
+    ServerName etek.rikkeiedu.org
     # Tro thang vao thu muc du an (KHONG phai htdocs)
-    DocumentRoot "C:/tanphat/app-erp"
+    DocumentRoot "C:/xampp/htdocs/tan-phat"
 
-    <Directory "C:/tanphat/app-erp">
+    <Directory "C:/xampp/htdocs/tan-phat">
         # BAT BUOC: cho phep .htaccess cua du an hoat dong (rewrite + chan .env)
         AllowOverride All
         Require all granted
@@ -25,14 +25,14 @@
 
 # ---- HTTPS (cong 443) — bo comment khi da co chung chi SSL ----
 # <VirtualHost *:443>
-#     ServerName erp.tanphat.vn
-#     DocumentRoot "C:/tanphat/app-erp"
+#     ServerName etek.rikkeiedu.org
+#     DocumentRoot "C:/xampp/htdocs/tan-phat"
 #
 #     SSLEngine on
 #     SSLCertificateFile      "conf/ssl.crt/tanphat.crt"
 #     SSLCertificateKeyFile   "conf/ssl.key/tanphat.key"
 #
-#     <Directory "C:/tanphat/app-erp">
+#     <Directory "C:/xampp/htdocs/tan-phat">
 #         AllowOverride All
 #         Require all granted
 #         Options -Indexes +FollowSymLinks
