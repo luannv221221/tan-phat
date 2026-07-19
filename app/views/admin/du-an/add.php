@@ -1,7 +1,7 @@
 <div class="row"><div class="col-lg-9 mx-auto">
     <div class="card card-outline card-primary">
         <div class="card-header"><h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>{{$page_name}}</h3></div>
-        <form action="" method="post">
+        <form action="" method="post" enctype="multipart/form-data">
             <?php echo csrf_field(); ?>
             <div class="card-body">
                 @if (!empty($msg))
@@ -28,8 +28,10 @@
                         <input type="text" name="location" class="form-control" value="{{!empty($old['location'])?$old['location']:''}}"/>
                     </div>
                     <div class="form-group col-md-4">
-                        <label>Ảnh (URL)</label>
-                        <input type="text" name="thumbnail" class="form-control" value="{{!empty($old['thumbnail'])?$old['thumbnail']:''}}"/>
+                        <label>Ảnh (tải lên)</label>
+                        <input type="file" name="thumbnail_file" accept="image/*" class="form-control-file"/>
+                        {!! !empty($errors['thumbnail_file'])?'<small class="text-danger d-block">'.e($errors['thumbnail_file']).'</small>':false !!}
+                        <input type="text" name="thumbnail" class="form-control mt-1" placeholder="hoặc URL ảnh" value="{{!empty($old['thumbnail'])?$old['thumbnail']:''}}"/>
                     </div>
                 </div>
                 <div class="form-group">

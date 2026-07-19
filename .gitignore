@@ -33,3 +33,7 @@ public/assets/uploads/brands/*
 !public/assets/uploads/brands/.gitkeep
 public/assets/uploads/parts/*
 !public/assets/uploads/parts/.gitkeep
+public/assets/uploads/news/*
+!public/assets/uploads/news/.gitkeep
+public/assets/uploads/projects/*
+!public/assets/uploads/projects/.gitkeep

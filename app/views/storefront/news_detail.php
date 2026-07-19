@@ -10,7 +10,7 @@ $catBadge = !empty($news['category_name']) ? '<span class="badge">'.e($news['cat
             <h1 style="font-size:26px;margin:0 0 8px">{{$news['title']}}</h1>
             <div class="muted" style="margin-bottom:16px">🗓 {{$date}} · 👁 {{(int)$news['view_count']}} lượt xem {!! $catBadge !!}</div>
             @if (!empty($news['thumbnail']))
-            <img src="{{$news['thumbnail']}}" alt="{{$news['title']}}" style="width:100%;border-radius:8px;margin-bottom:16px"/>
+            <img src="{{media_url($news['thumbnail'])}}" alt="{{$news['title']}}" style="width:100%;border-radius:8px;margin-bottom:16px"/>
             @endif
             @if (!empty($news['summary']))
             <p style="font-weight:600;color:#444">{{$news['summary']}}</p>

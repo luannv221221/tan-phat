@@ -9,7 +9,7 @@
         @foreach ($list as $pj)
         <?php
         $thumb = !empty($pj['thumbnail'])
-            ? '<img src="'.e($pj['thumbnail']).'" alt="'.e($pj['name']).'" style="width:100%;height:100%;object-fit:cover"/>'
+            ? '<img src="'.e(media_url($pj['thumbnail'])).'" alt="'.e($pj['name']).'" style="width:100%;height:100%;object-fit:cover"/>'
             : '🏗';
         $meta = trim(($pj['client'] ?? '') . (!empty($pj['location']) ? ' · ' . $pj['location'] : ''), ' ·');
         $done = !empty($pj['completed_at']) ? $pj['completed_at'] : '';

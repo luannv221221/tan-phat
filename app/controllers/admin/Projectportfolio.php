@@ -65,6 +65,9 @@ class Projectportfolio extends Controller {
         $data = $this->buildData();
         if ($data['slug'] === ''){ $this->flashOne('slug', 'Không sinh được slug, nhập thủ công', 'add'); return; }
         if (!empty($this->__model->findBySlug($data['slug']))){ $this->flashOne('slug', 'Slug đã tồn tại', 'add'); return; }
+        $up = upload_image('thumbnail_file', 'projects', !empty($data['name']) ? $data['name'] : 'du-an');
+        if ($up['status'] === 'error'){ $this->flashOne('thumbnail_file', $up['message'], 'add'); return; }
+        if ($up['status'] === 'ok') $data['thumbnail'] = $up['path'];
         $data['created_by'] = Session::get('dataUser');
         $this->__model->add($data);
         Session::flash('msg', 'Thêm ' . $this->labelOne . ' thành công');
@@ -94,6 +97,9 @@ class Projectportfolio extends Controller {
         if ($data['slug'] === ''){ $this->flashOne('slug', 'Không sinh được slug, nhập thủ công', 'edit/' . $id); return; }
         $ex = $this->__model->findBySlug($data['slug']);
         if (!empty($ex) && $ex['id'] != $id){ $this->flashOne('slug', 'Slug đã thuộc dự án khác', 'edit/' . $id); return; }
+        $up = upload_image('thumbnail_file', 'projects', !empty($data['name']) ? $data['name'] : 'du-an');
+        if ($up['status'] === 'error'){ $this->flashOne('thumbnail_file', $up['message'], 'edit/' . $id); return; }
+        if ($up['status'] === 'ok') $data['thumbnail'] = $up['path'];
         $this->__model->edit($data, $id);
         Session::flash('msg', 'Cập nhật ' . $this->labelOne . ' thành công');
         $this->__response->redirect('admin/' . $this->routeBase);

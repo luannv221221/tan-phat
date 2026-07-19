@@ -27,7 +27,7 @@ $listTitle = !empty($cat) ? $cat['name'] : 'Tin tức';
                 @foreach ($list as $n)
                 <?php
                 $thumb = !empty($n['thumbnail'])
-                    ? '<img src="'.e($n['thumbnail']).'" alt="'.e($n['title']).'" style="width:100%;height:100%;object-fit:cover"/>'
+                    ? '<img src="'.e(media_url($n['thumbnail'])).'" alt="'.e($n['title']).'" style="width:100%;height:100%;object-fit:cover"/>'
                     : '📰';
                 $date = !empty($n['published_at']) ? date('d/m/Y', strtotime($n['published_at'])) : '';
                 $catSuffix = !empty($n['category_name']) ? ' · '.e($n['category_name']) : '';

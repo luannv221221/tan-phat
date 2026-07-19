@@ -64,6 +64,9 @@ class News extends Controller {
         if (!empty($errors)){ $this->flash($errors, 'add'); return; }
         $data = $this->buildData();
         if (!empty($this->__model->findBySlug($data['slug']))){ $this->flash(['slug' => 'Đường dẫn đã tồn tại'], 'add'); return; }
+        $up = upload_image('thumbnail_file', 'news', !empty($data['title']) ? $data['title'] : 'news');
+        if ($up['status'] === 'error'){ $this->flash(['thumbnail_file' => $up['message']], 'add'); return; }
+        if ($up['status'] === 'ok') $data['thumbnail'] = $up['path'];
         $data['created_by'] = Session::get('dataUser');
         $this->__model->add($data);
         Session::flash('msg', 'Thêm ' . $this->labelOne . ' thành công');
@@ -93,6 +96,9 @@ class News extends Controller {
         $data = $this->buildData();
         $ex = $this->__model->findBySlug($data['slug']);
         if (!empty($ex) && $ex['id'] != $id){ $this->flash(['slug' => 'Đường dẫn đã thuộc bài khác'], 'edit/' . $id); return; }
+        $up = upload_image('thumbnail_file', 'news', !empty($data['title']) ? $data['title'] : 'news');
+        if ($up['status'] === 'error'){ $this->flash(['thumbnail_file' => $up['message']], 'edit/' . $id); return; }
+        if ($up['status'] === 'ok') $data['thumbnail'] = $up['path'];
         // giữ published_at cũ nếu đã đăng trước đó
         if (!empty($item['published_at']) && $data['is_published']) $data['published_at'] = $item['published_at'];
         $this->__model->edit($data, $id);

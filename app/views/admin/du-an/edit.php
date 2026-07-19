@@ -5,7 +5,7 @@ $isPub = isset($old['is_published']) ? !empty($old['is_published']) : ((int) $it
 <div class="row"><div class="col-lg-9 mx-auto">
     <div class="card card-outline card-warning">
         <div class="card-header"><h3 class="card-title"><i class="fas fa-edit mr-2"></i>{{$page_name}}</h3></div>
-        <form action="" method="post">
+        <form action="" method="post" enctype="multipart/form-data">
             <?php echo csrf_field(); ?>
             <div class="card-body">
                 @if (!empty($msg))
@@ -25,7 +25,13 @@ $isPub = isset($old['is_published']) ? !empty($old['is_published']) : ((int) $it
                 <div class="form-row">
                     <div class="form-group col-md-4"><label>Khách hàng</label><input type="text" name="client" class="form-control" value="{{$v('client')}}"/></div>
                     <div class="form-group col-md-4"><label>Địa điểm</label><input type="text" name="location" class="form-control" value="{{$v('location')}}"/></div>
-                    <div class="form-group col-md-4"><label>Ảnh (URL)</label><input type="text" name="thumbnail" class="form-control" value="{{$v('thumbnail')}}"/></div>
+                    <div class="form-group col-md-4">
+                        <label>Ảnh (tải lên để thay)</label>
+                        {!! !empty($item['thumbnail']) ? '<img src="'.e(media_url($item['thumbnail'])).'" style="height:44px;border-radius:4px;margin-bottom:6px"/>' : '' !!}
+                        <input type="file" name="thumbnail_file" accept="image/*" class="form-control-file"/>
+                        {!! !empty($errors['thumbnail_file'])?'<small class="text-danger d-block">'.e($errors['thumbnail_file']).'</small>':false !!}
+                        <input type="text" name="thumbnail" class="form-control mt-1" placeholder="hoặc URL ảnh" value="{{$v('thumbnail')}}"/>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Đường dẫn (slug)</label>
