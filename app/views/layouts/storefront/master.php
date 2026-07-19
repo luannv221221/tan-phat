@@ -212,12 +212,22 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
         <div><a href="<?php echo _WEB_URL; ?>/san-pham">Sản phẩm</a></div>
         <div><a href="<?php echo _WEB_URL; ?>/gio-hang">Giỏ hàng / Yêu cầu báo giá</a></div>
         <div><a href="<?php echo _WEB_URL; ?>/thanh-vien">Tài khoản thành viên</a></div>
+        <div><a href="<?php echo _WEB_URL; ?>/lien-he">Liên hệ</a></div>
     </div>
     <div>
         <h4>Liên hệ</h4>
         <div class="muted">Hotline: <?php echo e(!empty($settings['hotline']) ? $settings['hotline'] : '1900 0000'); ?></div>
         <div class="muted">Email: <?php echo e(!empty($settings['email']) ? $settings['email'] : 'info@tanphat.vn'); ?></div>
         <?php if (!empty($settings['address'])): ?><div class="muted"><?php echo e($settings['address']); ?></div><?php endif; ?>
+    </div>
+    <div>
+        <h4>Nhận bản tin</h4>
+        <div class="muted" style="margin-bottom:8px;max-width:240px">Đăng ký nhận thông tin sản phẩm & khuyến mãi.</div>
+        <form method="post" action="<?php echo _WEB_URL; ?>/dang-ky-ban-tin" style="display:flex;gap:6px;max-width:260px">
+            <?php echo csrf_field(); ?>
+            <input type="email" name="email" placeholder="Email của bạn" required style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid #555;background:#2a2a2a;color:#eee"/>
+            <button type="submit" class="btn btn-brand btn-sm">Đăng ký</button>
+        </form>
     </div>
 </div></footer>
 

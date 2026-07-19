@@ -283,6 +283,15 @@ Route::group('admin', function(){
    // Lịch bảo hành + Báo cáo CSKH (chỉ xem)
    Route::get('lich-bao-hanh', 'admin/warrantyschedule');
    Route::get('bao-cao-cskh',  'admin/cskhreport');
+   // CSKH web: đăng ký bản tin + hộp thư liên hệ
+   Route::get('newsletter', 'admin/subscribers');
+   Route::get('newsletter/set-status/(\d+)', 'admin/subscribers/setStatus/$1');
+   Route::get('newsletter/delete/(\d+)', 'admin/subscribers/delete/$1');
+   Route::get('contact-messages', 'admin/contactmessages');
+   Route::get('contact-messages/view/(\d+)', 'admin/contactmessages/view/$1');
+   Route::get('contact-messages/set-status/(\d+)', 'admin/contactmessages/setStatus/$1');
+   Route::get('contact-messages/delete/(\d+)', 'admin/contactmessages/delete/$1');
+
    // Kiểm duyệt đánh giá (TASK_84)
    Route::get('reviews', 'admin/reviews');
    Route::get('reviews/approve/(\d+)', 'admin/reviews/approve/$1');
@@ -376,6 +385,11 @@ Route::get('sitemap.xml', 'sitemap/index');
 // Webchat khách (JSON, polling)
 Route::post('chat/send', 'chat/send');
 Route::get('chat/poll', 'chat/poll');
+
+// Đăng ký bản tin + Liên hệ (public)
+Route::post('dang-ky-ban-tin', 'newsletter/subscribe');
+Route::get('lien-he', 'contact/index');
+Route::post('lien-he', 'contact/send');
 
 // Thành viên
 Route::get('thanh-vien', 'member/account');

@@ -22,7 +22,7 @@ $menuGroups = [
     'Bán hàng'           => ['orders', 'quotations', 'sales-invoices', 'bao-cao-ban-hang'],
     'Kho'                => ['goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
     'Kế toán'            => ['vouchers', 'journal', 'cash-book', 'debt', 'nhat-ky-chung', 'so-cai', 'partners', 'accounts', 'cost-items', 'projects'],
-    'CSKH'               => ['chat', 'warranty', 'lich-bao-hanh', 'customer-groups', 'reviews', 'bao-cao-cskh'],
+    'CSKH'               => ['chat', 'contact-messages', 'newsletter', 'warranty', 'lich-bao-hanh', 'customer-groups', 'reviews', 'bao-cao-cskh'],
     'Nhân sự'            => ['employees', 'departments', 'positions', 'leave-requests'],
     'Hệ thống'           => ['users', 'groups', 'settings', 'thong-ke'],
 ];
@@ -73,6 +73,8 @@ $itemIcons = [
     'sales-invoices'        => 'fa-file-invoice',
     'bao-cao-ban-hang'      => 'fa-chart-line',
     'chat'                  => 'fa-comments',
+    'contact-messages'      => 'fa-inbox',
+    'newsletter'            => 'fa-envelope-open-text',
     'warranty'              => 'fa-tools',
     'lich-bao-hanh'         => 'fa-calendar-check',
     'employees'             => 'fa-users',
