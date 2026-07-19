@@ -12,12 +12,33 @@ if (!empty($memberId)){
 $cart = Session::get('cart');
 $cartCount = 0;
 if (!empty($cart) && is_array($cart)){ foreach ($cart as $q){ $cartCount += (int) $q; } }
+
+// ----- SEO / cấu hình site -----
+$settings = $this->model('SettingsModel')->map();
+$seo = (isset($content['seo']) && is_array($content['seo'])) ? $content['seo'] : [];
+$siteName = !empty($settings['site_name']) ? $settings['site_name'] : 'Tân Phát';
+$metaTitle = !empty($page_title) ? ($page_title . ' - ' . $siteName) : ($siteName . ' — ' . ($settings['site_slogan'] ?? ''));
+$metaDesc = !empty($seo['description']) ? $seo['description'] : (!empty($settings['meta_description']) ? $settings['meta_description'] : '');
+$metaKw = !empty($settings['meta_keywords']) ? $settings['meta_keywords'] : '';
+$ogImage = !empty($seo['image']) ? $seo['image'] : (!empty($settings['og_image']) ? $settings['og_image'] : '');
+$ogImageUrl = $ogImage !== '' ? media_url($ogImage) : '';
+$ogType = !empty($seo['type']) ? $seo['type'] : 'website';
+$canonical = _WEB_URL . '/' . (isset($_GET['module']) ? trim($_GET['module'], '/') : '');
 ?><!doctype html>
 <html lang="vi">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title><?php echo e(!empty($page_title) ? $page_title : 'Tân Phát — Phụ tùng & thiết bị gara ô tô'); ?></title>
+<title><?php echo e($metaTitle); ?></title>
+<?php if ($metaDesc !== ''): ?><meta name="description" content="<?php echo e($metaDesc); ?>"/><?php endif; ?>
+<?php if ($metaKw !== ''): ?><meta name="keywords" content="<?php echo e($metaKw); ?>"/><?php endif; ?>
+<link rel="canonical" href="<?php echo e($canonical); ?>"/>
+<meta property="og:site_name" content="<?php echo e($siteName); ?>"/>
+<meta property="og:title" content="<?php echo e($metaTitle); ?>"/>
+<meta property="og:type" content="<?php echo e($ogType); ?>"/>
+<meta property="og:url" content="<?php echo e($canonical); ?>"/>
+<?php if ($metaDesc !== ''): ?><meta property="og:description" content="<?php echo e($metaDesc); ?>"/><?php endif; ?>
+<?php if ($ogImageUrl !== ''): ?><meta property="og:image" content="<?php echo e($ogImageUrl); ?>"/><meta name="twitter:card" content="summary_large_image"/><?php endif; ?>
 <style>
 :root{--brand:#c0392b;--brand-d:#96271b;--ink:#222;--muted:#777;--line:#e6e6e6;--bg:#f5f6f8;--ok:#27ae60}
 *{box-sizing:border-box}
@@ -111,7 +132,7 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
 <body>
 
 <div class="topbar"><div class="container">
-    <span><i>☎</i> Hotline: 1900 0000 — Phụ tùng & thiết bị gara ô tô</span>
+    <span><i>☎</i> Hotline: <?php echo e(!empty($settings['hotline']) ? $settings['hotline'] : '1900 0000'); ?> — <?php echo e(!empty($settings['site_slogan']) ? $settings['site_slogan'] : 'Phụ tùng & thiết bị gara ô tô'); ?></span>
     <span>
         <?php if (!empty($memberName)): ?>
             Xin chào, <b><?php echo e($memberName); ?></b> · <a href="<?php echo _WEB_URL; ?>/thanh-vien">Tài khoản</a> · <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-xuat">Đăng xuất</a>
@@ -165,8 +186,9 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
     </div>
     <div>
         <h4>Liên hệ</h4>
-        <div class="muted">Hotline: 1900 0000</div>
-        <div class="muted">Email: info@tanphat.vn</div>
+        <div class="muted">Hotline: <?php echo e(!empty($settings['hotline']) ? $settings['hotline'] : '1900 0000'); ?></div>
+        <div class="muted">Email: <?php echo e(!empty($settings['email']) ? $settings['email'] : 'info@tanphat.vn'); ?></div>
+        <?php if (!empty($settings['address'])): ?><div class="muted"><?php echo e($settings['address']); ?></div><?php endif; ?>
     </div>
 </div></footer>
 

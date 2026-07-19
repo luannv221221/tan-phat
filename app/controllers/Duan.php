@@ -46,6 +46,12 @@ class Duan extends Controller {
         $c = &$this->__data['content'];
         $c['project'] = $project;
         $c['others']  = $this->__model->getPublished(4);
+        $c['seo'] = [
+            'description' => !empty($project['meta_description']) ? $project['meta_description'] : $project['summary'],
+            'image'       => $project['thumbnail'],
+            'type'        => 'article',
+        ];
+        if (!empty($project['meta_title'])) $this->__data['page_title'] = $project['meta_title'];
         $this->render('layouts/storefront/master', $this->__data);
     }
 }

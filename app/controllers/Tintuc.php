@@ -58,6 +58,12 @@ class Tintuc extends Controller {
         $c['news']       = $news;
         $c['latest']     = $this->__model->getPublished(0, 5);
         $c['categories'] = $this->__cat->getActive();
+        $c['seo'] = [
+            'description' => !empty($news['meta_description']) ? $news['meta_description'] : $news['summary'],
+            'image'       => $news['thumbnail'],
+            'type'        => 'article',
+        ];
+        if (!empty($news['meta_title'])) $this->__data['page_title'] = $news['meta_title'];
         $this->render('layouts/storefront/master', $this->__data);
     }
 }

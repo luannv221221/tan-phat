@@ -117,6 +117,8 @@ class Projectportfolio extends Controller {
         return [
             'name'         => trim($f['name']),
             'slug'         => slugify(!empty($f['slug']) ? $f['slug'] : $f['name']),
+            'meta_title'   => !empty($f['meta_title']) ? trim($f['meta_title']) : null,
+            'meta_description' => !empty($f['meta_description']) ? trim($f['meta_description']) : null,
             'client'       => !empty($f['client']) ? trim($f['client']) : null,
             'location'     => !empty($f['location']) ? trim($f['location']) : null,
             'summary'      => !empty($f['summary']) ? trim($f['summary']) : null,

@@ -35,6 +35,11 @@ Bề mặt **công khai** — controller gốc `app/controllers/` (KHÔNG thuộ
 - Nội dung cho phép HTML (admin tin cậy) — render raw `{!! content !!}`. Nav storefront thêm Tin tức + Dự án.
 - ⚠️ Link/module `projects` đã là Mã vụ việc kế toán → portfolio dùng `du-an` + controller `Projectportfolio` (tránh trùng `Projects`).
 
+## Upload ảnh + SEO (đã làm — migration 000023)
+
+- **Upload ảnh**: helper `upload_image()` + `media_url()`; gắn vào tin/dự án (thumbnail), products đã có gallery TASK_77.
+- **SEO** (TASK_97–103): `site_settings` (key-value) + màn `admin/settings` (Cấu hình website: tên/slogan/meta/OG image/liên hệ). Storefront layout render động `<title>`, meta description/keywords, canonical, Open Graph + Twitter card. Tin/dự án có `meta_title`/`meta_description` riêng; trang chi tiết SP/tin/dự án truyền `$content['seo']` (description/image/type) → layout ưu tiên, fallback site defaults. Footer/topbar dùng hotline/email/địa chỉ từ cấu hình.
+
 ## Hoãn (các đợt web sau)
 
-SEO (TASK_97–104) · quản lý menu (105–108) · thống kê truy cập (109–111) · webchat/hotline (112–113) · video/thư viện ảnh · thanh toán online (TASK_96) · giỏ hàng lưu DB · upload ảnh (tin/dự án/SP hiện nhập URL/placeholder).
+Quản lý menu (105–108) · thống kê truy cập (109–111) · webchat/hotline (112–113) · video/thư viện ảnh · **thanh toán online** (TASK_96 — cổng thanh toán thật liên quan tiền/credential, chỉ nên làm luồng đặt hàng + chuyển khoản) · giỏ hàng lưu DB · sitemap.xml.

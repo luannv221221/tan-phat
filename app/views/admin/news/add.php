@@ -44,6 +44,10 @@
                     <label>Nội dung (cho phép HTML)</label>
                     <textarea name="content" class="form-control" rows="10">{{!empty($old['content'])?$old['content']:''}}</textarea>
                 </div>
+                <div class="form-row">
+                    <div class="form-group col-md-5"><label class="small text-muted">SEO — Meta title</label><input type="text" name="meta_title" class="form-control form-control-sm" value="{{!empty($old['meta_title'])?$old['meta_title']:''}}"/></div>
+                    <div class="form-group col-md-7"><label class="small text-muted">SEO — Meta description</label><input type="text" name="meta_description" class="form-control form-control-sm" value="{{!empty($old['meta_description'])?$old['meta_description']:''}}"/></div>
+                </div>
                 <div class="form-group mb-0"><div class="custom-control custom-switch">
                     <input type="checkbox" class="custom-control-input" name="is_published" id="is_published" value="1"/>
                     <label class="custom-control-label" for="is_published">Đăng ngay</label>

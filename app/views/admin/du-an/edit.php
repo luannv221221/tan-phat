@@ -40,6 +40,10 @@ $isPub = isset($old['is_published']) ? !empty($old['is_published']) : ((int) $it
                 </div>
                 <div class="form-group"><label>Tóm tắt</label><textarea name="summary" class="form-control" rows="2">{{$v('summary')}}</textarea></div>
                 <div class="form-group"><label>Nội dung (cho phép HTML)</label><textarea name="content" class="form-control" rows="8">{{$v('content')}}</textarea></div>
+                <div class="form-row">
+                    <div class="form-group col-md-5"><label class="small text-muted">SEO — Meta title</label><input type="text" name="meta_title" class="form-control form-control-sm" value="{{$v('meta_title')}}"/></div>
+                    <div class="form-group col-md-7"><label class="small text-muted">SEO — Meta description</label><input type="text" name="meta_description" class="form-control form-control-sm" value="{{$v('meta_description')}}"/></div>
+                </div>
                 <div class="form-row align-items-center">
                     <div class="form-group col-md-3"><label>Thứ tự</label><input type="number" name="sort_order" class="form-control" value="{{$v('sort_order','0')}}"/></div>
                     <div class="form-group col-md-4 mt-4"><div class="custom-control custom-switch">

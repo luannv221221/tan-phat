@@ -129,6 +129,8 @@ class News extends Controller {
             'category_id'  => ($catId > 0 && !empty($this->__cat->getDetail($catId))) ? $catId : null,
             'title'        => trim($f['title']),
             'slug'         => slugify(!empty($f['slug']) ? $f['slug'] : $f['title']),
+            'meta_title'   => !empty($f['meta_title']) ? trim($f['meta_title']) : null,
+            'meta_description' => !empty($f['meta_description']) ? trim($f['meta_description']) : null,
             'summary'      => !empty($f['summary']) ? trim($f['summary']) : null,
             'content'      => isset($f['content']) ? $f['content'] : null,
             'thumbnail'    => !empty($f['thumbnail']) ? trim($f['thumbnail']) : null,

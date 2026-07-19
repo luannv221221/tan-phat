@@ -105,6 +105,11 @@ class Shop extends Controller {
         $c['reviews']  = $this->__review->getApprovedByPart($pid);
         $c['reviewSummary'] = $this->__review->summary($pid);
         $c['reviewMsg']  = Session::flash('reviewMsg');
+        $descParts = array_filter([$part['name'], $part['brand_name'] ?? '', $part['category_name'] ?? '']);
+        $c['seo'] = [
+            'description' => !empty($part['description']) ? mb_substr(strip_tags($part['description']), 0, 300) : ('Mua ' . implode(' - ', $descParts) . ' chính hãng tại Tân Phát.'),
+            'type'        => 'product',
+        ];
 
         $this->render('layouts/storefront/master', $this->__data);
     }

@@ -287,6 +287,10 @@ Route::group('admin', function(){
    }
    Route::get('leave-requests/set-status/(\d+)', 'admin/leaverequests/setStatus/$1');
 
+   // Cấu hình website (SEO)
+   Route::get('settings', 'admin/settings');
+   Route::post('settings/save', 'admin/settings/save');
+
    Route::get('khong-co-quyen', 'admin/dashboard/noPermission');
 
 });
