@@ -83,8 +83,16 @@ Khi **ghi sổ**, hệ thống tạo 1 **phiếu kế toán** (`acc_vouchers.vou
 - **Vị trí trong kho** (`admin/warehouse-locations`, CRUD): danh mục cây **tối đa 5 cấp** (Khu → Tầng → Kệ → Ngăn → Ô) theo từng kho. `full_path` + `level` tự dựng từ cha; đổi tên/cha tự cập nhật `full_path` nhánh con (`reindexChildren`); xoá cha xoá luôn nhánh con (FK CASCADE). Dropdown chọn cha lọc theo kho bằng JS.
 - **Nối phiếu nhập**: ô "Vị trí" dòng hàng nhập có `<datalist>` gợi ý từ danh mục vị trí đang bật (vẫn lưu text, không phá luồng nhập kho).
 
+## 5c. KHO-3 (nốt) + BÁN HÀNG (nốt) — migration 000032/000035 ✅
+
+- **Biểu đồ biến động tồn** (`admin/bien-dong-ton`): chọn phụ tùng + kho + khoảng ngày → SVG tự chứa (cột nhập xanh/xuất đỏ + đường tồn cuối ngày) + bảng; `StocksModel::getMovementByDay` (tồn đầu kỳ cộng dồn qua mọi kho).
+- **Bắt buộc chọn vị trí phiếu nhập**: ô "Vị trí" đổi từ text → **select** `warehouse_locations` phụ thuộc kho (JS); bắt buộc khi kho đã khai báo vị trí; lưu `location_id` + snapshot `full_path`.
+- **Chiết khấu theo dòng** (báo giá + hoá đơn): `discount_percent`/dòng, `amount = SL×giá×(1−CK%)`; doanh thu/thuế/giá vốn (KT-6) đều theo amount sau CK.
+- **Chiết khấu nhóm KH**: chọn khách thuộc nhóm → tự điền %CK mỗi dòng (JS, `PartnersModel::groupDiscountMap`), NV chỉnh được; `convert` báo giá→HĐ giữ CK.
+- **HĐĐT nội bộ** (`sales_invoices.einvoice_*`): phát hành (ký hiệu/mẫu số/số HĐ tự tăng) + thu hồi + **xuất XML** (cấu trúc tham khảo TT78/NĐ123). **KHÔNG** nối nhà cung cấp HĐĐT (như cổng thanh toán).
+
 ## 6. Hoãn sang đợt sau
 
-- Kho-3 (còn lại): báo cáo đồ thị biến động tồn; ràng buộc chọn vị trí bắt buộc trên phiếu (hiện chỉ gợi ý).
+- Chiết khấu theo tổng đơn (header) · in báo giá/hoá đơn PDF · nối nhà cung cấp HĐĐT thật.
 - Bán hàng: hợp đồng (theo yêu cầu "không cần làm hợp đồng"), chiết khấu dòng, hoá đơn điện tử.
 - TASK_79 (ẩn tồn theo quyền) & TASK_92 (facet) — cần storefront website.

@@ -67,8 +67,14 @@ Bề mặt **công khai** — controller gốc `app/controllers/` (KHÔNG thuộ
 
 - **Polling** (không websocket). `chat_conversations` (theo session_key/member) + `chat_messages` (customer/staff). Widget nổi trong layout storefront (nút 💬 + panel + JS poll 4s + gửi qua `/chat/send`, nhận qua `/chat/poll` JSON). Admin inbox `admin/chat` (danh sách + badge chưa đọc) → xem hội thoại + trả lời + đóng/mở. Nhóm menu CSKH.
 
+## Giữ tồn khi đặt hàng (migration 000036) ✅
+
+- Khách đặt hàng web → `stock_reservations` (giữ tồn theo phụ tùng, chưa trừ tồn thật, chưa sinh bút toán). **Tồn khả dụng bán = tổng tồn − tổng đang giữ** (`StocksModel::sellableByPart`); storefront hiển thị số này cho thành viên (gate TASK_79).
+- **Nhả giữ** khi: tạo hoá đơn từ đơn (`Orders::invoice` — từ đó hoá đơn ghi sổ trừ tồn thật) hoặc huỷ đơn. Trang đơn admin có badge "Đang giữ tồn".
+- Liên hệ + đăng ký bản tin công khai: xem `CSKH_SPEC.md`.
+
 ## Hoãn (không thuộc SRS Phần B chính)
 
-Cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · tự trừ tồn ngay khi đặt (hiện admin bấm tạo+ghi sổ hoá đơn) · webchat websocket real-time (hiện polling).
+Cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · webchat websocket real-time (hiện polling).
 
 > **Storefront Phần B (36 task): về cơ bản đã phủ hết** — sản phẩm/facet/thành viên/giỏ/đặt hàng/đánh giá/tin/dự án/thư viện/menu/SEO/sitemap/thống kê/webchat.
