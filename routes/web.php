@@ -78,6 +78,7 @@ Route::group('admin', function(){
        'news-categories' => 'newscategories',    // Danh mục tin
        'du-an'           => 'projectportfolio',  // Dự án (KHÁC Projects/Mã vụ việc)
        'galleries'       => 'galleries',         // Thư viện ảnh/video
+       'menus'           => 'menus',             // Menu website
    ];
    foreach ($cmsModules as $url => $controller){
        Route::get($url,                 'admin/'.$controller);

@@ -148,3 +148,10 @@ function youtube_id($url){
     }
     return '';
 }
+
+/** URL cho mục menu web: rỗng->trang chủ; http->giữ; else ghép _WEB_URL */
+function nav_url($url){
+    if (empty($url)) return _WEB_URL . '/';
+    if (preg_match('~^https?://~i', $url)) return $url;
+    return _WEB_URL . '/' . ltrim($url, '/');
+}

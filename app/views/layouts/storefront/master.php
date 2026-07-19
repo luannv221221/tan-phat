@@ -2,7 +2,7 @@
 use App\core\Session;
 
 // Dữ liệu dùng chung cho mọi trang storefront (tính ngay trong layout)
-$navCats = $this->model('PartCategoriesModel')->getTree();
+$navMenu = $this->model('MenusModel')->getActiveTree();
 $memberId = Session::get('dataMember');
 $memberName = '';
 if (!empty($memberId)){
@@ -70,8 +70,13 @@ header.main .container{display:flex;align-items:center;gap:20px;padding:14px 16p
 /* nav */
 nav.cats{background:var(--ink)}
 nav.cats .container{display:flex;flex-wrap:wrap;gap:2px}
-nav.cats a{color:#fff;padding:11px 14px;font-size:14px;font-weight:500}
+nav.cats a{color:#fff;padding:11px 14px;font-size:14px;font-weight:500;display:inline-block}
 nav.cats a:hover{background:rgba(255,255,255,.12)}
+nav.cats .has-sub{position:relative;display:inline-block}
+nav.cats .submenu{position:absolute;left:0;top:100%;background:#fff;min-width:190px;box-shadow:0 8px 20px rgba(0,0,0,.15);border-radius:0 0 6px 6px;z-index:20;display:none}
+nav.cats .has-sub:hover .submenu{display:block}
+nav.cats .submenu a{display:block;color:var(--ink);padding:9px 14px;font-weight:400;border-bottom:1px solid #f0f0f0}
+nav.cats .submenu a:hover{background:#f5f6f8;color:var(--brand)}
 /* layout */
 .wrap{display:flex;gap:22px;padding:22px 0;align-items:flex-start}
 .sidebar{width:250px;flex:0 0 250px}
@@ -155,19 +160,22 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
 </div></header>
 
 <nav class="cats"><div class="container">
-    <a href="<?php echo _WEB_URL; ?>/san-pham">Tất cả</a>
     <?php
-    $shown = 0;
-    foreach ($navCats as $c){
-        if ((int) $c['depth'] !== 0) continue;      // chỉ danh mục gốc
-        if ($shown++ >= 8) break;
-        echo '<a href="'._WEB_URL.'/san-pham?category[]='.(int)$c['id'].'">'.e($c['name']).'</a>';
+    foreach ($navMenu as $m){
+        $children = !empty($m['children']) ? $m['children'] : [];
+        $tgt = ($m['target'] === '_blank') ? ' target="_blank"' : '';
+        if (empty($children)){
+            echo '<a href="'.e(nav_url($m['url'])).'"'.$tgt.'>'.e($m['label']).'</a>';
+        } else {
+            echo '<div class="has-sub"><a href="'.e(nav_url($m['url'])).'"'.$tgt.'>'.e($m['label']).' ▾</a><div class="submenu">';
+            foreach ($children as $ch){
+                $ctgt = ($ch['target'] === '_blank') ? ' target="_blank"' : '';
+                echo '<a href="'.e(nav_url($ch['url'])).'"'.$ctgt.'>'.e($ch['label']).'</a>';
+            }
+            echo '</div></div>';
+        }
     }
     ?>
-    <a href="<?php echo _WEB_URL; ?>/san-pham?promo=1">🔥 Khuyến mãi</a>
-    <a href="<?php echo _WEB_URL; ?>/du-an">Dự án</a>
-    <a href="<?php echo _WEB_URL; ?>/thu-vien">Thư viện</a>
-    <a href="<?php echo _WEB_URL; ?>/tin-tuc">Tin tức</a>
 </div></nav>
 
 <main class="container">

@@ -53,6 +53,11 @@ Bề mặt **công khai** — controller gốc `app/controllers/` (KHÔNG thuộ
 - **Thư viện** (`admin/galleries` → `thu-vien`, `thu-vien/<slug>`): album (`galleries`) + ảnh/video (`gallery_items`). Admin: CRUD album + upload nhiều ảnh + thêm video YouTube (helper `youtube_id`) + xoá item. Storefront: lưới album → chi tiết (ảnh lightbox + video nhúng youtube-nocookie). Nav web thêm "Thư viện".
 - **sitemap.xml** (`Sitemap` controller): XML động từ trang tĩnh + sản phẩm/tin/dự án/thư viện đã đăng.
 
+## Menu website động (đã làm — migration 000027, TASK_105-108)
+
+- `menus` (cây cha-con 1 cấp: label/url/target/sort/status), seed 6 mục (Trang chủ/Sản phẩm/Khuyến mãi/Dự án/Thư viện/Tin tức). Admin `admin/menus` CRUD (list cây, dropdown chọn cha).
+- Storefront nav render động từ `MenusModel::getActiveTree()` (thay nav hardcode), có **dropdown submenu** (CSS hover). Helper `nav_url()`.
+
 ## Hoãn (các đợt web sau)
 
-Quản lý menu CMS (105–108) · thống kê truy cập (109–111) · webchat/hotline (112–113) · cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · tự trừ tồn ngay khi đặt (hiện admin bấm tạo+ghi sổ hoá đơn).
+Thống kê truy cập (109–111) · webchat/hotline (112–113) · cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · tự trừ tồn ngay khi đặt (hiện admin bấm tạo+ghi sổ hoá đơn).
