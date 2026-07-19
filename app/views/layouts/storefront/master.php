@@ -161,7 +161,7 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
 <body>
 
 <div class="topbar"><div class="container">
-    <span><i>☎</i> Hotline: <?php echo e(!empty($settings['hotline']) ? $settings['hotline'] : '1900 0000'); ?> — <?php echo e(!empty($settings['site_slogan']) ? $settings['site_slogan'] : 'Phụ tùng & thiết bị gara ô tô'); ?></span>
+    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Hotline: <?php echo e(!empty($settings['hotline']) ? $settings['hotline'] : '1900 0000'); ?> — <?php echo e(!empty($settings['site_slogan']) ? $settings['site_slogan'] : 'Phụ tùng & thiết bị gara ô tô'); ?></span>
     <span>
         <?php if (!empty($memberName)): ?>
             Xin chào, <b><?php echo e($memberName); ?></b> · <a href="<?php echo _WEB_URL; ?>/thanh-vien">Tài khoản</a> · <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-xuat">Đăng xuất</a>
@@ -179,7 +179,7 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
     </form>
     <div class="hdr-actions">
         <a href="<?php echo _WEB_URL; ?>/thanh-vien" class="lbl">👤 <?php echo e(!empty($memberName) ? 'Tài khoản' : 'Thành viên'); ?></a>
-        <a href="<?php echo _WEB_URL; ?>/gio-hang" class="cart">🛒 <span class="lbl">Giỏ</span><span class="count"><?php echo e((int) $cartCount); ?></span></a>
+        <a href="<?php echo _WEB_URL; ?>/gio-hang" class="cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> <span class="lbl">Giỏ</span><span class="count"><?php echo e((int) $cartCount); ?></span></a>
     </div>
 </div></header>
 
@@ -235,7 +235,7 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
     </div>
 </div></footer>
 
-<button id="cw-btn" title="Chat hỗ trợ">💬</button>
+<button id="cw-btn" title="Chat hỗ trợ"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
 <div id="cw-panel">
     <div id="cw-head">Hỗ trợ trực tuyến<small>Tân Phát thường trả lời trong ít phút</small></div>
     <div id="cw-msgs"></div>
