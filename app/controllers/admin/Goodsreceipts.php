@@ -53,6 +53,8 @@ class Goodsreceipts extends Controller {
         $this->__data['content']['partners']   = $this->__partner->getActive();
         $this->__data['content']['parts']      = $this->__part->getForSelect();
         $this->__data['content']['accounts']   = $this->__accModel->getDetailAccounts();
+        // KHO-3: gợi ý vị trí trong kho (datalist) cho ô "Vị trí" dòng hàng
+        $this->__data['content']['locations']  = $this->model('WarehouseLocationsModel')->getActivePaths();
     }
 
     public function index(){

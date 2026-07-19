@@ -214,6 +214,58 @@ class StocksModel extends Model {
     }
 
     /**
+     * KHO-3 — Hàng tồn lâu: mỗi dòng tồn (qty>0) kèm NGÀY PHÁT SINH GẦN NHẤT
+     * và số ngày nằm kho tới $asOf. Lọc theo kho + ngưỡng tồn tối thiểu $minDays.
+     * @return array các dòng, đã sắp số ngày giảm dần.
+     */
+    public function getAging($warehouseId = 0, $minDays = 0, $asOf = null){
+        $asOf = $asOf ?: date('Y-m-d');
+
+        $rows = $this->getStockList($warehouseId, '');
+        $out = [];
+        foreach ($rows ?: [] as $r){
+            $qty = (float) $r['quantity'];
+            if ($qty <= 0) continue;
+
+            // Ngày phát sinh gần nhất của (kho, phụ tùng)
+            $last = $this->table('stock_cards')
+                ->select('`move_date`')
+                ->where('warehouse_id', '=', (int) $r['warehouse_id'])
+                ->where('part_id', '=', (int) $r['part_id'])
+                ->orderBy('move_date', 'DESC')
+                ->orderBy('id', 'DESC')->first();
+
+            $lastDate = !empty($last) ? $last['move_date'] : null;
+            $days = ($lastDate !== null) ? $this->daysBetween($lastDate, $asOf) : null;
+            if ($days !== null && $days < 0) $days = 0;
+
+            if ($minDays > 0 && ($days === null || $days < $minDays)) continue;
+
+            $r['last_move_date'] = $lastDate;
+            $r['days_idle']      = $days;
+            $r['value']          = round($qty * (float) $r['avg_cost'], 2);
+            $out[] = $r;
+        }
+
+        usort($out, function($a, $b){
+            return ($b['days_idle'] ?? -1) <=> ($a['days_idle'] ?? -1);
+        });
+        return $out;
+    }
+
+    /** Số ngày lịch giữa 2 mốc (chỉ tính phần ngày, tránh lệch do DST) */
+    private function daysBetween($fromDate, $toDate){
+        try {
+            $d1 = new \DateTime(substr($fromDate, 0, 10));
+            $d2 = new \DateTime(substr($toDate, 0, 10));
+        } catch (\Exception $e){
+            return null;
+        }
+        $days = (int) $d1->diff($d2)->days;
+        return ($d2 < $d1) ? -$days : $days;
+    }
+
+    /**
      * Số dư (số lượng, giá trị) của phụ tùng NGAY TRƯỚC ngày $from — cho tồn đầu kỳ
      * của báo cáo thẻ kho. Lấy thẻ cuối cùng có move_date < $from.
      */

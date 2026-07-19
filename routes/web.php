@@ -221,6 +221,15 @@ Route::group('admin', function(){
    Route::get('stock-takes/post/(\d+)',   'admin/stocktakes/post/$1');
    Route::get('stock-takes/unpost/(\d+)', 'admin/stocktakes/unpost/$1');
 
+   // KHO-3: vị trí trong kho (cây tối đa 5 cấp) + báo cáo hàng tồn lâu (chỉ xem)
+   Route::get('warehouse-locations',              'admin/warehouselocations');
+   Route::get('warehouse-locations/add',          'admin/warehouselocations/add');
+   Route::post('warehouse-locations/add',         'admin/warehouselocations/postAdd');
+   Route::get('warehouse-locations/edit/(\d+)',   'admin/warehouselocations/edit/$1');
+   Route::post('warehouse-locations/edit/(\d+)',  'admin/warehouselocations/postEdit/$1');
+   Route::get('warehouse-locations/delete/(\d+)', 'admin/warehouselocations/delete/$1');
+   Route::get('ton-kho-lau', 'admin/tonkholau');
+
    /* =========================================================
     * BÁN HÀNG (SAL) — khép vòng doanh thu + công nợ khách
     *
@@ -265,6 +274,11 @@ Route::group('admin', function(){
    }
    // Phiếu bảo hành: đổi trạng thái
    Route::get('warranty/set-status/(\d+)', 'admin/warranty/setStatus/$1');
+   // CSKH-2: biên bản giao nhận thiết bị (lập / in / xoá) — dùng chung quyền warranty
+   Route::get('warranty/handover-add/(\d+)',    'admin/warranty/handoverAdd/$1');
+   Route::post('warranty/handover-store/(\d+)', 'admin/warranty/handoverStore/$1');
+   Route::get('warranty/handover-print/(\d+)',  'admin/warranty/handoverPrint/$1');
+   Route::get('warranty/handover-delete/(\d+)', 'admin/warranty/handoverDelete/$1');
    // Lịch bảo hành + Báo cáo CSKH (chỉ xem)
    Route::get('lich-bao-hanh', 'admin/warrantyschedule');
    Route::get('bao-cao-cskh',  'admin/cskhreport');

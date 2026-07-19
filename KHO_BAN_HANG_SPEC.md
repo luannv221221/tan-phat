@@ -77,8 +77,14 @@ Khi **ghi sổ**, hệ thống tạo 1 **phiếu kế toán** (`acc_vouchers.vou
 
 - Tựa lên `StocksModel` (applyIn/applyOut/reverseDoc/isLastMovement). Huỷ ghi sổ chỉ khi là phát sinh cuối (bình quân gia quyền). Bổ sung TK 711.
 
+## 5b. KHO-3 — Hàng tồn lâu + Vị trí nhiều cấp (migration 000030) ✅
+
+- **Hàng tồn lâu** (`admin/ton-kho-lau`, chỉ xem): mỗi dòng tồn (SL>0) kèm **ngày phát sinh gần nhất** (từ `stock_cards`) và **số ngày nằm kho** tới ngày báo cáo. Lọc theo kho + ngưỡng ngày tối thiểu (mặc định 90) + ngày chốt. Gộp theo dải tuổi 0–30 / 31–90 / 91–180 / 181–365 / >365 (thẻ tổng hợp SL mã + giá trị). `StocksModel::getAging()`; số ngày tính bằng `DateTime::diff` (chuẩn lịch, không lệch DST).
+- **Vị trí trong kho** (`admin/warehouse-locations`, CRUD): danh mục cây **tối đa 5 cấp** (Khu → Tầng → Kệ → Ngăn → Ô) theo từng kho. `full_path` + `level` tự dựng từ cha; đổi tên/cha tự cập nhật `full_path` nhánh con (`reindexChildren`); xoá cha xoá luôn nhánh con (FK CASCADE). Dropdown chọn cha lọc theo kho bằng JS.
+- **Nối phiếu nhập**: ô "Vị trí" dòng hàng nhập có `<datalist>` gợi ý từ danh mục vị trí đang bật (vẫn lưu text, không phá luồng nhập kho).
+
 ## 6. Hoãn sang đợt sau
 
-- Kho-3: hàng tồn lâu (WH-12), báo cáo đồ thị biến động; phân cấp kho 5 tầng.
+- Kho-3 (còn lại): báo cáo đồ thị biến động tồn; ràng buộc chọn vị trí bắt buộc trên phiếu (hiện chỉ gợi ý).
 - Bán hàng: hợp đồng (theo yêu cầu "không cần làm hợp đồng"), chiết khấu dòng, hoá đơn điện tử.
 - TASK_79 (ẩn tồn theo quyền) & TASK_92 (facet) — cần storefront website.

@@ -31,6 +31,51 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
     </div>
 </div>
 
+<div class="card card-outline card-info">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-file-signature mr-2"></i>Biên bản giao nhận thiết bị</h3>
+        <div class="card-tools">
+            @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
+            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/handover-add/'.$item['id'].'?type=receive'}}" class="btn btn-sm btn-outline-info"><i class="fas fa-arrow-down mr-1"></i> BB nhận thiết bị</a>
+            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/handover-add/'.$item['id'].'?type=return'}}" class="btn btn-sm btn-outline-success"><i class="fas fa-arrow-up mr-1"></i> BB trả thiết bị</a>
+            @endif
+        </div>
+    </div>
+    <div class="card-body table-responsive p-0">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr>
+                    <th style="width:130px">Số BB</th>
+                    <th>Loại</th>
+                    <th style="width:110px">Ngày</th>
+                    <th>Bên giao → Bên nhận</th>
+                    <th style="width:120px" class="text-center">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (!empty($handovers))
+                @foreach ($handovers as $h)
+                <tr>
+                    <td><code>{{$h['handover_no']}}</code></td>
+                    <td>{!! $h['type']==='return' ? '<span class="badge badge-success">Trả thiết bị</span>' : '<span class="badge badge-info">Nhận thiết bị</span>' !!}</td>
+                    <td>{{$h['handover_date']}}</td>
+                    <td class="text-muted small">{{!empty($h['deliverer'])?$h['deliverer']:'—'}} → {{!empty($h['receiver'])?$h['receiver']:'—'}}</td>
+                    <td class="text-center">
+                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/handover-print/'.$h['id']}}" target="_blank" class="btn btn-sm btn-outline-primary" title="In"><i class="fas fa-print"></i></a>
+                        @if (route('admin/'.$routeBase.'/delete/'.$item['id']))
+                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/handover-delete/'.$h['id']}}" onclick="return confirm('Xoá biên bản này?')" class="btn btn-sm btn-outline-danger" title="Xoá"><i class="fas fa-trash"></i></a>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            @else
+                <tr><td colspan="5" class="text-center text-muted py-3">Chưa có biên bản. Bấm <b>BB nhận thiết bị</b> khi tiếp nhận, <b>BB trả thiết bị</b> khi hoàn tất.</td></tr>
+            @endif
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <form action="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" method="post">
     <?php echo csrf_field(); ?>
     <div class="card"><div class="card-body">

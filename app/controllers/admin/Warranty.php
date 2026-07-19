@@ -11,7 +11,7 @@ use App\core\Session;
 class Warranty extends Controller {
 
     private $__data = [];
-    private $__model, $__partner, $__part, $__request, $__response;
+    private $__model, $__partner, $__part, $__handover, $__request, $__response;
 
     private $routeBase = 'warranty';
     private $labelOne  = 'phiếu bảo hành';
@@ -22,6 +22,7 @@ class Warranty extends Controller {
         $this->__model    = $this->model('WarrantyRequestsModel');
         $this->__partner  = $this->model('PartnersModel');
         $this->__part     = $this->model('PartsModel');
+        $this->__handover = $this->model('WarrantyHandoversModel');
         $this->__request  = new Request();
         $this->__response = new Response();
     }
@@ -104,6 +105,8 @@ class Warranty extends Controller {
         $this->formData();
         $this->__data['content']['page_name'] = 'Phiếu ' . $item['request_no'];
         $this->__data['content']['item']      = $item;
+        $this->__data['content']['handovers'] = $this->__handover->getByWarranty($id);
+        $this->__data['content']['handoverTypes'] = WarrantyHandoversModel::$types;
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['errors']    = Session::flash('errors');
         $this->__data['content']['old']       = Session::flash('old');
@@ -156,6 +159,130 @@ class Warranty extends Controller {
         $this->__model->remove($id);
         Session::flash('msg', 'Xoá ' . $this->labelOne . ' thành công');
         $this->__response->redirect('admin/' . $this->routeBase);
+    }
+
+    // ===== CSKH-2: Biên bản giao nhận thiết bị =====
+
+    /** Kiểm tra quyền thao tác trên phiếu (dùng chung quyền edit warranty) */
+    private function canManage($id){
+        return (bool) route('admin/' . $this->routeBase . '/edit/' . $id);
+    }
+
+    /** Thông tin khách + thiết bị để dựng biên bản */
+    private function handoverContext($item){
+        $customer = !empty($item['customer_name']) ? $item['customer_name'] : '';
+        $phone    = !empty($item['phone']) ? $item['phone'] : '';
+        if (!empty($item['partner_id'])){
+            $pn = $this->__partner->getDetail((int) $item['partner_id']);
+            if (!empty($pn)){
+                if ($customer === '') $customer = $pn['name'];
+                if ($phone === '' && !empty($pn['phone'])) $phone = $pn['phone'];
+            }
+        }
+        $product = !empty($item['product_name']) ? $item['product_name'] : '';
+        if ($product === '' && !empty($item['part_id'])){
+            $pt = $this->__part->getDetail((int) $item['part_id']);
+            if (!empty($pt)) $product = $pt['name'];
+        }
+        return ['customer' => $customer, 'phone' => $phone, 'product' => $product];
+    }
+
+    /** Form lập biên bản (type = receive | return) */
+    public function handoverAdd($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (!$this->canManage($id)){ $this->__response->redirect('admin/khong-co-quyen'); return; }
+
+        $f = $this->__request->getFields();
+        $type = (isset($f['type']) && isset(WarrantyHandoversModel::$types[$f['type']])) ? $f['type'] : 'receive';
+
+        $this->__data['sub_content'] = $this->viewDir . '/handover-add';
+        $this->__data['page_title']  = 'Lập biên bản giao nhận';
+        $this->baseData();
+        $this->__data['content']['page_name'] = 'Biên bản giao nhận — phiếu ' . $item['request_no'];
+        $this->__data['content']['item']      = $item;
+        $this->__data['content']['type']       = $type;
+        $this->__data['content']['typeLabel']  = WarrantyHandoversModel::$types[$type];
+        $this->__data['content']['ctx']        = $this->handoverContext($item);
+        $this->__data['content']['today']      = date('Y-m-d');
+        $this->__data['content']['errors']     = Session::flash('errors');
+        $this->__data['content']['old']        = Session::flash('old');
+        $this->render('layouts/admin/master_admin', $this->__data);
+    }
+
+    /** Lưu biên bản */
+    public function handoverStore($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (!$this->canManage($id)){ $this->__response->redirect('admin/khong-co-quyen'); return; }
+
+        $f = $this->__request->getFields();
+        $type = (isset($f['type']) && isset(WarrantyHandoversModel::$types[$f['type']])) ? $f['type'] : 'receive';
+
+        $errors = [];
+        if (empty($f['handover_date'])) $errors['handover_date'] = 'Chọn ngày lập biên bản';
+        if (!empty($errors)){
+            Session::flash('errors', $errors);
+            Session::flash('old', $f);
+            $this->__response->redirect('admin/' . $this->routeBase . '/handover-add/' . $id . '?type=' . $type);
+            return;
+        }
+
+        $hid = $this->__handover->add([
+            'handover_no'    => $this->__handover->nextNo(),
+            'warranty_id'    => (int) $id,
+            'type'           => $type,
+            'handover_date'  => $f['handover_date'],
+            'deliverer'      => !empty($f['deliverer']) ? trim($f['deliverer']) : null,
+            'receiver'       => !empty($f['receiver']) ? trim($f['receiver']) : null,
+            'accessories'    => !empty($f['accessories']) ? trim($f['accessories']) : null,
+            'condition_note' => !empty($f['condition_note']) ? trim($f['condition_note']) : null,
+            'note'           => !empty($f['note']) ? trim($f['note']) : null,
+            'created_by'     => Session::get('dataUser'),
+        ]);
+
+        Session::flash('msg', 'Đã lập biên bản giao nhận ' . $this->__handover->getDetail($hid)['handover_no']);
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
+    }
+
+    /** Bản in A4 (trang độc lập, không layout admin) */
+    public function handoverPrint($hid){
+        $h = $this->__handover->getDetail($hid);
+        if (empty($h)){ echo 'Không tìm thấy biên bản'; return; }
+        $item = $this->__model->getDetail($h['warranty_id']);
+        if (empty($item)){ echo 'Không tìm thấy phiếu bảo hành'; return; }
+        if (!$this->canManage($h['warranty_id'])){ $this->__response->redirect('admin/khong-co-quyen'); return; }
+
+        $settings = $this->model('SettingsModel');
+
+        $this->render($this->viewDir . '/handover-print', [
+            'h'         => $h,
+            'item'      => $item,
+            'typeLabel' => isset(WarrantyHandoversModel::$types[$h['type']]) ? WarrantyHandoversModel::$types[$h['type']] : $h['type'],
+            'ctx'       => $this->handoverContext($item),
+            'company'   => $settings ? $settings->val('site_name', 'CÔNG TY TÂN PHÁT') : 'CÔNG TY TÂN PHÁT',
+            'address'   => $settings ? $settings->val('contact_address', '') : '',
+            'phone'     => $settings ? $settings->val('contact_phone', '') : '',
+        ]);
+    }
+
+    /** Xoá biên bản */
+    public function handoverDelete($hid){
+        $h = $this->__handover->getDetail($hid);
+        if (empty($h)){
+            Session::flash('msgError', 'Không tìm thấy biên bản');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (!$this->canManage($h['warranty_id'])){ $this->__response->redirect('admin/khong-co-quyen'); return; }
+        $this->__handover->remove($hid);
+        Session::flash('msg', 'Đã xoá biên bản giao nhận');
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $h['warranty_id']);
     }
 
     // ===== Helper =====

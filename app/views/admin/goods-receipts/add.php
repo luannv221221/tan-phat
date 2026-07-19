@@ -20,6 +20,11 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
 }
 $selType = !empty($old['type']) ? $old['type'] : 'nhap_mua';
 ?>
+<datalist id="loc-list">
+    @foreach ($locations as $loc)
+    <option value="{{$loc['full_path']}}">{{$loc['warehouse_code']}}</option>
+    @endforeach
+</datalist>
 <form action="" method="post">
     <?php echo csrf_field(); ?>
 
@@ -167,7 +172,7 @@ $selType = !empty($old['type']) ? $old['type'] : 'nhap_mua';
         tr.appendChild(amtTd);
 
         var wrap = document.createElement('div'); wrap.className='d-flex';
-        var loc = inp('line_loc[]', 'mr-1', data.location); loc.placeholder='Vị trí'; loc.style.maxWidth='90px';
+        var loc = inp('line_loc[]', 'mr-1', data.location); loc.placeholder='Vị trí'; loc.style.maxWidth='120px'; loc.setAttribute('list','loc-list');
         var note = inp('line_note[]', '', data.note); note.placeholder='Ghi chú';
         wrap.appendChild(loc); wrap.appendChild(note);
         tr.appendChild(td(wrap));
