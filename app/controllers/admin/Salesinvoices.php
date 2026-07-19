@@ -388,8 +388,8 @@ class Salesinvoices extends Controller {
         $x = function($v){ return htmlspecialchars((string) $v, ENT_XML1 | ENT_QUOTES, 'UTF-8'); };
         $sellerName = $this->__settings->val('site_name', 'CÔNG TY TÂN PHÁT');
         $sellerTax  = $this->__settings->val('tax_code', '');
-        $sellerAddr = $this->__settings->val('contact_address', '');
-        $sellerTel  = $this->__settings->val('contact_phone', '');
+        $sellerAddr = $this->__settings->val('address', '');
+        $sellerTel  = $this->__settings->val('hotline', '');
         $buyerName  = !empty($item['customer_name']) ? $item['customer_name'] : 'Khách lẻ';
 
         $lines = '';

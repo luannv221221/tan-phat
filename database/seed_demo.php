@@ -62,10 +62,12 @@ $whId = idOf($db,'warehouses','code','KHO01');
 // ---------- 1) Cấu hình website ----------
 $settings = [
     'site_name' => 'Công ty TNHH Phụ tùng Ô tô Tân Phát',
-    'slogan' => 'Phụ tùng & thiết bị gara ô tô chính hãng',
+    'site_slogan' => 'Phụ tùng & thiết bị gara ô tô chính hãng',
+    'meta_description' => 'Tân Phát - nhà cung cấp phụ tùng và thiết bị gara ô tô chính hãng. Tư vấn tương thích theo hãng, model, đời xe.',
+    'meta_keywords' => 'phụ tùng ô tô, thiết bị gara, má phanh, lọc dầu, ắc quy, Tân Phát',
     'hotline' => '1900 6363', 'email' => 'info@tanphat.vn',
-    'contact_phone' => '024 3555 8888',
-    'contact_address' => 'Số 88 Nguyễn Văn Cừ, Long Biên, Hà Nội',
+    'address' => 'Số 88 Nguyễn Văn Cừ, Long Biên, Hà Nội',
+    'facebook' => 'https://facebook.com/tanphat.auto', 'zalo' => '1900 6363',
     'tax_code' => '0101234567',
     'bank_name' => 'Vietcombank - CN Hà Nội', 'bank_account' => '0011000123456',
     'bank_holder' => 'CONG TY TNHH PHU TUNG O TO TAN PHAT',

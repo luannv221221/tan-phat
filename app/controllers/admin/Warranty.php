@@ -267,8 +267,8 @@ class Warranty extends Controller {
             'typeLabel' => isset(WarrantyHandoversModel::$types[$h['type']]) ? WarrantyHandoversModel::$types[$h['type']] : $h['type'],
             'ctx'       => $this->handoverContext($item),
             'company'   => $settings ? $settings->val('site_name', 'CÔNG TY TÂN PHÁT') : 'CÔNG TY TÂN PHÁT',
-            'address'   => $settings ? $settings->val('contact_address', '') : '',
-            'phone'     => $settings ? $settings->val('contact_phone', '') : '',
+            'address'   => $settings ? $settings->val('address', '') : '',
+            'phone'     => $settings ? $settings->val('hotline', '') : '',
         ]);
     }
 
