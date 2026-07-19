@@ -268,6 +268,25 @@ Route::group('admin', function(){
    Route::get('reviews/hide/(\d+)',    'admin/reviews/hide/$1');
    Route::get('reviews/delete/(\d+)',  'admin/reviews/delete/$1');
 
+   /* =========================================================
+    * NHÂN SỰ (HR) — phòng ban + chức vụ + nhân viên + nghỉ phép
+    * ========================================================= */
+   $hrModules = [
+       'departments'    => 'departments',
+       'positions'      => 'positions',
+       'employees'      => 'employees',
+       'leave-requests' => 'leaverequests',
+   ];
+   foreach ($hrModules as $url => $controller){
+       Route::get($url,                 'admin/'.$controller);
+       Route::get($url.'/add',          'admin/'.$controller.'/add');
+       Route::post($url.'/add',         'admin/'.$controller.'/postAdd');
+       Route::get($url.'/edit/(\d+)',   'admin/'.$controller.'/edit/$1');
+       Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
+       Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
+   }
+   Route::get('leave-requests/set-status/(\d+)', 'admin/leaverequests/setStatus/$1');
+
    Route::get('khong-co-quyen', 'admin/dashboard/noPermission');
 
 });
