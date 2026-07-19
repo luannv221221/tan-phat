@@ -177,6 +177,7 @@ Trên Windows thường Apache ghi được sẵn. Nếu bị lỗi ghi: chuột
 | Tiếng Việt lỗi font | Import không đúng utf8mb4 → import lại bằng lệnh CLI có `--default-character-set=utf8mb4`. |
 | Trang trắng, không log | Tạm đặt `APP_DEBUG=true`, xem lỗi, sửa xong đặt lại `false`. Log ở `public/logs/errors/`. |
 | Không kết nối được DB | Sai `DB_USER/DB_PASS/DB_HOST` trong `.env`, hoặc user chưa được `GRANT` trên `tanphat_php`. |
+| `#1273 Unknown collation: 'utf8mb4_0900_ai_ci'` khi import + thiếu bảng | Dump tạo từ **MySQL 8** nhưng server dùng **MariaDB** (XAMPP mặc định). Dùng bản dump đã đổi collation về `utf8mb4_unicode_ci` (đã xử lý trong `deploy/tanphat_php.sql`). Nếu tự dump lại, thêm: `... \| sed "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" > file.sql`. |
 
 ---
 
