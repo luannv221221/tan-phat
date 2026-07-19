@@ -40,6 +40,13 @@ Bề mặt **công khai** — controller gốc `app/controllers/` (KHÔNG thuộ
 - **Upload ảnh**: helper `upload_image()` + `media_url()`; gắn vào tin/dự án (thumbnail), products đã có gallery TASK_77.
 - **SEO** (TASK_97–103): `site_settings` (key-value) + màn `admin/settings` (Cấu hình website: tên/slogan/meta/OG image/liên hệ). Storefront layout render động `<title>`, meta description/keywords, canonical, Open Graph + Twitter card. Tin/dự án có `meta_title`/`meta_description` riêng; trang chi tiết SP/tin/dự án truyền `$content['seo']` (description/image/type) → layout ưu tiên, fallback site defaults. Footer/topbar dùng hotline/email/địa chỉ từ cấu hình.
 
+## Đặt hàng online (đã làm — migration 000024)
+
+- **Luồng an toàn**: giỏ hàng → `dat-hang` (checkout: tên/SĐT/địa chỉ/thanh toán) → tạo `orders`+`order_items` → `dat-hang/hoan-tat` (mã đơn + **hướng dẫn chuyển khoản** từ cấu hình, hoặc COD). KHÔNG cổng thẻ thật.
+- Thanh toán: **chuyển khoản** / **COD**. Thông tin ngân hàng ở `site_settings` (bank_name/account/holder), sửa ở màn Cấu hình.
+- Admin `orders`: danh sách (badge đơn mới) + chi tiết + luồng trạng thái Mới→Xác nhận→Đang giao→Hoàn tất/Huỷ. Nhóm menu "Bán hàng".
+- Giỏ vẫn giữ song song nút "Gửi yêu cầu báo giá" (tạo quotation).
+
 ## Hoãn (các đợt web sau)
 
-Quản lý menu (105–108) · thống kê truy cập (109–111) · webchat/hotline (112–113) · video/thư viện ảnh · **thanh toán online** (TASK_96 — cổng thanh toán thật liên quan tiền/credential, chỉ nên làm luồng đặt hàng + chuyển khoản) · giỏ hàng lưu DB · sitemap.xml.
+Quản lý menu (105–108) · thống kê truy cập (109–111) · webchat/hotline (112–113) · video/thư viện ảnh · cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · sitemap.xml · trừ tồn kho khi đặt (hiện đơn chỉ ghi nhận, chưa liên thông kho/hoá đơn).

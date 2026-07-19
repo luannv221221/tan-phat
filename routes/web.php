@@ -287,6 +287,12 @@ Route::group('admin', function(){
    }
    Route::get('leave-requests/set-status/(\d+)', 'admin/leaverequests/setStatus/$1');
 
+   // Đơn hàng (storefront)
+   Route::get('orders', 'admin/orders');
+   Route::get('orders/edit/(\d+)', 'admin/orders/edit/$1');
+   Route::get('orders/set-status/(\d+)', 'admin/orders/setStatus/$1');
+   Route::get('orders/delete/(\d+)', 'admin/orders/delete/$1');
+
    // Cấu hình website (SEO)
    Route::get('settings', 'admin/settings');
    Route::post('settings/save', 'admin/settings/save');
@@ -320,6 +326,11 @@ Route::post('gio-hang/cap-nhat', 'cart/update');
 Route::get('gio-hang/xoa/(\d+)', 'cart/remove/$1');
 Route::post('gio-hang/gui', 'cart/submit');
 Route::get('gio-hang/hoan-tat', 'cart/done');
+
+// Đặt hàng (chuyển khoản / COD — không cổng thẻ)
+Route::get('dat-hang', 'cart/checkout');
+Route::post('dat-hang', 'cart/placeOrder');
+Route::get('dat-hang/hoan-tat', 'cart/orderDone');
 
 // CMS công khai: Tin tức + Dự án
 Route::get('tin-tuc', 'tintuc/index');

@@ -43,7 +43,11 @@
     </div>
 
     <aside class="sidebar" style="width:320px;flex:0 0 320px">
-        <div class="card"><div class="hd">Gửi yêu cầu báo giá</div><div class="bd">
+        <div class="card" style="margin-bottom:16px"><div class="bd tc">
+            <div class="muted" style="margin-bottom:8px">Mua ngay với giá niêm yết</div>
+            <a class="btn btn-brand" href="{{_WEB_URL.'/dat-hang'}}" style="width:100%;font-size:16px;padding:11px">🛍 Đặt hàng ngay</a>
+        </div></div>
+        <div class="card"><div class="hd">Hoặc gửi yêu cầu báo giá</div><div class="bd">
             <form method="post" action="{{_WEB_URL.'/gio-hang/gui'}}">
                 <?php echo csrf_field(); ?>
                 <div class="fld" style="margin-bottom:12px">

@@ -12,13 +12,16 @@ use App\core\Session;
 class Cart extends Controller {
 
     private $__data = [];
-    private $__part, $__quote, $__quoteItem, $__member, $__request, $__response;
+    private $__part, $__quote, $__quoteItem, $__member, $__order, $__orderItem, $__settings, $__request, $__response;
 
     function __construct(){
         $this->__part      = $this->model('PartsModel');
         $this->__quote     = $this->model('QuotationsModel');
         $this->__quoteItem = $this->model('QuotationItemsModel');
         $this->__member    = $this->model('MembersModel');
+        $this->__order     = $this->model('OrdersModel');
+        $this->__orderItem = $this->model('OrderItemsModel');
+        $this->__settings  = $this->model('SettingsModel');
         $this->__request   = new Request();
         $this->__response  = new Response();
     }
@@ -146,6 +149,86 @@ class Cart extends Controller {
         $this->__data['sub_content'] = 'storefront/cart_done';
         $this->__data['page_title']  = 'Đã gửi yêu cầu báo giá';
         $this->__data['content']['quoteNo'] = Session::flash('lastQuoteNo');
+        $this->render('layouts/storefront/master', $this->__data);
+    }
+
+    // ================= ĐẶT HÀNG =================
+
+    public function checkout(){
+        $data = $this->buildRows($this->getCart());
+        if (empty($data['rows'])){
+            Session::flash('errors', ['cart' => 'Giỏ hàng trống']);
+            $this->__response->redirect('gio-hang'); return;
+        }
+        $memberId = Session::get('dataMember');
+        $this->__data['sub_content'] = 'storefront/checkout';
+        $this->__data['page_title']  = 'Đặt hàng';
+        $c = &$this->__data['content'];
+        $c['rows']     = $data['rows'];
+        $c['total']    = $data['total'];
+        $c['member']   = !empty($memberId) ? $this->__member->getDetail($memberId) : null;
+        $c['payments'] = OrdersModel::$payments;
+        $c['errors']   = Session::flash('errors');
+        $c['old']      = Session::flash('old');
+        $this->render('layouts/storefront/master', $this->__data);
+    }
+
+    public function placeOrder(){
+        $data = $this->buildRows($this->getCart());
+        if (empty($data['rows'])){
+            Session::flash('errors', ['cart' => 'Giỏ hàng trống']);
+            $this->__response->redirect('gio-hang'); return;
+        }
+
+        $f = $this->__request->getFields();
+        $name    = !empty($f['name']) ? trim($f['name']) : '';
+        $phone   = !empty($f['phone']) ? trim($f['phone']) : '';
+        $address = !empty($f['address']) ? trim($f['address']) : '';
+        $pay     = (!empty($f['payment_method']) && isset(OrdersModel::$payments[$f['payment_method']])) ? $f['payment_method'] : 'bank_transfer';
+
+        $errors = [];
+        if ($name === '')    $errors['name'] = 'Nhập họ tên';
+        if ($phone === '')   $errors['phone'] = 'Nhập số điện thoại';
+        if ($address === '') $errors['address'] = 'Nhập địa chỉ nhận hàng';
+        if (!empty($errors)){
+            Session::flash('errors', $errors);
+            Session::flash('old', $f);
+            $this->__response->redirect('dat-hang'); return;
+        }
+
+        $memberId = Session::get('dataMember');
+        $orderId = $this->__order->add([
+            'order_no'       => $this->__order->nextNo(),
+            'member_id'      => !empty($memberId) ? (int) $memberId : null,
+            'customer_name'  => $name,
+            'phone'          => $phone,
+            'email'          => !empty($f['email']) ? trim($f['email']) : null,
+            'address'        => $address,
+            'note'           => !empty($f['note']) ? trim($f['note']) : null,
+            'payment_method' => $pay,
+            'subtotal'       => 0,
+            'total_amount'   => 0,
+            'status'         => 'new',
+        ]);
+        $total = $this->__orderItem->syncForOrder($orderId, $data['rows']);
+        $this->__order->edit(['subtotal' => $total, 'total_amount' => $total], $orderId);
+
+        Session::remove('cart');
+        $order = $this->__order->getDetail($orderId);
+        Session::flash('lastOrderNo', $order['order_no']);
+        Session::flash('lastOrderPay', $pay);
+        Session::flash('lastOrderTotal', $total);
+        $this->__response->redirect('dat-hang/hoan-tat');
+    }
+
+    public function orderDone(){
+        $this->__data['sub_content'] = 'storefront/order_done';
+        $this->__data['page_title']  = 'Đặt hàng thành công';
+        $c = &$this->__data['content'];
+        $c['orderNo'] = Session::flash('lastOrderNo');
+        $c['pay']     = Session::flash('lastOrderPay');
+        $c['total']   = Session::flash('lastOrderTotal');
+        $c['settings']= $this->__settings->map();
         $this->render('layouts/storefront/master', $this->__data);
     }
 }

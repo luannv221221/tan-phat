@@ -13,7 +13,8 @@ class Settings extends Controller {
 
     // Các khoá cho phép chỉnh (whitelist)
     private $keys = ['site_name', 'site_slogan', 'meta_description', 'meta_keywords',
-                     'og_image', 'hotline', 'email', 'address', 'facebook', 'zalo'];
+                     'og_image', 'hotline', 'email', 'address', 'facebook', 'zalo',
+                     'bank_name', 'bank_account', 'bank_holder'];
 
     function __construct(){
         $this->__model    = $this->model('SettingsModel');

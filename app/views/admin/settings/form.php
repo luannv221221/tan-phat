@@ -46,6 +46,17 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                     <div class="form-group col-md-6"><label>Zalo (URL/SĐT)</label><input type="text" name="zalo" class="form-control" value="{{$s('zalo')}}"/></div>
                 </div>
             </div>
+        </div>
+
+        <div class="card card-outline card-success">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-university mr-2"></i>Tài khoản ngân hàng (hướng dẫn chuyển khoản)</h3></div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-4"><label>Ngân hàng</label><input type="text" name="bank_name" class="form-control" value="{{$s('bank_name')}}"/></div>
+                    <div class="form-group col-md-4"><label>Số tài khoản</label><input type="text" name="bank_account" class="form-control" value="{{$s('bank_account')}}"/></div>
+                    <div class="form-group col-md-4"><label>Chủ tài khoản</label><input type="text" name="bank_holder" class="form-control" value="{{$s('bank_holder')}}"/></div>
+                </div>
+            </div>
             <div class="card-footer"><button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Lưu cấu hình</button></div>
         </div>
     </form>
