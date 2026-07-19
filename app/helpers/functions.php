@@ -139,3 +139,12 @@ function media_url($path){
     if (preg_match('~^https?://~i', $path)) return $path;
     return _WEB_URL . '/' . ltrim($path, '/');
 }
+
+/** Trích YouTube video ID từ URL (youtube.com/watch?v= | youtu.be/ | /embed/). Rỗng nếu không phải YouTube. */
+function youtube_id($url){
+    if (empty($url)) return '';
+    if (preg_match('~(?:youtube\.com/(?:watch\?(?:.*&)?v=|embed/)|youtu\.be/)([A-Za-z0-9_-]{11})~i', $url, $m)){
+        return $m[1];
+    }
+    return '';
+}

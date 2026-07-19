@@ -48,6 +48,11 @@ Bề mặt **công khai** — controller gốc `app/controllers/` (KHÔNG thuộ
 - Giỏ vẫn giữ song song nút "Gửi yêu cầu báo giá" (tạo quotation).
 - **Nối đơn ↔ hoá đơn (migration 000025)**: đơn có `sales_invoice_id`; admin bấm "Tạo hoá đơn bán" → sinh hoá đơn nháp từ dòng đơn (vat_rate=0, giá web là giá cuối) → ghi sổ hoá đơn **trừ tồn + doanh thu Nợ131/Có511 + giá vốn Nợ632/Có156 (KT-6)**. Khép vòng web → back-office.
 
+## Thư viện ảnh/video + sitemap (đã làm — migration 000026)
+
+- **Thư viện** (`admin/galleries` → `thu-vien`, `thu-vien/<slug>`): album (`galleries`) + ảnh/video (`gallery_items`). Admin: CRUD album + upload nhiều ảnh + thêm video YouTube (helper `youtube_id`) + xoá item. Storefront: lưới album → chi tiết (ảnh lightbox + video nhúng youtube-nocookie). Nav web thêm "Thư viện".
+- **sitemap.xml** (`Sitemap` controller): XML động từ trang tĩnh + sản phẩm/tin/dự án/thư viện đã đăng.
+
 ## Hoãn (các đợt web sau)
 
-Quản lý menu (105–108) · thống kê truy cập (109–111) · webchat/hotline (112–113) · video/thư viện ảnh · cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · sitemap.xml · tự trừ tồn ngay khi đặt (hiện cần admin bấm tạo+ghi sổ hoá đơn).
+Quản lý menu CMS (105–108) · thống kê truy cập (109–111) · webchat/hotline (112–113) · cổng thanh toán thật (thẻ/ví) · giỏ hàng lưu DB · tự trừ tồn ngay khi đặt (hiện admin bấm tạo+ghi sổ hoá đơn).

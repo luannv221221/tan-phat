@@ -71,12 +71,13 @@ Route::group('admin', function(){
    Route::get('products/export', 'admin/products/export');
 
    /* =========================================================
-    * CMS NỘI DUNG — Tin tức + Danh mục tin + Dự án (portfolio)
+    * CMS NỘI DUNG — Tin tức + Danh mục tin + Dự án (portfolio) + Thư viện
     * ========================================================= */
    $cmsModules = [
        'news'            => 'news',              // Tin tức
        'news-categories' => 'newscategories',    // Danh mục tin
        'du-an'           => 'projectportfolio',  // Dự án (KHÁC Projects/Mã vụ việc)
+       'galleries'       => 'galleries',         // Thư viện ảnh/video
    ];
    foreach ($cmsModules as $url => $controller){
        Route::get($url,                 'admin/'.$controller);
@@ -86,6 +87,10 @@ Route::group('admin', function(){
        Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
        Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
    }
+   // Thư viện: quản lý ảnh/video trong album
+   Route::post('galleries/images/(\d+)', 'admin/galleries/postImages/$1');
+   Route::post('galleries/add-video/(\d+)', 'admin/galleries/addVideo/$1');
+   Route::get('galleries/item-delete/(\d+)', 'admin/galleries/itemDelete/$1');
 
    /* =========================================================
     * DANH MỤC XE + DANH MỤC PHỤ TÙNG
@@ -338,6 +343,9 @@ Route::get('tin-tuc', 'tintuc/index');
 Route::get('tin-tuc/([a-z0-9\-]+)', 'tintuc/detail/$1');
 Route::get('du-an', 'duan/index');
 Route::get('du-an/([a-z0-9\-]+)', 'duan/detail/$1');
+Route::get('thu-vien', 'thuvien/index');
+Route::get('thu-vien/([a-z0-9\-]+)', 'thuvien/detail/$1');
+Route::get('sitemap.xml', 'sitemap/index');
 
 // Thành viên
 Route::get('thanh-vien', 'member/account');

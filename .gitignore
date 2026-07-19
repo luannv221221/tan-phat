@@ -37,3 +37,7 @@ public/assets/uploads/news/*
 !public/assets/uploads/news/.gitkeep
 public/assets/uploads/projects/*
 !public/assets/uploads/projects/.gitkeep
+public/assets/uploads/galleries/*
+!public/assets/uploads/galleries/.gitkeep
+public/assets/uploads/settings/*
+!public/assets/uploads/settings/.gitkeep
