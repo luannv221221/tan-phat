@@ -280,6 +280,12 @@ Route::group('admin', function(){
    Route::post('warranty/handover-store/(\d+)', 'admin/warranty/handoverStore/$1');
    Route::get('warranty/handover-print/(\d+)',  'admin/warranty/handoverPrint/$1');
    Route::get('warranty/handover-delete/(\d+)', 'admin/warranty/handoverDelete/$1');
+   // Nhắc bảo trì tự động
+   Route::get('nhac-bao-tri', 'admin/baotri');
+   Route::post('nhac-bao-tri/save-config', 'admin/baotri/saveConfig');
+   Route::get('nhac-bao-tri/mark/(\d+)', 'admin/baotri/markReminded/$1');
+   Route::get('nhac-bao-tri/unremind/(\d+)', 'admin/baotri/unremind/$1');
+
    // Lịch bảo hành + Báo cáo CSKH (chỉ xem)
    Route::get('lich-bao-hanh', 'admin/warrantyschedule');
    Route::get('bao-cao-cskh',  'admin/cskhreport');

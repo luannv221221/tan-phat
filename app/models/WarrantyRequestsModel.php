@@ -61,6 +61,20 @@ class WarrantyRequestsModel extends Model {
         return $out;
     }
 
+    /** Phiếu ĐÃ hoàn tất (có ngày hoàn tất) — nguồn tính nhắc bảo trì */
+    public function getCompleted(){
+        return $this->table($this->_table)
+            ->select('`warranty_requests`.*, `partners`.`name` AS partner_full, `partners`.`phone` AS partner_phone')
+            ->leftJoinOn('partners', 'warranty_requests.partner_id', 'partners.id')
+            ->where('warranty_requests.status', '=', 'done')
+            ->whereNotNull('warranty_requests.completed_date')
+            ->orderBy('warranty_requests.completed_date', 'DESC')->get();
+    }
+
+    public function setReminded($id, $date){
+        return $this->updateById(['reminded_at' => $date, 'update_at' => date('Y-m-d H:i:s')], (int) $id);
+    }
+
     public function getDetail($id){ return $this->getFirst($id); }
 
     public function nextNo(){
