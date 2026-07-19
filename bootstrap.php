@@ -1,10 +1,13 @@
 <?php
 //Một số ứng dụng đặt là file init.php
 
-require_once 'vendor/autoload.php'; //Import autoload composer
+// Đường dẫn TUYỆT ĐỐI (theo __DIR__) — không phụ thuộc thư mục làm việc của
+// web server. Bản cũ dùng 'vendor/autoload.php' tương đối => hỏng nếu CWD khác
+// thư mục dự án (một số cấu hình Apache/IIS).
+require_once __DIR__ . '/vendor/autoload.php'; //Import autoload composer
 
 //Cần phải import file config.php đầu tiên
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 /*
  * M11 — Bật/tắt hiển thị lỗi theo APP_DEBUG trong .env.
@@ -55,11 +58,11 @@ set_exception_handler(function(\Throwable $e){
 });
 
 //Load tất cả các file config trong folder configs
-$allConfigs = scandir('configs');
+$allConfigs = scandir(__DIR__ . '/configs');
 if (!empty($allConfigs)){
     foreach ($allConfigs as $configFile){
         if ($configFile!='.' && $configFile!='..'){
-            require_once 'configs/'.$configFile;
+            require_once __DIR__ . '/configs/'.$configFile;
         }
     }
 }
