@@ -62,8 +62,8 @@ img{max-width:100%;display:block}
 .topbar a{opacity:.9}
 header.main{background:#fff;border-bottom:1px solid var(--line)}
 header.main .container{display:flex;align-items:center;gap:20px;padding:14px 16px}
-.logo{font-size:24px;font-weight:800;color:var(--brand);white-space:nowrap}
-.logo span{color:var(--ink)}
+.logo{display:inline-flex;align-items:center;flex-shrink:0}
+.logo img{height:56px;width:auto;display:block}
 .search{flex:1;display:flex}
 .search input{flex:1;padding:9px 12px;border:1px solid var(--line);border-right:0;border-radius:6px 0 0 6px;font-size:14px}
 .search button{border-radius:0 6px 6px 0;border:0}
@@ -172,7 +172,7 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
 </div></div>
 
 <header class="main"><div class="container">
-    <a href="<?php echo _WEB_URL; ?>/" class="logo">TÂN <span>PHÁT</span></a>
+    <a href="<?php echo _WEB_URL; ?>/" class="logo"><img src="<?php echo _WEB_URL; ?>/public/assets/img/logo.png" alt="<?php echo e($siteName); ?>"/></a>
     <form class="search" method="get" action="<?php echo _WEB_URL; ?>/san-pham">
         <input type="text" name="q" placeholder="Tìm phụ tùng, mã, OEM..." value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
         <button class="btn btn-brand" type="submit">Tìm</button>
