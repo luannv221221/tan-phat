@@ -12,9 +12,16 @@
     </div>
     <div class="grid" style="margin-bottom:28px">
         @foreach ($promo as $p)
-        <?php $price = !empty($p['sale_price']) ? (float) $p['sale_price'] : (float) $p['price']; ?>
+        <?php
+        $price = !empty($p['sale_price']) ? (float) $p['sale_price'] : (float) $p['price'];
+        $pid = (int) $p['id'];
+        $imgFile = isset($imgMap[$pid]) ? $imgMap[$pid] : '';
+        $thumbInner = $imgFile !== ''
+            ? '<img src="'.e(_WEB_URL.'/public/assets/uploads/parts/'.$imgFile).'" alt="'.e($p['name']).'" loading="lazy"/>'
+            : '<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+        ?>
         <div class="pcard">
-            <a class="thumb" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}"><span class="badge badge-promo" style="position:absolute;margin:8px">KM</span>🔧</a>
+            <a class="thumb" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}"><span class="badge badge-promo" style="position:absolute;margin:8px">KM</span>{!! $thumbInner !!}</a>
             <div class="info">
                 <a class="pname" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}">{{$p['name']}}</a>
                 <div class="code">Mã: {{$p['code']}}</div>
@@ -37,9 +44,14 @@
             $price = $hasSale ? (float) $p['sale_price'] : (float) $p['price'];
             $km = $hasSale ? '<span class="badge badge-promo" style="position:absolute;margin:8px">KM</span>' : '';
             $old = $hasSale ? '<span class="old">'.number_format((float) $p['price'], 0, ',', '.').'</span>' : '';
+            $pid = (int) $p['id'];
+            $imgFile = isset($imgMap[$pid]) ? $imgMap[$pid] : '';
+            $thumbInner = $imgFile !== ''
+                ? '<img src="'.e(_WEB_URL.'/public/assets/uploads/parts/'.$imgFile).'" alt="'.e($p['name']).'" loading="lazy"/>'
+                : '<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
             ?>
             <div class="pcard">
-                <a class="thumb" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}">{!! $km !!}🔧</a>
+                <a class="thumb" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}">{!! $km !!}{!! $thumbInner !!}</a>
                 <div class="info">
                     <a class="pname" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}">{{$p['name']}}</a>
                     <div class="code">Mã: {{$p['code']}}</div>
