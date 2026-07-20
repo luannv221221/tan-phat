@@ -72,15 +72,15 @@
 
             <td class="text-center">
                 @if (route('admin/users/edit/'.$item['id']))
-                <a href="{{_WEB_URL.'/admin/users/edit/'.$item['id']}}" class="btn btn-warning"><i class="fa fa-edit"></i> </a>
+                <a href="{{_WEB_URL.'/admin/users/edit/'.$item['id']}}" class="btn btn-warning"><i class="fas fa-edit"></i> </a>
                 @endif
             </td>
             <td class="text-center">
                 @if (route('admin/users/delete/'.$item['id']))
                 @if ($item['id']!=$infoUser['id'])
-                <a onclick="return confirm('Bạn có chắc chắn?')" href="{{_WEB_URL.'/admin/users/delete/'.$item['id']}}" class="btn btn-danger"><i class="fa fa-trash"></i></a>
+                <a onclick="return confirm('Bạn có chắc chắn?')" href="{{_WEB_URL.'/admin/users/delete/'.$item['id']}}" class="btn btn-danger"><i class="fas fa-trash"></i></a>
                 @else
-                <a href="#" onclick="alert('Không thể xoá vì người dùng đang hoạt động');return false;" class="btn btn-danger disabled"><i class="fa fa-trash"></i></a>
+                <a href="#" onclick="alert('Không thể xoá vì người dùng đang hoạt động');return false;" class="btn btn-danger disabled"><i class="fas fa-trash"></i></a>
                 @endif
                 @endif
             </td>

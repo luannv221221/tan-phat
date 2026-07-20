@@ -48,7 +48,7 @@ class Migrator {
                         `batch` INT NOT NULL,
                         `ran_at` DATETIME NOT NULL,
                         UNIQUE KEY `uq_migration` (`migration`)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
         }
 
         $this->db->query($sql);

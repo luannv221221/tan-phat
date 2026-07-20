@@ -25,5 +25,25 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Composer
-/vendor/
+# Composer — bo qua vendor NHUNG giu autoloader tu viet (khong co dep ngoai)
+# de deploy bang git clone van chay duoc ma khong can `composer install`.
+/vendor/*
+!/vendor/autoload.php
+
+# Ban dump DB va file cau hinh may dich khi deploy (nhay cam — khong commit)
+/deploy/*.sql
+/deploy/*.zip
+
+# Uploads — file nguoi dung tai len (logo hang, anh phu tung). Giu thu muc, bo qua noi dung.
+public/assets/uploads/brands/*
+!public/assets/uploads/brands/.gitkeep
+public/assets/uploads/parts/*
+!public/assets/uploads/parts/.gitkeep
+public/assets/uploads/news/*
+!public/assets/uploads/news/.gitkeep
+public/assets/uploads/projects/*
+!public/assets/uploads/projects/.gitkeep
+public/assets/uploads/galleries/*
+!public/assets/uploads/galleries/.gitkeep
+public/assets/uploads/settings/*
+!public/assets/uploads/settings/.gitkeep

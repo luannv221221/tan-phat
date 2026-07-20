@@ -54,6 +54,18 @@ class CarModelsModel extends Model {
         return $this->getFirst($id);
     }
 
+    /**
+     * Tìm model theo slug TRONG 1 hãng.
+     * UNIQUE KEY là (brand_id, slug) nên slug chỉ cần duy nhất trong cùng hãng —
+     * "vios" của Toyota và "vios" của hãng khác không đụng nhau.
+     */
+    public function findBySlugInBrand($brandId, $slug){
+        return $this->table($this->_table)
+                    ->where('brand_id', '=', $brandId)
+                    ->where('slug', '=', $slug)
+                    ->first();
+    }
+
     public function add($data){
         $data['create_at'] = date('Y-m-d H:i:s');
         $this->addNew($data);

@@ -1,0 +1,10 @@
+# Đảm bảo file nhị phân (font, ảnh) KHÔNG bị chuyển đổi CRLF -> tránh hỏng font/icon
+*.woff2 binary
+*.woff  binary
+*.ttf   binary
+*.eot   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary

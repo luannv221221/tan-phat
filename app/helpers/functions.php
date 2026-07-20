@@ -100,3 +100,58 @@ function slugify($str){
 
     return trim($str, '-');
 }
+
+/**
+ * Upload 1 ảnh an toàn (validate đuôi + kích thước + là ảnh thật).
+ * Trả về:
+ *   ['status'=>'none']                         không có file gửi lên
+ *   ['status'=>'error','message'=>...]         lỗi
+ *   ['status'=>'ok','path'=>'public/assets/uploads/<sub>/<file>']  thành công
+ */
+function upload_image($key, $subDir, $baseName = 'img'){
+    $allowed  = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    $maxBytes = 3 * 1024 * 1024;
+
+    if (empty($_FILES[$key]) || !isset($_FILES[$key]['error'])
+        || $_FILES[$key]['error'] === UPLOAD_ERR_NO_FILE){
+        return ['status' => 'none'];
+    }
+    $file = $_FILES[$key];
+    if ($file['error'] !== UPLOAD_ERR_OK)  return ['status' => 'error', 'message' => 'Tải ảnh thất bại (mã ' . (int) $file['error'] . ')'];
+    if ($file['size'] > $maxBytes)         return ['status' => 'error', 'message' => 'Ảnh vượt quá 3MB'];
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if (!in_array($ext, $allowed, true))   return ['status' => 'error', 'message' => 'Chỉ chấp nhận ảnh: ' . implode(', ', $allowed)];
+    if (getimagesize($file['tmp_name']) === false) return ['status' => 'error', 'message' => 'File không phải ảnh hợp lệ'];
+
+    $dir = 'public/assets/uploads/' . trim($subDir, '/') . '/';
+    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+    $slug = slugify($baseName); if ($slug === '') $slug = 'img';
+    $name = $slug . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
+    if (!move_uploaded_file($file['tmp_name'], $dir . $name)){
+        return ['status' => 'error', 'message' => 'Không lưu được ảnh'];
+    }
+    return ['status' => 'ok', 'path' => $dir . $name];
+}
+
+/** URL hiển thị ảnh: giữ nguyên nếu là URL ngoài (http), else ghép _WEB_URL */
+function media_url($path){
+    if (empty($path)) return '';
+    if (preg_match('~^https?://~i', $path)) return $path;
+    return _WEB_URL . '/' . ltrim($path, '/');
+}
+
+/** Trích YouTube video ID từ URL (youtube.com/watch?v= | youtu.be/ | /embed/). Rỗng nếu không phải YouTube. */
+function youtube_id($url){
+    if (empty($url)) return '';
+    if (preg_match('~(?:youtube\.com/(?:watch\?(?:.*&)?v=|embed/)|youtu\.be/)([A-Za-z0-9_-]{11})~i', $url, $m)){
+        return $m[1];
+    }
+    return '';
+}
+
+/** URL cho mục menu web: rỗng->trang chủ; http->giữ; else ghép _WEB_URL */
+function nav_url($url){
+    if (empty($url)) return _WEB_URL . '/';
+    if (preg_match('~^https?://~i', $url)) return $url;
+    return _WEB_URL . '/' . ltrim($url, '/');
+}

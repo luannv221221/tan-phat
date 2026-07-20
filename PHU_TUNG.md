@@ -117,12 +117,12 @@ Chưa có phụ tùng thật nào — cần nhập liệu hoặc import.
 |---|---|---|
 | **Controller + view CRUD** | — | Model + DB xong; chưa có màn hình |
 | **Thêm vào bảng `modules`** | — | Để phân quyền được |
-| Thư viện ảnh theo slide | TASK_77 | Cần bảng `part_images` |
-| Import Excel | TASK_78 | Cập nhật thông số bằng file Excel |
-| Ẩn/hiện theo phân quyền | TASK_79 | VD: chỉ thành viên thấy tồn kho |
-| Tự động nhóm danh mục | TASK_80 | VD: danh mục "Khuyến mại" tự gom SP có `sale_price` |
-| Phụ kiện đi kèm | TASK_81 | Cần bảng `part_related` |
-| Lọc theo thông số kỹ thuật | TASK_90 | Cần `attributes` / `attribute_values` — mới có lọc theo danh mục |
-| Gợi ý khi gõ tìm kiếm | TASK_91 | Mới có tìm cơ bản |
-| Lọc tích chọn (facet) | TASK_92 | |
-| Tải catalogue | TASK_85 | |
+| ~~Thư viện ảnh theo slide~~ | TASK_77 | ✅ Xong 18/07 — bảng `part_images`, upload nhiều ảnh + ảnh đại diện, ở màn hình sửa phụ tùng |
+| ~~Import Excel~~ | TASK_78 | ✅ Xong 18/07 — `core/SpreadsheetReader` đọc `.xlsx`+`.csv` (không cần thư viện); upsert theo `code` |
+| Ẩn/hiện theo phân quyền | TASK_79 | ⏸ HOÃN — parts chưa có trường tồn kho + chưa có hệ thống "thành viên" website |
+| ~~Tự động nhóm danh mục~~ | TASK_80 | ✅ Xong 18/07 — lọc "Chỉ khuyến mãi" (SP có `sale_price`) trong danh sách phụ tùng |
+| ~~Phụ kiện đi kèm~~ | TASK_81 | ✅ Xong 18/07 — bảng `part_related`, picker tìm kiếm AJAX (`products/search-json`), `syncForPart` chặn tự tham chiếu |
+| ~~Lọc theo thông số kỹ thuật~~ | TASK_90 | ✅ Xong 18/07 — bảng `attributes` + `part_attribute_values`, CRUD thông số, gán giá trị cho phụ tùng, lọc theo thông số |
+| ~~Gợi ý khi gõ tìm kiếm~~ | TASK_91 | ✅ Xong 18/07 — autocomplete ở ô tìm (dùng `products/search-json`) |
+| Lọc tích chọn (facet) | TASK_92 | ⏸ HOÃN — là tính năng website khách hàng, chưa có storefront |
+| ~~Tải catalogue~~ | TASK_85 | ✅ Xong 18/07 — xuất CSV theo bộ lọc hiện tại (`products/export`) |
