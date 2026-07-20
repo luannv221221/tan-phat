@@ -34,7 +34,7 @@
                 @endforeach
                 </tbody>
                 <tfoot>
-                    <tr><td colspan="3" class="tr"><b>Tổng cộng</b></td><td class="tr"><b style="color:#c0392b;font-size:18px">{{number_format($total,0,',','.')}} ₫</b></td><td></td></tr>
+                    <tr><td colspan="3" class="tr"><b>Tổng cộng</b></td><td class="tr"><b style="color:#164194;font-size:18px">{{number_format($total,0,',','.')}} ₫</b></td><td></td></tr>
                 </tfoot>
             </table>
             <div class="mt"><button class="btn btn-outline" type="submit">Cập nhật giỏ</button>

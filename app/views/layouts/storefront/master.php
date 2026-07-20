@@ -43,7 +43,7 @@ $canonical = _WEB_URL . '/' . (isset($_GET['module']) ? trim($_GET['module'], '/
 <?php if ($metaDesc !== ''): ?><meta property="og:description" content="<?php echo e($metaDesc); ?>"/><?php endif; ?>
 <?php if ($ogImageUrl !== ''): ?><meta property="og:image" content="<?php echo e($ogImageUrl); ?>"/><meta name="twitter:card" content="summary_large_image"/><?php endif; ?>
 <style>
-:root{--brand:#c0392b;--brand-d:#96271b;--ink:#222;--muted:#777;--line:#e6e6e6;--bg:#f5f6f8;--ok:#27ae60}
+:root{--brand:#164194;--brand-d:#102f6b;--ink:#222;--muted:#777;--line:#e6e6e6;--bg:#f5f6f8;--ok:#27ae60}
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
 a{color:inherit;text-decoration:none}
@@ -54,7 +54,7 @@ img{max-width:100%;display:block}
 .btn-outline{background:#fff;border-color:var(--brand);color:var(--brand)}
 .btn-sm{padding:5px 10px;font-size:13px}
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;background:#eee}
-.badge-promo{background:#fdecea;color:var(--brand)}
+.badge-promo{background:#e7edfa;color:var(--brand)}
 .badge-ok{background:#e9f7ef;color:var(--ok)}
 /* header */
 .topbar{background:var(--brand-d);color:#fff;font-size:13px}

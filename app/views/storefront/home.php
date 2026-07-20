@@ -1,5 +1,5 @@
 <div class="wrap" style="display:block">
-    <div style="background:linear-gradient(120deg,#c0392b,#96271b);color:#fff;border-radius:10px;padding:34px;margin-bottom:24px">
+    <div style="background:linear-gradient(120deg,#164194,#102f6b);color:#fff;border-radius:10px;padding:34px;margin-bottom:24px">
         <h1 style="margin:0 0 8px;font-size:28px">Phụ tùng &amp; thiết bị gara ô tô chính hãng</h1>
         <p style="margin:0 0 16px;opacity:.9">Tra cứu tương thích theo hãng — model — đời xe. Báo giá nhanh cho khách hàng và garage.</p>
         <a class="btn btn-outline" style="background:#fff" href="{{_WEB_URL.'/san-pham'}}">Xem tất cả sản phẩm →</a>

@@ -5,7 +5,7 @@ $isBank = ($pay === 'bank_transfer');
     <div class="tc" style="font-size:56px">✅</div>
     <h1 class="page-title tc">Đặt hàng thành công!</h1>
     @if (!empty($orderNo))
-    <p class="tc">Mã đơn hàng: <b><?php echo e($orderNo); ?></b> · Tổng tiền: <b style="color:#c0392b"><?php echo e(number_format((float) $total, 0, ',', '.')); ?> ₫</b></p>
+    <p class="tc">Mã đơn hàng: <b><?php echo e($orderNo); ?></b> · Tổng tiền: <b style="color:#164194"><?php echo e(number_format((float) $total, 0, ',', '.')); ?> ₫</b></p>
     @endif
 
     @if ($isBank)

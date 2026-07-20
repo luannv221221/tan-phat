@@ -52,7 +52,7 @@
                         <td style="padding:8px 0;text-align:right;font-size:14px">{{number_format($r['amount'],0,',','.')}}</td>
                     </tr>
                     @endforeach
-                    <tr><td style="padding:12px 0;font-weight:700">Tổng cộng</td><td style="padding:12px 0;text-align:right;font-weight:700;color:#c0392b;font-size:18px">{{number_format($total,0,',','.')}} ₫</td></tr>
+                    <tr><td style="padding:12px 0;font-weight:700">Tổng cộng</td><td style="padding:12px 0;text-align:right;font-weight:700;color:#164194;font-size:18px">{{number_format($total,0,',','.')}} ₫</td></tr>
                 </table>
                 <button class="btn btn-brand" type="submit" style="width:100%;margin-top:8px">Xác nhận đặt hàng</button>
                 <a class="btn" href="{{_WEB_URL.'/gio-hang'}}" style="width:100%;text-align:center;margin-top:6px">← Về giỏ hàng</a>
