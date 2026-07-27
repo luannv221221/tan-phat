@@ -1,147 +1,204 @@
 <?php
+$base = _WEB_URL . '/public/assets/uploads/parts/';
+$assetImg = _WEB_URL . '/public/assets/storefront/images/';
 $hasSale = !empty($part['sale_price']);
 $price = $hasSale ? (float) $part['sale_price'] : (float) $part['price'];
-$oemSuffix   = !empty($part['oem_code']) ? ' · OEM: ' . e($part['oem_code']) : '';
-$brandBadge  = !empty($part['brand_name']) ? '<span class="badge">' . e($part['brand_name']) . '</span> ' : '';
-$originBadge = !empty($part['origin_name']) ? '<span class="badge">Xuất xứ: ' . e($part['origin_name']) . '</span> ' : '';
-$catBadge    = !empty($part['category_name']) ? '<span class="badge">' . e($part['category_name']) . '</span>' : '';
-$promoBadge  = $hasSale ? '<span class="old" style="font-size:18px;margin-left:8px">' . number_format((float) $part['price'], 0, ',', '.') . ' ₫</span> <span class="badge badge-promo">Khuyến mãi</span>' : '';
-$unitName    = !empty($part['unit_name']) ? e($part['unit_name']) : '';
-$unitSuffix  = !empty($part['unit_name']) ? '<span class="muted"> / ' . e($part['unit_name']) . '</span>' : '';
-$stockNum    = rtrim(rtrim(number_format((float) $stock, 3, ',', '.'), '0'), ',');
+$stockNum = rtrim(rtrim(number_format((float) $stock, 3, ',', '.'), '0'), ',');
+$avg = isset($reviewSummary['avg']) ? (float) $reviewSummary['avg'] : 0;
+$avgRound = (int) round($avg);
 ?>
-<div class="crumb"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / <a href="{{_WEB_URL.'/san-pham'}}">Sản phẩm</a> / {{$part['name']}}</div>
+<div class="content">
+<section class="detail">
+<div class="container">
 
-<div class="card"><div class="bd">
-<div class="detail">
-    <?php $base = _WEB_URL . '/public/assets/uploads/parts/'; ?>
-    <div class="gallery">
-        @if (!empty($images))
-        <div class="main-img"><img id="mainImg" src="{{$base.$images[0]['image']}}" alt="{{$part['name']}}"/></div>
-        @if (count($images) > 1)
-        <div class="thumbs">
-            @foreach ($images as $img)
-            <img src="{{$base.$img['image']}}" class="tn" onclick="document.getElementById('mainImg').src=this.src"/>
-            @endforeach
-        </div>
-        @endif
-        @else
-        <div class="main-img"><svg width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>
-        @endif
-    </div>
+    <div class="breadcrumb-sf"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / <a href="{{_WEB_URL.'/san-pham'}}">Sản phẩm</a> / {{$part['name']}}</div>
 
-    <div class="meta">
-        <h1>{{$part['name']}}</h1>
-        <div class="muted">Mã: <b>{{$part['code']}}</b>{!! $oemSuffix !!}</div>
-        <div class="mt">{!! $brandBadge !!}{!! $originBadge !!}{!! $catBadge !!}</div>
-
-        <div class="mt" style="margin-top:18px">
-            <span class="big-price">{{number_format($price,0,',','.')}} ₫</span>
-            {!! $promoBadge !!}
-            {!! $unitSuffix !!}
-        </div>
-
-        @if ($isMember)
-            <div class="mt"><span class="badge {{$stock>0?'badge-ok':'badge-promo'}}">Tồn kho: {{$stockNum}} {!! $unitName !!}</span></div>
-        @else
-            <div class="alert alert-info mt" style="margin-top:14px;font-size:14px">🔒 <a href="{{_WEB_URL.'/thanh-vien/dang-nhap'}}"><b>Đăng nhập thành viên</b></a> để xem tồn kho sản phẩm.</div>
-        @endif
-
-        <form method="post" action="{{_WEB_URL.'/gio-hang/them'}}" class="mt" style="display:flex;gap:10px;align-items:center;margin-top:18px">
-            <?php echo csrf_field(); ?>
-            <input type="hidden" name="part_id" value="{{(int)$part['id']}}"/>
-            <input type="number" name="qty" value="1" min="1" style="width:80px;padding:9px;border:1px solid #e6e6e6;border-radius:6px"/>
-            <button class="btn btn-brand" type="submit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Thêm vào giỏ / báo giá</button>
-        </form>
-
-        @if (!empty($part['warranty_month']))
-        <div class="muted mt" style="margin-top:14px">🛡 Bảo hành: {{(int)$part['warranty_month']}} tháng</div>
-        @endif
-    </div>
-</div>
-</div></div>
-
-@if (!empty($attrs))
-<div class="card mt"><div class="hd">Thông số kỹ thuật</div><div class="bd">
-    <table class="spec">
-        @foreach ($attrs as $a)
-        <?php $unitCell = !empty($a['unit']) ? ' ' . e($a['unit']) : ''; ?>
-        <tr><td>{{$a['name']}}</td><td>{{$a['value']}}{!! $unitCell !!}</td></tr>
-        @endforeach
-    </table>
-</div></div>
-@endif
-
-@if (!empty($part['description']))
-<div class="card mt"><div class="hd">Mô tả</div><div class="bd">{!! nl2br(e($part['description'])) !!}</div></div>
-@endif
-
-@if (!empty($fitments))
-<div class="card mt"><div class="hd">Xe tương thích</div><div class="bd">
-    <div style="display:flex;flex-wrap:wrap;gap:8px">
-    @foreach ($fitments as $ft)
-        <span class="badge">{{$ft['brand_name'].' '.$ft['model_name'].(!empty($ft['year_name']) ? ' — '.$ft['year_name'] : '')}}</span>
-    @endforeach
-    </div>
-</div></div>
-@endif
-
-@if (!empty($related))
-<div class="card mt"><div class="hd">Phụ kiện / sản phẩm đi kèm</div><div class="bd">
-    <div style="display:flex;flex-wrap:wrap;gap:10px">
-    @foreach ($related as $r)
-        <a class="btn btn-outline btn-sm" href="{{_WEB_URL.'/san-pham/'.$r['slug']}}">{{$r['name']}}</a>
-    @endforeach
-    </div>
-</div></div>
-@endif
-
-<?php
-$avgStars = str_repeat('★', (int) round($reviewSummary['avg'])) . str_repeat('☆', 5 - (int) round($reviewSummary['avg']));
-?>
-<div class="card mt"><div class="hd">Đánh giá sản phẩm
-    @if ($reviewSummary['count'] > 0)
-    <span style="color:#f39c12;font-weight:400;margin-left:8px">{!! $avgStars !!} {{$reviewSummary['avg']}}/5 ({{(int)$reviewSummary['count']}} đánh giá)</span>
-    @endif
-</div><div class="bd">
-    @if (!empty($reviewMsg))
-    <div class="alert alert-ok">{{$reviewMsg}}</div>
-    @endif
-
-    @if (!empty($reviews))
-        @foreach ($reviews as $rv)
-        <?php $stars = str_repeat('★', (int) $rv['rating']) . str_repeat('☆', 5 - (int) $rv['rating']); ?>
-        <div style="border-bottom:1px solid #eee;padding:10px 0">
-            <b>{{$rv['author_name']}}</b> <span style="color:#f39c12">{!! $stars !!}</span>
-            <div class="muted" style="font-size:13px">{{$rv['create_at']}}</div>
-            <div>{{$rv['comment']}}</div>
-        </div>
-        @endforeach
-    @else
-        <p class="muted">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
-    @endif
-
-    <div class="mt" style="margin-top:18px">
-    @if ($isMember)
-        <form method="post" action="{{_WEB_URL.'/san-pham/danh-gia'}}">
-            <?php echo csrf_field(); ?>
-            <input type="hidden" name="part_id" value="{{(int)$part['id']}}"/>
-            <div style="margin-bottom:10px">
-                <label style="font-weight:600;font-size:14px;margin-right:8px">Chấm điểm</label>
-                <select name="rating" style="padding:6px;border:1px solid #e6e6e6;border-radius:5px">
-                    <option value="5">5 — Rất tốt</option>
-                    <option value="4">4 — Tốt</option>
-                    <option value="3">3 — Bình thường</option>
-                    <option value="2">2 — Tạm</option>
-                    <option value="1">1 — Kém</option>
-                </select>
+    <div class="row">
+        <!-- Ảnh -->
+        <div class="col-12 col-lg-5">
+            <div class="detail-img">
+                @if (!empty($images))
+                <div class="slider">
+                    <div id="sync11" class="owl-carousel owl-theme">
+                        @foreach ($images as $img)
+                        <div><img src="{{$base.$img['image']}}" alt="{{$part['name']}}"/></div>
+                        @endforeach
+                    </div>
+                </div>
+                @if (count($images) > 1)
+                <div class="slider-nav">
+                    <div class="row">
+                        <div id="sync21" class="owl-carousel owl-theme">
+                            @foreach ($images as $img)
+                            <div class="slider-nav__item"><img src="{{$base.$img['image']}}" alt=""/></div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                @endif
+                @else
+                <img src="{{$assetImg.'placeholder.svg'}}" alt="{{$part['name']}}" style="width:100%"/>
+                @endif
             </div>
-            <textarea name="comment" rows="3" placeholder="Chia sẻ cảm nhận của bạn..." style="width:100%;max-width:600px;padding:9px;border:1px solid #e6e6e6;border-radius:6px"></textarea>
-            <div class="mt"><button class="btn btn-brand" type="submit">Gửi đánh giá</button></div>
-        </form>
-    @else
-        <div class="alert alert-info" style="margin-bottom:0">🔒 <a href="{{_WEB_URL.'/thanh-vien/dang-nhap'}}"><b>Đăng nhập thành viên</b></a> để viết đánh giá.</div>
-    @endif
-    </div>
-</div></div>
+        </div>
 
+        <!-- Thông tin -->
+        <div class="col-12 col-lg-7">
+            <div class="detail-info">
+                <h1 class="detail-info__name">{{$part['name']}}</h1>
+                <div class="detail-info__star">
+                    <?php for ($s = 1; $s <= 5; $s++): ?>
+                        <i class="fa <?php echo $s <= $avgRound ? 'fa-star' : 'fa-star-o'; ?>" aria-hidden="true"></i>
+                    <?php endfor; ?>
+                    @if (!empty($reviewSummary['count']))
+                    <span class="text-muted small ms-1">{{$avg}}/5 ({{(int)$reviewSummary['count']}} đánh giá)</span>
+                    @endif
+                </div>
+
+                <div class="mb-2 text-muted">Mã: <b>{{$part['code']}}</b><?php if (!empty($part['oem_code'])): ?> · OEM: {{$part['oem_code']}}<?php endif; ?></div>
+                <div class="mb-3">
+                    <?php if (!empty($part['brand_name'])): ?><span class="badge bg-secondary">{{$part['brand_name']}}</span><?php endif; ?>
+                    <?php if (!empty($part['origin_name'])): ?><span class="badge bg-secondary">Xuất xứ: {{$part['origin_name']}}</span><?php endif; ?>
+                    <?php if (!empty($part['category_name'])): ?><span class="badge bg-secondary">{{$part['category_name']}}</span><?php endif; ?>
+                </div>
+
+                <div class="detail-info__price">
+                    <span class="price-new">{{number_format($price,0,',','.')}} đ</span>
+                    <?php if ($hasSale): ?><span class="price-old">{{number_format((float)$part['price'],0,',','.')}} đ</span><?php endif; ?>
+                    <?php if (!empty($part['unit_name'])): ?><span class="text-muted" style="font-size:1rem"> / {{$part['unit_name']}}</span><?php endif; ?>
+                </div>
+
+                @if ($isMember)
+                    <div class="mt-2"><span class="badge {{$stock>0?'bg-success':'bg-secondary'}}">Tồn kho: {{$stockNum}} {{$part['unit_name']??''}}</span></div>
+                @else
+                    <div class="alert alert-info mt-3 py-2"><i class="fa fa-lock"></i> <a href="{{_WEB_URL.'/thanh-vien/dang-nhap'}}"><b>Đăng nhập thành viên</b></a> để xem tồn kho.</div>
+                @endif
+
+                <form method="post" action="{{_WEB_URL.'/gio-hang/them'}}" class="detail-info__qty">
+                    <?php echo csrf_field(); ?>
+                    <input type="hidden" name="part_id" value="{{(int)$part['id']}}"/>
+                    <label>Số lượng</label>
+                    <input type="number" name="qty" value="1" min="1"/>
+                    <button type="submit"><i class="fa fa-shopping-cart"></i> Thêm vào giỏ hàng</button>
+                </form>
+
+                @if (!empty($part['warranty_month']))
+                <div class="detail-info__des"><i class="fa fa-shield"></i> Bảo hành: {{(int)$part['warranty_month']}} tháng</div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs nội dung -->
+    <div class="detail-content-container">
+        <div class="detail-content">
+            <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-desc" type="button" role="tab">Thông tin sản phẩm</button>
+                </li>
+                @if (!empty($attrs))
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-spec" type="button" role="tab">Thông số kỹ thuật</button>
+                </li>
+                @endif
+                @if (!empty($fitments))
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-fit" type="button" role="tab">Xe tương thích</button>
+                </li>
+                @endif
+            </ul>
+            <div class="tab-content" id="pills-tabContent">
+                <div class="tab-pane fade show active" id="tab-desc" role="tabpanel">
+                    @if (!empty($part['description']))
+                        {!! nl2br(e($part['description'])) !!}
+                    @else
+                        <p class="text-muted">Đang cập nhật thông tin sản phẩm.</p>
+                    @endif
+                </div>
+                @if (!empty($attrs))
+                <div class="tab-pane fade" id="tab-spec" role="tabpanel">
+                    <table class="table table-bordered">
+                        <tbody>
+                        @foreach ($attrs as $a)
+                        <tr><td style="width:220px;background:#f8f9fa">{{$a['name']}}</td><td>{{$a['value']}}<?php if (!empty($a['unit'])): ?> {{$a['unit']}}<?php endif; ?></td></tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
+                @if (!empty($fitments))
+                <div class="tab-pane fade" id="tab-fit" role="tabpanel">
+                    <div class="d-flex flex-wrap gap-2">
+                    @foreach ($fitments as $ft)
+                        <span class="badge bg-secondary">{{$ft['brand_name'].' '.$ft['model_name'].(!empty($ft['year_name']) ? ' — '.$ft['year_name'] : '')}}</span>
+                    @endforeach
+                    </div>
+                </div>
+                @endif
+            </div>
+
+            @if (!empty($related))
+            <h2 class="mt-4" style="font-size:1.2rem">Phụ kiện / sản phẩm đi kèm</h2>
+            <div class="d-flex flex-wrap gap-2">
+                @foreach ($related as $r)
+                <a class="btn btn-outline-primary btn-sm" href="{{_WEB_URL.'/san-pham/'.$r['slug']}}">{{$r['name']}}</a>
+                @endforeach
+            </div>
+            @endif
+        </div>
+
+        <div class="socials-share my-3">
+            <a class="bg-facebook" href="https://www.facebook.com/sharer/sharer.php?u={{urlencode(_WEB_URL.'/san-pham/'.$part['slug'])}}" target="_blank"><span class="fa fa-facebook"></span> Share</a>
+            <a class="bg-twitter" href="https://twitter.com/intent/tweet?url={{urlencode(_WEB_URL.'/san-pham/'.$part['slug'])}}" target="_blank"><span class="fa fa-twitter"></span> Tweet</a>
+        </div>
+    </div>
+
+    <!-- Đánh giá -->
+    <div class="detail-content-container mt-3">
+        <h2 style="font-size:1.3rem">Đánh giá sản phẩm</h2>
+        @if (!empty($reviewMsg))
+        <div class="alert alert-success">{{$reviewMsg}}</div>
+        @endif
+
+        @if (!empty($reviews))
+            @foreach ($reviews as $rv)
+            <div class="py-2 border-bottom">
+                <b>{{$rv['author_name']}}</b>
+                <span style="color:#febd69">
+                    <?php for ($s = 1; $s <= 5; $s++): ?><i class="fa <?php echo $s <= (int)$rv['rating'] ? 'fa-star' : 'fa-star-o'; ?>"></i><?php endfor; ?>
+                </span>
+                <div class="text-muted small">{{$rv['create_at']}}</div>
+                <div>{{$rv['comment']}}</div>
+            </div>
+            @endforeach
+        @else
+            <p class="text-muted">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+        @endif
+
+        <div class="mt-3">
+        @if ($isMember)
+            <form method="post" action="{{_WEB_URL.'/san-pham/danh-gia'}}">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="part_id" value="{{(int)$part['id']}}"/>
+                <div class="mb-2" style="max-width:220px">
+                    <label class="form-label fw-semibold mb-1">Chấm điểm</label>
+                    <select name="rating" class="form-select form-select-sm">
+                        <option value="5">5 — Rất tốt</option>
+                        <option value="4">4 — Tốt</option>
+                        <option value="3">3 — Bình thường</option>
+                        <option value="2">2 — Tạm</option>
+                        <option value="1">1 — Kém</option>
+                    </select>
+                </div>
+                <textarea name="comment" rows="3" class="form-control" style="max-width:640px" placeholder="Chia sẻ cảm nhận của bạn..."></textarea>
+                <button class="btn btn-primary mt-2" type="submit">Gửi đánh giá</button>
+            </form>
+        @else
+            <div class="alert alert-info mb-0"><i class="fa fa-lock"></i> <a href="{{_WEB_URL.'/thanh-vien/dang-nhap'}}"><b>Đăng nhập thành viên</b></a> để viết đánh giá.</div>
+        @endif
+        </div>
+    </div>
+
+</div>
+</section>
+</div>

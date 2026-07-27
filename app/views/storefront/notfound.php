@@ -1,6 +1,13 @@
-<div class="card" style="margin:40px auto;max-width:520px"><div class="bd tc" style="padding:50px">
-    <div style="font-size:50px">🔍</div>
-    <h2>Không tìm thấy sản phẩm</h2>
-    <p class="muted">Sản phẩm không tồn tại hoặc đã ngừng kinh doanh.</p>
-    <a class="btn btn-brand" href="<?php echo _WEB_URL; ?>/san-pham">Về danh sách sản phẩm</a>
-</div></div>
+<div class="content">
+<div class="sf-page">
+<div class="container">
+    <div class="card border-0 shadow-sm mx-auto" style="max-width:520px"><div class="card-body text-center p-5">
+        <div style="font-size:50px">🔍</div>
+        <h2>Không tìm thấy</h2>
+        <p class="text-muted">Nội dung không tồn tại hoặc đã ngừng hiển thị.</p>
+        <a class="btn btn-primary" href="<?php echo _WEB_URL; ?>/san-pham">Về danh sách sản phẩm</a>
+        <a class="btn btn-outline-secondary" href="<?php echo _WEB_URL; ?>/">Về trang chủ</a>
+    </div></div>
+</div>
+</div>
+</div>

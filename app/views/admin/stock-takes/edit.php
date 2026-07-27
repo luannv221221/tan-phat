@@ -32,9 +32,6 @@ $fmtQ = function($n){ return rtrim(rtrim(number_format((float) $n, 3, ',', '.'),
             <dt class="col-sm-3">Lý do</dt><dd class="col-sm-9">{{!empty($item['reason'])?$item['reason']:'—'}}</dd>
             <dt class="col-sm-3">Giá trị thừa</dt><dd class="col-sm-9 text-success">{{number_format((float)$item['surplus_value'],0,',','.')}} ₫</dd>
             <dt class="col-sm-3">Giá trị thiếu</dt><dd class="col-sm-9 text-danger">{{number_format((float)$item['shortage_value'],0,',','.')}} ₫</dd>
-            @if (!empty($voucher))
-            <dt class="col-sm-3">Bút toán</dt><dd class="col-sm-9"><code>{{$voucher['voucher_no']}}</code> <span class="text-muted">(thừa Nợ156/Có711 · thiếu Nợ632/Có156)</span></dd>
-            @endif
         </dl>
     </div></div>
     <div class="card card-outline card-info">

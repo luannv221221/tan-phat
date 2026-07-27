@@ -72,20 +72,11 @@ $selType = !empty($old['type']) ? $old['type'] : 'nhap_mua';
                     </select>
                 </div>
                 <div class="form-group col-md-4">
-                    <label>TK đối ứng (KT-6)</label>
-                    <select name="counter_account_id" class="form-control">
-                        <option value="">— Mặc định 331 (nhập mua) —</option>
-                        @foreach ($accounts as $a)
-                        <option value="{{$a['id']}}" {{(!empty($old['counter_account_id']) && $old['counter_account_id']==$a['id'])?'selected':''}}>{{$a['code'].' - '.$a['name']}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="form-group col-md-4">
                     <label>Diễn giải</label>
                     <input type="text" name="reason" class="form-control" value="{{!empty($old['reason'])?$old['reason']:''}}"/>
                 </div>
             </div>
-            <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Ghi sổ sẽ định khoản <b>Nợ 156 Hàng hóa / Có TK đối ứng</b> và cập nhật tồn theo bình quân gia quyền.</p>
+            <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Ghi sổ sẽ cập nhật tồn kho theo bình quân gia quyền.</p>
         </div>
     </div>
 

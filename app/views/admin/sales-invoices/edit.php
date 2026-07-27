@@ -57,9 +57,6 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
             <dt class="col-sm-3">Tổng thanh toán</dt><dd class="col-sm-9 font-weight-bold">{{number_format((float)$item['total_amount'],0,',','.')}} ₫</dd>
             <dt class="col-sm-3">Giá vốn</dt><dd class="col-sm-9">{{number_format((float)$item['cost_amount'],0,',','.')}} ₫</dd>
             <dt class="col-sm-3">Lãi gộp</dt><dd class="col-sm-9 font-weight-bold {{$profit>=0?'text-success':'text-danger'}}">{{number_format($profit,0,',','.')}} ₫</dd>
-            @if (!empty($voucher))
-            <dt class="col-sm-3">Bút toán</dt><dd class="col-sm-9"><code>{{$voucher['voucher_no']}}</code> <span class="text-muted">(Nợ 131/Có 511+3331 · Nợ 632/Có 156)</span></dd>
-            @endif
         </dl>
     </div></div>
 
@@ -121,9 +118,8 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
 
     <div class="card"><div class="card-body">
         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
-        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/unpost/'.$item['id']}}" onclick="return confirm('Huỷ ghi sổ sẽ hoàn tồn kho và xoá bút toán (doanh thu, công nợ). Tiếp tục?')" class="btn btn-warning"><i class="fas fa-unlock mr-1"></i> Huỷ ghi sổ</a>
+        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/unpost/'.$item['id']}}" onclick="return confirm('Huỷ ghi sổ sẽ hoàn tồn kho. Tiếp tục?')" class="btn btn-warning"><i class="fas fa-unlock mr-1"></i> Huỷ ghi sổ</a>
         @endif
-        <a href="{{_WEB_URL.'/admin/debt'}}" class="btn btn-outline-info"><i class="fas fa-hand-holding-usd mr-1"></i> Xem công nợ</a>
         <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-default"><i class="fas fa-arrow-left mr-1"></i> Về danh sách</a>
     </div></div>
 @else

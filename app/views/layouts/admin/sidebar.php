@@ -18,12 +18,10 @@ $isActive = function ($link) use ($currentUrl) {
 $menuGroups = [
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
     'Danh mục phụ tùng'  => ['part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
-    'Nội dung'           => ['products', 'news', 'news-categories', 'du-an', 'galleries', 'menus'],
-    'Bán hàng'           => ['orders', 'quotations', 'sales-invoices', 'bao-cao-ban-hang'],
+    'Nội dung'           => ['products', 'news', 'news-categories', 'du-an', 'galleries', 'banners', 'menus'],
+    'Bán hàng'           => ['orders', 'quotations', 'sales-invoices', 'partners', 'bao-cao-ban-hang'],
     'Kho'                => ['goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
-    'Kế toán'            => ['vouchers', 'journal', 'cash-book', 'debt', 'nhat-ky-chung', 'so-cai', 'partners', 'accounts', 'cost-items', 'projects'],
     'CSKH'               => ['chat', 'contact-messages', 'newsletter', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'customer-groups', 'reviews', 'bao-cao-cskh'],
-    'Nhân sự'            => ['employees', 'departments', 'positions', 'leave-requests'],
     'Hệ thống'           => ['users', 'groups', 'settings', 'thong-ke'],
 ];
 
@@ -33,9 +31,7 @@ $groupIcons = [
     'Nội dung'           => 'fa-folder-open',
     'Bán hàng'           => 'fa-cash-register',
     'Kho'                => 'fa-warehouse',
-    'Kế toán'            => 'fa-calculator',
     'CSKH'               => 'fa-headset',
-    'Nhân sự'            => 'fa-user-tie',
     'Hệ thống'           => 'fa-sliders-h',
 ];
 
@@ -57,6 +53,7 @@ $itemIcons = [
     'news-categories'       => 'fa-folder',
     'du-an'                 => 'fa-briefcase',
     'galleries'             => 'fa-images',
+    'banners'               => 'fa-image',
     'menus'                 => 'fa-bars',
     'warehouses'            => 'fa-warehouse',
     'goods-receipts'        => 'fa-dolly-flatbed',
@@ -78,10 +75,6 @@ $itemIcons = [
     'warranty'              => 'fa-tools',
     'lich-bao-hanh'         => 'fa-calendar-check',
     'nhac-bao-tri'          => 'fa-bell',
-    'employees'             => 'fa-users',
-    'departments'           => 'fa-sitemap',
-    'positions'             => 'fa-id-badge',
-    'leave-requests'        => 'fa-plane-departure',
     'customer-groups'       => 'fa-user-friends',
     'reviews'               => 'fa-star',
     'bao-cao-cskh'          => 'fa-chart-pie',
@@ -89,16 +82,7 @@ $itemIcons = [
     'groups'               => 'fa-user-shield',
     'settings'              => 'fa-cog',
     'thong-ke'              => 'fa-chart-area',
-    'vouchers'              => 'fa-receipt',
-    'journal'               => 'fa-file-invoice',
-    'debt'                  => 'fa-hand-holding-usd',
-    'nhat-ky-chung'         => 'fa-book-open',
-    'so-cai'                => 'fa-book',
     'partners'              => 'fa-address-book',
-    'cash-book'             => 'fa-book',
-    'accounts'              => 'fa-landmark',
-    'cost-items'            => 'fa-coins',
-    'projects'              => 'fa-briefcase',
 ];
 
 // Chỉ giữ module user có quyền, index theo link

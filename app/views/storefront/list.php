@@ -4,136 +4,171 @@ $inArr = function($id, $arr){ return in_array((int) $id, array_map('intval', (ar
 $baseQ = $query; unset($baseQ['page']);
 $pageUrl = function($n) use ($baseQ){ $q = $baseQ; $q['page'] = $n; return _WEB_URL.'/san-pham?'.http_build_query($q); };
 $titleTxt = !empty($f['keyword']) ? 'Kết quả: ' . $f['keyword'] : 'Sản phẩm';
+$partsBase = _WEB_URL . '/public/assets/uploads/parts/';
+$assetImg  = _WEB_URL . '/public/assets/storefront/images/';
 ?>
-<div class="crumb"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / Sản phẩm</div>
+<div class="content">
+<div class="products">
+<div class="container">
 
-<form method="get" action="{{_WEB_URL.'/san-pham'}}" id="facetForm">
-{!! !empty($f['keyword']) ? '<input type="hidden" name="q" value="'.e($f['keyword']).'"/>' : '' !!}
-<div class="wrap">
-    <aside class="sidebar">
-        <div class="card"><div class="bd">
-            <div class="facet">
-                <h4>Danh mục</h4>
-                @foreach ($catOptions as $c)
-                    @if ((int) $c['depth'] <= 1)
-                    <label style="padding-left:{{(int)$c['depth']*12}}px">
-                        <input type="checkbox" name="category[]" value="{{(int)$c['id']}}" {{$inArr($c['id'],$f['categoryIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
-                        {{$c['name']}}
-                    </label>
-                    @endif
-                @endforeach
-            </div>
+    <div class="breadcrumb-sf"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / Sản phẩm</div>
 
-            @if (!empty($brandOptions))
-            <div class="facet">
-                <h4>Thương hiệu</h4>
-                @foreach ($brandOptions as $b)
-                    <label><input type="checkbox" name="brand[]" value="{{(int)$b['id']}}" {{$inArr($b['id'],$f['brandIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/> {{$b['name']}}</label>
-                @endforeach
-            </div>
-            @endif
+    <form method="get" action="{{_WEB_URL.'/san-pham'}}" id="facetForm">
+    {!! !empty($f['keyword']) ? '<input type="hidden" name="q" value="'.e($f['keyword']).'"/>' : '' !!}
+    <div class="row">
 
-            @if (!empty($originOptions))
-            <div class="facet">
-                <h4>Xuất xứ</h4>
-                @foreach ($originOptions as $o)
-                    <label><input type="checkbox" name="origin[]" value="{{(int)$o['id']}}" {{$inArr($o['id'],$f['originIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/> {{$o['name']}}</label>
-                @endforeach
-            </div>
-            @endif
-
-            <div class="facet">
-                <h4>Xe tương thích</h4>
-                <select name="car_model" onchange="document.getElementById('facetForm').submit()" style="width:100%;padding:7px;border:1px solid #e6e6e6;border-radius:5px">
-                    <option value="">— Mọi xe —</option>
-                    @foreach ($carModels as $cm)
-                        <option value="{{(int)$cm['id']}}" {{((int)$f['carModelId']===(int)$cm['id'])?'selected':''}}>{{$cm['name']}}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="facet">
-                <h4>Khoảng giá (₫)</h4>
-                <div class="price-row">
-                    <input type="text" name="price_min" placeholder="Từ" value="{{$f['priceMin']}}"/>
-                    <input type="text" name="price_max" placeholder="Đến" value="{{$f['priceMax']}}"/>
+        <!-- Sidebar lọc -->
+        <div class="col-lg-3">
+            <div class="products__sidebar">
+                <div class="products__sidebar--item">
+                    <h3>Danh mục</h3>
+                    <div class="px-3">
+                        @foreach ($catOptions as $c)
+                            @if ((int) $c['depth'] <= 1)
+                            <div class="form-check" style="padding-left:{{1.5+(int)$c['depth']*1}}rem">
+                                <input class="form-check-input" type="checkbox" id="cat{{(int)$c['id']}}" name="category[]" value="{{(int)$c['id']}}" {{$inArr($c['id'],$f['categoryIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
+                                <label class="form-check-label" for="cat{{(int)$c['id']}}">{{$c['name']}}</label>
+                            </div>
+                            @endif
+                        @endforeach
+                    </div>
                 </div>
-            </div>
 
-            <div class="facet">
-                <label><input type="checkbox" name="promo" value="1" {{!empty($f['promo'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/> Chỉ hàng khuyến mãi</label>
-            </div>
+                @if (!empty($brandOptions))
+                <div class="products__sidebar--item">
+                    <h3>Thương hiệu</h3>
+                    <div class="px-3">
+                        @foreach ($brandOptions as $b)
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="br{{(int)$b['id']}}" name="brand[]" value="{{(int)$b['id']}}" {{$inArr($b['id'],$f['brandIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
+                            <label class="form-check-label" for="br{{(int)$b['id']}}">{{$b['name']}}</label>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
 
-            <button class="btn btn-brand btn-sm" type="submit" style="width:100%">Áp dụng</button>
-            <a class="btn btn-sm" href="{{_WEB_URL.'/san-pham'}}" style="width:100%;text-align:center;margin-top:6px">Xoá lọc</a>
-        </div></div>
-    </aside>
+                @if (!empty($originOptions))
+                <div class="products__sidebar--item">
+                    <h3>Xuất xứ</h3>
+                    <div class="px-3">
+                        @foreach ($originOptions as $o)
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="or{{(int)$o['id']}}" name="origin[]" value="{{(int)$o['id']}}" {{$inArr($o['id'],$f['originIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
+                            <label class="form-check-label" for="or{{(int)$o['id']}}">{{$o['name']}}</label>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
 
-    <section class="content">
-        <div class="toolbar">
-            <div>
-                <h1 class="page-title">{{$titleTxt}}</h1>
-                <div class="muted">{{(int)$total}} sản phẩm</div>
-            </div>
-            <div>
-                <label class="muted" style="font-size:13px">Sắp xếp
-                <select name="sort" onchange="document.getElementById('facetForm').submit()">
-                    <option value="">Tên A-Z</option>
-                    <option value="new" {{($f['sort']==='new')?'selected':''}}>Mới nhất</option>
-                    <option value="price_asc" {{($f['sort']==='price_asc')?'selected':''}}>Giá thấp → cao</option>
-                    <option value="price_desc" {{($f['sort']==='price_desc')?'selected':''}}>Giá cao → thấp</option>
-                </select></label>
+                <div class="products__sidebar--item">
+                    <h3>Xe tương thích</h3>
+                    <div class="px-3">
+                        <select name="car_model" class="form-select form-select-sm" onchange="document.getElementById('facetForm').submit()">
+                            <option value="">— Mọi xe —</option>
+                            @foreach ($carModels as $cm)
+                                <option value="{{(int)$cm['id']}}" {{((int)$f['carModelId']===(int)$cm['id'])?'selected':''}}>{{$cm['name']}}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="products__sidebar--item">
+                    <h3>Khoảng giá (₫)</h3>
+                    <div class="px-3 d-flex gap-2">
+                        <input type="text" class="form-control form-control-sm" name="price_min" placeholder="Từ" value="{{$f['priceMin']}}"/>
+                        <input type="text" class="form-control form-control-sm" name="price_max" placeholder="Đến" value="{{$f['priceMax']}}"/>
+                    </div>
+                </div>
+
+                <div class="products__sidebar--item">
+                    <div class="px-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="promoChk" name="promo" value="1" {{!empty($f['promo'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
+                            <label class="form-check-label" for="promoChk">Chỉ hàng khuyến mãi</label>
+                        </div>
+                        <button class="btn btn-primary btn-sm w-100 mt-3" type="submit">Áp dụng lọc</button>
+                        <a class="btn btn-outline-secondary btn-sm w-100 mt-2" href="{{_WEB_URL.'/san-pham'}}">Xoá lọc</a>
+                    </div>
+                </div>
             </div>
         </div>
 
-        @if (empty($list))
-            <div class="card"><div class="bd tc muted" style="padding:50px">Không có sản phẩm khớp bộ lọc.</div></div>
-        @else
-            <div class="grid">
-                @foreach ($list as $p)
-                <?php
-                $hasSale = !empty($p['sale_price']);
-                $price = $hasSale ? (float) $p['sale_price'] : (float) $p['price'];
-                $pid = (int) $p['id'];
-                $km  = $hasSale ? '<span class="badge badge-promo" style="position:absolute;margin:8px">KM</span>' : '';
-                $old = $hasSale ? '<span class="old">'.number_format((float) $p['price'], 0, ',', '.').'</span>' : '';
-                $brandSuffix = !empty($p['brand_name']) ? ' · '.e($p['brand_name']) : '';
-                $st = ($isMember && isset($stockMap[$pid])) ? (float) $stockMap[$pid] : 0;
-                $stockBadge = $isMember
-                    ? '<div><span class="badge '.($st > 0 ? 'badge-ok' : '').'">Tồn: '.rtrim(rtrim(number_format($st, 3, ',', '.'), '0'), ',').'</span></div>'
-                    : '';
-                $imgFile = isset($imgMap[$pid]) ? $imgMap[$pid] : '';
-                $thumbInner = $imgFile !== ''
-                    ? '<img src="'.e(_WEB_URL.'/public/assets/uploads/parts/'.$imgFile).'" alt="'.e($p['name']).'" loading="lazy"/>'
-                    : '<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
-                ?>
-                <div class="pcard">
-                    <a class="thumb" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}">{!! $km !!}{!! $thumbInner !!}</a>
-                    <div class="info">
-                        <a class="pname" href="{{_WEB_URL.'/san-pham/'.$p['slug']}}">{{$p['name']}}</a>
-                        <div class="code">Mã: {{$p['code']}}{!! $brandSuffix !!}</div>
-                        <div class="price">{{number_format($price,0,',','.')}} ₫ {!! $old !!}</div>
-                        {!! $stockBadge !!}
-                        <div class="foot">
-                            <form method="post" action="{{_WEB_URL.'/gio-hang/them'}}" style="display:inline">
-                                <?php echo csrf_field(); ?>
-                                <input type="hidden" name="part_id" value="{{$pid}}"/>
-                                <button class="btn btn-brand btn-sm" type="submit">Thêm vào giỏ</button>
-                            </form>
-                        </div>
-                    </div>
+        <!-- Danh sách -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 mt-3 mt-lg-0">
+                <div>
+                    <h1 class="sf-page-title mb-0">{{$titleTxt}}</h1>
+                    <div class="text-muted">{{(int)$total}} sản phẩm</div>
                 </div>
-                @endforeach
+                <div>
+                    <label class="text-muted small me-1">Sắp xếp</label>
+                    <select name="sort" class="form-select form-select-sm d-inline-block" style="width:auto" onchange="document.getElementById('facetForm').submit()">
+                        <option value="">Tên A-Z</option>
+                        <option value="new" {{($f['sort']==='new')?'selected':''}}>Mới nhất</option>
+                        <option value="price_asc" {{($f['sort']==='price_asc')?'selected':''}}>Giá thấp → cao</option>
+                        <option value="price_desc" {{($f['sort']==='price_desc')?'selected':''}}>Giá cao → thấp</option>
+                    </select>
+                </div>
             </div>
 
-            @if ($pages > 1)
-            <div class="mt tc">
-                @for ($i = 1; $i <= $pages; $i++)
-                    <a class="btn btn-sm {{($i===(int)$page)?'btn-brand':'btn-outline'}}" href="{{$pageUrl($i)}}">{{$i}}</a>
-                @endfor
-            </div>
+            @if (empty($list))
+                <div class="empty-box">Không có sản phẩm khớp bộ lọc.</div>
+            @else
+                <div class="products__list">
+                    <div class="row g-3">
+                        @foreach ($list as $p)
+                        <?php
+                        $hasSale = !empty($p['sale_price']);
+                        $price = $hasSale ? (float) $p['sale_price'] : (float) $p['price'];
+                        $pid = (int) $p['id'];
+                        $brandSuffix = !empty($p['brand_name']) ? ' · ' . $p['brand_name'] : '';
+                        $st = ($isMember && isset($stockMap[$pid])) ? (float) $stockMap[$pid] : 0;
+                        $imgFile = isset($imgMap[$pid]) ? $imgMap[$pid] : '';
+                        $imgUrl = $imgFile !== '' ? ($partsBase . $imgFile) : ($assetImg . 'placeholder.svg');
+                        $url = _WEB_URL . '/san-pham/' . $p['slug'];
+                        ?>
+                        <div class="col-6 col-md-4">
+                            <div class="products--item h-100">
+                                <div class="item__image">
+                                    <a href="{{$url}}"><img src="{{$imgUrl}}" alt="{{$p['name']}}" loading="lazy"/></a>
+                                    <?php if ($hasSale): ?><span class="item--sales">KM</span><?php endif; ?>
+                                </div>
+                                <div class="item__info">
+                                    <h3 class="item--name"><a href="{{$url}}">{{$p['name']}}</a></h3>
+                                    <div class="small text-muted mb-1">Mã: {{$p['code']}}{{$brandSuffix}}</div>
+                                    <div class="item--price">
+                                        <?php if ($hasSale): ?><del>{{number_format((float)$p['price'],0,',','.')}} đ</del><?php endif; ?>
+                                        <span>{{number_format($price,0,',','.')}} đ</span>
+                                    </div>
+                                    @if ($isMember)
+                                    <div class="mt-1"><span class="badge {{$st>0?'bg-success':'bg-secondary'}}">Tồn: {{rtrim(rtrim(number_format($st,3,',','.'),'0'),',')}}</span></div>
+                                    @endif
+                                    <form method="post" action="{{_WEB_URL.'/gio-hang/them'}}" class="mt-2">
+                                        <?php echo csrf_field(); ?>
+                                        <input type="hidden" name="part_id" value="{{$pid}}"/>
+                                        <button class="btn btn-primary btn-sm w-100" type="submit"><i class="fa fa-shopping-cart"></i> Thêm vào giỏ</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                @if ($pages > 1)
+                <div class="pagination-sf">
+                    @for ($i = 1; $i <= $pages; $i++)
+                        <a class="{{($i===(int)$page)?'active':''}}" href="{{$pageUrl($i)}}">{{$i}}</a>
+                    @endfor
+                </div>
+                @endif
             @endif
-        @endif
-    </section>
+        </div>
+
+    </div>
+    </form>
 </div>
-</form>
+</div>
+</div>

@@ -63,20 +63,11 @@ $selType = !empty($old['type']) ? $old['type'] : 'xuat_ban';
                     </select>
                 </div>
                 <div class="form-group col-md-4">
-                    <label>TK đối ứng (KT-6)</label>
-                    <select name="counter_account_id" class="form-control">
-                        <option value="">— Mặc định 632 (giá vốn) —</option>
-                        @foreach ($accounts as $a)
-                        <option value="{{$a['id']}}" {{(!empty($old['counter_account_id']) && $old['counter_account_id']==$a['id'])?'selected':''}}>{{$a['code'].' - '.$a['name']}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="form-group col-md-4">
                     <label>Diễn giải</label>
                     <input type="text" name="reason" class="form-control" value="{{!empty($old['reason'])?$old['reason']:''}}"/>
                 </div>
             </div>
-            <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Giá vốn tính <b>khi ghi sổ</b> theo bình quân gia quyền. Định khoản <b>Nợ TK đối ứng / Có 156 Hàng hóa</b>. Doanh thu bán hàng do phân hệ Bán hàng ghi riêng.</p>
+            <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Giá vốn tính <b>khi ghi sổ</b> theo bình quân gia quyền.</p>
         </div>
     </div>
 

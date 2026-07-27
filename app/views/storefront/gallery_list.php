@@ -1,19 +1,33 @@
-<div class="crumb"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / Thư viện</div>
-<h1 class="page-title">Thư viện ảnh &amp; video</h1>
+<?php $assetImg = _WEB_URL . '/public/assets/storefront/images/'; ?>
+<div class="content">
+<div class="sf-page">
+<div class="container">
 
-@if (empty($list))
-    <div class="card"><div class="bd tc muted" style="padding:50px">Chưa có album nào.</div></div>
-@else
-    <div class="grid" style="margin-top:14px">
-        @foreach ($list as $g)
-        <?php $thumb = !empty($g['cover']) ? '<img src="'.e(media_url($g['cover'])).'" alt="'.e($g['name']).'" style="width:100%;height:100%;object-fit:cover"/>' : '🖼'; ?>
-        <div class="pcard">
-            <a class="thumb" href="{{_WEB_URL.'/thu-vien/'.$g['slug']}}">{!! $thumb !!}</a>
-            <div class="info">
-                <a class="pname" href="{{_WEB_URL.'/thu-vien/'.$g['slug']}}">{{$g['name']}}</a>
-                <div class="muted" style="font-size:13px">{{!empty($g['description'])?$g['description']:''}}</div>
+    <div class="breadcrumb-sf"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / Thư viện</div>
+    <h1 class="sf-page-title">Thư viện ảnh &amp; video</h1>
+
+    @if (empty($list))
+        <div class="empty-box">Chưa có album nào.</div>
+    @else
+        <div class="row g-3 mt-1">
+            @foreach ($list as $g)
+            <?php
+            $thumb = !empty($g['cover']) ? media_url($g['cover']) : ($assetImg . 'placeholder.svg');
+            $url = _WEB_URL . '/thu-vien/' . $g['slug'];
+            ?>
+            <div class="col-6 col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <a href="{{$url}}"><img src="{{$thumb}}" class="card-img-top" alt="{{$g['name']}}" style="height:190px;object-fit:cover"/></a>
+                    <div class="card-body">
+                        <a href="{{$url}}" class="fw-semibold text-dark d-block mb-1">{{$g['name']}}</a>
+                        <div class="small text-muted">{{!empty($g['description']) ? mb_strimwidth($g['description'],0,90,'...') : ''}}</div>
+                    </div>
+                </div>
             </div>
+            @endforeach
         </div>
-        @endforeach
-    </div>
-@endif
+    @endif
+
+</div>
+</div>
+</div>

@@ -23,7 +23,7 @@ class Salesinvoices extends Controller {
 
     private $__data = [];
     private $__model, $__itemModel, $__stock, $__warehouse, $__partner, $__part;
-    private $__accModel, $__voucherModel, $__entryModel, $__settings, $__request, $__response;
+    private $__settings, $__request, $__response;
 
     private $routeBase = 'sales-invoices';
     private $labelOne  = 'hoá đơn';
@@ -37,9 +37,6 @@ class Salesinvoices extends Controller {
         $this->__warehouse    = $this->model('WarehousesModel');
         $this->__partner      = $this->model('PartnersModel');
         $this->__part         = $this->model('PartsModel');
-        $this->__accModel     = $this->model('AccAccountsModel');
-        $this->__voucherModel = $this->model('AccVouchersModel');
-        $this->__entryModel   = $this->model('AccVoucherEntriesModel');
         $this->__settings     = $this->model('SettingsModel');
         $this->__request      = new Request();
         $this->__response     = new Response();
@@ -128,8 +125,7 @@ class Salesinvoices extends Controller {
         $this->__data['content']['page_name'] = 'Hoá đơn ' . $item['invoice_no'];
         $this->__data['content']['item']      = $item;
         $this->__data['content']['items']     = $this->__itemModel->getByInvoice($id);
-        $this->__data['content']['voucher']   = $item['acc_voucher_id']
-            ? $this->__voucherModel->getDetail($item['acc_voucher_id']) : null;
+        $this->__data['content']['voucher']   = null;
         $this->__data['content']['eiDefaults'] = [
             'serial' => $this->__settings->val('einvoice_serial', 'K' . date('y') . 'TTP'),
             'form'   => $this->__settings->val('einvoice_form', '1'),
@@ -206,22 +202,11 @@ class Salesinvoices extends Controller {
             $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
         }
 
-        // Tài khoản
-        $acc = [];
-        foreach ([self::RECEIVABLE, self::REVENUE, self::TAX, self::COGS, self::INVENTORY] as $code){
-            $row = $this->__accModel->findByCode($code);
-            if (empty($row)){
-                Session::flash('msgError', 'Thiếu tài khoản ' . $code . ' trong danh mục.');
-                $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
-            }
-            $acc[$code] = (int) $row['id'];
-        }
-
         $date = $item['invoice_date'];
         $no   = $item['invoice_no'];
         $rate = (float) $item['vat_rate'];
 
-        $this->__model->transaction(function($db) use ($id, $item, $items, $wh, $date, $no, $rate, $acc){
+        $this->__model->transaction(function($db) use ($id, $item, $items, $wh, $date, $no, $rate){
             $subtotal = 0.0; $cost = 0.0;
             foreach ($items as $it){
                 $avg = $this->__stock->applyOut($wh, (int) $it['part_id'], (float) $it['quantity'],
@@ -234,33 +219,11 @@ class Salesinvoices extends Controller {
             $tax   = round($subtotal * $rate / 100, 2);
             $total = $subtotal + $tax;
 
-            $vid = $this->__voucherModel->add([
-                'voucher_no'      => $this->__voucherModel->nextNo('ke_toan'),
-                'voucher_type'    => 'ke_toan',
-                'voucher_date'    => $date,
-                'cash_account_id' => null,
-                'partner_id'      => $item['customer_id'] !== null ? (int) $item['customer_id'] : null,
-                'partner_name'    => $item['customer_name'],
-                'reason'          => 'Tự động từ hoá đơn ' . $no,
-                'amount'          => $total,
-                'status'          => 1,
-            ]);
-            // Nợ 131 / Có 511 (doanh thu)
-            $this->__entryModel->addJournalLine($vid, $acc[self::RECEIVABLE], $acc[self::REVENUE], $subtotal, 'Doanh thu ' . $no);
-            // Nợ 131 / Có 3331 (thuế)
-            if ($tax > 0){
-                $this->__entryModel->addJournalLine($vid, $acc[self::RECEIVABLE], $acc[self::TAX], $tax, 'Thuế GTGT ' . $no);
-            }
-            // Nợ 632 / Có 156 (giá vốn)
-            if ($cost > 0){
-                $this->__entryModel->addJournalLine($vid, $acc[self::COGS], $acc[self::INVENTORY], $cost, 'Giá vốn ' . $no);
-            }
-
             $this->__model->edit(['status' => 1, 'subtotal' => $subtotal, 'tax_amount' => $tax,
-                'total_amount' => $total, 'cost_amount' => $cost, 'acc_voucher_id' => $vid], $id);
+                'total_amount' => $total, 'cost_amount' => $cost], $id);
         });
 
-        Session::flash('msg', 'Đã ghi sổ ' . $no . ' — doanh thu, công nợ, giá vốn & trừ tồn kho.');
+        Session::flash('msg', 'Đã ghi sổ ' . $no . ' — trừ tồn kho & ghi nhận giá vốn.');
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
 
@@ -294,18 +257,15 @@ class Salesinvoices extends Controller {
             $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
         }
 
-        $voucherId = $item['acc_voucher_id'] ? (int) $item['acc_voucher_id'] : 0;
-
-        $this->__model->transaction(function($db) use ($id, $items, $wh, $voucherId){
+        $this->__model->transaction(function($db) use ($id, $items, $wh){
             foreach ($items as $it){
                 $this->__stock->reverseDoc($wh, (int) $it['part_id'], self::DOC_TYPE, $id);
                 $this->__itemModel->setCost((int) $it['id'], 0, 0);
             }
-            if ($voucherId > 0){ $this->__voucherModel->remove($voucherId); }
-            $this->__model->edit(['status' => 0, 'acc_voucher_id' => null, 'cost_amount' => 0], $id);
+            $this->__model->edit(['status' => 0, 'cost_amount' => 0], $id);
         });
 
-        Session::flash('msg', 'Đã huỷ ghi sổ ' . $item['invoice_no'] . ' — hoàn tồn kho & xoá bút toán.');
+        Session::flash('msg', 'Đã huỷ ghi sổ ' . $item['invoice_no'] . ' — hoàn tồn kho.');
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
 

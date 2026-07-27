@@ -5,7 +5,7 @@
                 <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>{{$page_name}}</h3>
             </div>
 
-            <form action="" method="post">
+            <form action="" method="post" enctype="multipart/form-data">
                 <?php echo csrf_field(); ?>
                 <div class="card-body">
                     @if (!empty($msg))
@@ -50,6 +50,16 @@
                     </div>
 
                     <div class="form-group">
+                        <label>Ảnh danh mục</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" name="image" id="image" accept="image/*"/>
+                            <label class="custom-file-label" for="image">Chọn ảnh...</label>
+                        </div>
+                        <small class="form-text text-muted">Hiển thị ở lưới danh mục ngoài trang chủ. JPG, PNG, GIF, WEBP · tối đa 3MB.</small>
+                        {!! !empty($errors['image'])?'<small class="text-danger d-block">'.e($errors['image']).'</small>':false !!}
+                    </div>
+
+                    <div class="form-group">
                         <label>Thứ tự hiển thị</label>
                         <input type="number" class="form-control" name="sort_order" style="max-width:150px" value="{{!empty($old['sort_order'])?$old['sort_order']:'0'}}"/>
                     </div>
@@ -71,3 +81,13 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'image') {
+        var name = e.target.files.length ? e.target.files[0].name : 'Chọn ảnh...';
+        var lbl = e.target.parentNode.querySelector('.custom-file-label');
+        if (lbl) lbl.textContent = name;
+    }
+});
+</script>
