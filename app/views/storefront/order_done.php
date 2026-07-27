@@ -1,13 +1,12 @@
-<?php $isBank = ($pay === 'bank_transfer'); ?>
-<div class="content">
-<div class="sf-page">
-<div class="container">
-    <div class="card border-0 shadow-sm mx-auto" style="max-width:640px"><div class="card-body p-4 p-md-5">
-        <div class="text-center" style="font-size:56px">✅</div>
-        <h1 class="sf-page-title text-center">Đặt hàng thành công!</h1>
-        @if (!empty($orderNo))
-        <p class="text-center">Mã đơn hàng: <b><?php echo e($orderNo); ?></b> · Tổng tiền: <b class="text-accent"><?php echo e(number_format((float) $total, 0, ',', '.')); ?> đ</b></p>
-        @endif
+<?php
+$isBank = ($pay === 'bank_transfer');
+?>
+<div class="card" style="margin:30px auto;max-width:640px"><div class="bd" style="padding:40px">
+    <div class="tc" style="font-size:56px">✅</div>
+    <h1 class="page-title tc">Đặt hàng thành công!</h1>
+    @if (!empty($orderNo))
+    <p class="tc">Mã đơn hàng: <b><?php echo e($orderNo); ?></b> · Tổng tiền: <b style="color:#164194"><?php echo e(number_format((float) $total, 0, ',', '.')); ?> ₫</b></p>
+    @endif
 
         @if ($isBank)
         <div class="alert alert-info">

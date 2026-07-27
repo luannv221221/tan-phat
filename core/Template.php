@@ -126,7 +126,7 @@ class Template{
         }
 
         //Xử lý endfor
-        preg_match_all('~@endfor$~im', $this->__content, $matches);
+        preg_match_all('~@endfor\s*$~im', $this->__content, $matches);
 
         if (!empty($matches[0])){
             foreach ($matches[0] as $value){

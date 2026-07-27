@@ -5,11 +5,40 @@
     <div class="breadcrumb-sf"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / Giỏ hàng</div>
     <h1 class="sf-page-title mb-3">Giỏ hàng / Yêu cầu báo giá</h1>
 
-    @if (!empty($msg))
-    <div class="alert alert-success">{{$msg}}</div>
-    @endif
-    {!! !empty($errors['cart']) ? '<div class="alert alert-danger">'.e($errors['cart']).'</div>' : '' !!}
-    {!! !empty($errors['name']) ? '<div class="alert alert-danger">'.e($errors['name']).'</div>' : '' !!}
+@if (empty($rows))
+    <div class="card"><div class="bd tc muted" style="padding:50px">
+        Giỏ hàng trống. <a href="{{_WEB_URL.'/san-pham'}}">Xem sản phẩm →</a>
+    </div></div>
+@else
+<div class="wrap" style="align-items:flex-start">
+    <div class="content">
+        <form method="post" action="{{_WEB_URL.'/gio-hang/cap-nhat'}}">
+            <?php echo csrf_field(); ?>
+            <table class="cart-tbl">
+                <thead><tr><th>Sản phẩm</th><th style="width:120px">Đơn giá</th><th style="width:100px">SL</th><th style="width:140px" class="tr">Thành tiền</th><th style="width:60px"></th></tr></thead>
+                <tbody>
+                @foreach ($rows as $r)
+                    <?php $p = $r['part']; ?>
+                    <tr>
+                        <td>
+                            <a href="{{_WEB_URL.'/san-pham/'.$p['slug']}}"><b>{{$p['name']}}</b></a>
+                            <div class="muted" style="font-size:12px">Mã: {{$p['code']}}</div>
+                        </td>
+                        <td>{{number_format($r['price'],0,',','.')}} ₫</td>
+                        <td><input type="number" name="qty[{{(int)$p['id']}}]" value="{{(int)$r['qty']}}" min="1" style="width:70px;padding:6px;border:1px solid #e6e6e6;border-radius:5px"/></td>
+                        <td class="tr"><b>{{number_format($r['amount'],0,',','.')}} ₫</b></td>
+                        <td class="tc"><a href="{{_WEB_URL.'/gio-hang/xoa/'.(int)$p['id']}}" title="Xoá" style="color:#c0392b">✕</a></td>
+                    </tr>
+                @endforeach
+                </tbody>
+                <tfoot>
+                    <tr><td colspan="3" class="tr"><b>Tổng cộng</b></td><td class="tr"><b style="color:#164194;font-size:18px">{{number_format($total,0,',','.')}} ₫</b></td><td></td></tr>
+                </tfoot>
+            </table>
+            <div class="mt"><button class="btn btn-outline" type="submit">Cập nhật giỏ</button>
+                <a class="btn" href="{{_WEB_URL.'/san-pham'}}">Tiếp tục mua sắm</a></div>
+        </form>
+    </div>
 
     @if (empty($rows))
         <div class="empty-box">Giỏ hàng trống. <a href="{{_WEB_URL.'/san-pham'}}">Xem sản phẩm →</a></div>
