@@ -79,6 +79,7 @@ Route::group('admin', function(){
        'du-an'           => 'projectportfolio',  // Dự án (KHÁC Projects/Mã vụ việc)
        'galleries'       => 'galleries',         // Thư viện ảnh/video
        'menus'           => 'menus',             // Menu website
+       'banners'         => 'banners',           // Banner slider trang chủ
    ];
    foreach ($cmsModules as $url => $controller){
        Route::get($url,                 'admin/'.$controller);
@@ -144,15 +145,11 @@ Route::group('admin', function(){
    }
 
    /* =========================================================
-    * KẾ TOÁN (KT-1 + KT-2) — theo KE_TOAN_SPEC_DE_XUAT.md
+    * ĐỐI TƯỢNG (khách hàng / nhà cung cấp) — dùng chung Bán hàng & Kho
     * ========================================================= */
+   // Đối tượng khách hàng / nhà cung cấp (dùng chung cho Bán hàng & Kho)
    $accModules = [
-       'accounts'   => 'accounts',    // Danh mục tài khoản (cây)
-       'cost-items' => 'costitems',   // Mã phí
-       'projects'   => 'projects',    // Mã vụ việc
-       'vouchers'   => 'vouchers',    // Phiếu thu / chi
-       'journal'    => 'journal',     // Phiếu kế toán (định khoản tự do) - KT-3
-       'partners'   => 'partners',    // Đối tượng khách/NCC - KT-4
+       'partners'   => 'partners',    // Đối tượng khách/NCC
    ];
    foreach ($accModules as $url => $controller){
        Route::get($url,                 'admin/'.$controller);
@@ -162,18 +159,6 @@ Route::group('admin', function(){
        Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
        Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
    }
-   // Phiếu: ghi sổ / huỷ ghi sổ
-   Route::get('vouchers/post/(\d+)',   'admin/vouchers/post/$1');
-   Route::get('vouchers/unpost/(\d+)', 'admin/vouchers/unpost/$1');
-   Route::get('journal/post/(\d+)',    'admin/journal/post/$1');
-   Route::get('journal/unpost/(\d+)',  'admin/journal/unpost/$1');
-   // Sổ quỹ (chỉ xem)
-   Route::get('cash-book', 'admin/cashbook');
-   // Công nợ (chỉ xem) - KT-4
-   Route::get('debt', 'admin/debt');
-   // Sổ sách (chỉ xem) - KT-5
-   Route::get('nhat-ky-chung', 'admin/generaljournal');
-   Route::get('so-cai', 'admin/ledger');
 
    /* =========================================================
     * KHO (WH) — theo KHO_BAN_HANG_SPEC.md
@@ -308,25 +293,6 @@ Route::group('admin', function(){
    Route::get('reviews/hide/(\d+)',    'admin/reviews/hide/$1');
    Route::get('reviews/delete/(\d+)',  'admin/reviews/delete/$1');
 
-   /* =========================================================
-    * NHÂN SỰ (HR) — phòng ban + chức vụ + nhân viên + nghỉ phép
-    * ========================================================= */
-   $hrModules = [
-       'departments'    => 'departments',
-       'positions'      => 'positions',
-       'employees'      => 'employees',
-       'leave-requests' => 'leaverequests',
-   ];
-   foreach ($hrModules as $url => $controller){
-       Route::get($url,                 'admin/'.$controller);
-       Route::get($url.'/add',          'admin/'.$controller.'/add');
-       Route::post($url.'/add',         'admin/'.$controller.'/postAdd');
-       Route::get($url.'/edit/(\d+)',   'admin/'.$controller.'/edit/$1');
-       Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
-       Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
-   }
-   Route::get('leave-requests/set-status/(\d+)', 'admin/leaverequests/setStatus/$1');
-
    // Đơn hàng (storefront)
    Route::get('orders', 'admin/orders');
    Route::get('orders/edit/(\d+)', 'admin/orders/edit/$1');
@@ -382,6 +348,9 @@ Route::get('gio-hang/hoan-tat', 'cart/done');
 Route::get('dat-hang', 'cart/checkout');
 Route::post('dat-hang', 'cart/placeOrder');
 Route::get('dat-hang/hoan-tat', 'cart/orderDone');
+
+// Trang giới thiệu (public)
+Route::get('gioi-thieu', 'gioithieu/index');
 
 // CMS công khai: Tin tức + Dự án
 Route::get('tin-tuc', 'tintuc/index');

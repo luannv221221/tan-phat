@@ -5,7 +5,7 @@
                 <h3 class="card-title"><i class="fas fa-edit mr-2"></i>{{$page_name}}</h3>
             </div>
 
-            <form action="" method="post">
+            <form action="" method="post" enctype="multipart/form-data">
                 <?php echo csrf_field(); ?>
                 <div class="card-body">
                     @if (!empty($msg))
@@ -52,6 +52,19 @@
                     </div>
 
                     <div class="form-group">
+                        <label>Ảnh danh mục</label>
+                        @if (!empty($item['image']))
+                        <div class="mb-2"><img src="{{media_url($item['image'])}}" alt="ảnh danh mục" style="max-height:90px;max-width:100%;border-radius:6px;border:1px solid #dee2e6"/></div>
+                        @endif
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" name="image" id="image" accept="image/*"/>
+                            <label class="custom-file-label" for="image">{{!empty($item['image'])?'Chọn ảnh mới...':'Chọn ảnh...'}}</label>
+                        </div>
+                        <small class="form-text text-muted">Để trống sẽ giữ ảnh hiện tại. Hiển thị ở lưới danh mục trang chủ.</small>
+                        {!! !empty($errors['image'])?'<small class="text-danger d-block">'.e($errors['image']).'</small>':false !!}
+                    </div>
+
+                    <div class="form-group">
                         <label>Thứ tự hiển thị</label>
                         <input type="number" class="form-control" name="sort_order" style="max-width:150px" value="{{isset($old['sort_order'])?$old['sort_order']:$item['sort_order']}}"/>
                     </div>
@@ -73,3 +86,13 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'image') {
+        var name = e.target.files.length ? e.target.files[0].name : 'Chọn ảnh mới...';
+        var lbl = e.target.parentNode.querySelector('.custom-file-label');
+        if (lbl) lbl.textContent = name;
+    }
+});
+</script>

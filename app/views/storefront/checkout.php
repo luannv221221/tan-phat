@@ -1,56 +1,48 @@
 <?php $memberName = !empty($member['name']) ? $member['name'] : ''; ?>
-<div class="crumb"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / <a href="{{_WEB_URL.'/gio-hang'}}">Giỏ hàng</a> / Đặt hàng</div>
-<h1 class="page-title">Đặt hàng</h1>
+<div class="content">
+<div class="sf-page">
+<div class="container">
 
-{!! !empty($errors['name']) ? '<div class="alert alert-err">'.e($errors['name']).'</div>' : '' !!}
-{!! !empty($errors['phone']) ? '<div class="alert alert-err">'.e($errors['phone']).'</div>' : '' !!}
-{!! !empty($errors['address']) ? '<div class="alert alert-err">'.e($errors['address']).'</div>' : '' !!}
+    <div class="breadcrumb-sf"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / <a href="{{_WEB_URL.'/gio-hang'}}">Giỏ hàng</a> / Đặt hàng</div>
+    <h1 class="sf-page-title mb-3">Đặt hàng</h1>
 
-<form method="post" action="{{_WEB_URL.'/dat-hang'}}">
-    <?php echo csrf_field(); ?>
-    <div class="wrap" style="align-items:flex-start">
-        <section class="content">
-            <div class="card"><div class="hd">Thông tin người nhận</div><div class="bd">
-                <div class="fld" style="margin-bottom:12px">
-                    <label style="font-weight:600;font-size:14px">Họ tên <span style="color:#c0392b">*</span></label>
-                    <input type="text" name="name" value="{{!empty($old['name'])?$old['name']:$memberName}}" style="width:100%;padding:10px;border:1px solid #e6e6e6;border-radius:6px" required/>
-                </div>
-                <div class="fld" style="margin-bottom:12px">
-                    <label style="font-weight:600;font-size:14px">Số điện thoại <span style="color:#c0392b">*</span></label>
-                    <input type="text" name="phone" value="{{!empty($old['phone'])?$old['phone']:(!empty($member['phone'])?$member['phone']:'')}}" style="width:100%;padding:10px;border:1px solid #e6e6e6;border-radius:6px" required/>
-                </div>
-                <div class="fld" style="margin-bottom:12px">
-                    <label style="font-weight:600;font-size:14px">Email</label>
-                    <input type="text" name="email" value="{{!empty($old['email'])?$old['email']:(!empty($member['email'])?$member['email']:'')}}" style="width:100%;padding:10px;border:1px solid #e6e6e6;border-radius:6px"/>
-                </div>
-                <div class="fld" style="margin-bottom:12px">
-                    <label style="font-weight:600;font-size:14px">Địa chỉ nhận hàng <span style="color:#c0392b">*</span></label>
-                    <input type="text" name="address" value="{{!empty($old['address'])?$old['address']:(!empty($member['address'])?$member['address']:'')}}" style="width:100%;padding:10px;border:1px solid #e6e6e6;border-radius:6px" required/>
-                </div>
-                <div class="fld" style="margin-bottom:0">
-                    <label style="font-weight:600;font-size:14px">Ghi chú</label>
-                    <textarea name="note" rows="2" style="width:100%;padding:10px;border:1px solid #e6e6e6;border-radius:6px"></textarea>
-                </div>
-            </div></div>
+    {!! !empty($errors['name']) ? '<div class="alert alert-danger">'.e($errors['name']).'</div>' : '' !!}
+    {!! !empty($errors['phone']) ? '<div class="alert alert-danger">'.e($errors['phone']).'</div>' : '' !!}
+    {!! !empty($errors['address']) ? '<div class="alert alert-danger">'.e($errors['address']).'</div>' : '' !!}
 
-            <div class="card mt"><div class="hd">Hình thức thanh toán</div><div class="bd">
-                @foreach ($payments as $k => $label)
-                <label style="display:block;padding:6px 0;font-size:15px;cursor:pointer">
-                    <input type="radio" name="payment_method" value="{{$k}}" {{$k=='bank_transfer'?'checked':''}}/> {{$label}}
-                </label>
-                @endforeach
-            </div></div>
-        </section>
+    <form method="post" action="{{_WEB_URL.'/dat-hang'}}">
+        <?php echo csrf_field(); ?>
+        <div class="row g-4">
+            <div class="col-12 col-lg-8">
+                <div class="card border-0 shadow-sm"><div class="card-header bg-white fw-semibold">Thông tin người nhận</div><div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Họ tên <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" value="{{!empty($old['name'])?$old['name']:$memberName}}" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số điện thoại <span class="text-danger">*</span></label>
+                        <input type="text" name="phone" class="form-control" value="{{!empty($old['phone'])?$old['phone']:(!empty($member['phone'])?$member['phone']:'')}}" required/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="text" name="email" class="form-control" value="{{!empty($old['email'])?$old['email']:(!empty($member['email'])?$member['email']:'')}}"/>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Địa chỉ nhận hàng <span class="text-danger">*</span></label>
+                        <input type="text" name="address" class="form-control" value="{{!empty($old['address'])?$old['address']:(!empty($member['address'])?$member['address']:'')}}" required/>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">Ghi chú</label>
+                        <textarea name="note" rows="2" class="form-control"></textarea>
+                    </div>
+                </div></div>
 
-        <aside class="sidebar" style="width:340px;flex:0 0 340px">
-            <div class="card"><div class="hd">Đơn hàng</div><div class="bd">
-                <table style="width:100%;border-collapse:collapse">
-                    @foreach ($rows as $r)
-                    <?php $p = $r['part']; ?>
-                    <tr style="border-bottom:1px solid #eee">
-                        <td style="padding:8px 0;font-size:14px">{{$p['name']}} <span class="muted">× {{(int)$r['qty']}}</span></td>
-                        <td style="padding:8px 0;text-align:right;font-size:14px">{{number_format($r['amount'],0,',','.')}}</td>
-                    </tr>
+                <div class="card border-0 shadow-sm mt-3"><div class="card-header bg-white fw-semibold">Hình thức thanh toán</div><div class="card-body">
+                    @foreach ($payments as $k => $label)
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="payment_method" id="pay-{{$k}}" value="{{$k}}" {{$k=='bank_transfer'?'checked':''}}/>
+                        <label class="form-check-label" for="pay-{{$k}}">{{$label}}</label>
+                    </div>
                     @endforeach
                     <tr><td style="padding:12px 0;font-weight:700">Tổng cộng</td><td style="padding:12px 0;text-align:right;font-weight:700;color:#164194;font-size:18px">{{number_format($total,0,',','.')}} ₫</td></tr>
                 </table>

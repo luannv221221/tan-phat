@@ -27,6 +27,28 @@ $ogImage = !empty($seo['image']) ? $seo['image'] : (!empty($settings['og_image']
 $ogImageUrl = $ogImage !== '' ? media_url($ogImage) : '';
 $ogType = !empty($seo['type']) ? $seo['type'] : 'website';
 $canonical = _WEB_URL . '/' . (isset($_GET['module']) ? trim($_GET['module'], '/') : '');
+
+// Đường dẫn asset của theme storefront + logo
+$asset = _WEB_URL . '/public/assets/storefront';
+$logoUrl = !empty($settings['logo']) ? media_url($settings['logo']) : ($asset . '/images/logo.png');
+$hotline = !empty($settings['hotline']) ? $settings['hotline'] : '1900 0000';
+$hotlineTel = preg_replace('/[^0-9+]/', '', $hotline);
+$slogan = !empty($settings['site_slogan']) ? $settings['site_slogan'] : 'Phụ tùng & thiết bị gara ô tô';
+
+// Bộ render menu đa cấp cho theme (<ul class="menu"> lồng nhau)
+$renderMenu = function ($items) use (&$renderMenu){
+    foreach ($items as $it){
+        $children = !empty($it['children']) ? $it['children'] : [];
+        $tgt = (!empty($it['target']) && $it['target'] === '_blank') ? ' target="_blank"' : '';
+        echo '<li><a href="' . e(nav_url($it['url'])) . '"' . $tgt . '>' . e($it['label']) . '</a>';
+        if (!empty($children)){
+            echo '<ul>';
+            $renderMenu($children);
+            echo '</ul>';
+        }
+        echo '</li>';
+    }
+};
 ?><!doctype html>
 <html lang="vi">
 <head>
@@ -42,6 +64,13 @@ $canonical = _WEB_URL . '/' . (isset($_GET['module']) ? trim($_GET['module'], '/
 <meta property="og:url" content="<?php echo e($canonical); ?>"/>
 <?php if ($metaDesc !== ''): ?><meta property="og:description" content="<?php echo e($metaDesc); ?>"/><?php endif; ?>
 <?php if ($ogImageUrl !== ''): ?><meta property="og:image" content="<?php echo e($ogImageUrl); ?>"/><meta name="twitter:card" content="summary_large_image"/><?php endif; ?>
+
+<link rel="stylesheet" href="<?php echo $asset; ?>/css/bootstrap.min.css"/>
+<link rel="stylesheet" href="<?php echo $asset; ?>/css/font-awesome.min.css"/>
+<link rel="stylesheet" href="<?php echo $asset; ?>/css/owl.carousel.min.css"/>
+<link rel="stylesheet" href="<?php echo $asset; ?>/css/owl.theme.default.min.css"/>
+<link rel="stylesheet" href="<?php echo $asset; ?>/css/own-carousel.min.css"/>
+<link rel="stylesheet" href="<?php echo $asset; ?>/css/style.css"/>
 <style>
 :root{--brand:#164194;--brand-d:#102f6b;--ink:#222;--muted:#777;--line:#e6e6e6;--bg:#f5f6f8;--ok:#27ae60}
 *{box-sizing:border-box}
@@ -147,15 +176,14 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
 #cw-head small{display:block;font-weight:400;opacity:.85;font-size:12px}
 #cw-msgs{flex:1;overflow-y:auto;padding:12px;background:#f5f6f8}
 .cw-m{margin-bottom:8px;display:flex}
-.cw-m .b{max-width:78%;padding:8px 11px;border-radius:12px;font-size:14px;line-height:1.35;word-wrap:break-word}
+.cw-m .b{max-width:80%;padding:7px 11px;border-radius:12px;font-size:.9rem;line-height:1.35;word-wrap:break-word}
 .cw-m.customer{justify-content:flex-end}
-.cw-m.customer .b{background:var(--brand);color:#fff;border-bottom-right-radius:3px}
-.cw-m.staff .b{background:#fff;border:1px solid #e6e6e6;border-bottom-left-radius:3px}
-#cw-foot{border-top:1px solid #eee;padding:8px;display:flex;gap:6px}
-#cw-foot input{flex:1;padding:9px;border:1px solid #e6e6e6;border-radius:20px;font-size:14px}
-#cw-foot button{border:0;background:var(--brand);color:#fff;border-radius:50%;width:38px;height:38px;cursor:pointer}
-#cw-info{padding:8px;display:flex;gap:6px;border-top:1px solid #eee}
-#cw-info input{flex:1;padding:7px;border:1px solid #e6e6e6;border-radius:6px;font-size:13px}
+.cw-m.customer .b{background:#2957a4;color:#fff;border-bottom-right-radius:3px}
+.cw-m.staff .b{background:#eef1f6;color:#333;border-bottom-left-radius:3px}
+#cw-info{display:flex;gap:6px;margin-bottom:8px}
+#cw-info input{flex:1}
+#cw-foot{display:flex;gap:6px}
+#cw-foot input{flex:1}
 </style>
 </head>
 <body>
@@ -181,113 +209,238 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
         <a href="<?php echo _WEB_URL; ?>/thanh-vien" class="lbl">👤 <?php echo e(!empty($memberName) ? 'Tài khoản' : 'Thành viên'); ?></a>
         <a href="<?php echo _WEB_URL; ?>/gio-hang" class="cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> <span class="lbl">Giỏ</span><span class="count"><?php echo e((int) $cartCount); ?></span></a>
     </div>
-</div></header>
+    <div class="py-3 top-header">
+        <div class="container">
+            <div class="row align-items-center g-3">
+                <div class="col-2 d-md-none">
+                    <button type="button" class="menu-toggle"><i class="fa fa-bars"></i></button>
+                </div>
+                <div class="col-7 col-md-2">
+                    <div class="header__logo text-center text-md-left">
+                        <a href="<?php echo _WEB_URL; ?>/"><img src="<?php echo e($logoUrl); ?>" alt="<?php echo e($siteName); ?>"/></a>
+                    </div>
+                </div>
+                <div class="col-5 px-5 d-none d-md-block">
+                    <form action="<?php echo _WEB_URL; ?>/san-pham" method="get">
+                        <div class="input-group header__search">
+                            <input type="search" name="q" class="form-control" placeholder="Tìm phụ tùng, mã, OEM..." value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
+                            <button type="submit" class="btn"><i class="fa fa-search" aria-hidden="true"></i></button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-5 d-none d-md-block">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="header__hotline">
+                            <a href="tel:<?php echo e($hotlineTel); ?>"><i class="fa fa-mobile" aria-hidden="true"></i> Hotline: <?php echo e($hotline); ?></a>
+                        </div>
+                        <div class="header__cart">
+                            <a href="<?php echo _WEB_URL; ?>/gio-hang">
+                                <span class="header__cart--item"> Giỏ hàng </span>
+                                <span class="header__cart--item">
+                                    <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+                                    <span class="count"><?php echo (int) $cartCount; ?></span>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-3 d-md-none">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <div class="header__cart">
+                            <a href="<?php echo _WEB_URL; ?>/gio-hang">
+                                <span class="header__cart--item">
+                                    <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+                                    <span class="count"><?php echo (int) $cartCount; ?></span>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 d-md-none">
+                    <form action="<?php echo _WEB_URL; ?>/san-pham" method="get">
+                        <div class="input-group header__search">
+                            <input type="search" name="q" class="form-control" placeholder="Tìm kiếm..." value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
+                            <button type="submit" class="btn"><i class="fa fa-search" aria-hidden="true"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <nav class="header__primary-menu">
+        <div class="d-md-none py-2 px-3 text-center">
+            <a href="<?php echo _WEB_URL; ?>/"><img src="<?php echo e($logoUrl); ?>" alt=""/></a>
+            <button type="button" class="close">&times;</button>
+        </div>
+        <div class="container">
+            <ul class="menu">
+                <li><a href="<?php echo _WEB_URL; ?>/">Trang chủ</a></li>
+                <li><a href="<?php echo _WEB_URL; ?>/gioi-thieu">Giới thiệu</a></li>
+                <?php $renderMenu($navMenu); ?>
+            </ul>
+        </div>
+    </nav>
+</header>
+<!--End .header-->
 
-<nav class="cats"><div class="container">
-    <?php
-    foreach ($navMenu as $m){
-        $children = !empty($m['children']) ? $m['children'] : [];
-        $tgt = ($m['target'] === '_blank') ? ' target="_blank"' : '';
-        if (empty($children)){
-            echo '<a href="'.e(nav_url($m['url'])).'"'.$tgt.'>'.e($m['label']).'</a>';
-        } else {
-            echo '<div class="has-sub"><a href="'.e(nav_url($m['url'])).'"'.$tgt.'>'.e($m['label']).' ▾</a><div class="submenu">';
-            foreach ($children as $ch){
-                $ctgt = ($ch['target'] === '_blank') ? ' target="_blank"' : '';
-                echo '<a href="'.e(nav_url($ch['url'])).'"'.$ctgt.'>'.e($ch['label']).'</a>';
-            }
-            echo '</div></div>';
-        }
-    }
-    ?>
-</div></nav>
+<?php $this->render($sub_content, $content); ?>
 
-<main class="container">
-    <?php $this->render($sub_content, $content); ?>
-</main>
+<footer class="footer py-4">
+    <div class="container">
+        <div class="footer__logo">
+            <p><a href="<?php echo _WEB_URL; ?>/"><img src="<?php echo e($logoUrl); ?>" alt="" style="max-height:70px;width:auto"/></a></p>
+            <h2><?php echo e($siteName); ?></h2>
+        </div>
+        <hr/>
+        <div class="footer__address">
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <div class="footer__address--item">
+                        <h4><i class="fa fa-map-marker" aria-hidden="true"></i> Địa chỉ</h4>
+                        <p><?php echo e(!empty($settings['address']) ? $settings['address'] : 'Đang cập nhật'); ?></p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="footer__address--item">
+                        <h4><i class="fa fa-phone" aria-hidden="true"></i> Liên hệ</h4>
+                        <p>Hotline: <?php echo e($hotline); ?></p>
+                        <p>Email: <?php echo e(!empty($settings['email']) ? $settings['email'] : 'info@tanphat.vn'); ?></p>
+                    </div>
+                </div>
+                <div class="col-6 col-md-4">
+                    <div class="footer__address--item">
+                        <h4><i class="fa fa-info-circle" aria-hidden="true"></i> Giới thiệu</h4>
+                        <p><?php echo e($slogan); ?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer__inner pt-4">
+            <div class="row">
+                <div class="col-12 col-md-9">
+                    <div class="footer__inner--menu">
+                        <ul>
+                            <li><a href="<?php echo _WEB_URL; ?>/san-pham">Sản phẩm</a></li>
+                            <li><a href="<?php echo _WEB_URL; ?>/tin-tuc">Tin tức</a></li>
+                            <li><a href="<?php echo _WEB_URL; ?>/du-an">Dự án</a></li>
+                            <li><a href="<?php echo _WEB_URL; ?>/thu-vien">Thư viện</a></li>
+                            <li><a href="<?php echo _WEB_URL; ?>/lien-he">Liên hệ</a></li>
+                        </ul>
+                        <ul>
+                            <li><a href="<?php echo _WEB_URL; ?>/gio-hang">Giỏ hàng / Báo giá</a></li>
+                            <li><a href="<?php echo _WEB_URL; ?>/thanh-vien">Tài khoản thành viên</a></li>
+                            <li><a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-ky">Đăng ký thành viên</a></li>
+                        </ul>
+                        <ul>
+                            <?php foreach (array_slice($navMenu, 0, 6) as $mItem): ?>
+                                <li><a href="<?php echo e(nav_url($mItem['url'])); ?>"><?php echo e($mItem['label']); ?></a></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-12 col-md-3">
+                    <div class="footer__inner--subscribe">
+                        <p>Đăng ký nhận bản tin</p>
+                        <form method="post" action="<?php echo _WEB_URL; ?>/dang-ky-ban-tin" class="mb-3">
+                            <?php echo csrf_field(); ?>
+                            <div class="input-group">
+                                <input type="email" name="email" class="form-control" placeholder="Email..." required/>
+                                <button type="submit" class="btn">Gửi</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+<!--End .footer-->
 
-<footer class="main"><div class="container cols">
-    <div>
-        <h4>TÂN PHÁT</h4>
-        <div class="muted" style="max-width:320px">Chuyên phụ tùng và thiết bị gara ô tô chính hãng. Tư vấn tương thích theo hãng — model — đời xe.</div>
-    </div>
-    <div>
-        <h4>Hỗ trợ</h4>
-        <div><a href="<?php echo _WEB_URL; ?>/san-pham">Sản phẩm</a></div>
-        <div><a href="<?php echo _WEB_URL; ?>/gio-hang">Giỏ hàng / Yêu cầu báo giá</a></div>
-        <div><a href="<?php echo _WEB_URL; ?>/thanh-vien">Tài khoản thành viên</a></div>
-        <div><a href="<?php echo _WEB_URL; ?>/lien-he">Liên hệ</a></div>
-    </div>
-    <div>
-        <h4>Liên hệ</h4>
-        <div class="muted">Hotline: <?php echo e(!empty($settings['hotline']) ? $settings['hotline'] : '1900 0000'); ?></div>
-        <div class="muted">Email: <?php echo e(!empty($settings['email']) ? $settings['email'] : 'info@tanphat.vn'); ?></div>
-        <?php if (!empty($settings['address'])): ?><div class="muted"><?php echo e($settings['address']); ?></div><?php endif; ?>
-    </div>
-    <div>
-        <h4>Nhận bản tin</h4>
-        <div class="muted" style="margin-bottom:8px;max-width:240px">Đăng ký nhận thông tin sản phẩm & khuyến mãi.</div>
-        <form method="post" action="<?php echo _WEB_URL; ?>/dang-ky-ban-tin" style="display:flex;gap:6px;max-width:260px">
-            <?php echo csrf_field(); ?>
-            <input type="email" name="email" placeholder="Email của bạn" required style="flex:1;padding:7px 10px;border-radius:6px;border:1px solid #555;background:#2a2a2a;color:#eee"/>
-            <button type="submit" class="btn btn-brand btn-sm">Đăng ký</button>
-        </form>
-    </div>
-</div></footer>
-
-<button id="cw-btn" title="Chat hỗ trợ"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
-<div id="cw-panel">
-    <div id="cw-head">Hỗ trợ trực tuyến<small>Tân Phát thường trả lời trong ít phút</small></div>
-    <div id="cw-msgs"></div>
-    <div id="cw-info">
-        <input type="text" id="cw-name" placeholder="Tên của bạn"/>
-        <input type="text" id="cw-phone" placeholder="SĐT"/>
-    </div>
-    <div id="cw-foot">
-        <input type="text" id="cw-input" placeholder="Nhập tin nhắn..." maxlength="2000"/>
-        <button id="cw-send" title="Gửi">➤</button>
+<!-- Chat widget (vỏ theme, nối backend /chat/send + /chat/poll) -->
+<div class="chatbox">
+    <h2 class="chatbox__title">Chat với chúng tôi <i class="fa fa-angle-down"></i></h2>
+    <div class="chatbox__content">
+        <div id="cw-msgs"></div>
+        <div id="cw-info">
+            <input type="text" id="cw-name" class="form-control" placeholder="Tên của bạn"/>
+            <input type="text" id="cw-phone" class="form-control" placeholder="Điện thoại"/>
+        </div>
+        <div id="cw-foot">
+            <input type="text" id="cw-input" class="form-control" placeholder="Nhập tin nhắn..." maxlength="2000"/>
+            <button type="button" id="cw-send" class="btn"><i class="fa fa-paper-plane"></i></button>
+        </div>
     </div>
 </div>
+
+<!-- Back to top -->
+<a id="button" href="#"></a>
+
+<script src="<?php echo _WEB_URL; ?>/public/assets/js/jquery-3.6.0.min.js"></script>
+<script src="<?php echo $asset; ?>/js/bootstrap.bundle.min.js"></script>
+<script src="<?php echo $asset; ?>/js/owl.carousel.min.js"></script>
+<script src="<?php echo $asset; ?>/js/own-carousel.min.js"></script>
+<script src="<?php echo $asset; ?>/js/menu.js"></script>
+<script src="<?php echo $asset; ?>/js/script.js"></script>
 <script>
 (function(){
     var WEB = "<?php echo _WEB_URL; ?>";
     var TOKEN = "<?php echo csrf_token(); ?>";
-    var btn=document.getElementById('cw-btn'), panel=document.getElementById('cw-panel');
-    var msgs=document.getElementById('cw-msgs'), input=document.getElementById('cw-input'), send=document.getElementById('cw-send');
-    var nameEl=document.getElementById('cw-name'), phoneEl=document.getElementById('cw-phone'), info=document.getElementById('cw-info');
-    var lastId=0, timer=null, started=false;
+    var chatbox = document.querySelector('.chatbox');
+    var title = chatbox ? chatbox.querySelector('.chatbox__title') : null;
+    var content = chatbox ? chatbox.querySelector('.chatbox__content') : null;
+    if(!chatbox || !title || !content) return;
+
+    // Ẩn/hiện khung chat (giữ hành vi trượt của theme)
+    var h = content.clientHeight;
+    chatbox.style.transform = 'translateY(' + h + 'px)';
+    chatbox.classList.add('hide');
+    chatbox.addEventListener('click', function(e){ e.stopPropagation(); });
+    title.addEventListener('click', function(){
+        if(chatbox.classList.contains('hide')){
+            chatbox.style.transform = 'translateY(0)';
+            chatbox.classList.remove('hide');
+            if(!started){ started = true; poll(); timer = setInterval(poll, 4000); }
+        } else {
+            chatbox.style.transform = 'translateY(' + h + 'px)';
+            chatbox.classList.add('hide');
+        }
+    });
+
+    var msgs = document.getElementById('cw-msgs');
+    var input = document.getElementById('cw-input');
+    var send = document.getElementById('cw-send');
+    var nameEl = document.getElementById('cw-name');
+    var phoneEl = document.getElementById('cw-phone');
+    var info = document.getElementById('cw-info');
+    var lastId = 0, timer = null, started = false;
 
     function addMsg(m){
-        var row=document.createElement('div'); row.className='cw-m '+(m.sender==='staff'?'staff':'customer');
-        var b=document.createElement('div'); b.className='b'; b.textContent=m.body; row.appendChild(b);
-        msgs.appendChild(row); msgs.scrollTop=msgs.scrollHeight;
-        if(m.id && m.id>lastId) lastId=m.id;
+        var row = document.createElement('div');
+        row.className = 'cw-m ' + (m.sender === 'staff' ? 'staff' : 'customer');
+        var b = document.createElement('div'); b.className = 'b'; b.textContent = m.body;
+        row.appendChild(b); msgs.appendChild(row); msgs.scrollTop = msgs.scrollHeight;
+        if(m.id && m.id > lastId) lastId = m.id;
     }
     function poll(){
-        fetch(WEB+'/chat/poll?after='+lastId,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
-            if(d && d.messages){ d.messages.forEach(function(m){ addMsg(m); if(m.sender==='staff') info.style.display='none'; }); }
-        }).catch(function(){});
+        fetch(WEB + '/chat/poll?after=' + lastId, {credentials:'same-origin'})
+            .then(function(r){ return r.json(); })
+            .then(function(d){ if(d && d.messages){ d.messages.forEach(function(m){ addMsg(m); if(m.sender==='staff' && info) info.style.display='none'; }); } })
+            .catch(function(){});
     }
-    function open(){
-        panel.classList.add('open');
-        if(!started){ started=true; poll(); timer=setInterval(poll,4000); }
-    }
-    btn.addEventListener('click',function(){ panel.classList.contains('open')?panel.classList.remove('open'):open(); });
-
     function doSend(){
-        var body=input.value.trim(); if(!body) return;
-        var fd=new FormData(); fd.append('_token',TOKEN); fd.append('body',body);
-        if(nameEl.value.trim()) fd.append('name',nameEl.value.trim());
-        if(phoneEl.value.trim()) fd.append('phone',phoneEl.value.trim());
-        input.value='';
-        fetch(WEB+'/chat/send',{method:'POST',body:fd,credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
-            if(d && d.ok){ addMsg({id:d.id,sender:'customer',body:d.body}); info.style.display='none'; }
-        }).catch(function(){});
+        var body = input.value.trim(); if(!body) return;
+        var fd = new FormData(); fd.append('_token', TOKEN); fd.append('body', body);
+        if(nameEl.value.trim()) fd.append('name', nameEl.value.trim());
+        if(phoneEl.value.trim()) fd.append('phone', phoneEl.value.trim());
+        input.value = '';
+        fetch(WEB + '/chat/send', {method:'POST', body:fd, credentials:'same-origin'})
+            .then(function(r){ return r.json(); })
+            .then(function(d){ if(d && d.ok){ addMsg({id:d.id, sender:'customer', body:d.body}); if(info) info.style.display='none'; } })
+            .catch(function(){});
     }
-    send.addEventListener('click',doSend);
-    input.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); doSend(); } });
+    send.addEventListener('click', doSend);
+    input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); doSend(); } });
 })();
 </script>
-
 </body>
 </html>

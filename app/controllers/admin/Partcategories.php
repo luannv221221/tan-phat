@@ -90,6 +90,16 @@ class Partcategories extends Controller {
             return;
         }
 
+        // Ảnh danh mục (không bắt buộc)
+        $up = upload_image('image', 'categories', $data['name']);
+        if ($up['status'] === 'error'){
+            $this->flashOne(['image' => $up['message']], 'add');
+            return;
+        }
+        if ($up['status'] === 'ok'){
+            $data['image'] = $up['path'];
+        }
+
         $this->__model->add($data);
 
         Session::flash('msg', 'Thêm ' . $this->labelOne . ' thành công');
@@ -126,7 +136,8 @@ class Partcategories extends Controller {
     }
 
     public function postEdit($id){
-        if (empty($this->__model->getDetail($id))){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
             Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
             $this->__response->redirect('admin/' . $this->routeBase);
             return;
@@ -170,6 +181,19 @@ class Partcategories extends Controller {
             return;
         }
 
+        // Ảnh mới (không bắt buộc — giữ ảnh cũ nếu không chọn)
+        $up = upload_image('image', 'categories', $data['name']);
+        if ($up['status'] === 'error'){
+            $this->flashOne(['image' => $up['message']], 'edit/' . $id);
+            return;
+        }
+        if ($up['status'] === 'ok'){
+            $data['image'] = $up['path'];
+            if (!empty($item['image']) && is_file($item['image'])){
+                @unlink($item['image']);
+            }
+        }
+
         $this->__model->edit($data, $id);
 
         Session::flash('msg', 'Cập nhật ' . $this->labelOne . ' thành công');
@@ -179,7 +203,8 @@ class Partcategories extends Controller {
     // ================= Xoá =================
 
     public function delete($id){
-        if (empty($this->__model->getDetail($id))){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
             Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
             $this->__response->redirect('admin/' . $this->routeBase);
             return;
@@ -191,6 +216,9 @@ class Partcategories extends Controller {
             Session::flash('msgError',
                 'Không xoá được: ' . $this->labelOne . ' này còn danh mục con. Xoá hoặc chuyển danh mục con trước.');
         } else {
+            if (!empty($item['image']) && is_file($item['image'])){
+                @unlink($item['image']);
+            }
             Session::flash('msg', 'Xoá ' . $this->labelOne . ' thành công');
         }
 

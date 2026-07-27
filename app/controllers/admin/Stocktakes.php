@@ -19,7 +19,7 @@ class Stocktakes extends Controller {
 
     private $__data = [];
     private $__model, $__itemModel, $__stock, $__warehouse, $__part;
-    private $__accModel, $__voucherModel, $__entryModel, $__request, $__response;
+    private $__request, $__response;
 
     private $routeBase = 'stock-takes';
     private $labelOne  = 'phiếu kiểm kê';
@@ -32,9 +32,6 @@ class Stocktakes extends Controller {
         $this->__stock        = $this->model('StocksModel');
         $this->__warehouse    = $this->model('WarehousesModel');
         $this->__part         = $this->model('PartsModel');
-        $this->__accModel     = $this->model('AccAccountsModel');
-        $this->__voucherModel = $this->model('AccVouchersModel');
-        $this->__entryModel   = $this->model('AccVoucherEntriesModel');
         $this->__request      = new Request();
         $this->__response     = new Response();
     }
@@ -110,7 +107,7 @@ class Stocktakes extends Controller {
         $this->__data['content']['item']      = $item;
         $this->__data['content']['items']     = $items;
         $this->__data['content']['bookMap']   = $bookMap;
-        $this->__data['content']['voucher']   = $item['acc_voucher_id'] ? $this->__voucherModel->getDetail($item['acc_voucher_id']) : null;
+        $this->__data['content']['voucher']   = null;
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['errors']    = Session::flash('errors');
         $this->__data['content']['old']       = Session::flash('old');
@@ -144,15 +141,8 @@ class Stocktakes extends Controller {
         $items = $this->__itemModel->getByTake($id);
         if (empty($items)){ Session::flash('msgError', 'Phiếu chưa có dòng hàng.'); $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return; }
 
-        $acc = [];
-        foreach ([self::INVENTORY, self::SHORTAGE, self::SURPLUS] as $code){
-            $row = $this->__accModel->findByCode($code);
-            if (empty($row)){ Session::flash('msgError', 'Thiếu tài khoản ' . $code . ' trong danh mục.'); $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return; }
-            $acc[$code] = (int) $row['id'];
-        }
-
         $wh = (int) $item['warehouse_id']; $date = $item['take_date']; $no = $item['take_no'];
-        $this->__model->transaction(function($db) use ($id, $items, $wh, $date, $no, $acc){
+        $this->__model->transaction(function($db) use ($id, $items, $wh, $date, $no){
             $surplus = 0.0; $shortage = 0.0;
             foreach ($items as $it){
                 $pid = (int) $it['part_id'];
@@ -170,24 +160,7 @@ class Stocktakes extends Controller {
                 $this->__itemModel->setResult((int) $it['id'], $book, $diff, $avg, round($diff * $avg, 2));
             }
 
-            $vid = null;
-            if ($surplus > 0 || $shortage > 0){
-                $vid = $this->__voucherModel->add([
-                    'voucher_no'      => $this->__voucherModel->nextNo('ke_toan'),
-                    'voucher_type'    => 'ke_toan',
-                    'voucher_date'    => $date,
-                    'cash_account_id' => null,
-                    'partner_id'      => null,
-                    'partner_name'    => null,
-                    'reason'          => 'Tự động từ kiểm kê ' . $no,
-                    'amount'          => $surplus + $shortage,
-                    'status'          => 1,
-                ]);
-                if ($surplus > 0) $this->__entryModel->addJournalLine($vid, $acc[self::INVENTORY], $acc[self::SURPLUS], $surplus, 'Hàng thừa ' . $no);
-                if ($shortage > 0) $this->__entryModel->addJournalLine($vid, $acc[self::SHORTAGE], $acc[self::INVENTORY], $shortage, 'Hàng thiếu ' . $no);
-            }
-
-            $this->__model->edit(['status' => 1, 'surplus_value' => $surplus, 'shortage_value' => $shortage, 'acc_voucher_id' => $vid], $id);
+            $this->__model->edit(['status' => 1, 'surplus_value' => $surplus, 'shortage_value' => $shortage], $id);
         });
         Session::flash('msg', 'Đã chốt ' . $no . ' — điều chỉnh tồn kho.');
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
@@ -211,17 +184,15 @@ class Stocktakes extends Controller {
         }
         if (!empty($blocked)){ Session::flash('msgError', 'Không huỷ được: đã có phát sinh sau ở — ' . implode('; ', $blocked)); $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return; }
 
-        $voucherId = $item['acc_voucher_id'] ? (int) $item['acc_voucher_id'] : 0;
-        $this->__model->transaction(function($db) use ($id, $items, $wh, $voucherId){
+        $this->__model->transaction(function($db) use ($id, $items, $wh){
             foreach ($items as $it){
                 if (abs((float) $it['diff_qty']) < 1e-9) continue;
                 $this->__stock->reverseDoc($wh, (int) $it['part_id'], self::DOC_TYPE, $id);
             }
             foreach ($items as $it){ $this->__itemModel->setResult((int) $it['id'], 0, 0, 0, 0); }
-            if ($voucherId > 0) $this->__voucherModel->remove($voucherId);
-            $this->__model->edit(['status' => 0, 'surplus_value' => 0, 'shortage_value' => 0, 'acc_voucher_id' => null], $id);
+            $this->__model->edit(['status' => 0, 'surplus_value' => 0, 'shortage_value' => 0], $id);
         });
-        Session::flash('msg', 'Đã huỷ chốt ' . $item['take_no'] . ' — hoàn tồn kho & xoá bút toán.');
+        Session::flash('msg', 'Đã huỷ chốt ' . $item['take_no'] . ' — hoàn tồn kho.');
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
 

@@ -21,7 +21,7 @@ class Goodsreceipts extends Controller {
 
     private $__data = [];
     private $__model, $__itemModel, $__stock, $__warehouse, $__partner, $__part, $__location;
-    private $__accModel, $__voucherModel, $__entryModel, $__request, $__response;
+    private $__request, $__response;
     private $__locMap = null;
 
     private $routeBase = 'goods-receipts';
@@ -37,9 +37,6 @@ class Goodsreceipts extends Controller {
         $this->__partner      = $this->model('PartnersModel');
         $this->__part         = $this->model('PartsModel');
         $this->__location     = $this->model('WarehouseLocationsModel');
-        $this->__accModel     = $this->model('AccAccountsModel');
-        $this->__voucherModel = $this->model('AccVouchersModel');
-        $this->__entryModel   = $this->model('AccVoucherEntriesModel');
         $this->__request      = new Request();
         $this->__response     = new Response();
     }
@@ -54,7 +51,6 @@ class Goodsreceipts extends Controller {
         $this->__data['content']['warehouses'] = $this->__warehouse->getActive();
         $this->__data['content']['partners']   = $this->__partner->getActive();
         $this->__data['content']['parts']      = $this->__part->getForSelect();
-        $this->__data['content']['accounts']   = $this->__accModel->getDetailAccounts();
         // KHO-3: vị trí trong kho (select phụ thuộc kho) cho ô "Vị trí" dòng hàng
         $this->__data['content']['locations']  = $this->__location->getActiveList();
     }
@@ -149,8 +145,7 @@ class Goodsreceipts extends Controller {
         $this->__data['content']['page_name'] = 'Phiếu ' . $item['receipt_no'];
         $this->__data['content']['item']      = $item;
         $this->__data['content']['items']     = $this->__itemModel->getByReceipt($id);
-        $this->__data['content']['voucher']   = $item['acc_voucher_id']
-            ? $this->__voucherModel->getDetail($item['acc_voucher_id']) : null;
+        $this->__data['content']['voucher']   = null;
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['errors']    = Session::flash('errors');
         $this->__data['content']['old']       = Session::flash('old');
@@ -213,23 +208,11 @@ class Goodsreceipts extends Controller {
             $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
         }
 
-        $inv = $this->__accModel->findByCode(self::INVENTORY_CODE);
-        if (empty($inv)){
-            Session::flash('msgError', 'Thiếu tài khoản kho ' . self::INVENTORY_CODE . ' trong danh mục.');
-            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
-        }
-        $invId     = (int) $inv['id'];
-        $counterId = $this->resolveCounter($item['counter_account_id']);
-        if ($counterId <= 0){
-            Session::flash('msgError', 'Chưa chọn tài khoản đối ứng cho phiếu.');
-            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
-        }
-
         $wh   = (int) $item['warehouse_id'];
         $date = $item['receipt_date'];
         $no   = $item['receipt_no'];
 
-        $this->__model->transaction(function($db) use ($id, $item, $items, $wh, $date, $no, $invId, $counterId){
+        $this->__model->transaction(function($db) use ($id, $item, $items, $wh, $date, $no){
             $total = 0.0;
             foreach ($items as $it){
                 $this->__stock->applyIn($wh, (int) $it['part_id'], (float) $it['quantity'],
@@ -237,24 +220,10 @@ class Goodsreceipts extends Controller {
                 $total += (float) $it['amount'];
             }
 
-            // Bút toán KT-6: Nợ 156 / Có [đối ứng]
-            $vid = $this->__voucherModel->add([
-                'voucher_no'      => $this->__voucherModel->nextNo('ke_toan'),
-                'voucher_type'    => 'ke_toan',
-                'voucher_date'    => $date,
-                'cash_account_id' => null,
-                'partner_id'      => $item['partner_id'] !== null ? (int) $item['partner_id'] : null,
-                'partner_name'    => $item['partner_name'],
-                'reason'          => 'Tự động từ phiếu nhập ' . $no,
-                'amount'          => $total,
-                'status'          => 1,
-            ]);
-            $this->__entryModel->addJournalLine($vid, $invId, $counterId, $total, 'Nhập kho ' . $no);
-
-            $this->__model->edit(['status' => 1, 'total_amount' => $total, 'acc_voucher_id' => $vid], $id);
+            $this->__model->edit(['status' => 1, 'total_amount' => $total], $id);
         });
 
-        Session::flash('msg', 'Đã ghi sổ ' . $no . ' — cập nhật tồn kho & sinh bút toán.');
+        Session::flash('msg', 'Đã ghi sổ ' . $no . ' — cập nhật tồn kho.');
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
 
@@ -289,19 +258,14 @@ class Goodsreceipts extends Controller {
             $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
         }
 
-        $voucherId = $item['acc_voucher_id'] ? (int) $item['acc_voucher_id'] : 0;
-
-        $this->__model->transaction(function($db) use ($id, $items, $wh, $voucherId){
+        $this->__model->transaction(function($db) use ($id, $items, $wh){
             foreach ($items as $it){
                 $this->__stock->reverseDoc($wh, (int) $it['part_id'], self::DOC_TYPE, $id);
             }
-            if ($voucherId > 0){
-                $this->__voucherModel->remove($voucherId); // entries CASCADE
-            }
-            $this->__model->edit(['status' => 0, 'acc_voucher_id' => null], $id);
+            $this->__model->edit(['status' => 0], $id);
         });
 
-        Session::flash('msg', 'Đã huỷ ghi sổ ' . $item['receipt_no'] . ' — hoàn tồn kho & xoá bút toán.');
+        Session::flash('msg', 'Đã huỷ ghi sổ ' . $item['receipt_no'] . ' — hoàn tồn kho.');
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
 
@@ -322,18 +286,10 @@ class Goodsreceipts extends Controller {
 
     // ===== Helper =====
 
-    private function resolveCounter($counterId){
-        $counterId = (int) $counterId;
-        if ($counterId > 0) return $counterId;
-        $def = $this->__accModel->findByCode(self::DEFAULT_COUNTER);
-        return !empty($def) ? (int) $def['id'] : 0;
-    }
-
     private function counterId(){
         $f = $this->__request->getFields();
         $id = !empty($f['counter_account_id']) ? (int) $f['counter_account_id'] : 0;
-        if ($id <= 0) return null;
-        return !empty($this->__accModel->getDetail($id)) ? $id : null;
+        return $id > 0 ? $id : null;
     }
 
     private function partnerId(){

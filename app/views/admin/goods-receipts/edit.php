@@ -60,9 +60,6 @@ $sel = function($field, $default = '') use ($old, $item){
             <dt class="col-sm-3">Nhà cung cấp</dt><dd class="col-sm-9">{{!empty($item['partner_name'])?$item['partner_name']:'—'}}</dd>
             <dt class="col-sm-3">Diễn giải</dt><dd class="col-sm-9">{{!empty($item['reason'])?$item['reason']:'—'}}</dd>
             <dt class="col-sm-3">Tổng giá trị</dt><dd class="col-sm-9 font-weight-bold">{{number_format((float)$item['total_amount'],0,',','.')}} ₫</dd>
-            @if (!empty($voucher))
-            <dt class="col-sm-3">Bút toán</dt><dd class="col-sm-9"><code>{{$voucher['voucher_no']}}</code> <span class="text-muted">(Nợ 156 / Có TK đối ứng)</span></dd>
-            @endif
         </dl>
     </div></div>
 
@@ -128,15 +125,6 @@ $sel = function($field, $default = '') use ($old, $item){
                         <option value="">— Chọn / vãng lai —</option>
                         @foreach ($partners as $pn)
                         <option value="{{$pn['id']}}" {{$sel('partner_id')==$pn['id']?'selected':''}}>{{$pn['code'].' - '.$pn['name']}}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="form-group col-md-4">
-                    <label>TK đối ứng (KT-6)</label>
-                    <select name="counter_account_id" class="form-control">
-                        <option value="">— Mặc định 331 (nhập mua) —</option>
-                        @foreach ($accounts as $a)
-                        <option value="{{$a['id']}}" {{$sel('counter_account_id')==$a['id']?'selected':''}}>{{$a['code'].' - '.$a['name']}}</option>
                         @endforeach
                     </select>
                 </div>

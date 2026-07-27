@@ -1,17 +1,28 @@
-<div class="crumb"><a href="{{_WEB_URL}}/">Trang chủ</a> / Tài khoản</div>
+<div class="content">
+<div class="sf-page">
+<div class="container">
 
-@if (!empty($msg))
-<div class="alert alert-ok">{{$msg}}</div>
-@endif
+    <div class="breadcrumb-sf"><a href="{{_WEB_URL}}/">Trang chủ</a> / Tài khoản</div>
 
-<div class="card" style="max-width:640px"><div class="hd">Thông tin thành viên</div><div class="bd">
-    <table class="spec" style="width:100%;border-collapse:collapse">
-        <tr><td style="width:160px;background:#fafafa;padding:10px;border:1px solid #e6e6e6">Họ tên</td><td style="padding:10px;border:1px solid #e6e6e6">{{$member['name']}}</td></tr>
-        <tr><td style="background:#fafafa;padding:10px;border:1px solid #e6e6e6">Email</td><td style="padding:10px;border:1px solid #e6e6e6">{{$member['email']}}</td></tr>
-        <tr><td style="background:#fafafa;padding:10px;border:1px solid #e6e6e6">Điện thoại</td><td style="padding:10px;border:1px solid #e6e6e6">{{!empty($member['phone'])?$member['phone']:'—'}}</td></tr>
-    </table>
-    <div class="mt">
-        <a class="btn btn-brand" href="{{_WEB_URL}}/san-pham">Tiếp tục mua sắm</a>
-        <a class="btn" href="{{_WEB_URL}}/thanh-vien/dang-xuat">Đăng xuất</a>
+    @if (!empty($msg))
+    <div class="alert alert-success">{{$msg}}</div>
+    @endif
+
+    <div class="card border-0 shadow-sm" style="max-width:640px">
+        <div class="card-header bg-white fw-semibold">Thông tin thành viên</div>
+        <div class="card-body">
+            <table class="table table-bordered mb-3">
+                <tbody>
+                    <tr><td style="width:160px;background:#f8f9fa">Họ tên</td><td>{{$member['name']}}</td></tr>
+                    <tr><td style="background:#f8f9fa">Email</td><td>{{$member['email']}}</td></tr>
+                    <tr><td style="background:#f8f9fa">Điện thoại</td><td>{{!empty($member['phone'])?$member['phone']:'—'}}</td></tr>
+                </tbody>
+            </table>
+            <a class="btn btn-primary" href="{{_WEB_URL}}/san-pham">Tiếp tục mua sắm</a>
+            <a class="btn btn-outline-secondary" href="{{_WEB_URL}}/thanh-vien/dang-xuat">Đăng xuất</a>
+        </div>
     </div>
-</div></div>
+
+</div>
+</div>
+</div>
