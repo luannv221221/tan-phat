@@ -44,11 +44,30 @@
                         <label class="form-check-label" for="pay-{{$k}}">{{$label}}</label>
                     </div>
                     @endforeach
-                    <tr><td style="padding:12px 0;font-weight:700">Tổng cộng</td><td style="padding:12px 0;text-align:right;font-weight:700;color:#164194;font-size:18px">{{number_format($total,0,',','.')}} ₫</td></tr>
-                </table>
-                <button class="btn btn-brand" type="submit" style="width:100%;margin-top:8px">Xác nhận đặt hàng</button>
-                <a class="btn" href="{{_WEB_URL.'/gio-hang'}}" style="width:100%;text-align:center;margin-top:6px">← Về giỏ hàng</a>
-            </div></div>
-        </aside>
-    </div>
-</form>
+                </div></div>
+            </div>
+
+            <aside class="col-12 col-lg-4">
+                <div class="card border-0 shadow-sm"><div class="card-header bg-white fw-semibold">Đơn hàng</div><div class="card-body">
+                    <table class="table table-sm">
+                        <tbody>
+                        @foreach ($rows as $r)
+                        <?php $p = $r['part']; ?>
+                        <tr>
+                            <td class="small">{{$p['name']}} <span class="text-muted">× {{(int)$r['qty']}}</span></td>
+                            <td class="text-end small">{{number_format($r['amount'],0,',','.')}}</td>
+                        </tr>
+                        @endforeach
+                        <tr><td class="fw-bold">Tổng cộng</td><td class="text-end fw-bold text-accent" style="font-size:1.15rem">{{number_format($total,0,',','.')}} đ</td></tr>
+                        </tbody>
+                    </table>
+                    <button class="btn btn-primary w-100" type="submit">Xác nhận đặt hàng</button>
+                    <a class="btn btn-outline-secondary w-100 mt-2" href="{{_WEB_URL.'/gio-hang'}}"><i class="fa fa-angle-left"></i> Về giỏ hàng</a>
+                </div></div>
+            </aside>
+        </div>
+    </form>
+
+</div>
+</div>
+</div>

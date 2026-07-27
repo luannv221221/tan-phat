@@ -72,109 +72,32 @@ $renderMenu = function ($items) use (&$renderMenu){
 <link rel="stylesheet" href="<?php echo $asset; ?>/css/own-carousel.min.css"/>
 <link rel="stylesheet" href="<?php echo $asset; ?>/css/style.css"/>
 <style>
-:root{--brand:#164194;--brand-d:#102f6b;--ink:#222;--muted:#777;--line:#e6e6e6;--bg:#f5f6f8;--ok:#27ae60}
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5}
-a{color:inherit;text-decoration:none}
-img{max-width:100%;display:block}
-.container{max-width:1180px;margin:0 auto;padding:0 16px}
-.btn{display:inline-block;padding:8px 16px;border-radius:6px;border:1px solid transparent;cursor:pointer;font-size:14px;background:#eee;color:var(--ink)}
-.btn-brand{background:var(--brand);color:#fff}.btn-brand:hover{background:var(--brand-d)}
-.btn-outline{background:#fff;border-color:var(--brand);color:var(--brand)}
-.btn-sm{padding:5px 10px;font-size:13px}
-.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;background:#eee}
-.badge-promo{background:#e7edfa;color:var(--brand)}
-.badge-ok{background:#e9f7ef;color:var(--ok)}
-/* header */
-.topbar{background:var(--brand-d);color:#fff;font-size:13px}
-.topbar .container{display:flex;justify-content:space-between;padding:6px 16px}
-.topbar a{opacity:.9}
-header.main{background:#fff;border-bottom:1px solid var(--line)}
-header.main .container{display:flex;align-items:center;gap:20px;padding:14px 16px}
-.logo{display:inline-flex;align-items:center;flex-shrink:0}
-.logo img{height:56px;width:auto;display:block}
-.search{flex:1;display:flex}
-.search input{flex:1;padding:9px 12px;border:1px solid var(--line);border-right:0;border-radius:6px 0 0 6px;font-size:14px}
-.search button{border-radius:0 6px 6px 0;border:0}
-.hdr-actions{display:flex;gap:16px;align-items:center;white-space:nowrap}
-.hdr-actions .cart{position:relative}
-.cart .count{position:absolute;top:-8px;right:-10px;background:var(--brand);color:#fff;border-radius:50%;font-size:11px;min-width:18px;height:18px;text-align:center;line-height:18px;padding:0 4px}
-/* nav */
-nav.cats{background:var(--ink)}
-nav.cats .container{display:flex;flex-wrap:wrap;gap:2px}
-nav.cats a{color:#fff;padding:11px 14px;font-size:14px;font-weight:500;display:inline-block}
-nav.cats a:hover{background:rgba(255,255,255,.12)}
-nav.cats .has-sub{position:relative;display:inline-block}
-nav.cats .submenu{position:absolute;left:0;top:100%;background:#fff;min-width:190px;box-shadow:0 8px 20px rgba(0,0,0,.15);border-radius:0 0 6px 6px;z-index:20;display:none}
-nav.cats .has-sub:hover .submenu{display:block}
-nav.cats .submenu a{display:block;color:var(--ink);padding:9px 14px;font-weight:400;border-bottom:1px solid #f0f0f0}
-nav.cats .submenu a:hover{background:#f5f6f8;color:var(--brand)}
-/* layout */
-.wrap{display:flex;gap:22px;padding:22px 0;align-items:flex-start}
-.sidebar{width:250px;flex:0 0 250px}
-.content{flex:1;min-width:0}
-.card{background:#fff;border:1px solid var(--line);border-radius:8px}
-.card .hd{padding:12px 16px;border-bottom:1px solid var(--line);font-weight:700}
-.card .bd{padding:16px}
-.facet{margin-bottom:14px}
-.facet h4{margin:0 0 8px;font-size:14px}
-.facet label{display:block;font-size:14px;padding:3px 0;color:#444;cursor:pointer}
-.facet .price-row{display:flex;gap:6px}
-.facet .price-row input{width:100%;padding:6px;border:1px solid var(--line);border-radius:5px;font-size:13px}
-/* product grid */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
-.pcard{background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;transition:.15s}
-.pcard:hover{box-shadow:0 6px 18px rgba(0,0,0,.08);transform:translateY(-2px)}
-.pcard .thumb{aspect-ratio:1/1;background:#fafafa;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:40px;border-bottom:1px solid var(--line)}
-.pcard .thumb img{width:100%;height:100%;object-fit:cover}
-.pcard .info{padding:12px;display:flex;flex-direction:column;gap:6px;flex:1}
-.pcard .pname{font-size:14px;font-weight:600;color:var(--ink);min-height:38px}
-.pcard .code{font-size:12px;color:var(--muted)}
-.pcard .price{color:var(--brand);font-weight:700;font-size:16px}
-.pcard .old{color:var(--muted);text-decoration:line-through;font-size:13px;font-weight:400;margin-left:6px}
-.pcard .foot{margin-top:auto;padding-top:8px}
-.page-title{font-size:22px;margin:0 0 4px}
-.crumb{font-size:13px;color:var(--muted);margin-bottom:14px}
-.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
-.toolbar select{padding:7px 10px;border:1px solid var(--line);border-radius:6px}
-/* detail */
-.detail{display:flex;gap:26px;flex-wrap:wrap}
-.detail .gallery{flex:0 0 380px;max-width:100%}
-.detail .gallery .main-img{aspect-ratio:1/1;background:#fafafa;border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:70px;overflow:hidden}
-.detail .gallery .main-img img{width:100%;height:100%;object-fit:contain}
-.detail .gallery .thumbs{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.detail .gallery .thumbs .tn{width:64px;height:64px;object-fit:cover;border:1px solid var(--line);border-radius:6px;cursor:pointer;background:#fafafa}
-.detail .gallery .thumbs .tn:hover{border-color:var(--brand)}
-.detail .meta{flex:1;min-width:280px}
-.detail h1{font-size:24px;margin:0 0 8px}
-.detail .big-price{font-size:30px;color:var(--brand);font-weight:800}
-.detail table.spec{width:100%;border-collapse:collapse;margin-top:10px}
-.detail table.spec td{border:1px solid var(--line);padding:8px 12px;font-size:14px}
-.detail table.spec td:first-child{background:#fafafa;width:180px;color:#555}
-.alert{padding:12px 16px;border-radius:6px;margin-bottom:16px}
-.alert-info{background:#eef6fb;border:1px solid #cfe6f5;color:#215e82}
-.alert-ok{background:#e9f7ef;border:1px solid #cdeeda;color:#1c7a43}
-.alert-err{background:#fdecea;border:1px solid #f5c6c2;color:#9b2c22}
-.form-box{max-width:440px;margin:30px auto}
-.form-box .fld{margin-bottom:14px}
-.form-box label{display:block;font-size:14px;margin-bottom:5px;font-weight:600}
-.form-box input{width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;font-size:15px}
-table.cart-tbl{width:100%;border-collapse:collapse;background:#fff}
-table.cart-tbl th,table.cart-tbl td{border:1px solid var(--line);padding:10px;font-size:14px}
-table.cart-tbl th{background:#fafafa;text-align:left}
-footer.main{background:var(--ink);color:#bbb;margin-top:36px;padding:26px 0}
-footer.main a{color:#ddd}
-footer .cols{display:flex;flex-wrap:wrap;gap:30px;justify-content:space-between}
-footer h4{color:#fff;font-size:15px;margin:0 0 10px}
-.muted{color:var(--muted)}.mt{margin-top:16px}.tr{text-align:right}.tc{text-align:center}
-@media(max-width:860px){.wrap{flex-direction:column}.sidebar{width:100%;flex:auto}.hdr-actions .lbl{display:none}}
-/* chat widget */
-#cw-btn{position:fixed;right:20px;bottom:20px;width:56px;height:56px;border-radius:50%;background:var(--brand);color:#fff;font-size:26px;border:0;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:60}
-#cw-panel{position:fixed;right:20px;bottom:86px;width:330px;max-width:calc(100vw - 40px);height:440px;max-height:70vh;background:#fff;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.25);z-index:60;display:none;flex-direction:column;overflow:hidden}
-#cw-panel.open{display:flex}
-#cw-head{background:var(--brand);color:#fff;padding:12px 14px;font-weight:600}
-#cw-head small{display:block;font-weight:400;opacity:.85;font-size:12px}
-#cw-msgs{flex:1;overflow-y:auto;padding:12px;background:#f5f6f8}
+/* ---- Bổ sung nhỏ cho storefront (không có trong theme) ---- */
+:root{--sf-accent:#2957a4;--sf-accent-d:#1d418d}
+.btn-primary{background:var(--sf-accent);border-color:var(--sf-accent)}
+.btn-primary:hover,.btn-primary:focus{background:var(--sf-accent-d);border-color:var(--sf-accent-d)}
+.btn-outline-primary{color:var(--sf-accent);border-color:var(--sf-accent)}
+.btn-outline-primary:hover{background:var(--sf-accent);border-color:var(--sf-accent);color:#fff}
+.text-accent{color:var(--sf-accent)!important}
+.price-now{color:var(--sf-accent);font-weight:700}
+.price-old-sm{color:#999;text-decoration:line-through;font-size:.9rem;margin-left:6px}
+.sf-section{margin:34px 0}
+.sf-page{margin:24px 0}
+.sf-page-title{font-size:1.8rem;font-weight:600;margin-bottom:6px}
+.sf-flash{padding:12px 16px;border-radius:6px;margin:16px 0;font-size:.95rem}
+.sf-flash-ok{background:#e9f7ef;border:1px solid #cdeeda;color:#1c7a43}
+.sf-flash-err{background:#fdecea;border:1px solid #f5c6c2;color:#9b2c22}
+.sf-flash-info{background:#eef6fb;border:1px solid #cfe6f5;color:#215e82}
+.breadcrumb-sf{font-size:.9rem;color:#777;padding:14px 0}
+.breadcrumb-sf a{color:#2957a4}
+.pagination-sf{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;padding:24px 0}
+.pagination-sf a,.pagination-sf span{display:inline-block;padding:7px 13px;border:1px solid #ddd;border-radius:5px;color:#333;font-size:.9rem}
+.pagination-sf .active{background:#2957a4;border-color:#2957a4;color:#fff}
+.empty-box{text-align:center;color:#888;padding:50px 20px}
+.products--item .item__image img{width:100%;height:190px;object-fit:cover}
+.categories .categories__item img{width:100%;height:180px;object-fit:cover}
+/* Chat widget nối backend */
+#cw-msgs{height:230px;overflow-y:auto;background:#fff;border:1px solid #e6e6e6;border-radius:6px;padding:10px;margin-bottom:10px}
 .cw-m{margin-bottom:8px;display:flex}
 .cw-m .b{max-width:80%;padding:7px 11px;border-radius:12px;font-size:.9rem;line-height:1.35;word-wrap:break-word}
 .cw-m.customer{justify-content:flex-end}
@@ -188,26 +111,30 @@ footer h4{color:#fff;font-size:15px;margin:0 0 10px}
 </head>
 <body>
 
-<div class="topbar"><div class="container">
-    <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Hotline: <?php echo e(!empty($settings['hotline']) ? $settings['hotline'] : '1900 0000'); ?> — <?php echo e(!empty($settings['site_slogan']) ? $settings['site_slogan'] : 'Phụ tùng & thiết bị gara ô tô'); ?></span>
-    <span>
-        <?php if (!empty($memberName)): ?>
-            Xin chào, <b><?php echo e($memberName); ?></b> · <a href="<?php echo _WEB_URL; ?>/thanh-vien">Tài khoản</a> · <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-xuat">Đăng xuất</a>
-        <?php else: ?>
-            <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-nhap">Đăng nhập</a> · <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-ky">Đăng ký</a>
-        <?php endif; ?>
-    </span>
-</div></div>
-
-<header class="main"><div class="container">
-    <a href="<?php echo _WEB_URL; ?>/" class="logo"><img src="<?php echo _WEB_URL; ?>/public/assets/img/logo.png" alt="<?php echo e($siteName); ?>"/></a>
-    <form class="search" method="get" action="<?php echo _WEB_URL; ?>/san-pham">
-        <input type="text" name="q" placeholder="Tìm phụ tùng, mã, OEM..." value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
-        <button class="btn btn-brand" type="submit">Tìm</button>
-    </form>
-    <div class="hdr-actions">
-        <a href="<?php echo _WEB_URL; ?>/thanh-vien" class="lbl">👤 <?php echo e(!empty($memberName) ? 'Tài khoản' : 'Thành viên'); ?></a>
-        <a href="<?php echo _WEB_URL; ?>/gio-hang" class="cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-4px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> <span class="lbl">Giỏ</span><span class="count"><?php echo e((int) $cartCount); ?></span></a>
+<header class="header">
+    <div class="topbar">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-8">
+                    <ul class="topbar__left">
+                        <li><a href="<?php echo _WEB_URL; ?>/gio-hang">Xây dựng báo giá</a></li>
+                        <li><a href="<?php echo _WEB_URL; ?>/lien-he">Hệ thống chi nhánh</a></li>
+                    </ul>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="topbar__right">
+                        <?php if (!empty($memberName)): ?>
+                            <span style="color:#fff">Xin chào, <b><?php echo e($memberName); ?></b></span>
+                            <a href="<?php echo _WEB_URL; ?>/thanh-vien">Tài khoản</a>
+                            <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-xuat">Đăng xuất</a>
+                        <?php else: ?>
+                            <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-ky">Đăng ký</a>
+                            <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-nhap">Đăng nhập</a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="py-3 top-header">
         <div class="container">
