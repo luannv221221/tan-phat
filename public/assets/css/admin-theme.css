@@ -1,0 +1,593 @@
+/* ============================================================
+ * Theme quản trị Tân Phát.
+ *
+ * Nạp SAU bootstrap.min.css và THAY THẾ hoàn toàn adminlte.min.css.
+ * AdminLTE đã bị gỡ khỏi master_admin.php, nên file này phải tự dựng:
+ *   1. Khung shell (sidebar + topbar + vùng nội dung)
+ *   2. Đè lại giao diện các component Bootstrap 4 (card, table, form, btn)
+ *   3. Dựng lại vài component vốn của AdminLTE mà view đang dùng
+ *      (.info-box, .callout) — xem mục 9.
+ * ============================================================ */
+
+/* ---------- 1. Token ---------- */
+:root {
+    --bg-page:        #f4f6f9;
+    --bg-surface:     #ffffff;
+    --border:         #e3e6ea;
+    --border-input:   #d8dce1;
+    --text:           #212529;
+    --text-muted:     #6b7280;
+    --sidebar-w:      188px;
+    --sidebar-w-min:  64px;
+    --sidebar-active: #e8eef7;
+    --thead-bg:       #dbd0cb;
+    --row-bg:         #eceff4;
+    --row-hover:      #dfe5ec;
+    --brand-green:    #17803d;
+    --brand-green-d:  #13682f;
+    --brand-blue:     #1668e3;
+    --brand-blue-d:   #1257bd;
+    --topbar-h:       58px;
+    --radius-card:    10px;
+    --radius-ctl:     6px;
+}
+
+/* ---------- 2. Nền chung ---------- */
+html, body { height: 100%; }
+
+body.adm {
+    margin: 0;
+    background: var(--bg-page);
+    color: var(--text);
+    font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Icon Lucide nhúng bằng <svg><use> */
+.ic {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    vertical-align: -3px;
+}
+
+/* ---------- 3. Shell ---------- */
+.adm-shell { display: flex; min-height: 100vh; }
+
+.adm-sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 1030;
+    transition: width .18s ease, transform .18s ease;
+}
+
+.adm-main {
+    margin-left: var(--sidebar-w);
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    transition: margin-left .18s ease;
+}
+
+.adm-content { padding: 18px 20px 40px; }
+
+/* Trạng thái thu gọn */
+body.adm-collapsed .adm-sidebar { width: var(--sidebar-w-min); }
+body.adm-collapsed .adm-main    { margin-left: var(--sidebar-w-min); }
+body.adm-collapsed .adm-nav__text,
+body.adm-collapsed .adm-nav__caret,
+body.adm-collapsed .adm-brand__name,
+body.adm-collapsed .adm-brand__role { display: none; }
+body.adm-collapsed .adm-nav__link { justify-content: center; padding: 0; }
+body.adm-collapsed .adm-sub { display: none !important; }
+body.adm-collapsed .adm-brand__tile { width: 40px; height: 40px; border-radius: 10px; }
+
+/* ---------- 4. Sidebar: thương hiệu ---------- */
+.adm-brand {
+    padding: 18px 12px 14px;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+}
+.adm-brand:hover { text-decoration: none; color: inherit; }
+
+.adm-brand__tile {
+    width: 56px; height: 56px;
+    margin: 0 auto;
+    border-radius: 14px;
+    background: #eef1f5;
+    color: #8a93a0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.adm-brand__tile .ic { width: 28px; height: 28px; stroke-width: 1.5; }
+
+.adm-brand__name { margin-top: 8px; font-size: 14px; font-weight: 700; color: #1f2937; }
+.adm-brand__role { font-size: 11px; color: var(--text-muted); }
+
+/* ---------- 5. Sidebar: menu ---------- */
+.adm-nav {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px 8px 16px;
+}
+.adm-nav ul { list-style: none; margin: 0; padding: 0; }
+
+.adm-nav__link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 44px;
+    padding: 0 12px;
+    border-radius: 8px;
+    color: #374151;
+    font-size: 14px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.adm-nav__link:hover { background: #f3f5f8; color: #111827; text-decoration: none; }
+.adm-nav__link.is-active { background: var(--sidebar-active); color: #111827; font-weight: 600; }
+
+.adm-nav__link .ic { width: 20px; height: 20px; stroke-width: 1.75; }
+.adm-nav__text { overflow: hidden; text-overflow: ellipsis; }
+
+.adm-nav__caret {
+    margin-left: auto;
+    width: 16px; height: 16px;
+    color: #9aa3af;
+    transition: transform .18s ease;
+}
+.adm-group.is-open > .adm-nav__link .adm-nav__caret { transform: rotate(180deg); }
+
+.adm-sub { display: none; }
+.adm-group.is-open > .adm-sub { display: block; }
+.adm-sub .adm-nav__link {
+    height: 40px;
+    padding-left: 44px;
+    font-size: 13.5px;
+    gap: 8px;
+}
+.adm-sub .adm-nav__link .ic { display: none; }
+
+/* Dải thu gọn dưới đáy sidebar */
+.adm-sidebar__foot {
+    border-top: 1px solid var(--border);
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+.adm-collapse-btn {
+    border: 0;
+    background: transparent;
+    color: #6b7280;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.adm-collapse-btn:hover { background: #f3f5f8; color: #111827; }
+body.adm-collapsed .adm-collapse-btn .ic { transform: rotate(180deg); }
+
+/* ---------- 6. Topbar ---------- */
+.adm-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    height: var(--topbar-h);
+    flex: 0 0 var(--topbar-h);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+}
+.adm-topbar__burger {
+    display: none;
+    border: 0;
+    background: transparent;
+    color: #374151;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.adm-topbar__title { font-size: 17px; font-weight: 700; color: #1f2937; }
+.adm-topbar__sep   { font-size: 17px; font-weight: 700; color: #1f2937; }
+.adm-topbar__right { margin-left: auto; display: flex; align-items: center; }
+
+.adm-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: #e9edf2;
+    color: #7b8494;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.adm-avatar .ic { width: 22px; height: 22px; stroke-width: 1.5; }
+.adm-user-toggle { display: flex; align-items: center; gap: 8px; color: inherit; }
+.adm-user-toggle:hover { text-decoration: none; color: inherit; }
+
+/* ---------- 7. Card ---------- */
+.card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+    margin-bottom: 18px;
+}
+/* Vô hiệu hoá viền màu trên đỉnh card kiểu AdminLTE */
+.card.card-outline,
+.card.card-primary,
+.card.card-info,
+.card.card-success,
+.card.card-warning,
+.card.card-danger { border-top: 1px solid var(--border); }
+
+.card-header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.card-title { margin: 0; font-size: 16px; font-weight: 600; color: #1f2937; }
+.card-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.card-body   { padding: 18px; }
+.card-body.p-0 { padding: 0; }
+.card-footer {
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    border-radius: 0 0 var(--radius-card) var(--radius-card);
+    padding: 14px 18px;
+}
+/* Nút Lưu/Quay lại nằm bên phải như mẫu */
+.card-footer { text-align: right; }
+.card-footer .btn + .btn { margin-left: 8px; }
+
+/* ---------- 8. Nút ---------- */
+.btn {
+    border-radius: var(--radius-ctl);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-sm { padding: 6px 12px; font-size: 13px; }
+
+.btn-primary { background: var(--brand-blue); border-color: var(--brand-blue); }
+.btn-primary:hover,
+.btn-primary:focus { background: var(--brand-blue-d); border-color: var(--brand-blue-d); }
+
+.btn-success { background: var(--brand-green); border-color: var(--brand-green); }
+.btn-success:hover { background: #13682f; border-color: #13682f; }
+
+.btn-default,
+.btn-secondary {
+    background: #fff;
+    border-color: var(--border-input);
+    color: #374151;
+}
+.btn-default:hover,
+.btn-secondary:hover { background: #f3f5f8; border-color: #cfd4da; color: #111827; }
+
+/* Nút hành động chính ở góc phải card header ("+ Thêm mới") — xanh lá như mẫu */
+.card-tools .btn-primary {
+    background: var(--brand-green);
+    border-color: var(--brand-green);
+}
+.card-tools .btn-primary:hover {
+    background: #13682f;
+    border-color: #13682f;
+}
+
+/* Nút icon vuông (quay lại, lọc) */
+.btn-icon {
+    width: 34px; height: 34px;
+    padding: 0;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid var(--border-input);
+    color: #4b5563;
+    border-radius: var(--radius-ctl);
+}
+.btn-icon:hover { background: #f3f5f8; color: #111827; }
+
+/* ---------- 9. Bảng ---------- */
+.table { margin-bottom: 0; border-collapse: separate; border-spacing: 0; }
+
+.table thead th {
+    background: var(--thead-bg);
+    border: 0;
+    color: #3f3a37;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 12px 14px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.table tbody td {
+    background: var(--row-bg);
+    border: 0;
+    border-bottom: 2px solid #fff;
+    padding: 12px 14px;
+    font-size: 14px;
+    vertical-align: middle;
+}
+.table-hover tbody tr:hover td { background: var(--row-hover); }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table td .btn + .btn { margin-left: 4px; }
+.table a { color: var(--brand-blue); }
+
+/* Mẫu hiển thị trạng thái bằng chữ thường, không dùng nhãn màu.
+   Giữ nguyên markup .badge trong 37 view, chỉ tắt phần trang trí. */
+.badge {
+    background: transparent !important;
+    color: var(--text) !important;
+    font-size: 14px;
+    font-weight: 400;
+    padding: 0;
+    border-radius: 0;
+}
+
+/* ---------- 10. Form ---------- */
+label { font-size: 13px; font-weight: 400; color: #374151; margin-bottom: 6px; }
+.form-group { margin-bottom: 16px; }
+
+.form-control {
+    height: 40px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: var(--text);
+    background: #fff;
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-ctl);
+    box-shadow: none;
+}
+.form-control:focus {
+    border-color: var(--brand-blue);
+    box-shadow: 0 0 0 3px rgba(22, 104, 227, .12);
+}
+textarea.form-control { height: auto; min-height: 96px; }
+select.form-control { padding-right: 32px; }
+
+.form-control[readonly],
+.form-control:disabled { background: #e9ecef; color: #6b7280; }
+
+.form-control-plaintext { padding: 8px 0; }
+.form-text { font-size: 12px; color: var(--text-muted); }
+.text-danger small, small.text-danger { font-size: 12px; }
+
+.custom-file, .custom-file-input, .custom-file-label { height: 40px; }
+.custom-file-label {
+    height: 40px;
+    padding: 9px 12px;
+    font-size: 14px;
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-ctl);
+}
+.custom-file-label::after { height: 38px; padding: 9px 12px; border-radius: 0 var(--radius-ctl) var(--radius-ctl) 0; }
+
+.input-group-text {
+    background: #f3f5f8;
+    border: 1px solid var(--border-input);
+    border-radius: var(--radius-ctl);
+    color: #6b7280;
+}
+
+/* Thanh tìm kiếm trên đầu danh sách */
+.adm-searchbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 14px;
+}
+.adm-searchbar .form-control { flex: 1 1 auto; }
+
+/* ---------- 10b. Trang Tổng quan ---------- */
+.adm-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+.adm-filters__item { flex: 1 1 320px; max-width: 420px; }
+.adm-filters__item label { display: block; }
+
+.stat-card .card-body { padding: 18px 20px 20px; }
+
+.stat-card__head { display: flex; align-items: center; gap: 12px; }
+.stat-card__icon {
+    width: 44px; height: 44px;
+    flex: 0 0 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+.stat-card__icon .ic { width: 22px; height: 22px; }
+.stat-card__icon--green { background: var(--brand-green); }
+.stat-card__icon--amber { background: #f0a020; }
+.stat-card__icon--blue  { background: var(--brand-blue); }
+
+.stat-card__title { font-size: 16px; font-weight: 600; color: #1f2937; }
+
+.stat-card__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 18px;
+}
+.stat-metric__label { font-size: 12px; color: var(--text-muted); }
+.stat-metric__value { font-size: 26px; font-weight: 700; line-height: 1.25; }
+.stat-metric__value--green { color: var(--brand-green); }
+.stat-metric__value--amber { color: #f0a020; }
+.stat-metric__value--blue  { color: var(--brand-blue); }
+.stat-metric__delta { font-size: 12px; color: var(--text-muted); }
+
+/* ---------- 11. Thông báo ---------- */
+.alert {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    padding: 12px 16px;
+}
+.alert-success { background: #e8f6ee; border-color: #bfe3ce; color: #14663a; }
+.alert-danger  { background: #fdecec; border-color: #f7c9c9; color: #a12525; }
+.alert-warning { background: #fff6e5; border-color: #f5dfae; color: #8a5a00; }
+.alert-info    { background: #e9f1fd; border-color: #c3d8f7; color: #14458f; }
+
+/* ---------- 12. Component cũ của AdminLTE mà view còn dùng ---------- */
+/* .info-box — dùng ở nhac-bao-tri, ton-kho-lau, bien-dong-ton */
+.info-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 78px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+}
+.info-box-icon {
+    width: 44px; height: 44px;
+    flex: 0 0 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 18px;
+}
+.info-box-content { display: flex; flex-direction: column; min-width: 0; }
+.info-box-text   { font-size: 12px; color: var(--text-muted); }
+.info-box-number { font-size: 22px; font-weight: 700; line-height: 1.2; }
+
+/* .callout — dùng ở warranty/handover-add, bien-dong-ton */
+.callout {
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--text-muted);
+    border-radius: var(--radius-ctl);
+    font-size: 14px;
+}
+.callout-info    { border-left-color: var(--brand-blue); }
+.callout-warning { border-left-color: #e0a300; }
+.callout-danger  { border-left-color: #d33a3a; }
+.callout-success { border-left-color: var(--brand-green); }
+
+/* ---------- 13. Dropdown ---------- */
+.dropdown-menu {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(16, 24, 40, .10);
+    font-size: 14px;
+    padding: 6px;
+}
+.dropdown-item { border-radius: 6px; padding: 8px 10px; }
+.dropdown-header { font-size: 12px; color: var(--text-muted); padding: 6px 10px; }
+
+/* ---------- 14. Giữ lại tiện ích cũ ---------- */
+.tp-swatch {
+    display: inline-block;
+    width: 26px; height: 26px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, .2);
+    vertical-align: middle;
+}
+.tp-color { max-width: 90px; height: 42px; padding: 4px; }
+
+/* ---------- 15. Trang đăng nhập ---------- */
+body.adm-auth { background: var(--bg-page); }
+
+.auth-topbar {
+    height: 64px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 24px;
+    font-size: 19px;
+    font-weight: 700;
+    color: #1f2937;
+}
+.auth-topbar img { height: 34px; width: auto; }
+
+.auth-wrap { display: flex; justify-content: center; padding: 90px 16px 40px; }
+
+.auth-card {
+    width: 100%;
+    max-width: 410px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(16, 24, 40, .05);
+    padding: 32px 34px 30px;
+}
+.auth-logo {
+    width: 56px; height: 56px;
+    margin: 0 auto 14px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #3b6fe0, #7b4fe0);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.auth-logo .ic { width: 28px; height: 28px; }
+.auth-card h1 { font-size: 26px; font-weight: 700; text-align: center; margin: 0 0 4px; }
+.auth-card .auth-sub { text-align: center; font-size: 13px; color: var(--text-muted); margin-bottom: 22px; }
+.auth-card .btn-primary { width: 100%; justify-content: center; padding: 10px; }
+
+/* ---------- 16. Màn hình nhỏ ---------- */
+@media (max-width: 991.98px) {
+    .adm-sidebar { transform: translateX(-100%); }
+    .adm-main    { margin-left: 0; }
+    body.adm-sidebar-open .adm-sidebar { transform: translateX(0); }
+    .adm-topbar__burger { display: inline-flex; }
+
+    .adm-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, .35);
+        z-index: 1029;
+        display: none;
+    }
+    body.adm-sidebar-open .adm-backdrop { display: block; }
+
+    body.adm-collapsed .adm-sidebar { width: var(--sidebar-w); }
+    body.adm-collapsed .adm-main    { margin-left: 0; }
+    body.adm-collapsed .adm-nav__text,
+    body.adm-collapsed .adm-nav__caret,
+    body.adm-collapsed .adm-brand__name,
+    body.adm-collapsed .adm-brand__role { display: revert; }
+    body.adm-collapsed .adm-nav__link { justify-content: flex-start; padding: 0 12px; }
+    body.adm-collapsed .adm-sub { display: none; }
+    body.adm-collapsed .adm-group.is-open > .adm-sub { display: block !important; }
+}

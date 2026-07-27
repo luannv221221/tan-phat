@@ -1,27 +1,41 @@
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-6">
-            <h1>Đăng nhập hệ thống</h1>
-            @if (!empty($msg))
-            <div class="alert alert-danger text-center">
-                {{$msg}}
-            </div>
-            @endif
-            <form action="" method="post">
-                <?php echo csrf_field(); ?>
-                <div class="form-group">
-                    <label for="">Email</label>
-                    <input name="email" type="text" class="form-control" placeholder="Email...">
-                    {!! !empty($errors['email'])?'<span style="color:red;">'.$errors['email'].'</span>':false; !!}
-                </div>
+<div class="auth-wrap">
+    <div class="auth-card">
 
-                <div class="form-group">
-                    <label for="">Mật khẩu</label>
-                    <input name="password" type="password" class="form-control" placeholder="Mật khẩu...">
-                    {!! !empty($errors['password'])?'<span style="color:red;">'.$errors['password'].'</span>':false; !!}
+        <div class="auth-logo"><?php echo icon('shield'); ?></div>
+        <h1>Đăng nhập</h1>
+        <p class="auth-sub">Nhập tài khoản để vào hệ thống quản trị</p>
+
+        @if (!empty($msg))
+        <div class="alert alert-danger">{{$msg}}</div>
+        @endif
+
+        <form action="" method="post">
+            <?php echo csrf_field(); ?>
+
+            <div class="form-group">
+                <label for="login-email">Email</label>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><?php echo icon('at-sign'); ?></span>
+                    </div>
+                    <input id="login-email" name="email" type="text" class="form-control" placeholder="Email..."/>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Đăng nhập</button>
-            </form>
-        </div>
+                {!! !empty($errors['email']) ? '<small class="text-danger">'.e($errors['email']).'</small>' : false !!}
+            </div>
+
+            <div class="form-group">
+                <label for="login-password">Mật khẩu</label>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><?php echo icon('lock'); ?></span>
+                    </div>
+                    <input id="login-password" name="password" type="password" class="form-control" placeholder="Mật khẩu..."/>
+                </div>
+                {!! !empty($errors['password']) ? '<small class="text-danger">'.e($errors['password']).'</small>' : false !!}
+            </div>
+
+            <button type="submit" class="btn btn-primary">Đăng nhập</button>
+        </form>
+
     </div>
 </div>

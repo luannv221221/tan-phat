@@ -149,6 +149,32 @@ function youtube_id($url){
     return '';
 }
 
+/**
+ * In 1 icon Lucide từ sprite.
+ *
+ *   icon('shopping-bag')                 => <svg class="ic"><use href="#i-shopping-bag"/></svg>
+ *   icon('chevron-down', 'adm-nav__caret')
+ *
+ * Sprite phải được nhúng 1 lần vào trang bằng icon_sprite() — đặt ngay
+ * sau <body>. Không dùng <use href="file.svg#id"> vì tham chiếu SVG ngoài
+ * không chạy ổn định trên mọi trình duyệt.
+ */
+function icon($name, $class = ''){
+    $name  = preg_replace('/[^a-z0-9-]/', '', strtolower((string) $name));
+    $class = trim('ic ' . $class);
+    return '<svg class="' . e($class) . '" aria-hidden="true"><use href="#i-' . $name . '"></use></svg>';
+}
+
+/** Nội dung sprite Lucide, nhúng 1 lần mỗi trang. */
+function icon_sprite(){
+    static $svg = null;
+    if ($svg === null){
+        $file = __DIR__ . '/../../public/assets/vendor/lucide/lucide.svg';
+        $svg  = is_file($file) ? file_get_contents($file) : '';
+    }
+    return $svg;
+}
+
 /** URL cho mục menu web: rỗng->trang chủ; http->giữ; else ghép _WEB_URL */
 function nav_url($url){
     if (empty($url)) return _WEB_URL . '/';

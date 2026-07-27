@@ -10,8 +10,18 @@ class AppServiceProvider extends ServiceProvider {
 
     public function boot(){
 
-        if (!empty(Session::get('dataUser'))){
-            $userId = Session::get('dataUser');
+        $userId = Session::get('dataUser');
+
+        // boot() chạy TRƯỚC AuthMiddleware — mà 'dataUser' lại do middleware đặt.
+        // Nên ở request admin đầu tiên ngay sau khi đăng nhập, 'dataUser' còn rỗng
+        // và sidebar hiện ra trống trơn; phải bấm sang trang khác mới đủ menu.
+        // Suy ra user từ 'dataToken' (Auth::postLogin đặt ngay lúc đăng nhập).
+        if (empty($userId) && !empty(Session::get('dataToken'))){
+            $tokenData = Load::model('LoginToken')->getToken(Session::get('dataToken'));
+            if (!empty($tokenData)){ $userId = $tokenData['user_id']; }
+        }
+
+        if (!empty($userId)){
 
             $userModel = Load::model('UsersModel');
             $moduleModel = Load::model('ModulesModel');

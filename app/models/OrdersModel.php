@@ -37,6 +37,33 @@ class OrdersModel extends Model {
         return (int) ($r['c'] ?? 0);
     }
 
+    /**
+     * Số đơn và tổng tiền theo từng trạng thái trong một khoảng thời gian.
+     *
+     * Dùng cho trang Tổng quan. Trả về:
+     *   ['completed' => ['count' => 3, 'sum' => 1250000.0], ...]
+     * Trạng thái không có đơn nào thì không xuất hiện trong mảng — bên gọi
+     * phải tự coi như 0 (xem Dashboard::bucket()).
+     *
+     * @param string $from 'Y-m-d H:i:s' — tính từ (>=)
+     * @param string $to   'Y-m-d H:i:s' — đến trước (<)
+     */
+    public function statsByStatus($from, $to){
+        $rows = $this->getRaw(
+            'SELECT `status`, COUNT(*) AS c, COALESCE(SUM(`total_amount`), 0) AS s
+               FROM `orders`
+              WHERE `create_at` >= ? AND `create_at` < ?
+              GROUP BY `status`',
+            [$from, $to]
+        );
+
+        $out = [];
+        foreach ((array) $rows as $r){
+            $out[$r['status']] = ['count' => (int) $r['c'], 'sum' => (float) $r['s']];
+        }
+        return $out;
+    }
+
     public function getDetail($id){ return $this->getFirst($id); }
 
     public function nextNo(){

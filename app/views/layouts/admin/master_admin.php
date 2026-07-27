@@ -5,38 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title><?php echo e((!empty($page_title)) ? $page_title : 'Quản trị hệ thống'); ?> · Tân Phát</title>
 
-    <!-- Font Awesome 6 (icon) — local, chạy offline -->
-    <link rel="stylesheet" href="<?php echo _WEB_URL.'/public/assets/vendor/fontawesome/css/all.min.css' ?>"/>
-    <!-- Bootstrap 4.6 (local) -->
+    <!-- Bootstrap 4.6 (local) — vẫn cần vì 120 view dùng lưới & component của nó -->
     <link type="text/css" rel="stylesheet" href="<?php echo _WEB_URL.'/public/assets/css/bootstrap.min.css' ?>"/>
-    <!-- AdminLTE 3.2 — local, chạy offline -->
-    <link rel="stylesheet" href="<?php echo _WEB_URL.'/public/assets/vendor/adminlte/css/adminlte.min.css' ?>"/>
-    <!-- Tùy biến riêng (nạp cuối để đè) -->
-    <link type="text/css" rel="stylesheet" href="<?php echo _WEB_URL.'/public/assets/css/style.css' ?>"/>
+    <!-- Theme quản trị (thay hoàn toàn AdminLTE) -->
+    <link type="text/css" rel="stylesheet" href="<?php echo _WEB_URL.'/public/assets/css/admin-theme.css' ?>"/>
+    <!-- Font Awesome — còn vài view dùng <i class="fas ..."> trong nội dung -->
+    <link rel="stylesheet" href="<?php echo _WEB_URL.'/public/assets/vendor/fontawesome/css/all.min.css' ?>"/>
 </head>
 
-<body class="hold-transition sidebar-mini layout-fixed">
-<div class="wrapper">
+<body class="adm">
+<?php echo icon_sprite(); ?>
 
-    <?php $this->render('layouts/admin/header', $content);  // navbar trên cùng ?>
+<div class="adm-shell">
 
-    <?php $this->render('layouts/admin/sidebar', $content); // menu dọc bên trái ?>
+    <?php $this->render('layouts/admin/sidebar', $content); ?>
 
-    <div class="content-wrapper">
-        <section class="content pt-3">
-            <div class="container-fluid">
-                <?php $this->render($sub_content, $content); ?>
-            </div>
-        </section>
+    <div class="adm-main">
+        <?php $this->render('layouts/admin/header', $content); ?>
+
+        <main class="adm-content">
+            <?php $this->render($sub_content, $content); ?>
+        </main>
     </div>
 
-    <?php $this->render('layouts/admin/footer', $content); ?>
-
 </div>
+
+<div class="adm-backdrop"></div>
 
 <script src="<?php echo _WEB_URL.'/public/assets/js/jquery-3.6.0.min.js' ?>"></script>
 <script src="<?php echo _WEB_URL.'/public/assets/vendor/popper/popper.min.js' ?>"></script>
 <script src="<?php echo _WEB_URL.'/public/assets/js/bootstrap.min.js' ?>"></script>
-<script src="<?php echo _WEB_URL.'/public/assets/vendor/adminlte/js/adminlte.min.js' ?>"></script>
+<script src="<?php echo _WEB_URL.'/public/assets/js/admin.js' ?>"></script>
 </body>
 </html>
