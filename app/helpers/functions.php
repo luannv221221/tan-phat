@@ -150,6 +150,27 @@ function youtube_id($url){
 }
 
 /**
+ * URL của 1 file tĩnh, kèm ?v=<thời điểm sửa file> để phá cache trình duyệt.
+ *
+ *   asset('public/assets/storefront/js/script.js')
+ *   => http://host/app/public/assets/storefront/js/script.js?v=1769521234
+ *
+ * VÌ SAO CẦN: sửa xong file JS/CSS rồi deploy, trình duyệt người dùng vẫn
+ * dùng bản cũ trong cache — lỗi đã sửa nhưng họ vẫn thấy. Gắn mtime vào URL
+ * thì file đổi là URL đổi, trình duyệt buộc phải tải lại; file không đổi thì
+ * URL giữ nguyên nên vẫn được cache bình thường.
+ *
+ * @param string $path Đường dẫn tương đối từ gốc dự án (không có dấu / đầu)
+ */
+function asset($path){
+    $path = ltrim((string) $path, '/');
+    $full = __DIR__ . '/../../' . $path;
+    $url  = _WEB_URL . '/' . $path;
+
+    return is_file($full) ? $url . '?v=' . filemtime($full) : $url;
+}
+
+/**
  * In 1 icon Lucide từ sprite.
  *
  *   icon('shopping-bag')                 => <svg class="ic"><use href="#i-shopping-bag"/></svg>

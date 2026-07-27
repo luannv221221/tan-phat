@@ -1,3 +1,36 @@
+/* ---------------------------------------------------------------------------
+ * SUA LOI: anh trang chi tiet san pham khong hien.
+ *
+ * own-carousel.min.js (slider trang chu) gan ham vao Object.prototype:
+ *     Object.prototype.ownCarousel = function (options) { ... }
+ * => moi object trong trang deu "co" thuoc tinh nay, va no LIET KE DUOC.
+ *
+ * Owl Carousel duyet danh sach plugin cua no bang for...in (di ca chuoi
+ * prototype), nen thay 'ownCarousel' va tuong day la plugin cua minh:
+ *     new Object.ownCarousel(owlInstance)
+ * Ben trong ham goi this.querySelector(".own-carousel") — nhung `this` la
+ * doi tuong Owl chu khong phai DOM element => TypeError, Owl chet giua chung,
+ * khong bao gio gan duoc class .owl-loaded.
+ *
+ * Ma owl.carousel.min.css co: .owl-carousel { display: none }
+ *                             .owl-carousel.owl-loaded { display: block }
+ * => slider anh nam nguyen trong DOM nhung bi an hoan toan.
+ *
+ * Cach sua: giu nguyen ham (trang chu van dung element.ownCarousel(...)),
+ * chi dat lai thanh KHONG liet ke duoc de for...in cua Owl khong nhin thay.
+ * File nay nap sau own-carousel.min.js nen sua o day la kip.
+ * ------------------------------------------------------------------------- */
+if (Object.prototype.hasOwnProperty.call(Object.prototype, "ownCarousel")) {
+  var __ownCarousel = Object.prototype.ownCarousel;
+  delete Object.prototype.ownCarousel;
+  Object.defineProperty(Object.prototype, "ownCarousel", {
+    value: __ownCarousel,
+    enumerable: false,
+    writable: true,
+    configurable: true,
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   if (document.querySelector(".own-carousel__container")) {
     document.querySelector(".own-carousel__container").ownCarousel({

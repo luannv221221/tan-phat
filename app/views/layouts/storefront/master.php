@@ -70,7 +70,7 @@ $renderMenu = function ($items) use (&$renderMenu){
 <link rel="stylesheet" href="<?php echo $asset; ?>/css/owl.carousel.min.css"/>
 <link rel="stylesheet" href="<?php echo $asset; ?>/css/owl.theme.default.min.css"/>
 <link rel="stylesheet" href="<?php echo $asset; ?>/css/own-carousel.min.css"/>
-<link rel="stylesheet" href="<?php echo $asset; ?>/css/style.css"/>
+<link rel="stylesheet" href="<?php echo asset("public/assets/storefront/css/style.css"); ?>"/>
 <style>
 /* ---- Bổ sung nhỏ cho storefront (không có trong theme) ---- */
 :root{--sf-accent:#2957a4;--sf-accent-d:#1d418d}
@@ -304,10 +304,10 @@ $renderMenu = function ($items) use (&$renderMenu){
 
 <script src="<?php echo _WEB_URL; ?>/public/assets/js/jquery-3.6.0.min.js"></script>
 <script src="<?php echo $asset; ?>/js/bootstrap.bundle.min.js"></script>
-<script src="<?php echo $asset; ?>/js/owl.carousel.min.js"></script>
-<script src="<?php echo $asset; ?>/js/own-carousel.min.js"></script>
-<script src="<?php echo $asset; ?>/js/menu.js"></script>
-<script src="<?php echo $asset; ?>/js/script.js"></script>
+<script src="<?php echo asset("public/assets/storefront/js/owl.carousel.min.js"); ?>"></script>
+<script src="<?php echo asset("public/assets/storefront/js/own-carousel.min.js"); ?>"></script>
+<script src="<?php echo asset("public/assets/storefront/js/menu.js"); ?>"></script>
+<script src="<?php echo asset("public/assets/storefront/js/script.js"); ?>"></script>
 <script>
 (function(){
     var WEB = "<?php echo _WEB_URL; ?>";
