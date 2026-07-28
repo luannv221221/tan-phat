@@ -3,18 +3,24 @@ $partsBase = _WEB_URL . '/public/assets/uploads/parts/';
 $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
 
 // Thẻ sản phẩm dùng chung (markup theme .products--item)
-$pcard = function ($p) use ($partsBase, $assetImg, $imgMap){
+$pcard = function ($p) use ($partsBase, $assetImg, $imgMap, $isMember, $stockMap){
     $pid = (int) $p['id'];
     $hasSale = !empty($p['sale_price']);
     $price = $hasSale ? (float) $p['sale_price'] : (float) $p['price'];
     $img = !empty($imgMap[$pid]) ? ($partsBase . $imgMap[$pid]) : ($assetImg . 'placeholder.svg');
     $url = _WEB_URL . '/san-pham/' . $p['slug'];
+
+    // % giảm để nhãn KM nói được điều gì đó thay vì chỉ 2 chữ "KM"
+    $off = ($hasSale && (float) $p['price'] > 0)
+         ? (int) round((1 - $price / (float) $p['price']) * 100) : 0;
+
+    $st = ($isMember && isset($stockMap[$pid])) ? (float) $stockMap[$pid] : 0;
     ob_start(); ?>
     <div class="col-6 col-md-3">
         <div class="products--item">
             <div class="item__image">
                 <a href="<?php echo e($url); ?>"><img src="<?php echo e($img); ?>" alt="<?php echo e($p['name']); ?>" loading="lazy"/></a>
-                <?php if ($hasSale): ?><span class="item--sales">KM</span><?php endif; ?>
+                <?php if ($hasSale): ?><span class="item--sales"><?php echo $off > 0 ? '-' . $off . '%' : 'KM'; ?></span><?php endif; ?>
             </div>
             <div class="item__info">
                 <h3 class="item--name"><a href="<?php echo e($url); ?>"><?php echo e($p['name']); ?></a></h3>
@@ -22,6 +28,13 @@ $pcard = function ($p) use ($partsBase, $assetImg, $imgMap){
                     <?php if ($hasSale): ?><del><?php echo number_format((float) $p['price'], 0, ',', '.'); ?> đ</del><?php endif; ?>
                     <span><?php echo number_format($price, 0, ',', '.'); ?> đ</span>
                 </div>
+                <?php if ($isMember): ?>
+                <div class="mt-1">
+                    <span class="badge <?php echo $st > 0 ? 'bg-success' : 'bg-secondary'; ?>">
+                        Tồn: <?php echo rtrim(rtrim(number_format($st, 3, ',', '.'), '0'), ','); ?>
+                    </span>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

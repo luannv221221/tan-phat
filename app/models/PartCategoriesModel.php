@@ -77,6 +77,48 @@ class PartCategoriesModel extends Model {
         return $ids;
     }
 
+    /**
+     * Mở rộng danh sách id danh mục thành CHÍNH NÓ + toàn bộ hậu duệ.
+     *
+     * Phụ tùng được gán vào danh mục lá (vd "Lọc dầu"), không gán vào danh mục
+     * gốc (vd "Hệ thống lọc"). Nên lọc storefront theo đúng id đã chọn thì chọn
+     * danh mục gốc luôn ra rỗng. Hàm này trả về cả nhánh để lọc ra đúng hàng.
+     *
+     * Chỉ đọc bảng danh mục 1 lần dù truyền vào bao nhiêu id.
+     *
+     * @param  array $ids
+     * @return array id duy nhất, đã ép kiểu int
+     */
+    public function expandWithDescendants(array $ids){
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        if (empty($ids)) return [];
+
+        $all = $this->table($this->_table)->select('`id`, `parent_id`')->get();
+
+        $byParent = [];
+        foreach ($all as $r){
+            $p = ($r['parent_id'] === null || $r['parent_id'] === '') ? 0 : (int) $r['parent_id'];
+            $byParent[$p][] = (int) $r['id'];
+        }
+
+        $out     = [];
+        $collect = function ($pid) use (&$collect, &$out, &$byParent){
+            if (empty($byParent[$pid])) return;
+            foreach ($byParent[$pid] as $cid){
+                if (in_array($cid, $out, true)) continue; // chặn vòng lặp nếu dữ liệu lỗi
+                $out[] = $cid;
+                $collect($cid);
+            }
+        };
+
+        foreach ($ids as $id){
+            if (!in_array($id, $out, true)) $out[] = $id;
+            $collect($id);
+        }
+
+        return $out;
+    }
+
     public function countChildren($id){
         $r = $this->table($this->_table)
                   ->select('COUNT(*) AS total')

@@ -19,8 +19,15 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
 
     <div class="breadcrumb-sf"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / {{$listName}}</div>
 
-    <form method="get" action="{{_WEB_URL.$listPath}}" id="facetForm">
-    {!! !empty($f['keyword']) ? '<input type="hidden" name="q" value="'.e($f['keyword']).'"/>' : '' !!}
+    <!-- Form lọc để RỖNG và nằm ngoài lưới sản phẩm. Các ô lọc nối vào đây bằng
+         thuộc tính form="facetForm" của HTML5.
+
+         Trước đây form này bao cả lưới sản phẩm, khiến form "Thêm vào giỏ" của
+         từng thẻ bị LỒNG BÊN TRONG. HTML không cho phép lồng form nên trình duyệt
+         vứt bỏ thẻ form bên trong; nút "Thêm vào giỏ" trở thành nút submit của
+         form lọc và chỉ tải lại trang danh sách thay vì thêm hàng vào giỏ. -->
+    <form method="get" action="{{_WEB_URL.$listPath}}" id="facetForm"></form>
+    {!! !empty($f['keyword']) ? '<input form="facetForm" type="hidden" name="q" value="'.e($f['keyword']).'"/>' : '' !!}
     <div class="row">
 
         <!-- Sidebar lọc -->
@@ -32,7 +39,7 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                         @foreach ($catOptions as $c)
                             @if ((int) $c['depth'] <= 1)
                             <div class="form-check" style="padding-left:{{1.5+(int)$c['depth']*1}}rem">
-                                <input class="form-check-input" type="checkbox" id="cat{{(int)$c['id']}}" name="category[]" value="{{(int)$c['id']}}" {{$inArr($c['id'],$f['categoryIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
+                                <input class="form-check-input" form="facetForm" type="checkbox" id="cat{{(int)$c['id']}}" name="category[]" value="{{(int)$c['id']}}" {{$inArr($c['id'],$f['categoryIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
                                 <label class="form-check-label" for="cat{{(int)$c['id']}}">{{$c['name']}}</label>
                             </div>
                             @endif
@@ -46,7 +53,7 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                     <div class="px-3">
                         @foreach ($brandOptions as $b)
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="br{{(int)$b['id']}}" name="brand[]" value="{{(int)$b['id']}}" {{$inArr($b['id'],$f['brandIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
+                            <input class="form-check-input" form="facetForm" type="checkbox" id="br{{(int)$b['id']}}" name="brand[]" value="{{(int)$b['id']}}" {{$inArr($b['id'],$f['brandIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
                             <label class="form-check-label" for="br{{(int)$b['id']}}">{{$b['name']}}</label>
                         </div>
                         @endforeach
@@ -60,7 +67,7 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                     <div class="px-3">
                         @foreach ($originOptions as $o)
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="or{{(int)$o['id']}}" name="origin[]" value="{{(int)$o['id']}}" {{$inArr($o['id'],$f['originIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
+                            <input class="form-check-input" form="facetForm" type="checkbox" id="or{{(int)$o['id']}}" name="origin[]" value="{{(int)$o['id']}}" {{$inArr($o['id'],$f['originIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
                             <label class="form-check-label" for="or{{(int)$o['id']}}">{{$o['name']}}</label>
                         </div>
                         @endforeach
@@ -71,7 +78,7 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                 <div class="products__sidebar--item">
                     <h3>Xe tương thích</h3>
                     <div class="px-3">
-                        <select name="car_model" class="form-select form-select-sm" onchange="document.getElementById('facetForm').submit()">
+                        <select form="facetForm" name="car_model" class="form-select form-select-sm" onchange="document.getElementById('facetForm').submit()">
                             <option value="">— Mọi xe —</option>
                             @foreach ($carModels as $cm)
                                 <option value="{{(int)$cm['id']}}" {{((int)$f['carModelId']===(int)$cm['id'])?'selected':''}}>{{$cm['name']}}</option>
@@ -83,8 +90,8 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                 <div class="products__sidebar--item">
                     <h3>Khoảng giá (₫)</h3>
                     <div class="px-3 d-flex gap-2">
-                        <input type="text" class="form-control form-control-sm" name="price_min" placeholder="Từ" value="{{$f['priceMin']}}"/>
-                        <input type="text" class="form-control form-control-sm" name="price_max" placeholder="Đến" value="{{$f['priceMax']}}"/>
+                        <input type="text" class="form-control form-control-sm" form="facetForm" name="price_min" placeholder="Từ" value="{{$f['priceMin']}}"/>
+                        <input type="text" class="form-control form-control-sm" form="facetForm" name="price_max" placeholder="Đến" value="{{$f['priceMax']}}"/>
                     </div>
                 </div>
 
@@ -92,11 +99,11 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                     <div class="px-3">
                         @if (!$isPromo)
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="promoChk" name="promo" value="1" {{!empty($f['promo'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
+                            <input class="form-check-input" form="facetForm" type="checkbox" id="promoChk" name="promo" value="1" {{!empty($f['promo'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
                             <label class="form-check-label" for="promoChk">Chỉ hàng khuyến mãi</label>
                         </div>
                         @endif
-                        <button class="btn btn-primary btn-sm w-100 mt-3" type="submit">Áp dụng lọc</button>
+                        <button form="facetForm" class="btn btn-primary btn-sm w-100 mt-3" type="submit">Áp dụng lọc</button>
                         <a class="btn btn-outline-secondary btn-sm w-100 mt-2" href="{{_WEB_URL.'/san-pham'}}">Xoá lọc</a>
                     </div>
                 </div>
@@ -112,7 +119,7 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                 </div>
                 <div>
                     <label class="text-muted small me-1">Sắp xếp</label>
-                    <select name="sort" class="form-select form-select-sm d-inline-block" style="width:auto" onchange="document.getElementById('facetForm').submit()">
+                    <select form="facetForm" name="sort" class="form-select form-select-sm d-inline-block" style="width:auto" onchange="document.getElementById('facetForm').submit()">
                         <option value="">Tên A-Z</option>
                         <option value="new" {{($f['sort']==='new')?'selected':''}}>Mới nhất</option>
                         <option value="price_asc" {{($f['sort']==='price_asc')?'selected':''}}>Giá thấp → cao</option>
@@ -141,7 +148,10 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                             <div class="products--item h-100">
                                 <div class="item__image">
                                     <a href="{{$url}}"><img src="{{$imgUrl}}" alt="{{$p['name']}}" loading="lazy"/></a>
-                                    <?php if ($hasSale): ?><span class="item--sales">KM</span><?php endif; ?>
+                                    <?php
+                                    $off = ($hasSale && (float) $p['price'] > 0)
+                                         ? (int) round((1 - $price / (float) $p['price']) * 100) : 0;
+                                    if ($hasSale): ?><span class="item--sales"><?php echo $off > 0 ? '-' . $off . '%' : 'KM'; ?></span><?php endif; ?>
                                 </div>
                                 <div class="item__info">
                                     <h3 class="item--name"><a href="{{$url}}">{{$p['name']}}</a></h3>
@@ -176,7 +186,6 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
         </div>
 
     </div>
-    </form>
 </div>
 </div>
 </div>

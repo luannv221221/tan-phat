@@ -62,10 +62,21 @@ class Shop extends Controller {
             'sort'        => isset($g['sort']) ? $g['sort'] : '',
         ];
 
+        // Chọn danh mục gốc phải ra cả hàng của danh mục con: phụ tùng gán vào
+        // danh mục lá nên lọc đúng id gốc luôn ra rỗng.
+        //
+        // Chỉ mở rộng cho câu truy vấn. $filters giữ nguyên lựa chọn thật của
+        // người dùng vì view dùng nó để tick lại ô — mở rộng luôn thì mọi danh
+        // mục con cũng hiện đã tick, sai với thao tác của khách.
+        $queryFilters = $filters;
+        if (!empty($queryFilters['categoryIds'])){
+            $queryFilters['categoryIds'] = $this->__cat->expandWithDescendants($queryFilters['categoryIds']);
+        }
+
         $page  = !empty($g['page']) ? max(1, (int) $g['page']) : 1;
-        $total = $this->__part->storefrontCount($filters);
+        $total = $this->__part->storefrontCount($queryFilters);
         $pages = (int) ceil($total / self::PER_PAGE);
-        $list  = $this->__part->storefront($filters, self::PER_PAGE, ($page - 1) * self::PER_PAGE);
+        $list  = $this->__part->storefront($queryFilters, self::PER_PAGE, ($page - 1) * self::PER_PAGE);
 
         // Tồn kho: chỉ tính cho thành viên (TASK_79)
         $stockMap = [];

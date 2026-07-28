@@ -107,6 +107,9 @@ $renderMenu = function ($items) use (&$renderMenu){
 #cw-info input{flex:1}
 #cw-foot{display:flex;gap:6px}
 #cw-foot input{flex:1}
+/* Nhãn khuyến mãi: bo tròn, đậm, màu đỏ cho bật khỏi ảnh.
+   Bản theme là ô vuông xanh trùng màu nút nên nhìn như chữ dán vào ảnh. */
+.item--sales{background:#d93025;border-radius:4px;padding:3px 8px;font-size:.8rem;font-weight:700;line-height:1.3;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 /* Thu gọn khung chat bằng max-height thay vì translateY đo bằng JS.
    Thanh tiêu đề luôn nằm nguyên chỗ nên lúc nào cũng bấm được, và
    trạng thái đóng có sẵn từ HTML nên không nháy khi chuyển trang. */
