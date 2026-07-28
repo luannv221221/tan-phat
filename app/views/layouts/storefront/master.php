@@ -107,6 +107,11 @@ $renderMenu = function ($items) use (&$renderMenu){
 #cw-info input{flex:1}
 #cw-foot{display:flex;gap:6px}
 #cw-foot input{flex:1}
+/* Thu gọn khung chat bằng max-height thay vì translateY đo bằng JS.
+   Thanh tiêu đề luôn nằm nguyên chỗ nên lúc nào cũng bấm được, và
+   trạng thái đóng có sẵn từ HTML nên không nháy khi chuyển trang. */
+.chatbox .chatbox__content{max-height:80vh;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+.chatbox.hide .chatbox__content{max-height:0;padding-top:0;padding-bottom:0}
 </style>
 </head>
 <body>
@@ -300,7 +305,7 @@ $renderMenu = function ($items) use (&$renderMenu){
 <!--End .footer-->
 
 <!-- Chat widget (vỏ theme, nối backend /chat/send + /chat/poll) -->
-<div class="chatbox">
+<div class="chatbox hide">
     <h2 class="chatbox__title">Chat với chúng tôi <i class="fa fa-angle-down"></i></h2>
     <div class="chatbox__content">
         <div id="cw-msgs"></div>
@@ -334,20 +339,24 @@ $renderMenu = function ($items) use (&$renderMenu){
     var content = chatbox ? chatbox.querySelector('.chatbox__content') : null;
     if(!chatbox || !title || !content) return;
 
-    // Ẩn/hiện khung chat (giữ hành vi trượt của theme)
-    var h = content.clientHeight;
-    chatbox.style.transform = 'translateY(' + h + 'px)';
-    chatbox.classList.add('hide');
+    // Đóng/mở khung chat.
+    //
+    // Bản cũ đo content.clientHeight MỘT LẦN lúc tải trang rồi
+    // translateY(h) để đẩy khung xuống. Hai hệ quả:
+    //   - Chiều cao thay đổi sau đó (ẩn ô tên/SĐT, hiện dòng lỗi) nhưng vẫn
+    //     đẩy theo h cũ => đẩy quá tay, thanh tiêu đề tụt gần hết khỏi màn
+    //     hình, rất khó bấm lại.
+    //   - Lúc tải trang khung hiện đủ rồi mới bị JS đẩy xuống => nháy/giật
+    //     ở mỗi lần chuyển trang.
+    //
+    // Nay chỉ bật/tắt class `hide`, còn việc thu gọn do CSS lo bằng
+    // max-height — không cần đo gì, và trạng thái đóng đã có sẵn trong
+    // HTML nên không còn nháy.
     chatbox.addEventListener('click', function(e){ e.stopPropagation(); });
     title.addEventListener('click', function(){
-        if(chatbox.classList.contains('hide')){
-            chatbox.style.transform = 'translateY(0)';
-            chatbox.classList.remove('hide');
-            if(!started){ started = true; poll(); timer = setInterval(poll, 4000); }
-        } else {
-            chatbox.style.transform = 'translateY(' + h + 'px)';
-            chatbox.classList.add('hide');
-        }
+        var opening = chatbox.classList.contains('hide');
+        chatbox.classList.toggle('hide', !opening);
+        if(opening && !started){ started = true; poll(); timer = setInterval(poll, 4000); }
     });
 
     var msgs = document.getElementById('cw-msgs');
@@ -365,10 +374,19 @@ $renderMenu = function ($items) use (&$renderMenu){
         row.appendChild(b); msgs.appendChild(row); msgs.scrollTop = msgs.scrollHeight;
         if(m.id && m.id > lastId) lastId = m.id;
     }
+    function hideInfo(){ if(info) info.style.display = 'none'; }
+
     function poll(){
         fetch(WEB + '/chat/poll?after=' + lastId, {credentials:'same-origin'})
             .then(function(r){ return r.json(); })
-            .then(function(d){ if(d && d.messages){ d.messages.forEach(function(m){ addMsg(m); if(m.sender==='staff' && info) info.style.display='none'; }); } })
+            .then(function(d){
+                if(!d) return;
+                // Hội thoại đã có tên/SĐT thì không hỏi lại nữa.
+                // Bản cũ chỉ ẩn khi NHÂN VIÊN trả lời, nên tải lại trang là
+                // 2 ô trắng hiện lại dù khách đã khai từ trước.
+                if(d.hasInfo) hideInfo();
+                if(d.messages){ d.messages.forEach(addMsg); }
+            })
             .catch(function(){});
     }
     var errEl = document.getElementById('cw-err');
@@ -394,7 +412,7 @@ $renderMenu = function ($items) use (&$renderMenu){
                 if(d && d.ok){
                     input.value = '';
                     addMsg({id:d.id, sender:'customer', body:d.body});
-                    if(info) info.style.display='none';
+                    hideInfo();
                 } else {
                     showErr((d && d.message) ? d.message : 'Không gửi được, vui lòng thử lại.');
                 }

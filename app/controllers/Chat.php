@@ -67,14 +67,21 @@ class Chat extends Controller {
         $f = $this->__request->getFields();
         $after = !empty($f['after']) ? (int) $f['after'] : 0;
         $key = Session::get('chat_key');
-        if (empty($key)){ $this->json(['messages' => []]); }
+        if (empty($key)){ $this->json(['messages' => [], 'hasInfo' => false]); }
         $conv = $this->__conv->findBySession($key);
-        if (empty($conv)){ $this->json(['messages' => []]); }
+        if (empty($conv)){ $this->json(['messages' => [], 'hasInfo' => false]); }
 
         $out = [];
         foreach ($this->__msg->getByConversation((int) $conv['id'], $after) as $m){
             $out[] = ['id' => (int) $m['id'], 'sender' => $m['sender'], 'body' => $m['body'], 'at' => $m['create_at']];
         }
-        $this->json(['messages' => $out]);
+
+        // Đã có hội thoại kèm tên/SĐT thì client ẩn luôn 2 ô nhập đó.
+        // Trước đây chỉ ẩn khi nhân viên trả lời, nên tải lại trang là 2 ô
+        // trắng hiện lại dù khách đã khai rồi.
+        $hasInfo = !empty($conv['guest_name']) || !empty($conv['guest_phone'])
+                   || !empty($conv['member_id']);
+
+        $this->json(['messages' => $out, 'hasInfo' => (bool) $hasInfo]);
     }
 }

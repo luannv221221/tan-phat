@@ -27,8 +27,16 @@
                     <td class="text-center text-muted">{{$c['id']}}</td>
                     <td>
                         {!! $c['unread']==1 && $c['status']=='open' ? '<i class="fas fa-circle text-danger mr-1" style="font-size:8px"></i>' : '' !!}
-                        {{!empty($c['member_name']) ? $c['member_name'] : (!empty($c['guest_name']) ? $c['guest_name'] : 'Khách')}}
+                        <?php
+                        /* Ưu tiên tên KHÁCH TỰ NHẬP cho hội thoại này, rồi mới tới tên tài
+                           khoản. Bản cũ làm ngược lại nên khách đã đăng nhập mà gõ tên khác
+                           thì danh sách hiện tên tài khoản, còn mở hội thoại ra lại hiện tên
+                           vừa gõ (view.php dùng guest_name) — hai chỗ nói hai kiểu. */
+                        ?>
+                        {{!empty($c['guest_name']) ? $c['guest_name'] : (!empty($c['member_name']) ? $c['member_name'] : 'Khách')}}
                         <span class="text-muted small">{{!empty($c['guest_phone']) ? ' · '.$c['guest_phone'] : ''}}</span>
+                        {!! (!empty($c['member_name']) && !empty($c['guest_name']) && $c['member_name'] !== $c['guest_name'])
+                            ? '<span class="text-muted small"> (TK: '.e($c['member_name']).')</span>' : '' !!}
                     </td>
                     <td class="small text-muted">{{$c['last_message_at']}}</td>
                     <td class="text-center">{!! $c['status']=='open' ? '<span class="badge badge-success">Mở</span>' : '<span class="badge badge-secondary">Đóng</span>' !!}</td>
