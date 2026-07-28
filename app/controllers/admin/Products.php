@@ -94,7 +94,17 @@ class Products extends Controller {
         $offset = ($page - 1) * $this->perPage;
 
         $this->__data['content']['page_name']     = $this->labelMany;
-        $this->__data['content']['dataList']      = $this->__model->getLists($filters, $keyword, $this->perPage, $offset, $promo, $attrId, $attrVal);
+        $dataList = $this->__model->getLists($filters, $keyword, $this->perPage, $offset, $promo, $attrId, $attrVal);
+        $this->__data['content']['dataList']      = $dataList;
+
+        // Ảnh đại diện cho cột "Ảnh". Ảnh nằm ở bảng part_images chứ không phải
+        // cột trong `parts`, nên phải map riêng theo id.
+        $imgMap = [];
+        foreach ($dataList as $row){
+            $imgMap[(int) $row['id']] = $this->__imgModel->primaryFor((int) $row['id']);
+        }
+        $this->__data['content']['imgMap'] = $imgMap;
+
         $this->__data['content']['categories']    = $this->__catModel->getTree();
         $this->__data['content']['attributes']    = $this->__attrModel->getActive();
         $this->__data['content']['keyword']       = $keyword;

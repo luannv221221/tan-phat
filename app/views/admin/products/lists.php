@@ -106,6 +106,7 @@ $to     = min($page * $perPage, $total);
             <thead>
                 <tr>
                     <th style="width:60px" class="text-center">STT</th>
+                    <th style="width:80px" class="text-center">Ảnh</th>
                     <th style="width:12%">Mã</th>
                     <th>Tên phụ tùng</th>
                     <th style="width:15%">Danh mục</th>
@@ -120,6 +121,11 @@ $to     = min($page * $perPage, $total);
                 @foreach ($dataList as $key => $item)
                 <tr>
                     <td class="text-center text-muted">{{($page-1)*$perPage + $key + 1}}</td>
+                    <td class="text-center">
+                        {!! !empty($imgMap[$item['id']])
+                            ? '<img src="'.e(_WEB_URL.'/public/assets/uploads/parts/'.$imgMap[$item['id']]).'" alt="" style="height:34px;max-width:70px;object-fit:contain">'
+                            : '<span class="text-muted">—</span>' !!}
+                    </td>
                     <td><code>{{$item['code']}}</code></td>
                     <td class="font-weight-bold">{{$item['name']}}</td>
                     <td>{!! !empty($item['category_name']) ? e($item['category_name']) : '<span class="text-muted">—</span>' !!}</td>
@@ -140,7 +146,7 @@ $to     = min($page * $perPage, $total);
                 @endforeach
             @else
                 <tr>
-                    <td colspan="8" class="text-center text-muted py-4">
+                    <td colspan="9" class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-2x d-block mb-2"></i> Không có phụ tùng nào khớp
                     </td>
                 </tr>

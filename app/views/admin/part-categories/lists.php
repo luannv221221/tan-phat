@@ -28,6 +28,7 @@
             <thead>
                 <tr>
                     <th style="width:60px" class="text-center">STT</th>
+                    <th style="width:80px" class="text-center">Ảnh</th>
                     <th>Tên danh mục</th>
                     <th style="width:22%">Slug</th>
                     <th style="width:80px" class="text-center">Thứ tự</th>
@@ -40,6 +41,9 @@
                 @foreach ($dataList as $key => $item)
                 <tr>
                     <td class="text-center text-muted">{{$key+1}}</td>
+                    <td class="text-center">
+                        {!! !empty($item['image']) ? '<img src="'.e(media_url($item['image'])).'" alt="" style="height:34px;max-width:70px;object-fit:contain">' : '<span class="text-muted">—</span>' !!}
+                    </td>
                     <td>
                         <span style="padding-left:{{$item['depth']*22}}px">
                             {!! $item['depth']>0 ? '<i class="fas fa-level-up-alt fa-rotate-90 text-muted mr-1"></i>' : '<i class="fas fa-folder text-warning mr-1"></i>' !!}
@@ -63,7 +67,7 @@
                 @endforeach
             @else
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-4">
+                    <td colspan="7" class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có dữ liệu
                     </td>
                 </tr>
