@@ -51,7 +51,7 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
         <dl class="row mb-0">
             <dt class="col-sm-3">Ngày</dt><dd class="col-sm-9">{{$item['invoice_date']}}</dd>
             <dt class="col-sm-3">Khách hàng</dt><dd class="col-sm-9">{{!empty($item['customer_name'])?$item['customer_name']:'Khách vãng lai'}}</dd>
-            <dt class="col-sm-3">Kho xuất</dt><dd class="col-sm-9">{{$item['warehouse_name']}}</dd>
+            <dt class="col-sm-3">Kho xuất</dt><dd class="col-sm-9">{{!empty($item['warehouse_name']) ? $item['warehouse_name'] : '—'}}</dd>
             <dt class="col-sm-3">Doanh thu chưa thuế</dt><dd class="col-sm-9">{{number_format((float)$item['subtotal'],0,',','.')}} ₫</dd>
             <dt class="col-sm-3">Thuế GTGT ({{rtrim(rtrim(number_format((float)$item['vat_rate'],2,'.',''),'0'),'.')}}%)</dt><dd class="col-sm-9">{{number_format((float)$item['tax_amount'],0,',','.')}} ₫</dd>
             <dt class="col-sm-3">Tổng thanh toán</dt><dd class="col-sm-9 font-weight-bold">{{number_format((float)$item['total_amount'],0,',','.')}} ₫</dd>

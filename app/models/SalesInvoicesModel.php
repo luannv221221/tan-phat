@@ -28,7 +28,26 @@ class SalesInvoicesModel extends Model {
                  ->orderBy('sales_invoices.id', 'DESC')->get();
     }
 
-    public function getDetail($id){ return $this->getFirst($id); }
+    /**
+     * Chi tiết hoá đơn — PHẢI join giống getLists().
+     *
+     * Bản cũ dùng getFirst() (SELECT * thuần, không join), nên trang chi tiết
+     * thiếu `warehouse_name` và `customer_full`: ô "Kho xuất" trống kèm
+     * PHP Warning "Undefined array key warehouse_name".
+     *
+     * leftJoin cho `warehouses` (khác getLists dùng join thường): hoá đơn cũ có
+     * thể chưa gán kho, join thường sẽ làm mất luôn dòng và trang báo
+     * "Không tìm thấy hoá đơn" — sai còn nặng hơn.
+     */
+    public function getDetail($id){
+        return $this->table($this->_table)
+            ->select('`sales_invoices`.*, `partners`.`name` AS customer_full, '
+                   . '`warehouses`.`name` AS warehouse_name')
+            ->leftJoinOn('partners', 'sales_invoices.customer_id', 'partners.id')
+            ->leftJoinOn('warehouses', 'sales_invoices.warehouse_id', 'warehouses.id')
+            ->where('sales_invoices.id', '=', (int) $id)
+            ->first();
+    }
 
     public function nextNo(){
         $row = $this->table($this->_table)->select('`invoice_no`')->orderBy('id', 'DESC')->first();
