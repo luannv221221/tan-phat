@@ -33,7 +33,22 @@ class Shop extends Controller {
 
     private function isMember(){ return !empty(Session::get('dataMember')); }
 
-    public function index(){
+    /**
+     * Trang Khuyến mãi (/khuyen-mai).
+     *
+     * Dùng lại đúng bộ máy của trang Sản phẩm, chỉ ép bộ lọc promo. Không tạo
+     * bảng "chương trình khuyến mãi" riêng: hàng khuyến mãi ở đây được định
+     * nghĩa là hàng có `parts.sale_price` — cùng nguồn với giá gạch ngang đang
+     * hiển thị trên thẻ sản phẩm, nên không thể lệch nhau.
+     */
+    public function promo(){
+        $this->index(true);
+    }
+
+    /**
+     * @param bool $promoOnly Ép chỉ hiện hàng khuyến mãi (trang /khuyen-mai)
+     */
+    public function index($promoOnly = false){
         $g = $_GET;
         $filters = [
             'categoryIds' => $this->intArray($g['category'] ?? []),
@@ -41,7 +56,7 @@ class Shop extends Controller {
             'originIds'   => $this->intArray($g['origin'] ?? []),
             'priceMin'    => isset($g['price_min']) ? preg_replace('/[^\d]/', '', $g['price_min']) : '',
             'priceMax'    => isset($g['price_max']) ? preg_replace('/[^\d]/', '', $g['price_max']) : '',
-            'promo'       => !empty($g['promo']),
+            'promo'       => $promoOnly || !empty($g['promo']),
             'keyword'     => isset($g['q']) ? trim($g['q']) : '',
             'carModelId'  => !empty($g['car_model']) ? (int) $g['car_model'] : 0,
             'sort'        => isset($g['sort']) ? $g['sort'] : '',
@@ -63,9 +78,16 @@ class Shop extends Controller {
         foreach ($list as $p){ $imgMap[(int) $p['id']] = $this->__img->primaryFor((int) $p['id']); }
 
         $this->__data['sub_content'] = 'storefront/list';
-        $this->__data['page_title']  = !empty($filters['keyword']) ? ('Tìm: ' . $filters['keyword']) : 'Sản phẩm';
+        if ($promoOnly){
+            $this->__data['page_title'] = 'Khuyến mãi';
+        } else {
+            $this->__data['page_title'] = !empty($filters['keyword']) ? ('Tìm: ' . $filters['keyword']) : 'Sản phẩm';
+        }
 
         $c = &$this->__data['content'];
+        // View dùng cờ này để đổi tiêu đề/breadcrumb, đổi action của form lọc
+        // và ẩn ô "Chỉ hàng khuyến mãi" (đang bị ép nên bỏ tick cũng vô nghĩa).
+        $c['promoPage'] = (bool) $promoOnly;
         $c['list']       = $list;
         $c['total']      = $total;
         $c['page']       = $page;

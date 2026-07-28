@@ -201,9 +201,13 @@ $renderMenu = function ($items) use (&$renderMenu){
         </div>
         <div class="container">
             <ul class="menu">
-                <li><a href="<?php echo _WEB_URL; ?>/">Trang chủ</a></li>
-                <li><a href="<?php echo _WEB_URL; ?>/gioi-thieu">Giới thiệu</a></li>
-                <?php $renderMenu($navMenu); ?>
+                <?php
+                // Toàn bộ menu lấy từ bảng `menus` (quản trị ở admin > Menu website).
+                // Trước đây "Trang chủ" và "Giới thiệu" được viết cứng ở đây, trong khi
+                // bảng `menus` cũng đã có "Trang chủ" -> nav hiện 2 lần. Nay bỏ phần
+                // viết cứng; migration 000042 thêm "Giới thiệu" vào bảng cho đủ mục.
+                $renderMenu($navMenu);
+                ?>
             </ul>
         </div>
     </nav>

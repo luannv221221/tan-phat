@@ -2,8 +2,14 @@
 $f = $filters;
 $inArr = function($id, $arr){ return in_array((int) $id, array_map('intval', (array) $arr), true); };
 $baseQ = $query; unset($baseQ['page']);
-$pageUrl = function($n) use ($baseQ){ $q = $baseQ; $q['page'] = $n; return _WEB_URL.'/san-pham?'.http_build_query($q); };
-$titleTxt = !empty($f['keyword']) ? 'Kết quả: ' . $f['keyword'] : 'Sản phẩm';
+
+// Trang /khuyen-mai dùng chung view này (Shop::promo), chỉ khác nhãn và URL gốc
+$isPromo  = !empty($promoPage);
+$listPath = $isPromo ? '/khuyen-mai' : '/san-pham';
+$listName = $isPromo ? 'Khuyến mãi'  : 'Sản phẩm';
+
+$pageUrl = function($n) use ($baseQ, $listPath){ $q = $baseQ; $q['page'] = $n; return _WEB_URL.$listPath.'?'.http_build_query($q); };
+$titleTxt = !empty($f['keyword']) ? 'Kết quả: ' . $f['keyword'] : $listName;
 $partsBase = _WEB_URL . '/public/assets/uploads/parts/';
 $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
 ?>
@@ -11,9 +17,9 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
 <div class="products">
 <div class="container">
 
-    <div class="breadcrumb-sf"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / Sản phẩm</div>
+    <div class="breadcrumb-sf"><a href="{{_WEB_URL.'/'}}">Trang chủ</a> / {{$listName}}</div>
 
-    <form method="get" action="{{_WEB_URL.'/san-pham'}}" id="facetForm">
+    <form method="get" action="{{_WEB_URL.$listPath}}" id="facetForm">
     {!! !empty($f['keyword']) ? '<input type="hidden" name="q" value="'.e($f['keyword']).'"/>' : '' !!}
     <div class="row">
 
@@ -84,10 +90,12 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
 
                 <div class="products__sidebar--item">
                     <div class="px-3">
+                        @if (!$isPromo)
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="promoChk" name="promo" value="1" {{!empty($f['promo'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
                             <label class="form-check-label" for="promoChk">Chỉ hàng khuyến mãi</label>
                         </div>
+                        @endif
                         <button class="btn btn-primary btn-sm w-100 mt-3" type="submit">Áp dụng lọc</button>
                         <a class="btn btn-outline-secondary btn-sm w-100 mt-2" href="{{_WEB_URL.'/san-pham'}}">Xoá lọc</a>
                     </div>

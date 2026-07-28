@@ -333,6 +333,10 @@ Route::get('dang-xuat', 'auth/logout');
 
 // Danh sách + chi tiết sản phẩm (facet — TASK_92; gate tồn kho — TASK_79)
 Route::get('san-pham', 'shop/index');
+
+// Trang Khuyến mãi — dùng lại Shop::index nhưng ép bộ lọc promo.
+// Phải đặt TRƯỚC route 'san-pham/([a-z0-9\-]+)' thì không sao vì khác tiền tố.
+Route::get('khuyen-mai', 'shop/promo');
 Route::post('san-pham/danh-gia', 'shop/postReview');   // gửi đánh giá (TASK_84)
 Route::get('san-pham/([a-z0-9\-]+)', 'shop/detail/$1');
 

@@ -14,7 +14,14 @@
 </head>
 
 <body class="adm">
-<?php echo icon_sprite(); ?>
+<?php
+// Controller nao khong dat $data['content'] thi bien $content khong ton tai
+// -> moi lan render sidebar/header/view con deu sinh PHP Warning trong error.log.
+// Vd: Dashboard::noPermission(). Cho ve mang rong cho gon.
+if (!isset($content)) { $content = []; }
+
+echo icon_sprite();
+?>
 
 <div class="adm-shell">
 
