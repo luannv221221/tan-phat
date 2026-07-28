@@ -38,6 +38,14 @@ Route::group('admin', function(){
 
    //Route users
 
+   // Khách hàng (bảng `members` — khách đăng ký ngoài website).
+   // Khác hẳn `users` phía dưới: `users` là tài khoản nhân viên có phân quyền.
+   // Không có route xoá — khách có thể đã phát sinh đơn hàng, chỉ khoá/mở.
+   Route::get('customers', 'admin/customers');
+   Route::get('customers/edit/(\d+)', 'admin/customers/edit/$1');
+   Route::post('customers/edit/(\d+)', 'admin/customers/postEdit/$1');
+   Route::get('customers/toggle/(\d+)', 'admin/customers/toggle/$1');
+
    Route::get('users', 'admin/users');
 
    Route::get('users/add', 'admin/users/add');

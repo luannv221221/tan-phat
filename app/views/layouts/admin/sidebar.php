@@ -23,7 +23,7 @@ $menuGroups = [
     'Nội dung'           => ['products', 'news', 'news-categories', 'du-an', 'galleries', 'banners', 'menus'],
     'Bán hàng'           => ['orders', 'quotations', 'sales-invoices', 'partners', 'bao-cao-ban-hang'],
     'Kho'                => ['goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
-    'CSKH'               => ['chat', 'contact-messages', 'newsletter', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'customer-groups', 'reviews', 'bao-cao-cskh'],
+    'CSKH'               => ['customers', 'chat', 'contact-messages', 'newsletter', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'customer-groups', 'reviews', 'bao-cao-cskh'],
     'Hệ thống'           => ['users', 'groups', 'settings', 'thong-ke'],
 ];
 

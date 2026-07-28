@@ -39,6 +39,48 @@ class MembersModel extends Model {
         return $this->updateById($data, $id);
     }
 
+    // ================= Màn hình quản trị (admin/customers) =================
+
+    /**
+     * Danh sách khách hàng cho admin, kèm số đơn đã đặt.
+     *
+     * @param string $keyword lọc theo tên / email / SĐT
+     * @param string $status  '' = tất cả, '1' = đang hoạt động, '0' = đã khoá
+     */
+    public function adminList($keyword = '', $status = '', $limit = 20, $offset = 0){
+        $sql = 'SELECT `members`.*,
+                       (SELECT COUNT(*) FROM `orders` WHERE `orders`.`member_id` = `members`.`id`) AS order_count
+                  FROM `members`';
+        list($where, $bind) = $this->adminWhere($keyword, $status);
+        $sql .= $where . ' ORDER BY `members`.`id` DESC LIMIT ' . (int) $limit . ' OFFSET ' . (int) $offset;
+
+        return $this->getRaw($sql, $bind);
+    }
+
+    public function adminCount($keyword = '', $status = ''){
+        list($where, $bind) = $this->adminWhere($keyword, $status);
+        $row = $this->firstRaw('SELECT COUNT(*) AS c FROM `members`' . $where, $bind);
+        return (int) ($row['c'] ?? 0);
+    }
+
+    /** Mệnh đề WHERE dùng chung cho adminList/adminCount. Giá trị luôn qua placeholder. */
+    private function adminWhere($keyword, $status){
+        $cond = [];
+        $bind = [];
+
+        if ($keyword !== ''){
+            $cond[] = '(`name` LIKE ? OR `email` LIKE ? OR `phone` LIKE ?)';
+            $like   = '%' . $keyword . '%';
+            $bind[] = $like; $bind[] = $like; $bind[] = $like;
+        }
+        if ($status === '0' || $status === '1'){
+            $cond[] = '`status` = ?';
+            $bind[] = (int) $status;
+        }
+
+        return [$cond ? ' WHERE ' . implode(' AND ', $cond) : '', $bind];
+    }
+
     /** Đổi mật khẩu (tự băm). Bên gọi phải kiểm tra mật khẩu cũ trước. */
     public function updatePassword($plain, $id){
         return $this->updateById([
