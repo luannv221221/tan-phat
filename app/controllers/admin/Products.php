@@ -155,8 +155,18 @@ class Products extends Controller {
         $this->syncRelated($partId);
         $this->syncAttrs($partId);
 
-        Session::flash('msg', 'Thêm ' . $this->labelOne . ' thành công');
-        $this->__response->redirect('admin/' . $this->routeBase);
+        // Ảnh nằm ở bảng part_images nên phải có part_id trước mới lưu được —
+        // vì thế xử lý ở ĐÂY, sau khi đã tạo phụ tùng, chứ không thể lưu song song.
+        // Trước đây trang Thêm mới không có ô chọn ảnh, phải lưu rồi bấm Sửa
+        // mới thêm được ảnh.
+        list($ok, $fail) = $this->storeUploadedImages($partId, $data['slug']);
+
+        $msg = 'Thêm ' . $this->labelOne . ' thành công';
+        if ($ok > 0)   $msg .= ", đã tải lên $ok ảnh";
+        if ($fail > 0) $msg .= ", $fail ảnh bị bỏ qua (sai định dạng hoặc quá 3MB)";
+
+        Session::flash('msg', $msg);
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $partId);
     }
 
     // ================= Sửa =================
@@ -242,24 +252,13 @@ class Products extends Controller {
             return;
         }
 
-        $files = $this->normalizeFiles('images');
-        if (empty($files)){
+        if (empty($this->normalizeFiles('images'))){
             Session::flash('msgError', 'Chưa chọn ảnh nào để tải lên');
             $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
             return;
         }
 
-        if (!is_dir($this->imgDir)){
-            @mkdir($this->imgDir, 0755, true);
-        }
-
-        $ok = 0; $fail = 0;
-        foreach ($files as $file){
-            $name = $this->saveImage($file, $item['slug']);
-            if ($name === null){ $fail++; continue; }
-            $this->__imgModel->add($id, $name);
-            $ok++;
-        }
+        list($ok, $fail) = $this->storeUploadedImages($id, $item['slug']);
 
         if ($ok > 0){
             Session::flash('msg', "Đã tải lên $ok ảnh" . ($fail > 0 ? ", $fail ảnh bị bỏ qua (sai định dạng/quá lớn)" : ''));
@@ -268,6 +267,35 @@ class Products extends Controller {
         }
 
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
+    }
+
+    /**
+     * Lưu các file trong $_FILES['images'] vào phụ tùng $partId.
+     *
+     * Dùng chung cho cả trang Thêm mới lẫn trang Sửa, để hai nơi không lệch
+     * nhau về giới hạn dung lượng / định dạng.
+     *
+     * Ảnh đầu tiên của phụ tùng tự thành ảnh đại diện (PartImagesModel::add).
+     *
+     * @return array [số ảnh lưu được, số ảnh bị bỏ qua]
+     */
+    private function storeUploadedImages($partId, $slug){
+        $files = $this->normalizeFiles('images');
+        if (empty($files)) return [0, 0];
+
+        if (!is_dir($this->imgDir)){
+            @mkdir($this->imgDir, 0755, true);
+        }
+
+        $ok = 0; $fail = 0;
+        foreach ($files as $file){
+            $name = $this->saveImage($file, $slug);
+            if ($name === null){ $fail++; continue; }
+            $this->__imgModel->add($partId, $name);
+            $ok++;
+        }
+
+        return [$ok, $fail];
     }
 
     /** Xoá 1 ảnh (kèm file vật lý) */

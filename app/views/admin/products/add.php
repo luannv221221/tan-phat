@@ -12,7 +12,7 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
     $sel = array_map('intval', $old['fitments']);
 }
 ?>
-<form action="" method="post">
+<form action="" method="post" enctype="multipart/form-data">
     <?php echo csrf_field(); ?>
 
     @if (!empty($msg))
@@ -129,6 +129,19 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                     <div class="form-group">
                         <label>Mô tả</label>
                         <textarea class="form-control" name="description" rows="3">{{!empty($old['description'])?$old['description']:''}}</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ảnh sản phẩm</label>
+                        <div class="custom-file">
+                            <input type="file" name="images[]" id="imgs" class="custom-file-input" accept="image/*" multiple/>
+                            <label class="custom-file-label" for="imgs">Chọn ảnh (có thể nhiều)...</label>
+                        </div>
+                        <small class="form-text text-muted">
+                            JPG, PNG, GIF, WEBP · tối đa 3MB mỗi ảnh. Chọn nhiều ảnh cùng lúc —
+                            ảnh đầu tiên là ảnh đại diện, các ảnh còn lại chạy slide ở trang chi tiết.
+                            Lưu xong vào trang sửa để đổi ảnh đại diện hoặc sắp xếp lại.
+                        </small>
                     </div>
 
                     <div class="form-group mb-0">
@@ -314,4 +327,15 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
         if (e.target !== input && !results.contains(e.target)) hideResults();
     });
 })();
+</script>
+
+<script>
+// Hiện số ảnh đã chọn lên nhãn (Bootstrap custom-file không tự làm)
+document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'imgs') {
+        var n = e.target.files.length;
+        var lbl = e.target.parentNode.querySelector('.custom-file-label');
+        if (lbl) lbl.textContent = n > 0 ? (n + ' ảnh đã chọn') : 'Chọn ảnh (có thể nhiều)...';
+    }
+});
 </script>
