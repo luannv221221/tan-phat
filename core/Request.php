@@ -247,43 +247,61 @@ class Request{
                     }
 
                     //6. Unique
+                    //
+                    // BẢN CŨ nối thẳng dữ liệu người dùng vào SQL:
+                    //     WHERE $fieldNameDb='$fieldData[$fieldName]'
+                    //     ... AND $condition        (condition dạng "id=5")
+                    //
+                    // Hai chỗ tiêm được:
+                    //   1. Giá trị field — do người ngoài internet gửi lên
+                    //      (kiểm tra trùng email lúc đăng ký).
+                    //   2. $condition — Users.php dựng 'unique:users:email:id='.$id
+                    //      với $id lấy từ URL /admin/users/edit/{id}.
+                    //
+                    // Nay: giá trị luôn đi qua placeholder. Tên bảng/cột không
+                    // tham số hoá được nên chặn bằng whitelist ký tự — chúng đến
+                    // từ chuỗi rule do lập trình viên viết, sai là lỗi code chứ
+                    // không phải dữ liệu, nên ném lỗi cho lộ ra ngay.
                     if ($ruleNameArr[0]=='unique'){
-                        $tableNameDb = null;
-                        $fieldNameDb = null;
 
-                        if (!empty($ruleNameArr[1]) && !empty($ruleNameArr[2])){
+                        if (!empty($ruleNameArr[1]) && !empty($ruleNameArr[2]) && !empty($fieldData[$fieldName])){
+
                             $tableNameDb = trim($ruleNameArr[1]);
                             $fieldNameDb = trim($ruleNameArr[2]);
 
-                            //Truy vấn database
-                            if (!empty($fieldData[$fieldName])){
-
-                                //kiểm tra xem có đang validate ở trang sửa không
-                                if (!empty($ruleNameArr[3])){
-                                    $condition = trim($ruleNameArr[3]);
-                                    $condition = str_replace('=', '<>', $condition);
-
-                                    $sql = "SELECT $fieldNameDb FROM $tableNameDb WHERE $fieldNameDb='$fieldData[$fieldName]' AND $condition";
-
-                                }else{
-                                    $sql = "SELECT $fieldNameDb FROM $tableNameDb WHERE $fieldNameDb='$fieldData[$fieldName]'";
-                                }
-
-                                
-                                $query = $this->db->query($sql);
-                                
-                                if (!empty($query)){
-                                    $rowCount = $query->rowCount();
-                                    if ($rowCount>0){
-
-                                        $this->setErrors($fieldName, $ruleNameArr[0], $this->getMessage($fieldName, $ruleNameArr[0]));
-
-                                        $checkValidate =false;
-                                    }
-                                }
-                                
+                            $identifier = '/^[A-Za-z0-9_]+$/';
+                            if (!preg_match($identifier, $tableNameDb) || !preg_match($identifier, $fieldNameDb)){
+                                throw new \RuntimeException(
+                                    "Rule unique: ten bang/cot khong hop le ($tableNameDb.$fieldNameDb)"
+                                );
                             }
-                            
+
+                            $sql      = "SELECT `$fieldNameDb` FROM `$tableNameDb` WHERE `$fieldNameDb` = ?";
+                            $bindings = [$fieldData[$fieldName]];
+
+                            // Tham số thứ 4 dạng "id=5": bỏ qua chính bản ghi đang sửa
+                            if (!empty($ruleNameArr[3])){
+                                $pair      = explode('=', trim($ruleNameArr[3]), 2);
+                                $excludeCol = trim($pair[0]);
+                                $excludeVal = isset($pair[1]) ? trim($pair[1]) : '';
+
+                                if (!preg_match($identifier, $excludeCol)){
+                                    throw new \RuntimeException(
+                                        "Rule unique: ten cot loai tru khong hop le ($excludeCol)"
+                                    );
+                                }
+
+                                $sql       .= " AND `$excludeCol` <> ?";
+                                $bindings[] = $excludeVal;
+                            }
+
+                            $query = $this->db->query($sql, $bindings);
+
+                            if (!empty($query) && $query->rowCount() > 0){
+                                $this->setErrors($fieldName, $ruleNameArr[0], $this->getMessage($fieldName, $ruleNameArr[0]));
+
+                                $checkValidate = false;
+                            }
                         }
 
                     }
