@@ -150,6 +150,72 @@ function youtube_id($url){
 }
 
 /**
+ * Đơn vị hành chính Việt Nam — 34 tỉnh/thành, 2 cấp (tỉnh → phường/xã).
+ *
+ * Theo cơ cấu sau sáp nhập 2025: bỏ cấp quận/huyện, dưới tỉnh là phường/xã.
+ * Dữ liệu nằm ở public/assets/data/vn-administrative.json, dạng:
+ *   [{"c":1,"n":"Thành phố Hà Nội","w":[{"c":4,"n":"Phường Ba Đình"}, ...]}, ...]
+ *
+ * Đọc từ file thay vì bảng DB: dữ liệu tĩnh, rất ít thay đổi, và deploy chỉ
+ * cần copy file — không phải chạy thêm migration seed 3.321 dòng.
+ *
+ * @return array
+ */
+function vn_admin_units(){
+    static $data = null;
+    if ($data === null){
+        $file = __DIR__ . '/../../public/assets/data/vn-administrative.json';
+        $json = is_file($file) ? file_get_contents($file) : '';
+        $data = $json !== '' ? json_decode($json, true) : [];
+        if (!is_array($data)) $data = [];
+    }
+    return $data;
+}
+
+/**
+ * Tra tên tỉnh + phường từ mã, đồng thời KIỂM TRA phường có thuộc tỉnh đó không.
+ *
+ * Bắt buộc phải kiểm tra ở server: client gửi lên mã gì cũng được, không thể
+ * tin danh sách đã lọc ở trình duyệt.
+ *
+ * @return array|null ['province' => ..., 'ward' => ...] hoặc null nếu không hợp lệ
+ */
+function vn_admin_lookup($provinceCode, $wardCode){
+    $provinceCode = (int) $provinceCode;
+    $wardCode     = (int) $wardCode;
+    if ($provinceCode <= 0 || $wardCode <= 0) return null;
+
+    foreach (vn_admin_units() as $p){
+        if ((int) $p['c'] !== $provinceCode) continue;
+
+        foreach ($p['w'] as $w){
+            if ((int) $w['c'] === $wardCode){
+                return ['province' => $p['n'], 'ward' => $w['n']];
+            }
+        }
+        return null; // đúng tỉnh nhưng phường không thuộc tỉnh này
+    }
+    return null;
+}
+
+/**
+ * Ghép địa chỉ đầy đủ của đơn hàng: "số nhà, phường/xã, tỉnh/thành".
+ *
+ * Đơn đặt TRƯỚC khi tách địa chỉ không có province_name/ward_name -> chỉ trả
+ * về `address` như cũ, không hiện dấu phẩy thừa.
+ *
+ * @param array $order dòng bảng `orders`
+ */
+function order_full_address($order){
+    $parts = [];
+    if (!empty($order['address']))       $parts[] = $order['address'];
+    if (!empty($order['ward_name']))     $parts[] = $order['ward_name'];
+    if (!empty($order['province_name'])) $parts[] = $order['province_name'];
+
+    return implode(', ', $parts);
+}
+
+/**
  * Chuẩn hoá số điện thoại: bỏ ký tự phân cách, đổi +84/84 thành 0.
  *
  *   normalize_phone('091 234 5678')  => '0912345678'

@@ -29,7 +29,7 @@
                 <dt class="col-sm-4">Họ tên</dt><dd class="col-sm-8">{{$item['customer_name']}}</dd>
                 <dt class="col-sm-4">Điện thoại</dt><dd class="col-sm-8">{{$item['phone']}}</dd>
                 <dt class="col-sm-4">Email</dt><dd class="col-sm-8">{{!empty($item['email'])?$item['email']:'—'}}</dd>
-                <dt class="col-sm-4">Địa chỉ</dt><dd class="col-sm-8">{{!empty($item['address'])?$item['address']:'—'}}</dd>
+                <dt class="col-sm-4">Địa chỉ</dt><dd class="col-sm-8">{{order_full_address($item) !== '' ? order_full_address($item) : '—'}}</dd>
                 <dt class="col-sm-4">Thanh toán</dt><dd class="col-sm-8">{{$payments[$item['payment_method']] ?? $item['payment_method']}}</dd>
                 <dt class="col-sm-4">Ghi chú</dt><dd class="col-sm-8">{{!empty($item['note'])?$item['note']:'—'}}</dd>
                 <dt class="col-sm-4">Ngày đặt</dt><dd class="col-sm-8">{{$item['create_at']}}</dd>

@@ -10,6 +10,7 @@
     {!! !empty($errors['phone']) ? '<div class="alert alert-danger">'.e($errors['phone']).'</div>' : '' !!}
     {!! !empty($errors['address']) ? '<div class="alert alert-danger">'.e($errors['address']).'</div>' : '' !!}
     {!! !empty($errors['email']) ? '<div class="alert alert-danger">'.e($errors['email']).'</div>' : '' !!}
+    {!! !empty($errors['area']) ? '<div class="alert alert-danger">'.e($errors['area']).'</div>' : '' !!}
 
     <form method="post" action="{{_WEB_URL.'/dat-hang'}}">
         <?php echo csrf_field(); ?>
@@ -28,9 +29,26 @@
                         <label class="form-label fw-semibold">Email</label>
                         <input type="email" name="email" class="form-control" value="{{!empty($old['email'])?$old['email']:(!empty($member['email'])?$member['email']:'')}}"/>
                     </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Tỉnh / Thành phố <span class="text-danger">*</span></label>
+                            <select name="province_code" id="provinceSel" class="form-select" required>
+                                <option value="">— Chọn tỉnh / thành phố —</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Phường / Xã <span class="text-danger">*</span></label>
+                            <select name="ward_code" id="wardSel" class="form-select" required disabled>
+                                <option value="">— Chọn tỉnh trước —</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Địa chỉ nhận hàng <span class="text-danger">*</span></label>
-                        <input type="text" name="address" class="form-control" value="{{!empty($old['address'])?$old['address']:(!empty($member['address'])?$member['address']:'')}}" required/>
+                        <label class="form-label fw-semibold">Địa chỉ cụ thể <span class="text-danger">*</span></label>
+                        <input type="text" name="address" class="form-control"
+                               placeholder="Số nhà, tên đường, thôn/xóm..."
+                               value="{{!empty($old['address'])?$old['address']:(!empty($member['address'])?$member['address']:'')}}" required/>
                     </div>
                     <div class="mb-0">
                         <label class="form-label fw-semibold">Ghi chú</label>
@@ -72,3 +90,55 @@
 </div>
 </div>
 </div>
+
+<script>
+/* Đổ danh sách tỉnh/phường từ file tĩnh.
+   34 tỉnh/thành, 2 cấp (bỏ quận/huyện) theo cơ cấu sau sáp nhập 2025.
+   Tải 1 lần, lọc phường ngay tại trình duyệt — không gọi server mỗi lần chọn.
+   Server vẫn kiểm tra lại mã gửi lên (vn_admin_lookup), không tin dữ liệu này. */
+(function(){
+    var provinceSel = document.getElementById('provinceSel');
+    var wardSel     = document.getElementById('wardSel');
+    if(!provinceSel || !wardSel) return;
+
+    // Giá trị đã chọn trước đó (khi form quay lại vì lỗi validate)
+    var oldProvince = "<?php echo isset($old['province_code']) ? (int) $old['province_code'] : ''; ?>";
+    var oldWard     = "<?php echo isset($old['ward_code']) ? (int) $old['ward_code'] : ''; ?>";
+    var data = [];
+
+    function fillWards(provinceCode, selected){
+        wardSel.innerHTML = '';
+        var p = data.filter(function(x){ return String(x.c) === String(provinceCode); })[0];
+
+        if(!p){
+            wardSel.disabled = true;
+            wardSel.appendChild(new Option('— Chọn tỉnh trước —', ''));
+            return;
+        }
+        wardSel.disabled = false;
+        wardSel.appendChild(new Option('— Chọn phường / xã —', ''));
+        p.w.forEach(function(w){
+            var o = new Option(w.n, w.c);
+            if(String(w.c) === String(selected)) o.selected = true;
+            wardSel.appendChild(o);
+        });
+    }
+
+    fetch("<?php echo asset('public/assets/data/vn-administrative.json'); ?>")
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            data = d;
+            d.forEach(function(p){
+                var o = new Option(p.n, p.c);
+                if(String(p.c) === oldProvince) o.selected = true;
+                provinceSel.appendChild(o);
+            });
+            if(oldProvince) fillWards(oldProvince, oldWard);
+        })
+        .catch(function(){
+            provinceSel.appendChild(new Option('Không tải được danh sách, vui lòng tải lại trang', ''));
+        });
+
+    provinceSel.addEventListener('change', function(){ fillWards(provinceSel.value, ''); });
+})();
+</script>

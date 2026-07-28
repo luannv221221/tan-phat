@@ -195,11 +195,18 @@ class Cart extends Controller {
 
         $email = !empty($f['email']) ? trim($f['email']) : '';
 
+        // Tỉnh/phường: LUÔN tra lại ở server. Trình duyệt gửi mã gì cũng được,
+        // và vn_admin_lookup() còn chặn cả trường hợp phường không thuộc tỉnh.
+        $provinceCode = isset($f['province_code']) ? (int) $f['province_code'] : 0;
+        $wardCode     = isset($f['ward_code']) ? (int) $f['ward_code'] : 0;
+        $area         = vn_admin_lookup($provinceCode, $wardCode);
+
         $errors = [];
         if ($name === '')    $errors['name'] = 'Nhập họ tên';
         if ($phone === '')   $errors['phone'] = 'Nhập số điện thoại';
         elseif (!is_phone($phone)) $errors['phone'] = 'Số điện thoại không hợp lệ (di động 10 số hoặc cố định 11 số)';
-        if ($address === '') $errors['address'] = 'Nhập địa chỉ nhận hàng';
+        if ($address === '') $errors['address'] = 'Nhập địa chỉ cụ thể (số nhà, tên đường)';
+        if ($area === null)  $errors['area'] = 'Chọn tỉnh/thành phố và phường/xã hợp lệ';
         // Email không bắt buộc, nhưng đã nhập thì phải đúng định dạng —
         // đây là địa chỉ dùng để gửi xác nhận đơn nên sai là mất liên lạc.
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Email không hợp lệ';
@@ -217,6 +224,12 @@ class Cart extends Controller {
             'phone'          => $phone,
             'email'          => $email !== '' ? $email : null,
             'address'        => $address,
+            // Chốt cả mã lẫn TÊN tại thời điểm đặt: danh mục hành chính còn đổi
+            // nữa thì đơn cũ vẫn giữ nguyên địa chỉ lúc khách đặt.
+            'province_code'  => $provinceCode,
+            'province_name'  => $area['province'],
+            'ward_code'      => $wardCode,
+            'ward_name'      => $area['ward'],
             'note'           => !empty($f['note']) ? trim($f['note']) : null,
             'payment_method' => $pay,
             'subtotal'       => 0,
