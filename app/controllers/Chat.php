@@ -44,6 +44,14 @@ class Chat extends Controller {
         if (empty($conv)){
             $name  = !empty($f['name']) ? trim($f['name']) : null;
             $phone = !empty($f['phone']) ? trim($f['phone']) : null;
+
+            // SĐT không bắt buộc, nhưng đã nhập thì phải đúng — đây là cách
+            // duy nhất để gọi lại khách nên lưu số rác thì coi như mất liên hệ.
+            if ($phone !== null && !is_phone($phone)){
+                $this->json(['ok' => false, 'error' => 'phone',
+                             'message' => 'Số điện thoại không hợp lệ (di động 10 số hoặc cố định 11 số)']);
+            }
+
             $cid = $this->__conv->create($key, $memberId, $name, $phone);
         } else {
             $cid = (int) $conv['id'];

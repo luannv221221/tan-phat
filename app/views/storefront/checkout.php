@@ -9,6 +9,7 @@
     {!! !empty($errors['name']) ? '<div class="alert alert-danger">'.e($errors['name']).'</div>' : '' !!}
     {!! !empty($errors['phone']) ? '<div class="alert alert-danger">'.e($errors['phone']).'</div>' : '' !!}
     {!! !empty($errors['address']) ? '<div class="alert alert-danger">'.e($errors['address']).'</div>' : '' !!}
+    {!! !empty($errors['email']) ? '<div class="alert alert-danger">'.e($errors['email']).'</div>' : '' !!}
 
     <form method="post" action="{{_WEB_URL.'/dat-hang'}}">
         <?php echo csrf_field(); ?>
@@ -21,11 +22,11 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Số điện thoại <span class="text-danger">*</span></label>
-                        <input type="text" name="phone" class="form-control" value="{{!empty($old['phone'])?$old['phone']:(!empty($member['phone'])?$member['phone']:'')}}" required/>
+                        <input type="tel" inputmode="numeric" maxlength="11" pattern="0[0-9]{9,10}" title="Di dong 10 so (0912345678) hoac co dinh 11 so (02438765432)" name="phone" class="form-control" value="{{!empty($old['phone'])?$old['phone']:(!empty($member['phone'])?$member['phone']:'')}}" required/>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Email</label>
-                        <input type="text" name="email" class="form-control" value="{{!empty($old['email'])?$old['email']:(!empty($member['email'])?$member['email']:'')}}"/>
+                        <input type="email" name="email" class="form-control" value="{{!empty($old['email'])?$old['email']:(!empty($member['email'])?$member['email']:'')}}"/>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Địa chỉ nhận hàng <span class="text-danger">*</span></label>

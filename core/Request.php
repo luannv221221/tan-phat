@@ -193,6 +193,24 @@ class Request{
                         $checkValidate = false;
                     }
 
+                    //2b. Phone — số điện thoại Việt Nam
+                    //
+                    //  Di động : 10 số, đầu 03/05/07/08/09   -> 0912345678
+                    //  Cố định : 11 số, đầu 02 + mã vùng     -> 02438765432 (024 3876 5432)
+                    //  Cho gõ kèm khoảng trắng/chấm/gạch, và chấp nhận +84 / 84.
+                    //  Không chấp nhận: có chữ, thiếu/thừa số, đầu số không hợp lệ.
+                    //
+                    //  Rỗng thì BỎ QUA — muốn bắt buộc thì thêm rule `required`,
+                    //  để field không bắt buộc (vd SĐT trong form liên hệ) vẫn dùng được.
+                    if ($ruleName=='phone' && !empty($fieldData[$fieldName])){
+
+                        if (!is_phone($fieldData[$fieldName])){
+                            $this->setErrors($fieldName, $ruleName, $this->getMessage($fieldName, $ruleName));
+
+                            $checkValidate = false;
+                        }
+                    }
+
                     //3. Min
                     if ($ruleNameArr[0]=='min'){
 

@@ -18,7 +18,8 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Số điện thoại</label>
-                <input type="text" name="phone" class="form-control" value="{{!empty($old['phone'])?$old['phone']:''}}"/>
+                <input type="tel" inputmode="numeric" maxlength="11" pattern="0[0-9]{9,10}" title="Di dong 10 so (0912345678) hoac co dinh 11 so (02438765432)" name="phone" class="form-control" value="{{!empty($old['phone'])?$old['phone']:''}}"/>
+                {!! !empty($errors['phone']) ? '<small class="text-danger">'.e($errors['phone']).'</small>' : '' !!}
             </div>
             <div class="mb-3">
                 <label class="form-label">Mật khẩu</label>

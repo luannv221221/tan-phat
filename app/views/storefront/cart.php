@@ -10,6 +10,7 @@
     @endif
     {!! !empty($errors['cart']) ? '<div class="alert alert-danger">'.e($errors['cart']).'</div>' : '' !!}
     {!! !empty($errors['name']) ? '<div class="alert alert-danger">'.e($errors['name']).'</div>' : '' !!}
+    {!! !empty($errors['phone']) ? '<div class="alert alert-danger">'.e($errors['phone']).'</div>' : '' !!}
 
     @if (empty($rows))
         <div class="empty-box">Giỏ hàng trống. <a href="{{_WEB_URL.'/san-pham'}}">Xem sản phẩm →</a></div>
@@ -63,7 +64,7 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold mb-1">Điện thoại</label>
-                        <input type="text" name="phone" class="form-control form-control-sm" value="{{!empty($member['phone'])?$member['phone']:''}}"/>
+                        <input type="tel" inputmode="numeric" maxlength="11" pattern="0[0-9]{9,10}" title="Di dong 10 so (0912345678) hoac co dinh 11 so (02438765432)" name="phone" class="form-control form-control-sm" value="{{!empty($member['phone'])?$member['phone']:''}}"/>
                     </div>
                     <div class="mb-2">
                         <label class="form-label small fw-semibold mb-1">Ghi chú</label>

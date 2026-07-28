@@ -50,7 +50,7 @@ $ov = function($k) use ($old){ return isset($old[$k]) ? $old[$k] : ''; };
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Điện thoại</label>
-                            <input type="text" name="phone" class="form-control" value="{{$ov('phone')}}"/>
+                            <input type="tel" inputmode="numeric" maxlength="11" pattern="0[0-9]{9,10}" title="Di dong 10 so (0912345678) hoac co dinh 11 so (02438765432)" name="phone" class="form-control" value="{{$ov('phone')}}"/>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Email</label>

@@ -150,6 +150,33 @@ function youtube_id($url){
 }
 
 /**
+ * Chuẩn hoá số điện thoại: bỏ ký tự phân cách, đổi +84/84 thành 0.
+ *
+ *   normalize_phone('091 234 5678')  => '0912345678'
+ *   normalize_phone('+84912345678')  => '0912345678'
+ */
+function normalize_phone($value){
+    $digits = preg_replace('/[\s.\-()]/', '', (string) $value);
+    return preg_replace('/^(\+?84)/', '0', $digits);
+}
+
+/**
+ * Số điện thoại Việt Nam có hợp lệ không.
+ *
+ *   Di động : 10 số, đầu 03/05/07/08/09   -> 0912345678
+ *   Cố định : 11 số, đầu 02 + mã vùng     -> 02438765432 (024 3876 5432)
+ *
+ * Chuỗi rỗng trả về false — nơi nào cho phép bỏ trống thì tự kiểm tra rỗng trước.
+ *
+ * Dùng chung cho cả rule `phone` của Request (form admin) lẫn các controller
+ * storefront tự validate tay, để mọi nơi cùng một luật.
+ */
+function is_phone($value){
+    $digits = normalize_phone($value);
+    return (bool) preg_match('/^(0[35789][0-9]{8}|02[0-9]{9})$/', $digits);
+}
+
+/**
  * URL của 1 file tĩnh, kèm ?v=<thời điểm sửa file> để phá cache trình duyệt.
  *
  *   asset('public/assets/storefront/js/script.js')

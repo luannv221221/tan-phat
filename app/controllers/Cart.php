@@ -120,6 +120,12 @@ class Cart extends Controller {
             Session::flash('errors', ['name' => 'Vui lòng nhập họ tên người yêu cầu']);
             $this->__response->redirect('gio-hang'); return;
         }
+        // SĐT ở đây được nhét vào `note` của báo giá — sai số là mất luôn
+        // đường liên hệ vì phiếu báo giá không có cột điện thoại riêng.
+        if ($phone !== '' && !is_phone($phone)){
+            Session::flash('errors', ['phone' => 'Số điện thoại không hợp lệ (di động 10 số hoặc cố định 11 số)']);
+            $this->__response->redirect('gio-hang'); return;
+        }
 
         $qid = $this->__quote->add([
             'quote_no'      => $this->__quote->nextNo(),
@@ -187,10 +193,16 @@ class Cart extends Controller {
         $address = !empty($f['address']) ? trim($f['address']) : '';
         $pay     = (!empty($f['payment_method']) && isset(OrdersModel::$payments[$f['payment_method']])) ? $f['payment_method'] : 'bank_transfer';
 
+        $email = !empty($f['email']) ? trim($f['email']) : '';
+
         $errors = [];
         if ($name === '')    $errors['name'] = 'Nhập họ tên';
         if ($phone === '')   $errors['phone'] = 'Nhập số điện thoại';
+        elseif (!is_phone($phone)) $errors['phone'] = 'Số điện thoại không hợp lệ (di động 10 số hoặc cố định 11 số)';
         if ($address === '') $errors['address'] = 'Nhập địa chỉ nhận hàng';
+        // Email không bắt buộc, nhưng đã nhập thì phải đúng định dạng —
+        // đây là địa chỉ dùng để gửi xác nhận đơn nên sai là mất liên lạc.
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Email không hợp lệ';
         if (!empty($errors)){
             Session::flash('errors', $errors);
             Session::flash('old', $f);
@@ -203,7 +215,7 @@ class Cart extends Controller {
             'member_id'      => !empty($memberId) ? (int) $memberId : null,
             'customer_name'  => $name,
             'phone'          => $phone,
-            'email'          => !empty($f['email']) ? trim($f['email']) : null,
+            'email'          => $email !== '' ? $email : null,
             'address'        => $address,
             'note'           => !empty($f['note']) ? trim($f['note']) : null,
             'payment_method' => $pay,

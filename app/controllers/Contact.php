@@ -48,6 +48,11 @@ class Contact extends Controller {
             Session::flash('contact_old', $f);
             $this->__response->redirect('lien-he'); return;
         }
+        if ($phone !== '' && !is_phone($phone)){
+            Session::flash('store_flash', 'err|Số điện thoại không hợp lệ. Di động 10 số (VD 0912345678) hoặc cố định 11 số (VD 02438765432).');
+            Session::flash('contact_old', $f);
+            $this->__response->redirect('lien-he'); return;
+        }
 
         $this->__model->add([
             'name'    => $name,

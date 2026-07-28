@@ -294,8 +294,9 @@ $renderMenu = function ($items) use (&$renderMenu){
         <div id="cw-msgs"></div>
         <div id="cw-info">
             <input type="text" id="cw-name" class="form-control" placeholder="Tên của bạn"/>
-            <input type="text" id="cw-phone" class="form-control" placeholder="Điện thoại"/>
+            <input type="tel" inputmode="numeric" maxlength="11" pattern="0[0-9]{9,10}" id="cw-phone" class="form-control" placeholder="Điện thoại"/>
         </div>
+        <div id="cw-err" class="text-danger small px-2" style="display:none"></div>
         <div id="cw-foot">
             <input type="text" id="cw-input" class="form-control" placeholder="Nhập tin nhắn..." maxlength="2000"/>
             <button type="button" id="cw-send" class="btn"><i class="fa fa-paper-plane"></i></button>
@@ -358,16 +359,35 @@ $renderMenu = function ($items) use (&$renderMenu){
             .then(function(d){ if(d && d.messages){ d.messages.forEach(function(m){ addMsg(m); if(m.sender==='staff' && info) info.style.display='none'; }); } })
             .catch(function(){});
     }
+    var errEl = document.getElementById('cw-err');
+    function showErr(msg){
+        if(!errEl) return;
+        errEl.textContent = msg || '';
+        errEl.style.display = msg ? 'block' : 'none';
+    }
+
     function doSend(){
         var body = input.value.trim(); if(!body) return;
         var fd = new FormData(); fd.append('_token', TOKEN); fd.append('body', body);
         if(nameEl.value.trim()) fd.append('name', nameEl.value.trim());
         if(phoneEl.value.trim()) fd.append('phone', phoneEl.value.trim());
-        input.value = '';
+        showErr('');
+
+        // KHÔNG xoá ô nhập trước khi biết kết quả: server có thể từ chối
+        // (vd SĐT sai) và bản cũ xoá trắng luôn => khách mất tin vừa gõ mà
+        // không hiểu vì sao không gửi được.
         fetch(WEB + '/chat/send', {method:'POST', body:fd, credentials:'same-origin'})
             .then(function(r){ return r.json(); })
-            .then(function(d){ if(d && d.ok){ addMsg({id:d.id, sender:'customer', body:d.body}); if(info) info.style.display='none'; } })
-            .catch(function(){});
+            .then(function(d){
+                if(d && d.ok){
+                    input.value = '';
+                    addMsg({id:d.id, sender:'customer', body:d.body});
+                    if(info) info.style.display='none';
+                } else {
+                    showErr((d && d.message) ? d.message : 'Không gửi được, vui lòng thử lại.');
+                }
+            })
+            .catch(function(){ showErr('Mất kết nối, vui lòng thử lại.'); });
     }
     send.addEventListener('click', doSend);
     input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); doSend(); } });

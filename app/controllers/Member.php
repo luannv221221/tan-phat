@@ -69,6 +69,7 @@ class Member extends Controller {
         if ($name === '')  $errors['name'] = 'Nhập họ tên';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Email không hợp lệ';
         elseif (!empty($this->__model->findByEmail($email))) $errors['email'] = 'Email này đã được đăng ký';
+        if ($phone !== '' && !is_phone($phone)) $errors['phone'] = 'Số điện thoại không hợp lệ (di động 10 số hoặc cố định 11 số)';
         if (strlen($pass) < 6) $errors['password'] = 'Mật khẩu tối thiểu 6 ký tự';
         elseif ($pass !== $pass2) $errors['password2'] = 'Mật khẩu nhập lại không khớp';
 
