@@ -38,4 +38,12 @@ class MembersModel extends Model {
         $data['update_at'] = date('Y-m-d H:i:s');
         return $this->updateById($data, $id);
     }
+
+    /** Đổi mật khẩu (tự băm). Bên gọi phải kiểm tra mật khẩu cũ trước. */
+    public function updatePassword($plain, $id){
+        return $this->updateById([
+            'password'  => password_hash($plain, PASSWORD_BCRYPT),
+            'update_at' => date('Y-m-d H:i:s'),
+        ], $id);
+    }
 }

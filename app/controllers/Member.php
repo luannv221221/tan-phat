@@ -102,6 +102,69 @@ class Member extends Controller {
         $this->__data['page_title']  = 'Tài khoản thành viên';
         $this->__data['content']['member'] = $this->__model->getDetail($id);
         $this->__data['content']['msg']    = Session::flash('msg');
+        $this->__data['content']['errors'] = Session::flash('errors');
+        $this->__data['content']['old']    = Session::flash('old');
         $this->render('layouts/storefront/master', $this->__data);
+    }
+
+    /**
+     * Cập nhật thông tin cá nhân của thành viên.
+     *
+     * Trang tài khoản trước đây chỉ là bảng hiển thị — không có form, không có
+     * route, nên không ai sửa được gì.
+     *
+     * KHÔNG cho sửa email: đó là định danh đăng nhập và có ràng buộc duy nhất;
+     * đổi email cần luồng xác minh riêng, không gộp vào đây.
+     */
+    public function postAccount(){
+        $id = Session::get('dataMember');
+        if (empty($id)){ $this->__response->redirect('thanh-vien/dang-nhap'); return; }
+
+        $f       = $this->__request->getFields();
+        $name    = isset($f['name']) ? trim($f['name']) : '';
+        $phone   = isset($f['phone']) ? trim($f['phone']) : '';
+        $address = isset($f['address']) ? trim($f['address']) : '';
+
+        $errors = [];
+        if ($name === '') $errors['name'] = 'Nhập họ tên';
+        if ($phone !== '' && !is_phone($phone)){
+            $errors['phone'] = 'Số điện thoại không hợp lệ (di động 10 số hoặc cố định 11 số)';
+        }
+
+        // Đổi mật khẩu là tuỳ chọn — chỉ xử lý khi có nhập mật khẩu mới
+        $newPass = isset($f['new_password']) ? $f['new_password'] : '';
+        if ($newPass !== ''){
+            $member  = $this->__model->getDetail($id);
+            $current = isset($f['current_password']) ? $f['current_password'] : '';
+
+            if ($current === '' || !password_verify($current, $member['password'])){
+                $errors['current_password'] = 'Mật khẩu hiện tại không đúng';
+            } elseif (strlen($newPass) < 6){
+                $errors['new_password'] = 'Mật khẩu mới tối thiểu 6 ký tự';
+            } elseif ($newPass !== (isset($f['new_password2']) ? $f['new_password2'] : '')){
+                $errors['new_password2'] = 'Mật khẩu nhập lại không khớp';
+            }
+        }
+
+        if (!empty($errors)){
+            Session::flash('errors', $errors);
+            Session::flash('old', ['name' => $name, 'phone' => $phone, 'address' => $address]);
+            $this->__response->redirect('thanh-vien'); return;
+        }
+
+        $this->__model->updateProfile([
+            'name'    => $name,
+            'phone'   => $phone !== '' ? $phone : null,
+            'address' => $address !== '' ? $address : null,
+        ], $id);
+
+        if ($newPass !== ''){
+            $this->__model->updatePassword($newPass, $id);
+            Session::flash('msg', 'Đã cập nhật thông tin và đổi mật khẩu.');
+        } else {
+            Session::flash('msg', 'Đã cập nhật thông tin.');
+        }
+
+        $this->__response->redirect('thanh-vien');
     }
 }

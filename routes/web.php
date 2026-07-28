@@ -376,6 +376,7 @@ Route::post('lien-he', 'contact/send');
 
 // Thành viên
 Route::get('thanh-vien', 'member/account');
+Route::post('thanh-vien', 'member/postAccount');
 Route::get('thanh-vien/dang-nhap', 'member/login');
 Route::post('thanh-vien/dang-nhap', 'member/postLogin');
 Route::get('thanh-vien/dang-ky', 'member/register');
