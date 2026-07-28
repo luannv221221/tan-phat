@@ -7,8 +7,10 @@
 
     <!-- Bootstrap 4.6 (local) — vẫn cần vì 120 view dùng lưới & component của nó -->
     <link type="text/css" rel="stylesheet" href="<?php echo _WEB_URL.'/public/assets/css/bootstrap.min.css' ?>"/>
-    <!-- Theme quản trị (thay hoàn toàn AdminLTE) -->
-    <link type="text/css" rel="stylesheet" href="<?php echo _WEB_URL.'/public/assets/css/admin-theme.css' ?>"/>
+    <!-- Theme quản trị (thay hoàn toàn AdminLTE).
+         Kèm ?v=<mtime>: sửa CSS rồi deploy mà không có nó thì trình duyệt
+         quản trị viên vẫn dùng bản cũ trong cache, lỗi đã sửa vẫn còn nguyên. -->
+    <link type="text/css" rel="stylesheet" href="<?php echo asset('public/assets/css/admin-theme.css'); ?>"/>
     <!-- Font Awesome — còn vài view dùng <i class="fas ..."> trong nội dung -->
     <link rel="stylesheet" href="<?php echo _WEB_URL.'/public/assets/vendor/fontawesome/css/all.min.css' ?>"/>
 </head>
@@ -42,6 +44,6 @@ echo icon_sprite();
 <script src="<?php echo _WEB_URL.'/public/assets/js/jquery-3.6.0.min.js' ?>"></script>
 <script src="<?php echo _WEB_URL.'/public/assets/vendor/popper/popper.min.js' ?>"></script>
 <script src="<?php echo _WEB_URL.'/public/assets/js/bootstrap.min.js' ?>"></script>
-<script src="<?php echo _WEB_URL.'/public/assets/js/admin.js' ?>"></script>
+<script src="<?php echo asset('public/assets/js/admin.js'); ?>"></script>
 </body>
 </html>

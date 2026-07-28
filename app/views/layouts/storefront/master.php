@@ -272,13 +272,25 @@ $renderMenu = function ($items) use (&$renderMenu){
                 <div class="col-12 col-md-3">
                     <div class="footer__inner--subscribe">
                         <p>Đăng ký nhận bản tin</p>
-                        <form method="post" action="<?php echo _WEB_URL; ?>/dang-ky-ban-tin" class="mb-3">
+                        <form method="post" action="<?php echo _WEB_URL; ?>/dang-ky-ban-tin" class="mb-2">
                             <?php echo csrf_field(); ?>
                             <div class="input-group">
                                 <input type="email" name="email" class="form-control" placeholder="Email..." required/>
                                 <button type="submit" class="btn">Gửi</button>
                             </div>
                         </form>
+                        <?php
+                        // Kết quả đăng ký hiện ngay dưới form, ở đúng trang vừa bấm.
+                        // Dùng khoá riêng `newsletter_flash` để không giành mất
+                        // `store_flash` của form liên hệ.
+                        $__nlFlash = \App\core\Session::flash('newsletter_flash');
+                        if (!empty($__nlFlash) && strpos($__nlFlash, '|') !== false):
+                            list($__nlType, $__nlMsg) = explode('|', $__nlFlash, 2);
+                        ?>
+                            <div class="alert <?php echo $__nlType === 'ok' ? 'alert-success' : 'alert-danger'; ?> py-2 px-3 mb-3" style="font-size:14px">
+                                <?php echo e($__nlMsg); ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

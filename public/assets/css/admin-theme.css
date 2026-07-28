@@ -333,7 +333,11 @@ body.adm-collapsed .adm-collapse-btn .ic { transform: rotate(180deg); }
 .table-hover tbody tr:hover td { background: var(--row-hover); }
 .table tbody tr:last-child td { border-bottom: 0; }
 .table td .btn + .btn { margin-left: 4px; }
-.table a { color: var(--brand-blue); }
+/* Link trong bảng màu xanh — TRỪ các nút.
+   `.table a` (0,0,1,1) đè được `.btn-primary` (0,0,1,0) nên nút <a> nằm
+   trong bảng bị chữ xanh trên nền xanh = mất chữ; rê chuột vào thì
+   `.btn-primary:hover` (0,0,2,0) thắng lại nên chữ mới hiện ra. */
+.table a:not(.btn) { color: var(--brand-blue); }
 
 /* Mẫu hiển thị trạng thái bằng chữ thường, không dùng nhãn màu.
    Giữ nguyên markup .badge trong 37 view, chỉ tắt phần trang trí. */
