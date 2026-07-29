@@ -395,6 +395,48 @@ select.form-control { padding-right: 32px; }
     color: #6b7280;
 }
 
+/* ---------- Ô chọn có tìm kiếm (js-search) ---------- */
+.ss { position: relative; }
+
+/* Giữ <select> thật trong DOM để form submit và JS cũ không đổi, chỉ giấu đi.
+   Không dùng display:none để trình duyệt vẫn báo lỗi "required" đúng chỗ. */
+.ss__native {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.ss__list {
+    display: none;
+    position: absolute;
+    z-index: 1050;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 280px;
+    overflow-y: auto;
+    margin-top: 2px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-ctl);
+    box-shadow: 0 6px 20px rgba(16, 24, 40, .12);
+}
+.ss.is-open .ss__list { display: block; }
+
+.ss__opt {
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ss__opt:hover     { background: #f3f5f8; }
+.ss__opt.is-active { background: var(--sidebar-active); font-weight: 600; }
+.ss__empty { padding: 10px 12px; font-size: 14px; color: var(--text-muted); }
+
 /* Thanh tìm kiếm trên đầu danh sách */
 .adm-searchbar {
     display: flex;

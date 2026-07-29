@@ -46,7 +46,7 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '0';
                 </div>
                 <div class="form-group col-md-4">
                     <label>Khách hàng</label>
-                    <select name="customer_id" class="form-control">
+                    <select name="customer_id" class="form-control js-search" data-placeholder="Gõ tên hoặc mã để tìm...">
                         <option value="">— Chọn / vãng lai —</option>
                         @foreach ($partners as $pn)
                         <option value="{{$pn['id']}}" {{(!empty($old['customer_id']) && $old['customer_id']==$pn['id'])?'selected':''}}>{{$pn['code'].' - '.$pn['name']}}</option>
@@ -124,7 +124,7 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '0';
         subEl.textContent = fmt(sub); taxEl.textContent = fmt(tax); grEl.textContent = fmt(sub + tax);
     }
     function partSelect(selected){
-        var s = document.createElement('select'); s.name='line_part[]'; s.className='form-control form-control-sm part-sel';
+        var s = document.createElement('select'); s.name='line_part[]'; s.className='form-control form-control-sm part-sel js-search'; s.setAttribute('data-placeholder','Gõ tên hoặc mã phụ tùng...');
         var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn phụ tùng —'; s.appendChild(o0);
         PARTS.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; o.setAttribute('data-price', op.price); if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
         return s;

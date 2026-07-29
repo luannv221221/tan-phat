@@ -121,7 +121,7 @@ $sel = function($field, $default = '') use ($old, $item){
             <div class="form-row">
                 <div class="form-group col-md-4">
                     <label>Nhà cung cấp</label>
-                    <select name="partner_id" class="form-control">
+                    <select name="partner_id" class="form-control js-search" data-placeholder="Gõ tên hoặc mã để tìm...">
                         <option value="">— Chọn / vãng lai —</option>
                         @foreach ($partners as $pn)
                         <option value="{{$pn['id']}}" {{$sel('partner_id')==$pn['id']?'selected':''}}>{{$pn['code'].' - '.$pn['name']}}</option>

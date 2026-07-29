@@ -37,6 +37,23 @@
             });
         }
 
+        // --- 4. Ô chọn có tìm kiếm ---
+        initSearchSelects(document);
+
+        // Dòng hàng ở hoá đơn/báo giá do JS tạo sau, nên phải bắt cả select
+        // được thêm vào về sau.
+        if (window.MutationObserver) {
+            new MutationObserver(function (muts) {
+                muts.forEach(function (m) {
+                    Array.prototype.forEach.call(m.addedNodes, function (n) {
+                        if (n.nodeType !== 1) return;
+                        if (n.matches && n.matches('select.js-search')) buildSearchSelect(n);
+                        else initSearchSelects(n);
+                    });
+                });
+            }).observe(document.body, { childList: true, subtree: true });
+        }
+
         // --- 3. Sidebar trên màn hình nhỏ ---
         var burger   = document.querySelector('.adm-topbar__burger');
         var backdrop = document.querySelector('.adm-backdrop');
@@ -52,6 +69,116 @@
             });
         }
     });
+
+    /* ============================================================
+     * Ô chọn có tìm kiếm (searchable select)
+     *
+     * Danh sách khách hàng / phụ tùng dài hàng chục dòng, <select> thuần chỉ
+     * cuộn được nên rất khó tìm.
+     *
+     * CÁCH LÀM: GIỮ NGUYÊN thẻ <select> thật (chỉ ẩn đi), phủ lên trên một ô
+     * nhập để lọc. Chọn xong thì gán value vào select rồi bắn sự kiện
+     * 'change'. Nhờ vậy:
+     *   - form submit y như cũ, không đổi tên trường
+     *   - JS sẵn có đọc select[name="customer_id"] hay .part-sel vẫn chạy
+     *     (vd tự điền đơn giá, chiết khấu theo nhóm khách)
+     *
+     * Áp dụng cho select có class `js-search`. Dòng hàng được JS tạo động nên
+     * dùng MutationObserver để bắt cả những select thêm sau.
+     * ============================================================ */
+
+    function buildSearchSelect(select) {
+        if (select.dataset.searchReady === '1') return;
+        select.dataset.searchReady = '1';
+
+        var wrap = document.createElement('div');
+        wrap.className = 'ss';
+        select.parentNode.insertBefore(wrap, select);
+        wrap.appendChild(select);
+        select.classList.add('ss__native');
+
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = select.className.replace('ss__native', '') + ' ss__input';
+        input.setAttribute('autocomplete', 'off');
+        input.placeholder = select.getAttribute('data-placeholder') || 'Gõ để tìm...';
+        wrap.appendChild(input);
+
+        var list = document.createElement('div');
+        list.className = 'ss__list';
+        wrap.appendChild(list);
+
+        function label(i) {
+            var o = select.options[i];
+            return o ? o.textContent.trim() : '';
+        }
+        function showSelected() {
+            input.value = select.selectedIndex > 0 ? label(select.selectedIndex) : '';
+        }
+
+        function render(filter) {
+            var q = (filter || '').toLowerCase().trim();
+            list.innerHTML = '';
+            var shown = 0;
+
+            for (var i = 0; i < select.options.length; i++) {
+                var txt = label(i);
+                // Bỏ qua option rỗng (— Chọn —) khi đang gõ tìm
+                if (q && txt.toLowerCase().indexOf(q) === -1) continue;
+                if (q && select.options[i].value === '') continue;
+
+                var row = document.createElement('div');
+                row.className = 'ss__opt' + (i === select.selectedIndex ? ' is-active' : '');
+                row.textContent = txt;
+                row.setAttribute('data-i', i);
+                list.appendChild(row);
+                shown++;
+            }
+
+            if (!shown) {
+                var none = document.createElement('div');
+                none.className = 'ss__empty';
+                none.textContent = 'Không tìm thấy';
+                list.appendChild(none);
+            }
+        }
+
+        function open() { render(''); input.select(); wrap.classList.add('is-open'); }
+        function close() { wrap.classList.remove('is-open'); showSelected(); }
+
+        function pick(i) {
+            select.selectedIndex = parseInt(i, 10);
+            // Bắn 'change' để các handler sẵn có (đơn giá, chiết khấu...) chạy
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            close();
+        }
+
+        input.addEventListener('focus', open);
+        input.addEventListener('input', function () {
+            wrap.classList.add('is-open');
+            render(input.value);
+        });
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { close(); input.blur(); }
+            if (e.key === 'Enter') {
+                var first = list.querySelector('.ss__opt');
+                if (first) { e.preventDefault(); pick(first.getAttribute('data-i')); }
+            }
+        });
+        list.addEventListener('mousedown', function (e) {
+            var opt = e.target.closest('.ss__opt');
+            if (opt) { e.preventDefault(); pick(opt.getAttribute('data-i')); }
+        });
+        document.addEventListener('click', function (e) {
+            if (!wrap.contains(e.target)) close();
+        });
+
+        showSelected();
+    }
+
+    function initSearchSelects(root) {
+        (root || document).querySelectorAll('select.js-search').forEach(buildSearchSelect);
+    }
 
     function setCollapsed(on) {
         document.body.classList.toggle('adm-collapsed', on);
