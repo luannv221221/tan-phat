@@ -5,7 +5,7 @@ use App\core\Request;
 use App\core\Session;
 
 /**
- * KHO-3 — Biểu đồ biến động tồn theo ngày cho 1 phụ tùng. Chỉ xem.
+ * KHO-3 — Biểu đồ biến động tồn theo ngày cho 1 hàng hoá. Chỉ xem.
  */
 class Biendongton extends Controller {
 

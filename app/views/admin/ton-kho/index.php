@@ -16,7 +16,7 @@
                 </select>
             </div>
             <div class="form-group col-md-5 mb-2">
-                <label class="mb-1 small">Tìm phụ tùng (tên / mã / OEM)</label>
+                <label class="mb-1 small">Tìm hàng hoá (tên / mã / OEM)</label>
                 <input type="text" name="keyword" class="form-control form-control-sm" value="{{$filterKeyword}}"/>
             </div>
             <div class="form-group col-md-3 mb-2">
@@ -32,7 +32,7 @@
                 <tr>
                     <th style="width:60px" class="text-center">STT</th>
                     <th style="width:130px">Mã</th>
-                    <th>Phụ tùng</th>
+                    <th>Hàng hoá</th>
                     <th>Kho</th>
                     <th style="width:12%" class="text-right">Tồn</th>
                     <th style="width:15%" class="text-right">Đơn giá BQ</th>

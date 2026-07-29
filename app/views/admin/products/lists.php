@@ -108,7 +108,7 @@ $to     = min($page * $perPage, $total);
                     <th style="width:60px" class="text-center">STT</th>
                     <th style="width:80px" class="text-center">Ảnh</th>
                     <th style="width:12%">Mã</th>
-                    <th>Tên phụ tùng</th>
+                    <th>Tên hàng hoá</th>
                     <th style="width:15%">Danh mục</th>
                     <th style="width:12%">Thương hiệu</th>
                     <th style="width:12%" class="text-right">Giá</th>
@@ -139,7 +139,7 @@ $to     = min($page * $perPage, $total);
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-warning btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
                         @endif
                         @if (route('admin/'.$routeBase.'/delete/'.$item['id']))
-                        <a onclick="return confirm('Bạn có chắc chắn muốn xoá phụ tùng này?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
+                        <a onclick="return confirm('Bạn có chắc chắn muốn xoá hàng hoá này?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
                         @endif
                     </td>
                 </tr>
@@ -147,7 +147,7 @@ $to     = min($page * $perPage, $total);
             @else
                 <tr>
                     <td colspan="9" class="text-center text-muted py-4">
-                        <i class="fas fa-inbox fa-2x d-block mb-2"></i> Không có phụ tùng nào khớp
+                        <i class="fas fa-inbox fa-2x d-block mb-2"></i> Không có hàng hoá nào khớp
                     </td>
                 </tr>
             @endif
@@ -157,7 +157,7 @@ $to     = min($page * $perPage, $total);
 
     @if ($total > 0)
     <div class="card-footer d-flex justify-content-between align-items-center flex-wrap">
-        <span class="text-muted small">Hiển thị {{$from}}–{{$to}} trên tổng {{$total}} phụ tùng</span>
+        <span class="text-muted small">Hiển thị {{$from}}–{{$to}} trên tổng {{$total}} hàng hoá</span>
         @if ($totalPages > 1)
         <nav>
             <ul class="pagination pagination-sm mb-0">
@@ -188,7 +188,7 @@ $to     = min($page * $perPage, $total);
 </div>
 
 <script>
-/* TASK_91 — gợi ý khi gõ ở ô tìm kiếm phụ tùng */
+/* TASK_91 — gợi ý khi gõ ở ô tìm kiếm hàng hoá */
 (function () {
     var input = document.getElementById('parts-search');
     if (!input) return;

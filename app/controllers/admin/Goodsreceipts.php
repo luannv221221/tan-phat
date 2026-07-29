@@ -10,7 +10,7 @@ use App\core\Session;
  *
  * Nháp (status=0) mới sửa/xoá. GHI SỔ -> cập nhật tồn + sinh phiếu kế toán:
  *   Nợ 156 Hàng hóa / Có [TK đối ứng] (mặc định 331 với nhập mua).
- * HUỶ GHI SỔ chỉ được nếu phiếu là phát sinh cuối cùng của mọi phụ tùng (bình
+ * HUỶ GHI SỔ chỉ được nếu phiếu là phát sinh cuối cùng của mọi hàng hoá (bình
  * quân gia quyền không đảo ngược được nếu đã có nhập/xuất chen sau).
  */
 class Goodsreceipts extends Controller {
@@ -245,7 +245,7 @@ class Goodsreceipts extends Controller {
         $items = $this->__itemModel->getByReceipt($id);
         $wh = (int) $item['warehouse_id'];
 
-        // Chặn nếu có phát sinh sau ở bất kỳ phụ tùng nào
+        // Chặn nếu có phát sinh sau ở bất kỳ hàng hoá nào
         $blocked = [];
         foreach ($items as $it){
             if (!$this->__stock->isLastMovement($wh, (int) $it['part_id'], self::DOC_TYPE, $id)){
@@ -315,7 +315,7 @@ class Goodsreceipts extends Controller {
         }
         $lines = $this->buildLines();
         if (empty($lines)){
-            $errors['lines'] = 'Phiếu phải có ít nhất 1 dòng hàng (phụ tùng + số lượng > 0)';
+            $errors['lines'] = 'Phiếu phải có ít nhất 1 dòng hàng (hàng hoá + số lượng > 0)';
         } elseif ($whId > 0 && $this->__location->countActiveInWarehouse($whId) > 0){
             // Kho có khai báo vị trí -> mỗi dòng BẮT BUỘC chọn vị trí đúng kho
             $map = $this->locMap();

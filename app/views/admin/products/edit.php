@@ -41,7 +41,7 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                 <div class="card-body">
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label>Mã phụ tùng <span class="text-danger">*</span></label>
+                            <label>Mã hàng hoá <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="code" value="{{$vCode}}"/>
                             {!! !empty($errors['code'])?'<small class="text-danger">'.e($errors['code']).'</small>':false !!}
                         </div>
@@ -52,7 +52,7 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                     </div>
 
                     <div class="form-group">
-                        <label>Tên phụ tùng <span class="text-danger">*</span></label>
+                        <label>Tên hàng hoá <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="name" value="{{$vName}}"/>
                         {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
                     </div>
@@ -211,7 +211,7 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
         <div class="card-body">
             <div class="position-relative" style="max-width:520px">
                 <input type="text" id="rel-search" class="form-control" autocomplete="off"
-                       placeholder="Gõ tên hoặc mã phụ tùng để thêm..."
+                       placeholder="Gõ tên hoặc mã hàng hoá để thêm..."
                        data-url="{{_WEB_URL.'/admin/products/search-json'}}" data-exclude="{{$item['id']}}"/>
                 <div id="rel-results" class="list-group position-absolute w-100 shadow-sm" style="z-index:30;max-height:240px;overflow:auto;display:none"></div>
             </div>
@@ -226,7 +226,7 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                     @endforeach
                 @endif
             </div>
-            <small class="text-muted">Chọn các phụ tùng gợi ý bán kèm sản phẩm này.</small>
+            <small class="text-muted">Chọn các hàng hoá gợi ý bán kèm sản phẩm này.</small>
         </div>
     </div>
 
@@ -238,7 +238,7 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
     </div>
 </form>
 
-<!-- Thư viện ảnh (TASK_77) — form riêng, không nằm trong form sửa phụ tùng -->
+<!-- Thư viện ảnh (TASK_77) — form riêng, không nằm trong form sửa hàng hoá -->
 <div class="card card-outline card-success">
     <div class="card-header"><h3 class="card-title"><i class="fas fa-images mr-2"></i>Thư viện ảnh</h3></div>
     <div class="card-body">

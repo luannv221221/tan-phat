@@ -6,7 +6,7 @@ use App\core\Response;
 use App\core\Session;
 
 /**
- * Danh mục phụ tùng (part_categories) — cây phân cấp cha-con.
+ * Danh mục hàng hoá (part_categories) — cây phân cấp cha-con.
  *
  * parent_id tự tham chiếu (ON DELETE RESTRICT: còn con là không xoá được).
  * Khi sửa, KHÔNG cho chọn chính nó hoặc hậu duệ làm cha (tránh vòng lặp).
@@ -18,7 +18,7 @@ class Partcategories extends Controller {
 
     private $routeBase = 'part-categories';
     private $labelOne  = 'danh mục';
-    private $labelMany = 'Danh mục phụ tùng';
+    private $labelMany = 'Danh mục hàng hoá';
     private $viewDir   = 'admin/part-categories';
 
     function __construct(){

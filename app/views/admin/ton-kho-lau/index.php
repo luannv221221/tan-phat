@@ -53,7 +53,7 @@
                 <tr>
                     <th style="width:50px" class="text-center">STT</th>
                     <th style="width:120px">Mã</th>
-                    <th>Phụ tùng</th>
+                    <th>Hàng hoá</th>
                     <th>Kho</th>
                     <th style="width:11%" class="text-right">Tồn</th>
                     <th style="width:12%" class="text-center">Phát sinh cuối</th>

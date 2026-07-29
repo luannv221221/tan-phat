@@ -53,7 +53,7 @@
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-warning btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
                         @endif
                         @if (route('admin/'.$routeBase.'/delete/'.$item['id']))
-                        <a onclick="return confirm('Xoá thông số này sẽ gỡ khỏi mọi phụ tùng. Chắc chắn?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
+                        <a onclick="return confirm('Xoá thông số này sẽ gỡ khỏi mọi hàng hoá. Chắc chắn?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
                         @endif
                     </td>
                 </tr>

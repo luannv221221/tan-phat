@@ -137,7 +137,7 @@ class Attributes extends Controller {
             return;
         }
 
-        // part_attribute_values ON DELETE CASCADE: giá trị của phụ tùng tự gỡ theo.
+        // part_attribute_values ON DELETE CASCADE: giá trị của hàng hoá tự gỡ theo.
         $this->__model->remove($id);
         Session::flash('msg', 'Xoá ' . $this->labelOne . ' thành công');
         $this->__response->redirect('admin/' . $this->routeBase);

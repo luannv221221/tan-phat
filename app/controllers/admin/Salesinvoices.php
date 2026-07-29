@@ -185,7 +185,7 @@ class Salesinvoices extends Controller {
 
         $wh = (int) $item['warehouse_id'];
 
-        // Chặn nếu tồn không đủ (gộp cùng phụ tùng)
+        // Chặn nếu tồn không đủ (gộp cùng hàng hoá)
         $need = [];
         foreach ($items as $it){ $need[(int) $it['part_id']] = ($need[(int) $it['part_id']] ?? 0) + (float) $it['quantity']; }
         $short = [];

@@ -5,9 +5,9 @@
     <div class="card-body border-bottom">
         <form method="get" class="form-row align-items-end">
             <div class="form-group col-md-4 mb-2">
-                <label class="mb-1 small">Phụ tùng <span class="text-danger">*</span></label>
+                <label class="mb-1 small">Hàng hoá <span class="text-danger">*</span></label>
                 <select name="part_id" class="form-control form-control-sm">
-                    <option value="0">— Chọn phụ tùng —</option>
+                    <option value="0">— Chọn hàng hoá —</option>
                     @foreach ($parts as $p)
                     <option value="{{$p['id']}}" {{$filterPart==$p['id']?'selected':''}}>{{$p['code'].' - '.$p['name']}}</option>
                     @endforeach
@@ -38,10 +38,10 @@
 </div>
 
 @if (empty($filterPart))
-<div class="callout callout-info">Chọn 1 phụ tùng để xem biểu đồ biến động nhập / xuất / tồn theo ngày.</div>
+<div class="callout callout-info">Chọn 1 hàng hoá để xem biểu đồ biến động nhập / xuất / tồn theo ngày.</div>
 @else
     @if (empty($partRow))
-    <div class="callout callout-warning">Không tìm thấy phụ tùng.</div>
+    <div class="callout callout-warning">Không tìm thấy hàng hoá.</div>
     @else
     <div class="row">
         <div class="col-md-3"><div class="info-box"><div class="info-box-content"><span class="info-box-text">Tồn đầu kỳ</span><span class="info-box-number">{{rtrim(rtrim(number_format((float)$opening,3,',','.'),'0'),',')}}</span></div></div></div>

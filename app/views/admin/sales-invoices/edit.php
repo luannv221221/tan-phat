@@ -64,7 +64,7 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
         <div class="card-header"><h3 class="card-title">Dòng hàng đã bán</h3></div>
         <div class="card-body table-responsive p-0">
             <table class="table table-sm mb-0">
-                <thead><tr><th>Phụ tùng</th><th class="text-right">SL</th><th class="text-right">Đơn giá</th><th class="text-right">CK %</th><th class="text-right">Thành tiền</th><th class="text-right">Giá vốn/đv</th></tr></thead>
+                <thead><tr><th>Hàng hoá</th><th class="text-right">SL</th><th class="text-right">Đơn giá</th><th class="text-right">CK %</th><th class="text-right">Thành tiền</th><th class="text-right">Giá vốn/đv</th></tr></thead>
                 <tbody>
                 @foreach ($items as $it)
                 <tr>
@@ -176,7 +176,7 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
             <div class="card-body table-responsive p-0">
                 <table class="table table-sm mb-0">
                     <thead><tr>
-                        <th style="width:30%">Phụ tùng</th>
+                        <th style="width:30%">Hàng hoá</th>
                         <th style="width:11%" class="text-right">Số lượng</th>
                         <th style="width:15%" class="text-right">Đơn giá bán</th>
                         <th style="width:9%" class="text-right">CK %</th>
@@ -231,8 +231,8 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
             subEl.textContent = fmt(sub); taxEl.textContent = fmt(tax); grEl.textContent = fmt(sub + tax);
         }
         function partSelect(selected){
-            var s = document.createElement('select'); s.name='line_part[]'; s.className='form-control form-control-sm part-sel js-search'; s.setAttribute('data-placeholder','Gõ tên hoặc mã phụ tùng...');
-            var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn phụ tùng —'; s.appendChild(o0);
+            var s = document.createElement('select'); s.name='line_part[]'; s.className='form-control form-control-sm part-sel js-search'; s.setAttribute('data-placeholder','Gõ tên hoặc mã hàng hoá...');
+            var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn hàng hoá —'; s.appendChild(o0);
             PARTS.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; o.setAttribute('data-price', op.price); if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
             return s;
         }

@@ -36,7 +36,7 @@ $sel = function($field, $default = '') use ($old, $item){ return isset($old[$fie
         <div class="card-header"><h3 class="card-title">Dòng hàng đã chuyển</h3></div>
         <div class="card-body table-responsive p-0">
             <table class="table table-sm mb-0">
-                <thead><tr><th>Phụ tùng</th><th class="text-right">Số lượng</th><th class="text-right">Giá vốn/đv</th><th class="text-right">Thành tiền</th></tr></thead>
+                <thead><tr><th>Hàng hoá</th><th class="text-right">Số lượng</th><th class="text-right">Giá vốn/đv</th><th class="text-right">Thành tiền</th></tr></thead>
                 <tbody>
                 @foreach ($items as $it)
                 <tr><td><code>{{$it['part_code']}}</code> {{$it['part_name']}}</td><td class="text-right">{{rtrim(rtrim(number_format((float)$it['quantity'],3,',','.'),'0'),',')}} {{$it['unit_name']}}</td><td class="text-right">{{number_format((float)$it['unit_cost'],0,',','.')}}</td><td class="text-right">{{number_format((float)$it['amount'],0,',','.')}}</td></tr>
@@ -92,7 +92,7 @@ $sel = function($field, $default = '') use ($old, $item){ return isset($old[$fie
             </div>
             <div class="card-body table-responsive p-0">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th style="width:45%">Phụ tùng</th><th style="width:18%" class="text-right">Số lượng</th><th>Ghi chú</th><th style="width:44px"></th></tr></thead>
+                    <thead><tr><th style="width:45%">Hàng hoá</th><th style="width:18%" class="text-right">Số lượng</th><th>Ghi chú</th><th style="width:44px"></th></tr></thead>
                     <tbody id="lines"></tbody>
                 </table>
             </div>
@@ -118,7 +118,7 @@ $sel = function($field, $default = '') use ($old, $item){ return isset($old[$fie
         var tbody = document.getElementById('lines');
         function buildSelect(name, opts, selected){
             var s = document.createElement('select'); s.name=name; s.className='form-control form-control-sm';
-            var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn phụ tùng —'; s.appendChild(o0);
+            var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn hàng hoá —'; s.appendChild(o0);
             opts.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
             return s;
         }

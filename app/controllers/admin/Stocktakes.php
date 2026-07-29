@@ -212,7 +212,7 @@ class Stocktakes extends Controller {
         $whId = !empty($f['warehouse_id']) ? (int) $f['warehouse_id'] : 0;
         if ($whId <= 0 || empty($this->__warehouse->getDetail($whId))) $errors['warehouse_id'] = 'Chọn kho kiểm kê';
         if (empty($f['take_date'])) $errors['take_date'] = 'Chọn ngày';
-        if (empty($this->buildLines())) $errors['lines'] = 'Phiếu phải có ít nhất 1 dòng phụ tùng';
+        if (empty($this->buildLines())) $errors['lines'] = 'Phiếu phải có ít nhất 1 dòng hàng hoá';
         return $errors;
     }
 

@@ -6,9 +6,9 @@
     <div class="card-body border-bottom">
         <form method="get" class="form-row align-items-end">
             <div class="form-group col-md-4 mb-2">
-                <label class="mb-1 small">Phụ tùng <span class="text-danger">*</span></label>
+                <label class="mb-1 small">Hàng hoá <span class="text-danger">*</span></label>
                 <select name="part_id" class="form-control form-control-sm">
-                    <option value="">— Chọn phụ tùng —</option>
+                    <option value="">— Chọn hàng hoá —</option>
                     @foreach ($parts as $p)
                     <option value="{{$p['id']}}" {{$filterPart==$p['id']?'selected':''}}>{{$p['code'].' - '.$p['name']}}</option>
                     @endforeach
@@ -38,7 +38,7 @@
 
     @if (empty($part))
     <div class="card-body text-center text-muted py-4">
-        <i class="fas fa-hand-pointer fa-2x d-block mb-2"></i> Chọn một phụ tùng để xem thẻ kho
+        <i class="fas fa-hand-pointer fa-2x d-block mb-2"></i> Chọn một hàng hoá để xem thẻ kho
     </div>
     @else
     <div class="card-body py-2 border-bottom">

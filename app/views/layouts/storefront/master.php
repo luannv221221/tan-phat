@@ -158,7 +158,7 @@ $renderMenu = function ($items) use (&$renderMenu){
                 <div class="col-5 px-5 d-none d-md-block">
                     <form action="<?php echo _WEB_URL; ?>/san-pham" method="get">
                         <div class="input-group header__search">
-                            <input type="search" name="q" class="form-control" placeholder="Tìm phụ tùng, mã, OEM..." value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
+                            <input type="search" name="q" class="form-control" placeholder="Tìm hàng hoá, mã, OEM..." value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
                             <button type="submit" class="btn"><i class="fa fa-search" aria-hidden="true"></i></button>
                         </div>
                     </form>

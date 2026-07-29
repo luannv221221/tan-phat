@@ -19,7 +19,7 @@ $isActive = function ($link) use ($currentUrl) {
 // Nhóm menu (thứ tự hiển thị) => các link thuộc nhóm
 $menuGroups = [
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
-    'Danh mục phụ tùng'  => ['part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
+    'Danh mục hàng hoá'  => ['part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
     'Nội dung'           => ['products', 'news', 'news-categories', 'du-an', 'galleries', 'banners', 'menus'],
     'Bán hàng'           => ['orders', 'quotations', 'sales-invoices', 'partners', 'bao-cao-ban-hang'],
     'Kho'                => ['goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
@@ -29,7 +29,7 @@ $menuGroups = [
 
 $groupIcons = [
     'Danh mục xe'        => 'car',
-    'Danh mục phụ tùng'  => 'cog',
+    'Danh mục hàng hoá'  => 'cog',
     'Nội dung'           => 'folder-open',
     'Bán hàng'           => 'shopping-cart',
     'Kho'                => 'warehouse',

@@ -20,14 +20,14 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
     @endif
 
     <div class="row">
-        <!-- Cột trái: thông tin phụ tùng -->
+        <!-- Cột trái: thông tin hàng hoá -->
         <div class="col-lg-7">
             <div class="card card-outline card-primary">
                 <div class="card-header"><h3 class="card-title"><i class="fas fa-box mr-2"></i>{{$page_name}}</h3></div>
                 <div class="card-body">
                     <div class="form-row">
                         <div class="form-group col-md-6">
-                            <label>Mã phụ tùng <span class="text-danger">*</span></label>
+                            <label>Mã hàng hoá <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="code" placeholder="VD: PT-0001" value="{{!empty($old['code'])?$old['code']:''}}"/>
                             {!! !empty($errors['code'])?'<small class="text-danger">'.e($errors['code']).'</small>':false !!}
                         </div>
@@ -38,7 +38,7 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                     </div>
 
                     <div class="form-group">
-                        <label>Tên phụ tùng <span class="text-danger">*</span></label>
+                        <label>Tên hàng hoá <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="name" placeholder="VD: Lọc gió động cơ" value="{{!empty($old['name'])?$old['name']:''}}"/>
                         {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
                     </div>
@@ -211,7 +211,7 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
         <div class="card-body">
             <div class="position-relative" style="max-width:520px">
                 <input type="text" id="rel-search" class="form-control" autocomplete="off"
-                       placeholder="Gõ tên hoặc mã phụ tùng để thêm..."
+                       placeholder="Gõ tên hoặc mã hàng hoá để thêm..."
                        data-url="{{_WEB_URL.'/admin/products/search-json'}}" data-exclude="0"/>
                 <div id="rel-results" class="list-group position-absolute w-100 shadow-sm" style="z-index:30;max-height:240px;overflow:auto;display:none"></div>
             </div>
@@ -226,13 +226,13 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                     @endforeach
                 @endif
             </div>
-            <small class="text-muted">Chọn các phụ tùng gợi ý bán kèm sản phẩm này.</small>
+            <small class="text-muted">Chọn các hàng hoá gợi ý bán kèm sản phẩm này.</small>
         </div>
     </div>
 
     <div class="card">
         <div class="card-body">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Thêm phụ tùng</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Thêm hàng hoá</button>
             <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-default"><i class="fas fa-arrow-left mr-1"></i> Quay lại</a>
         </div>
     </div>

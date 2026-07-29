@@ -59,7 +59,7 @@ $sel = function($field, $default = '') use ($old, $item){
         <div class="card-header"><h3 class="card-title">Dòng hàng đã xuất</h3></div>
         <div class="card-body table-responsive p-0">
             <table class="table table-sm mb-0">
-                <thead><tr><th>Phụ tùng</th><th class="text-right">Số lượng</th><th class="text-right">Giá vốn/đv</th><th class="text-right">Thành tiền</th><th>Ghi chú</th></tr></thead>
+                <thead><tr><th>Hàng hoá</th><th class="text-right">Số lượng</th><th class="text-right">Giá vốn/đv</th><th class="text-right">Thành tiền</th><th>Ghi chú</th></tr></thead>
                 <tbody>
                 @foreach ($items as $it)
                 <tr>
@@ -135,7 +135,7 @@ $sel = function($field, $default = '') use ($old, $item){
             <div class="card-body table-responsive p-0">
                 <table class="table table-sm mb-0">
                     <thead><tr>
-                        <th style="width:40%">Phụ tùng</th>
+                        <th style="width:40%">Hàng hoá</th>
                         <th style="width:16%" class="text-right">Số lượng</th>
                         <th>Ghi chú</th>
                         <th style="width:44px"></th>
@@ -165,7 +165,7 @@ $sel = function($field, $default = '') use ($old, $item){
         var tbody = document.getElementById('lines');
         function buildSelect(name, opts, selected){
             var s = document.createElement('select'); s.name=name; s.className='form-control form-control-sm';
-            var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn phụ tùng —'; s.appendChild(o0);
+            var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn hàng hoá —'; s.appendChild(o0);
             opts.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
             return s;
         }

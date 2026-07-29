@@ -6,12 +6,12 @@ use App\core\Response;
 use App\core\Session;
 
 /**
- * Phụ tùng (parts) — màn hình nghiệp vụ trung tâm.
+ * Hàng hoá (parts) — màn hình nghiệp vụ trung tâm.
  *
  * Đặc thù:
  *   - Nhiều khoá ngoại (danh mục, thương hiệu, hãng SX, xuất xứ, đơn vị)
- *   - Gán 1 phụ tùng cho NHIỀU đời xe (part_fitments) qua PartFitmentsModel::syncForPart
- *   - Phân trang (phụ tùng có thể hàng nghìn dòng)
+ *   - Gán 1 hàng hoá cho NHIỀU đời xe (part_fitments) qua PartFitmentsModel::syncForPart
+ *   - Phân trang (hàng hoá có thể hàng nghìn dòng)
  */
 class Products extends Controller {
 
@@ -20,14 +20,14 @@ class Products extends Controller {
     private $__catModel, $__brandModel, $__mnfModel, $__originModel, $__unitModel, $__yearModel, $__imgModel, $__relatedModel;
     private $__attrModel, $__attrValModel;
 
-    // Upload ảnh phụ tùng (TASK_77)
+    // Upload ảnh hàng hoá (TASK_77)
     private $imgDir      = 'public/assets/uploads/parts/';
     private $imgAllowed  = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
     private $imgMaxBytes = 3145728; // 3MB / ảnh
 
     private $routeBase = 'products';   // giữ URL cũ admin/products
-    private $labelOne  = 'phụ tùng';
-    private $labelMany = 'Quản lý phụ tùng';
+    private $labelOne  = 'hàng hoá';
+    private $labelMany = 'Quản lý hàng hoá';
     private $viewDir   = 'admin/products';
 
     private $perPage = 20;
@@ -156,7 +156,7 @@ class Products extends Controller {
         $this->syncAttrs($partId);
 
         // Ảnh nằm ở bảng part_images nên phải có part_id trước mới lưu được —
-        // vì thế xử lý ở ĐÂY, sau khi đã tạo phụ tùng, chứ không thể lưu song song.
+        // vì thế xử lý ở ĐÂY, sau khi đã tạo hàng hoá, chứ không thể lưu song song.
         // Trước đây trang Thêm mới không có ô chọn ảnh, phải lưu rồi bấm Sửa
         // mới thêm được ảnh.
         list($ok, $fail) = $this->storeUploadedImages($partId, $data['slug']);
@@ -237,7 +237,7 @@ class Products extends Controller {
 
     // ================= Ảnh (TASK_77) =================
 
-    /** Upload nhiều ảnh cho 1 phụ tùng */
+    /** Upload nhiều ảnh cho 1 hàng hoá */
     public function postImages($id){
         $item = $this->__model->getDetail($id);
         if (empty($item)){
@@ -246,7 +246,7 @@ class Products extends Controller {
             return;
         }
 
-        // Quản lý ảnh = sửa phụ tùng -> cần quyền edit
+        // Quản lý ảnh = sửa hàng hoá -> cần quyền edit
         if (!route('admin/' . $this->routeBase . '/edit/' . $id)){
             $this->__response->redirect('admin/khong-co-quyen');
             return;
@@ -270,12 +270,12 @@ class Products extends Controller {
     }
 
     /**
-     * Lưu các file trong $_FILES['images'] vào phụ tùng $partId.
+     * Lưu các file trong $_FILES['images'] vào hàng hoá $partId.
      *
      * Dùng chung cho cả trang Thêm mới lẫn trang Sửa, để hai nơi không lệch
      * nhau về giới hạn dung lượng / định dạng.
      *
-     * Ảnh đầu tiên của phụ tùng tự thành ảnh đại diện (PartImagesModel::add).
+     * Ảnh đầu tiên của hàng hoá tự thành ảnh đại diện (PartImagesModel::add).
      *
      * @return array [số ảnh lưu được, số ảnh bị bỏ qua]
      */
@@ -410,10 +410,10 @@ class Products extends Controller {
 
     public function import(){
         $this->__data['sub_content'] = $this->viewDir . '/import';
-        $this->__data['page_title']  = 'Import phụ tùng';
+        $this->__data['page_title']  = 'Import hàng hoá';
 
         $this->baseData();
-        $this->__data['content']['page_name'] = 'Import phụ tùng từ Excel / CSV';
+        $this->__data['content']['page_name'] = 'Import hàng hoá từ Excel / CSV';
         $this->__data['content']['result']    = Session::flash('importResult');
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['msgError']  = Session::flash('msgError');
@@ -422,7 +422,7 @@ class Products extends Controller {
     }
 
     public function postImport(){
-        // Import = thêm/sửa phụ tùng -> cần quyền add
+        // Import = thêm/sửa hàng hoá -> cần quyền add
         if (!route('admin/' . $this->routeBase . '/add')){
             $this->__response->redirect('admin/khong-co-quyen');
             return;
@@ -499,8 +499,8 @@ class Products extends Controller {
             $code = $get($row, 'code');
             $name = $get($row, 'name');
 
-            if ($code === ''){ $result['errors'][] = "Dòng $line: thiếu mã phụ tùng — bỏ qua."; continue; }
-            if ($name === ''){ $result['errors'][] = "Dòng $line: thiếu tên phụ tùng — bỏ qua."; continue; }
+            if ($code === ''){ $result['errors'][] = "Dòng $line: thiếu mã hàng hoá — bỏ qua."; continue; }
+            if ($name === ''){ $result['errors'][] = "Dòng $line: thiếu tên hàng hoá — bỏ qua."; continue; }
 
             $data = [
                 'code'            => $code,
@@ -569,7 +569,7 @@ class Products extends Controller {
         exit;
     }
 
-    /** TASK_85 — Xuất catalogue phụ tùng ra CSV (theo bộ lọc hiện tại) */
+    /** TASK_85 — Xuất catalogue hàng hoá ra CSV (theo bộ lọc hiện tại) */
     public function export(){
         $f       = $this->__request->getFields();
         $keyword = isset($f['keyword']) ? trim($f['keyword']) : '';
@@ -640,16 +640,16 @@ class Products extends Controller {
 
         $code = isset($f['code']) ? trim($f['code']) : '';
         if ($code === ''){
-            $errors['code'] = 'Mã phụ tùng không được để trống';
+            $errors['code'] = 'Mã hàng hoá không được để trống';
         } else {
             $existing = $this->__model->findByCode($code);
             if (!empty($existing) && ($id === null || $existing['id'] != $id)){
-                $errors['code'] = 'Mã phụ tùng này đã tồn tại';
+                $errors['code'] = 'Mã hàng hoá này đã tồn tại';
             }
         }
 
         if (!isset($f['name']) || trim($f['name']) === ''){
-            $errors['name'] = 'Tên phụ tùng không được để trống';
+            $errors['name'] = 'Tên hàng hoá không được để trống';
         }
 
         // slug
@@ -693,7 +693,7 @@ class Products extends Controller {
         ];
     }
 
-    /** Gán phụ tùng cho các đời xe được tick (lọc bỏ id không tồn tại) */
+    /** Gán hàng hoá cho các đời xe được tick (lọc bỏ id không tồn tại) */
     private function syncFitments($partId){
         $f     = $this->__request->getFields();
         $picked = isset($f['fitments']) && is_array($f['fitments']) ? $f['fitments'] : [];
@@ -732,7 +732,7 @@ class Products extends Controller {
         $this->__attrValModel->syncForPart($partId, $map);
     }
 
-    /** Tìm phụ tùng (JSON) cho ô chọn phụ kiện đi kèm — TASK_81 */
+    /** Tìm hàng hoá (JSON) cho ô chọn phụ kiện đi kèm — TASK_81 */
     public function searchJson(){
         $f       = $this->__request->getFields();
         $keyword = isset($f['q']) ? trim($f['q']) : '';

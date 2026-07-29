@@ -5,9 +5,9 @@ use App\core\Request;
 use App\core\Session;
 
 /**
- * KHO — Thẻ kho 1 phụ tùng (WH-08). Chỉ xem.
+ * KHO — Thẻ kho 1 hàng hoá (WH-08). Chỉ xem.
  *
- * Chọn phụ tùng (+ kho + khoảng ngày): tồn đầu kỳ + phát sinh nhập/xuất + số dư luỹ kế.
+ * Chọn hàng hoá (+ kho + khoảng ngày): tồn đầu kỳ + phát sinh nhập/xuất + số dư luỹ kế.
  * Thẻ kho theo TỪNG kho (số dư luỹ kế chỉ đúng khi khoá 1 kho) -> mặc định kho mặc định.
  */
 class Thekho extends Controller {

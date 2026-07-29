@@ -126,7 +126,7 @@ class Goodsissues extends Controller {
         $this->baseData();
         $this->formData();
         $items = $this->__itemModel->getByIssue($id);
-        // Tồn hiện tại từng phụ tùng (để cảnh báo khi lập)
+        // Tồn hiện tại từng hàng hoá (để cảnh báo khi lập)
         $stockMap = [];
         foreach ($items as $it){
             $stockMap[(int) $it['part_id']] = $this->__stock->available((int) $item['warehouse_id'], (int) $it['part_id']);
@@ -200,7 +200,7 @@ class Goodsissues extends Controller {
 
         $wh = (int) $item['warehouse_id'];
 
-        // Chặn nếu tồn không đủ (gộp số lượng cùng phụ tùng)
+        // Chặn nếu tồn không đủ (gộp số lượng cùng hàng hoá)
         $need = [];
         foreach ($items as $it){ $need[(int) $it['part_id']] = ($need[(int) $it['part_id']] ?? 0) + (float) $it['quantity']; }
         $short = [];
@@ -324,7 +324,7 @@ class Goodsissues extends Controller {
             $errors['issue_date'] = 'Chọn ngày phiếu';
         }
         if (empty($this->buildLines())){
-            $errors['lines'] = 'Phiếu phải có ít nhất 1 dòng hàng (phụ tùng + số lượng > 0)';
+            $errors['lines'] = 'Phiếu phải có ít nhất 1 dòng hàng (hàng hoá + số lượng > 0)';
         }
         return $errors;
     }

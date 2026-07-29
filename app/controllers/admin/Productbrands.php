@@ -6,7 +6,7 @@ use App\core\Response;
 use App\core\Session;
 
 /**
- * Thương hiệu phụ tùng
+ * Thương hiệu hàng hoá
  *
  * CRUD độc lập, kế thừa thẳng App\core\Controller.
  * Mỗi danh mục có controller + view riêng (không dùng LookupCrudController nữa).
@@ -18,7 +18,7 @@ class Productbrands extends Controller {
 
     private $routeBase = 'product-brands';
     private $labelOne  = 'thương hiệu';
-    private $labelMany = 'Thương hiệu phụ tùng';
+    private $labelMany = 'Thương hiệu hàng hoá';
     private $viewDir   = 'admin/product-brands';
 
     function __construct(){

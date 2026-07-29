@@ -62,8 +62,8 @@
                 <table class="table table-sm mb-0">
                     <thead><tr><th>Cột</th><th>Bắt buộc</th><th>Ghi chú</th></tr></thead>
                     <tbody>
-                        <tr><td><code>code</code></td><td class="text-danger">Có</td><td>Mã phụ tùng (khoá để cập nhật)</td></tr>
-                        <tr><td><code>name</code></td><td class="text-danger">Có</td><td>Tên phụ tùng</td></tr>
+                        <tr><td><code>code</code></td><td class="text-danger">Có</td><td>Mã hàng hoá (khoá để cập nhật)</td></tr>
+                        <tr><td><code>name</code></td><td class="text-danger">Có</td><td>Tên hàng hoá</td></tr>
                         <tr><td><code>price</code></td><td>—</td><td>Giá VND (số). VD 350000</td></tr>
                         <tr><td><code>oem_code</code></td><td>—</td><td>Mã OEM</td></tr>
                         <tr><td><code>sale_price</code></td><td>—</td><td>Giá khuyến mãi</td></tr>
