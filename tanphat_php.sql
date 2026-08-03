@@ -1,6 +1,6 @@
 -- ============================================================
 -- CSDL TAN PHAT ERP — ban xuat de ban giao
--- Sinh ngay: 03/08/2026 10:40  |  Server nguon: MySQL 8.0.44
+-- Sinh ngay: 03/08/2026 11:27  |  Server nguon: MySQL 8.0.44
 -- So bang: 61
 --
 -- CACH NAP:
@@ -548,7 +548,7 @@ CREATE TABLE `login_tokens` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `login_tokens` (`id`, `user_id`, `token`, `create_at`, `client_ip`, `current_activity`) VALUES
-('277', '15', 'c35f7d951daea71a4b990c1fcd13d5b3755a2e7ea2720dcababb71a3ac87b4a8', '2026-08-03 10:38:42', '127.0.0.1', '2026-08-03 10:38:42');
+('283', '15', '6ce45dbae88cf009c72036aaf8e2b527cceedc30d39930b1243c9c67f9caa8aa', '2026-08-03 11:25:35', '127.0.0.1', '2026-08-03 11:25:35');
 
 -- --------------------------------------------------------
 -- Bang `members`
@@ -662,7 +662,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`, `ran_at`) VALUES
 ('42', '2026_07_28_000045_orders_split_address', '31', '2026-08-03 07:23:10'),
 ('43', '2026_07_29_000046_rename_phu_tung_to_hang_hoa', '31', '2026-08-03 07:23:10'),
 ('44', '2026_08_03_000047_chuan_hoa_ten_bang_va_rang_buoc', '31', '2026-08-03 07:23:11'),
-('45', '2026_08_03_000048_go_bo_ke_toan_va_nhan_su', '32', '2026-08-03 10:39:10');
+('45', '2026_08_03_000048_go_bo_ke_toan_va_nhan_su', '32', '2026-08-03 10:39:10'),
+('46', '2026_08_03_000049_bo_cot_chet_bang_users', '33', '2026-08-03 11:26:31');
 
 -- --------------------------------------------------------
 -- Bang `modules`
@@ -1858,8 +1859,6 @@ CREATE TABLE `users` (
   `status` tinyint(1) NOT NULL DEFAULT '0',
   `group_id` int DEFAULT NULL,
   `current_activity` datetime DEFAULT NULL,
-  `forgot_key` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `active_key` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `create_at` datetime DEFAULT NULL,
   `update_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -1868,12 +1867,12 @@ CREATE TABLE `users` (
   CONSTRAINT `fk_users_group` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `users` (`id`, `name`, `email`, `password`, `status`, `group_id`, `current_activity`, `forgot_key`, `active_key`, `create_at`, `update_at`) VALUES
-('15', 'Tạ Hoàng An', 'hoangan.web@gmail.com', '$2y$10$68BDaDynYrReewCYLdCLfuTPWOAqPTYMR6SOuHvPdr8A5WYWk5FAu', '1', '9', '2021-12-11 03:00:48', NULL, NULL, NULL, NULL),
-('16', 'Hoàng Anh', 'hoang@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '1', '10', NULL, NULL, NULL, NULL, NULL),
-('17', 'Văn Tuấn', 'tuan@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '1', '11', NULL, NULL, NULL, NULL, NULL),
-('20', 'Nguyễn Văn A', 'nguyenvana@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '1', '9', NULL, NULL, NULL, '2021-09-15 18:23:26', NULL),
-('23', 'Hoàng Anh', 'hoanganh@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '0', '10', NULL, NULL, NULL, '2021-09-17 09:11:08', NULL);
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `status`, `group_id`, `current_activity`, `create_at`, `update_at`) VALUES
+('15', 'Tạ Hoàng An', 'hoangan.web@gmail.com', '$2y$10$X4mZ.0r2xbkHkqVeqjqMI.6l5joBUTXJax4kU.wqNaQuTUJShhBse', '1', '9', '2021-12-11 03:00:48', NULL, NULL),
+('16', 'Hoàng Anh', 'hoang@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '1', '10', NULL, NULL, NULL),
+('17', 'Văn Tuấn', 'tuan@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '1', '11', NULL, NULL, NULL),
+('20', 'Nguyễn Văn A', 'nguyenvana@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '1', '9', NULL, '2021-09-15 18:23:26', NULL),
+('23', 'Hoàng Anh', 'hoanganh@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '0', '10', NULL, '2021-09-17 09:11:08', NULL);
 
 -- --------------------------------------------------------
 -- Bang `visits`
@@ -2690,7 +2689,8 @@ INSERT INTO `visits` (`id`, `url`, `referrer`, `keyword`, `ip`, `user_agent`, `m
 ('794', 'san-pham', 'http://localhost:88/tan-phat/san-pham?promo=1', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 04:41:57'),
 ('795', '/', 'http://localhost:88/tan-phat/san-pham', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 04:41:58'),
 ('796', '/', 'http://localhost:88/tan-phat/san-pham', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 04:45:20'),
-('797', '/', 'http://localhost:88/tan-phat/', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 09:23:12');
+('797', '/', 'http://localhost:88/tan-phat/', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 09:23:12'),
+('798', '/', 'http://localhost:88/tan-phat/', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 11:20:34');
 
 -- --------------------------------------------------------
 -- Bang `warehouse_locations`
