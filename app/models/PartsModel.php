@@ -168,12 +168,45 @@ class PartsModel extends Model {
      * Kèm đơn vị + giá bán (price/sale_price) để form tự điền đơn giá khi chọn.
      */
     public function getForSelect(){
-        return $this->table($this->_table)
+        $rows = $this->table($this->_table)
             ->select('`parts`.`id`, `parts`.`code`, `parts`.`name`, `parts`.`price`, '
                    . '`parts`.`sale_price`, `product_units`.`name` AS unit_name')
             ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id')
             ->where('parts.status', '=', 1)
             ->orderBy('parts.name', 'ASC')->get();
+
+        $imgs = $this->primaryImageMap();
+        foreach ($rows as $i => $r){
+            $rows[$i]['image'] = isset($imgs[(int) $r['id']]) ? $imgs[(int) $r['id']] : '';
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Ảnh đại diện của mọi hàng hoá: [part_id => tên file].
+     *
+     * Ảnh nằm ở bảng `part_images` nên nếu hỏi từng dòng sẽ thành N+1 query —
+     * lấy 1 lần rồi map theo part_id. Thứ tự sắp xếp giống primaryFor() nên
+     * bản ghi đầu tiên của mỗi part chính là ảnh đại diện.
+     */
+    protected function primaryImageMap(){
+        $rows = $this->table('part_images')
+            ->select('`part_id`, `image`')
+            ->orderBy('part_id', 'ASC')
+            ->orderBy('is_primary', 'DESC')
+            ->orderBy('sort_order', 'ASC')
+            ->orderBy('id', 'ASC')->get();
+
+        $map = [];
+        foreach ($rows as $r){
+            $pid = (int) $r['part_id'];
+            if (!isset($map[$pid])){
+                $map[$pid] = $r['image'];
+            }
+        }
+
+        return $map;
     }
 
     /**

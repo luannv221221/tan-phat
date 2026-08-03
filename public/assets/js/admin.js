@@ -116,6 +116,10 @@
             input.value = select.selectedIndex > 0 ? label(select.selectedIndex) : '';
         }
 
+        // Có ít nhất 1 option kèm ảnh (data-img) thì mọi dòng đều chừa chỗ ảnh
+        // cho thẳng hàng — dòng không có ảnh dùng ô trống.
+        var hasImg = !!select.querySelector('option[data-img]');
+
         function render(filter) {
             var q = (filter || '').toLowerCase().trim();
             list.innerHTML = '';
@@ -129,7 +133,27 @@
 
                 var row = document.createElement('div');
                 row.className = 'ss__opt' + (i === select.selectedIndex ? ' is-active' : '');
-                row.textContent = txt;
+
+                if (hasImg) {
+                    var src = select.options[i].getAttribute('data-img');
+                    var thumb;
+                    if (src) {
+                        thumb = document.createElement('img');
+                        thumb.src = src;
+                        thumb.alt = '';
+                        thumb.loading = 'lazy';
+                    } else {
+                        thumb = document.createElement('span');
+                    }
+                    thumb.className = 'ss__thumb';
+                    row.appendChild(thumb);
+                }
+
+                var text = document.createElement('span');
+                text.className = 'ss__txt';
+                text.textContent = txt;
+                row.appendChild(text);
+
                 row.setAttribute('data-i', i);
                 list.appendChild(row);
                 shown++;

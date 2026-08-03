@@ -5,6 +5,7 @@ foreach ($parts as $p){
         'id'    => (int) $p['id'],
         'label' => $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : ''),
         'price' => (int) (!empty($p['sale_price']) ? $p['sale_price'] : $p['price']),
+        'img'   => !empty($p['image']) ? _WEB_URL . '/public/assets/uploads/parts/' . $p['image'] : '',
     ];
 }
 $initRows = [];
@@ -135,7 +136,7 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '10';
     function partSelect(selected){
         var s = document.createElement('select'); s.name='line_part[]'; s.className='form-control form-control-sm part-sel js-search'; s.setAttribute('data-placeholder','Gõ tên hoặc mã hàng hoá...');
         var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn hàng hoá —'; s.appendChild(o0);
-        PARTS.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; o.setAttribute('data-price', op.price); if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
+        PARTS.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; o.setAttribute('data-price', op.price); if (op.img) o.setAttribute('data-img', op.img); if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
         return s;
     }
     function td(child, cls){ var t=document.createElement('td'); if (cls) t.className=cls; if (child) t.appendChild(child); return t; }

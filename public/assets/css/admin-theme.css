@@ -426,13 +426,32 @@ select.form-control { padding-right: 32px; }
 .ss.is-open .ss__list { display: block; }
 
 .ss__opt {
-    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
     font-size: 14px;
     cursor: pointer;
+    overflow: hidden;
+}
+.ss__txt {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* Ảnh đại diện hàng hoá trong danh sách chọn — nhỏ, chỉ để nhận diện nhanh */
+.ss__thumb {
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    background: #f3f5f8;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+/* Hàng hoá chưa có ảnh: vẫn chừa chỗ cho thẳng hàng nhưng để trống hẳn */
+span.ss__thumb { background: none; border-color: transparent; }
 .ss__opt:hover     { background: #f3f5f8; }
 .ss__opt.is-active { background: var(--sidebar-active); font-weight: 600; }
 .ss__empty { padding: 10px 12px; font-size: 14px; color: var(--text-muted); }
