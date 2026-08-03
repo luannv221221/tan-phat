@@ -47,3 +47,7 @@ public/assets/uploads/galleries/*
 !public/assets/uploads/galleries/.gitkeep
 public/assets/uploads/settings/*
 !public/assets/uploads/settings/.gitkeep
+public/assets/uploads/banners/*
+!public/assets/uploads/banners/.gitkeep
+public/assets/uploads/categories/*
+!public/assets/uploads/categories/.gitkeep

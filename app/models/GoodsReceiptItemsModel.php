@@ -15,9 +15,9 @@ class GoodsReceiptItemsModel extends Model {
     public function getByReceipt($receiptId){
         return $this->table($this->_table)
             ->select('`goods_receipt_items`.*, `parts`.`code` AS part_code, '
-                   . '`parts`.`name` AS part_name, `product_units`.`name` AS unit_name')
+                   . '`parts`.`name` AS part_name, `part_units`.`name` AS unit_name')
             ->joinOn('parts', 'goods_receipt_items.part_id', 'parts.id')
-            ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id')
+            ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
             ->where('goods_receipt_items.receipt_id', '=', (int) $receiptId)
             ->orderBy('goods_receipt_items.id', 'ASC')->get();
     }

@@ -15,9 +15,9 @@ class SalesInvoiceItemsModel extends Model {
     public function getByInvoice($invoiceId){
         return $this->table($this->_table)
             ->select('`sales_invoice_items`.*, `parts`.`code` AS part_code, '
-                   . '`parts`.`name` AS part_name, `product_units`.`name` AS unit_name')
+                   . '`parts`.`name` AS part_name, `part_units`.`name` AS unit_name')
             ->joinOn('parts', 'sales_invoice_items.part_id', 'parts.id')
-            ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id')
+            ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
             ->where('sales_invoice_items.invoice_id', '=', (int) $invoiceId)
             ->orderBy('sales_invoice_items.id', 'ASC')->get();
     }

@@ -14,9 +14,9 @@ class QuotationItemsModel extends Model {
     public function getByQuotation($quotationId){
         return $this->table($this->_table)
             ->select('`quotation_items`.*, `parts`.`code` AS part_code, '
-                   . '`parts`.`name` AS part_name, `product_units`.`name` AS unit_name')
+                   . '`parts`.`name` AS part_name, `part_units`.`name` AS unit_name')
             ->joinOn('parts', 'quotation_items.part_id', 'parts.id')
-            ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id')
+            ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
             ->where('quotation_items.quotation_id', '=', (int) $quotationId)
             ->orderBy('quotation_items.id', 'ASC')->get();
     }

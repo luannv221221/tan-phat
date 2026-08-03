@@ -192,11 +192,11 @@ class StocksModel extends Model {
     public function getStockList($warehouseId = 0, $keyword = ''){
         $q = $this->table($this->_table)
             ->select('`stocks`.*, `parts`.`code` AS part_code, `parts`.`name` AS part_name, '
-                   . '`parts`.`oem_code` AS oem_code, `product_units`.`name` AS unit_name, '
+                   . '`parts`.`oem_code` AS oem_code, `part_units`.`name` AS unit_name, '
                    . '`warehouses`.`name` AS warehouse_name, `warehouses`.`code` AS warehouse_code')
             ->joinOn('parts', 'stocks.part_id', 'parts.id')
             ->joinOn('warehouses', 'stocks.warehouse_id', 'warehouses.id')
-            ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id');
+            ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id');
 
         if ($warehouseId > 0){
             $q = $q->where('stocks.warehouse_id', '=', (int) $warehouseId);

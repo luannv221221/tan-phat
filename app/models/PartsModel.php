@@ -15,13 +15,13 @@ class PartsModel extends Model {
     protected function selectWithJoins(){
         return $this->table($this->_table)
             ->select('`parts`.*, `part_categories`.`name` AS category_name, '
-                   . '`product_brands`.`name` AS brand_name, '
-                   . '`product_origins`.`name` AS origin_name, '
-                   . '`product_units`.`name` AS unit_name')
+                   . '`part_brands`.`name` AS brand_name, '
+                   . '`part_origins`.`name` AS origin_name, '
+                   . '`part_units`.`name` AS unit_name')
             ->leftJoinOn('part_categories', 'parts.category_id', 'part_categories.id')
-            ->leftJoinOn('product_brands', 'parts.brand_id', 'product_brands.id')
-            ->leftJoinOn('product_origins', 'parts.origin_id', 'product_origins.id')
-            ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id');
+            ->leftJoinOn('part_brands', 'parts.brand_id', 'part_brands.id')
+            ->leftJoinOn('part_origins', 'parts.origin_id', 'part_origins.id')
+            ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id');
     }
 
     /**
@@ -170,8 +170,8 @@ class PartsModel extends Model {
     public function getForSelect(){
         $rows = $this->table($this->_table)
             ->select('`parts`.`id`, `parts`.`code`, `parts`.`name`, `parts`.`price`, '
-                   . '`parts`.`sale_price`, `product_units`.`name` AS unit_name')
-            ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id')
+                   . '`parts`.`sale_price`, `part_units`.`name` AS unit_name')
+            ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
             ->where('parts.status', '=', 1)
             ->orderBy('parts.name', 'ASC')->get();
 

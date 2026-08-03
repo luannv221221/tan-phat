@@ -8,7 +8,7 @@ use App\core\Model;
  */
 class ProductReviewsModel extends Model {
 
-    protected $_table   = 'product_reviews';
+    protected $_table   = 'part_reviews';
     protected $_fields  = '*';
     protected $_primary = 'id';
 
@@ -32,10 +32,10 @@ class ProductReviewsModel extends Model {
     /** Danh sách kiểm duyệt (admin) — kèm tên sản phẩm */
     public function getForModeration($status = ''){
         $q = $this->table($this->_table)
-            ->select('`product_reviews`.*, `parts`.`code` AS part_code, `parts`.`name` AS part_name, `parts`.`slug` AS part_slug')
-            ->joinOn('parts', 'product_reviews.part_id', 'parts.id');
-        if ($status === '0' || $status === '1') $q = $q->where('product_reviews.status', '=', (int) $status);
-        return $q->orderBy('product_reviews.status', 'ASC')->orderBy('product_reviews.id', 'DESC')->get();
+            ->select('`part_reviews`.*, `parts`.`code` AS part_code, `parts`.`name` AS part_name, `parts`.`slug` AS part_slug')
+            ->joinOn('parts', 'part_reviews.part_id', 'parts.id');
+        if ($status === '0' || $status === '1') $q = $q->where('part_reviews.status', '=', (int) $status);
+        return $q->orderBy('part_reviews.status', 'ASC')->orderBy('part_reviews.id', 'DESC')->get();
     }
 
     public function countPending(){

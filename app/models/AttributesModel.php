@@ -10,7 +10,7 @@ require_once __DIR__ . '/LookupModel.php';
  * LookupModel::add/edit lưu nguyên nên không cần override.
  */
 class AttributesModel extends LookupModel {
-    protected $_table = 'attributes';
+    protected $_table = 'part_attributes';
 
     /** Chỉ các thông số đang bật — dùng khi gán giá trị cho phụ tùng */
     public function getActive(){

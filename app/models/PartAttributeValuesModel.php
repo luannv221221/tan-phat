@@ -28,10 +28,10 @@ class PartAttributeValuesModel extends Model {
     /** Thông số kèm tên + đơn vị (để hiển thị chi tiết phụ tùng) */
     public function getByPart($partId){
         return $this->table($this->_table)
-            ->select('`part_attribute_values`.`value`, `attributes`.`name`, `attributes`.`unit`')
-            ->joinOn('attributes', 'part_attribute_values.attribute_id', 'attributes.id')
+            ->select('`part_attribute_values`.`value`, `part_attributes`.`name`, `part_attributes`.`unit`')
+            ->joinOn('part_attributes', 'part_attribute_values.attribute_id', 'part_attributes.id')
             ->where('part_attribute_values.part_id', '=', $partId)
-            ->orderBy('attributes.sort_order', 'ASC')
+            ->orderBy('part_attributes.sort_order', 'ASC')
             ->get();
     }
 

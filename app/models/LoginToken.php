@@ -3,7 +3,7 @@
 use App\core\Model;
 
 class LoginToken extends Model{
-    protected $_table = 'login_token'; //Gán tên bảng
+    protected $_table = 'login_tokens'; //Gán tên bảng
     protected $_fields = '*'; //Các field cần lấy khi fetch và fetchAll
     protected $_primary = 'id'; //Trường khoá chính
 

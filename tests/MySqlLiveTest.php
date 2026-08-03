@@ -162,56 +162,57 @@ section('B2 — Transaction tren MySQL THAT (InnoDB)');
 
 $db = new Database();
 
+// Dung site_settings lam bang nhap (bang `options` da bi go o migration 000047).
 $db->transaction(function($d){
-    $d->insert('options', ['opt_name' => 'test_tx_commit', 'opt_value' => 'x']);
+    $d->insert('site_settings', ['skey' => 'test_tx_commit', 'svalue' => 'x']);
 });
-$c1 = $pdo->query('SELECT COUNT(*) FROM options WHERE opt_name="test_tx_commit"')->fetchColumn();
+$c1 = $pdo->query('SELECT COUNT(*) FROM site_settings WHERE skey="test_tx_commit"')->fetchColumn();
 ok($c1 == 1, 'transaction() commit that tren InnoDB');
 
 $threw = false;
 try {
     $db->transaction(function($d){
-        $d->insert('options', ['opt_name' => 'test_tx_rollback', 'opt_value' => 'x']);
+        $d->insert('site_settings', ['skey' => 'test_tx_rollback', 'svalue' => 'x']);
         throw new \RuntimeException('mo phong loi giua chung');
     });
 } catch (\RuntimeException $e){ $threw = true; }
 
-$c2 = $pdo->query('SELECT COUNT(*) FROM options WHERE opt_name="test_tx_rollback"')->fetchColumn();
+$c2 = $pdo->query('SELECT COUNT(*) FROM site_settings WHERE skey="test_tx_rollback"')->fetchColumn();
 ok($threw, 'transaction() nem lai exception');
 ok($c2 == 0, 'transaction() ROLLBACK THAT tren InnoDB — du lieu khong sot lai');
 
 // Don dep
-$pdo->exec('DELETE FROM options WHERE opt_name LIKE "test_tx_%"');
+$pdo->exec('DELETE FROM site_settings WHERE skey LIKE "test_tx_%"');
 
 // ================================================================
 section('M1 — removeExpired() tren MySQL that');
 
-$pdo->exec('DELETE FROM login_token');
+$pdo->exec('DELETE FROM login_tokens');
 $old = date('Y-m-d H:i:s', time() - 3600);
 $new = date('Y-m-d H:i:s', time() - 60);
-$ins = $pdo->prepare('INSERT INTO login_token (user_id,token,create_at,client_ip,current_activity) VALUES (?,?,?,?,?)');
+$ins = $pdo->prepare('INSERT INTO login_tokens (user_id,token,create_at,client_ip,current_activity) VALUES (?,?,?,?,?)');
 $ins->execute([15, Hash::randomToken(), $new, '127.0.0.1', $new]);
 $ins->execute([16, Hash::randomToken(), $old, '127.0.0.1', $old]);
 $ins->execute([17, Hash::randomToken(), $old, '127.0.0.1', null]);
 
 (new LoginToken())->removeExpired(15);
-$left = $pdo->query('SELECT COUNT(*) FROM login_token')->fetchColumn();
+$left = $pdo->query('SELECT COUNT(*) FROM login_tokens')->fetchColumn();
 ok($left == 1, 'removeExpired() giu lai dung 1 token con song', "con: $left");
 
 // Token dai 64 ky tu phai luu vua cot varchar(100)
-$tok = $pdo->query('SELECT token FROM login_token LIMIT 1')->fetchColumn();
+$tok = $pdo->query('SELECT token FROM login_tokens LIMIT 1')->fetchColumn();
 ok(strlen($tok) === 64, 'Token 64 ky tu luu du trong cot (khong bi cat)', 'dai: ' . strlen($tok));
 
 // ================================================================
 section('M2 — utf8mb4 tren MySQL that');
 
-$pdo->exec('DELETE FROM options WHERE opt_name = "test_utf8"');
+$pdo->exec('DELETE FROM site_settings WHERE skey = "test_utf8"');
 $db2 = new Database();
 $emoji = 'Tiếng Việt có dấu 🚗 phụ tùng ô tô';
-$db2->insert('options', ['opt_name' => 'test_utf8', 'opt_value' => $emoji]);
-$back = $pdo->query('SELECT opt_value FROM options WHERE opt_name="test_utf8"')->fetchColumn();
+$db2->insert('site_settings', ['skey' => 'test_utf8', 'svalue' => $emoji]);
+$back = $pdo->query('SELECT svalue FROM site_settings WHERE skey="test_utf8"')->fetchColumn();
 ok($back === $emoji, 'Luu/doc duoc tieng Viet + emoji (utf8mb4)', $back);
-$pdo->exec('DELETE FROM options WHERE opt_name = "test_utf8"');
+$pdo->exec('DELETE FROM site_settings WHERE skey = "test_utf8"');
 
 // ================================================================
 section('EMULATE_PREPARES=false tren MySQL that');

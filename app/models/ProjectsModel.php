@@ -3,11 +3,14 @@
 use App\core\Model;
 
 /**
- * CMS — Dự án / công trình (portfolio). Bảng `projects` (KHÁC acc_projects/Mã vụ việc).
+ * CMS — Dự án / công trình (portfolio) hiển thị trên website.
+ *
+ * Bảng `site_projects`. KHÁC `acc_projects` (mã vụ việc bên kế toán) — trước
+ * đây bảng này tên `projects` nên rất dễ nhầm hai thứ với nhau.
  */
 class ProjectsModel extends Model {
 
-    protected $_table   = 'projects';
+    protected $_table   = 'site_projects';
     protected $_fields  = '*';
     protected $_primary = 'id';
 

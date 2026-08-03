@@ -40,7 +40,7 @@ $pdo->exec("CREATE TABLE users (
     status INTEGER, group_id INTEGER, current_activity TEXT
 )");
 $pdo->exec("CREATE TABLE permissions (id INTEGER PRIMARY KEY AUTOINCREMENT, module_id INTEGER, group_id INTEGER, role TEXT)");
-$pdo->exec("CREATE TABLE login_token (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, token TEXT, create_at TEXT, client_ip TEXT, current_activity TEXT)");
+$pdo->exec("CREATE TABLE login_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, token TEXT, create_at TEXT, client_ip TEXT, current_activity TEXT)");
 
 $pdo->exec("INSERT INTO groups (name) VALUES ('Admin'),('Manager'),('Staff')");
 
@@ -173,7 +173,7 @@ $now    = time();
 $moi    = date('Y-m-d H:i:s', $now - 60);        // hoat dong 1 phut truoc
 $cu     = date('Y-m-d H:i:s', $now - 3600);      // hoat dong 60 phut truoc -> qua han
 
-$mk = $pdo->prepare("INSERT INTO login_token (user_id,token,create_at,client_ip,current_activity) VALUES (?,?,?,?,?)");
+$mk = $pdo->prepare("INSERT INTO login_tokens (user_id,token,create_at,client_ip,current_activity) VALUES (?,?,?,?,?)");
 $mk->execute([1, 'token_con_song', $moi, '127.0.0.1', $moi]);
 $mk->execute([2, 'token_qua_han',  $cu,  '127.0.0.1', $cu]);
 // Truong hop ban CU BO SOT: current_activity = NULL (dang nhap xong khong vao admin)

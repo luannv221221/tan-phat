@@ -14,9 +14,9 @@ class WarehouseTransferItemsModel extends Model {
     public function getByTransfer($transferId){
         return $this->table($this->_table)
             ->select('`warehouse_transfer_items`.*, `parts`.`code` AS part_code, '
-                   . '`parts`.`name` AS part_name, `product_units`.`name` AS unit_name')
+                   . '`parts`.`name` AS part_name, `part_units`.`name` AS unit_name')
             ->joinOn('parts', 'warehouse_transfer_items.part_id', 'parts.id')
-            ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id')
+            ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
             ->where('warehouse_transfer_items.transfer_id', '=', (int) $transferId)
             ->orderBy('warehouse_transfer_items.id', 'ASC')->get();
     }

@@ -17,9 +17,9 @@ class GoodsIssueItemsModel extends Model {
     public function getByIssue($issueId){
         return $this->table($this->_table)
             ->select('`goods_issue_items`.*, `parts`.`code` AS part_code, '
-                   . '`parts`.`name` AS part_name, `product_units`.`name` AS unit_name')
+                   . '`parts`.`name` AS part_name, `part_units`.`name` AS unit_name')
             ->joinOn('parts', 'goods_issue_items.part_id', 'parts.id')
-            ->leftJoinOn('product_units', 'parts.unit_id', 'product_units.id')
+            ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
             ->where('goods_issue_items.issue_id', '=', (int) $issueId)
             ->orderBy('goods_issue_items.id', 'ASC')->get();
     }
