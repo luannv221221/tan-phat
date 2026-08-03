@@ -17,7 +17,7 @@ foreach (scandir(__DIR__ . '/../configs') as $f){ if ($f!=='.'&&$f!=='..') requi
 use App\core\Database;
 
 $M = __DIR__ . '/../app/models/';
-foreach (['StocksModel','AccAccountsModel','AccVouchersModel','AccVoucherEntriesModel',
+foreach (['StocksModel',
           'GoodsReceiptsModel','SalesInvoicesModel','OrdersModel','OrderItemsModel',
           'StockReservationsModel','QuotationsModel','QuotationItemsModel',
           'WarehouseLocationsModel','WarrantyRequestsModel','WarrantyHandoversModel'] as $m){
@@ -26,9 +26,6 @@ foreach (['StocksModel','AccAccountsModel','AccVouchersModel','AccVoucherEntries
 
 $db    = new Database();
 $stock = new StocksModel();
-$acc   = new AccAccountsModel();
-$vch   = new AccVouchersModel();
-$ent   = new AccVoucherEntriesModel();
 $recM  = new GoodsReceiptsModel();
 $invM  = new SalesInvoicesModel();
 $ordM  = new OrdersModel();
@@ -54,9 +51,8 @@ if (!$force && idOf($db,'parts','code','PT-0001') > 0){
 
 $log("== SEED DEMO — DB " . _DB . " ==");
 
-// ---------- tài khoản kế toán ----------
-$A = [];
-foreach (['131','156','331','511','3331','632','711'] as $c){ $r=$acc->findByCode($c); $A[$c]= $r? (int)$r['id'] : 0; }
+// Phân hệ kế toán đã được gỡ khỏi hệ thống (migration 000048), nên seed không
+// còn sinh phiếu kế toán nữa — chỉ ghi sổ kho và chốt số liệu chứng từ.
 $whId = idOf($db,'warehouses','code','KHO01');
 
 // ---------- 1) Cấu hình website ----------
@@ -140,9 +136,9 @@ $log("- Kho KHO02 + cay vi tri KHO01");
 
 // ---------- 4) Phụ tùng ----------
 $cat=function($n) use($db){ return idOf($db,'part_categories','name',$n); };
-$pb =function($n) use($db){ return idOf($db,'product_brands','name',$n); };
-$un =function($n) use($db){ return idOf($db,'product_units','name',$n); };
-$org=function($n) use($db){ return idOf($db,'product_origins','name',$n); };
+$pb =function($n) use($db){ return idOf($db,'part_brands','name',$n); };
+$un =function($n) use($db){ return idOf($db,'part_units','name',$n); };
+$org=function($n) use($db){ return idOf($db,'part_origins','name',$n); };
 // [code, oem, name, cat, brand, unit, origin, price, sale, warranty]
 $parts = [
     ['PT-0001','04465-0D260','Má phanh trước Toyota Vios','Má phanh','Bosch','Bộ','Nhật Bản',650000,590000,6],
@@ -198,24 +194,17 @@ $pnId=function($code) use($db){ return idOf($db,'partners','code',$code); };
 
 // ---------- 6) Nhập kho (ghi sổ: tồn + KT-6) ----------
 $seedReceipt = function($whId,$partnerCode,$partnerName,$date,$lines,$type='nhap_mua')
-    use($db,$recM,$stock,$vch,$ent,$A,$pnId,$now){
+    use($db,$recM,$stock,$pnId,$now){
     $no=$recM->nextNo();
     $total=0.0; foreach($lines as $l){ $total += $l[1]*$l[2]; }
     $partnerId = $partnerCode ? ($pnId($partnerCode)?:null) : null;
     $recId=$recM->add(['receipt_no'=>$no,'receipt_type'=>$type,'warehouse_id'=>$whId,
-        'partner_id'=>$partnerId,'partner_name'=>$partnerName,'counter_account_id'=>$A['331']?:null,
+        'partner_id'=>$partnerId,'partner_name'=>$partnerName,
         'receipt_date'=>$date,'reason'=>'Nhập mua hàng','total_amount'=>$total,'status'=>1,'created_by'=>1]);
     foreach($lines as $l){
         $amt=round($l[1]*$l[2],2);
         $db->insert('goods_receipt_items',['receipt_id'=>$recId,'part_id'=>$l[0],'quantity'=>$l[1],'unit_cost'=>$l[2],'amount'=>$amt,'location'=>isset($l[3])?$l[3]:null,'location_id'=>null,'note'=>null]);
         $stock->applyIn($whId,$l[0],$l[1],$l[2],'receipt',$recId,$no,$date,null);
-    }
-    if ($A['156']&&$A['331']){
-        $vid=$vch->add(['voucher_no'=>$vch->nextNo('ke_toan'),'voucher_type'=>'ke_toan','voucher_date'=>$date,
-            'cash_account_id'=>null,'partner_id'=>$partnerId,'partner_name'=>$partnerName,
-            'reason'=>'Tự động từ phiếu nhập '.$no,'amount'=>$total,'status'=>1]);
-        $ent->addJournalLine($vid,$A['156'],$A['331'],$total,'Nhập kho '.$no);
-        $recM->edit(['acc_voucher_id'=>$vid],$recId);
     }
     return $recId;
 };
@@ -233,12 +222,12 @@ if ($force || $db->table('goods_receipts')->where('reason','=','Nhập mua hàng
         [$pid('PT-0002'),22,480000],[$pid('PT-0009'),12,1900000],[$pid('PT-0010'),8,2900000],
         [$pid('PT-0011'),16,1450000],[$pid('PT-0012'),24,470000],
     ]);
-    $log("- Nhap kho: 3 phieu (da ghi so + KT-6)");
+    $log("- Nhap kho: 3 phieu (da ghi so)");
 }
 
 // ---------- 7) Hoá đơn bán (ghi sổ: doanh thu/thuế/giá vốn + trừ tồn) ----------
 $seedInvoice = function($whId,$custCode,$custName,$date,$vat,$lines,$issueEinvoice=false)
-    use($db,$invM,$stock,$vch,$ent,$A,$pnId,$now){
+    use($db,$invM,$stock,$pnId,$now){
     $no=$invM->nextNo(); $custId=$custCode?($pnId($custCode)?:null):null;
     $invId=$invM->add(['invoice_no'=>$no,'customer_id'=>$custId,'customer_name'=>$custName,'warehouse_id'=>$whId,
         'invoice_date'=>$date,'vat_rate'=>$vat,'subtotal'=>0,'tax_amount'=>0,'total_amount'=>0,'cost_amount'=>0,'status'=>0,'created_by'=>1]);
@@ -252,14 +241,8 @@ $seedInvoice = function($whId,$custCode,$custName,$date,$vat,$lines,$issueEinvoi
     }
     $tax=round($sub*$vat/100,2);$tot=$sub+$tax;
     $ei = $issueEinvoice ? ['einvoice_status'=>'issued','einvoice_serial'=>'K26TTP','einvoice_form'=>'1','einvoice_no'=>$invM->nextEinvoiceNo(),'einvoice_issued_at'=>$now] : [];
-    if ($A['131']&&$A['511']){
-        $vid=$vch->add(['voucher_no'=>$vch->nextNo('ke_toan'),'voucher_type'=>'ke_toan','voucher_date'=>$date,
-            'cash_account_id'=>null,'partner_id'=>$custId,'partner_name'=>$custName,'reason'=>'Tự động từ hoá đơn '.$no,'amount'=>$tot,'status'=>1]);
-        $ent->addJournalLine($vid,$A['131'],$A['511'],$sub,'Doanh thu '.$no);
-        if ($tax>0) $ent->addJournalLine($vid,$A['131'],$A['3331'],$tax,'Thuế GTGT '.$no);
-        if ($cost>0) $ent->addJournalLine($vid,$A['632'],$A['156'],$cost,'Giá vốn '.$no);
-        $invM->edit(array_merge(['status'=>1,'subtotal'=>$sub,'tax_amount'=>$tax,'total_amount'=>$tot,'cost_amount'=>$cost,'acc_voucher_id'=>$vid],$ei),$invId);
-    }
+    $invM->edit(array_merge(['status'=>1,'subtotal'=>$sub,'tax_amount'=>$tax,
+        'total_amount'=>$tot,'cost_amount'=>$cost],$ei),$invId);
     return $invId;
 };
 $seedInvoice($whId,'KH-0001','Garage Thành Công','2026-06-10',10,[
@@ -343,42 +326,12 @@ $reviews=[
 ];
 $nRev=0;
 foreach($reviews as $rv){ $piid=idOf($db,'parts','code',$rv[0]); if($piid<=0)continue;
-    $db->insert('product_reviews',['part_id'=>$piid,'member_id'=>null,'author_name'=>$rv[1],'rating'=>$rv[2],'comment'=>$rv[3],'status'=>1,'create_at'=>$now]); $nRev++; }
+    $db->insert('part_reviews',['part_id'=>$piid,'member_id'=>null,'author_name'=>$rv[1],'rating'=>$rv[2],'comment'=>$rv[3],'status'=>1,'create_at'=>$now]); $nRev++; }
 $log("- Danh gia SP: +$nRev (da duyet)");
 
-// ---------- 12) Nhân sự ----------
-$deptId=function($n) use($db){ return idOf($db,'departments','name',$n); };
-$posAll=$db->table('positions')->orderBy('id','ASC')->get(); $posIds=array_map(function($p){return (int)$p['id'];},$posAll?:[]);
-$ppick=function($i) use($posIds){ return !empty($posIds)?$posIds[$i%count($posIds)]:null; };
-$emps=[
-    ['NV-001','Nguyễn Văn An','Phòng Kinh doanh','Nam','1988-04-12','0901111001','an.nv@tanphat.vn','2020-01-15',15000000],
-    ['NV-002','Trần Thị Bình','Phòng Kinh doanh','Nữ','1992-08-20','0901111002','binh.tt@tanphat.vn','2021-03-01',12000000],
-    ['NV-003','Lê Hoàng Cường','Phòng Kho vận','Nam','1990-11-05','0901111003','cuong.lh@tanphat.vn','2019-06-10',13000000],
-    ['NV-004','Phạm Thị Dung','Phòng Kế toán','Nữ','1991-02-28','0901111004','dung.pt@tanphat.vn','2020-09-01',14000000],
-    ['NV-005','Hoàng Văn Em','Phòng Kỹ thuật','Nam','1987-07-17','0901111005','em.hv@tanphat.vn','2018-02-20',16000000],
-    ['NV-006','Vũ Thị Giang','Phòng Kỹ thuật','Nữ','1994-12-03','0901111006','giang.vt@tanphat.vn','2022-05-15',11000000],
-    ['NV-007','Đặng Quốc Huy','Phòng Kho vận','Nam','1993-05-25','0901111007','huy.dq@tanphat.vn','2021-11-08',11500000],
-    ['NV-008','Bùi Thị Lan','Phòng Kế toán','Nữ','1995-09-14','0901111008','lan.bt@tanphat.vn','2023-01-03',10500000],
-];
-$nEmp=0;$i=0;
-foreach($emps as $e){
-    if (idOf($db,'employees','code',$e[0])>0){$i++;continue;}
-    $db->insert('employees',['code'=>$e[0],'name'=>$e[1],'department_id'=>$deptId($e[2])?:null,'position_id'=>$ppick($i),
-        'gender'=>$e[3],'dob'=>$e[4],'phone'=>$e[5],'email'=>$e[6],'address'=>'Hà Nội','hire_date'=>$e[7],'salary_base'=>$e[8],'status'=>1,'create_at'=>$now]);
-    $nEmp++;$i++;
-}
-$log("- Nhan vien: +$nEmp");
-// đơn nghỉ phép
-$empId=function($c) use($db){ return idOf($db,'employees','code',$c); };
-$leaves=[
-    ['NV-002','Nghỉ phép năm','2026-07-22','2026-07-24',3,'Về quê','pending'],
-    ['NV-005','Nghỉ ốm','2026-06-10','2026-06-11',2,'Khám bệnh','approved'],
-    ['NV-007','Nghỉ phép năm','2026-05-02','2026-05-03',2,'Việc gia đình','approved'],
-];
-foreach($leaves as $lv){ $eid=$empId($lv[0]); if($eid<=0)continue;
-    if ($db->table('leave_requests')->where('employee_id','=',$eid)->where('from_date','=',$lv[2])->first()) continue;
-    $db->insert('leave_requests',['employee_id'=>$eid,'leave_type'=>$lv[1],'from_date'=>$lv[2],'to_date'=>$lv[3],'days'=>$lv[4],'reason'=>$lv[5],'status'=>$lv[6],'created_by'=>1,'create_at'=>$now]); }
-$log("- Don nghi phep: 3");
+// ---------- 12) Nhân sự — ĐÃ GỠ ----------
+// Phân hệ nhân sự bị gỡ khỏi hệ thống (migration 000048): không còn
+// controller, model, view lẫn bảng CSDL, nên seed cũng bỏ luôn phần này.
 
 // ---------- 13) Nội dung web: tin tức + dự án + thư viện ----------
 $ncAll=$db->table('news_categories')->orderBy('id','ASC')->get();
@@ -409,8 +362,8 @@ $projects=[
 $nProj=0;
 foreach($projects as $k=>$p){
     $slug=slugify_($p[0]);
-    if (idOf($db,'projects','slug',$slug)>0) continue;
-    $db->insert('projects',['name'=>$p[0],'slug'=>$slug,'meta_title'=>$p[0],'meta_description'=>$p[3],'client'=>$p[1],'location'=>$p[2],
+    if (idOf($db,'site_projects','slug',$slug)>0) continue;
+    $db->insert('site_projects',['name'=>$p[0],'slug'=>$slug,'meta_title'=>$p[0],'meta_description'=>$p[3],'client'=>$p[1],'location'=>$p[2],
         'summary'=>$p[3],'content'=>'<p>'.$p[3].'</p>','thumbnail'=>null,'completed_at'=>date('Y-m-d',strtotime('-'.($k*30+15).' days')),
         'is_published'=>1,'sort_order'=>$k,'created_by'=>1,'create_at'=>$now]); $nProj++;
 }

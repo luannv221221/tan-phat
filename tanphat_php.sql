@@ -1,7 +1,7 @@
 -- ============================================================
 -- CSDL TAN PHAT ERP — ban xuat de ban giao
--- Sinh ngay: 03/08/2026 07:26  |  Server nguon: MySQL 8.0.44
--- So bang: 70
+-- Sinh ngay: 03/08/2026 10:40  |  Server nguon: MySQL 8.0.44
+-- So bang: 61
 --
 -- CACH NAP:
 --   1. Tao CSDL rong (file nay KHONG co lenh CREATE DATABASE):
@@ -19,189 +19,6 @@ START TRANSACTION;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
-
--- --------------------------------------------------------
--- Bang `acc_accounts`
--- --------------------------------------------------------
-
-DROP TABLE IF EXISTS `acc_accounts`;
-CREATE TABLE `acc_accounts` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `code` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `parent_id` int DEFAULT NULL,
-  `type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'other',
-  `is_detail` tinyint(1) NOT NULL DEFAULT '1',
-  `sort_order` int NOT NULL DEFAULT '0',
-  `status` tinyint(1) NOT NULL DEFAULT '1',
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_acc_accounts_code` (`code`),
-  KEY `idx_acc_accounts_parent` (`parent_id`),
-  CONSTRAINT `fk_acc_accounts_parent` FOREIGN KEY (`parent_id`) REFERENCES `acc_accounts` (`id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `acc_accounts` (`id`, `code`, `name`, `parent_id`, `type`, `is_detail`, `sort_order`, `status`, `create_at`, `update_at`) VALUES
-('1', '111', 'Tiền mặt', NULL, 'asset', '1', '0', '1', '2026-07-18 05:49:08', NULL),
-('2', '112', 'Tiền gửi ngân hàng', NULL, 'asset', '1', '1', '1', '2026-07-18 05:49:08', NULL),
-('3', '131', 'Phải thu của khách hàng', NULL, 'asset', '1', '2', '1', '2026-07-18 05:49:08', NULL),
-('4', '133', 'Thuế GTGT được khấu trừ', NULL, 'asset', '1', '3', '1', '2026-07-18 05:49:08', NULL),
-('5', '156', 'Hàng hóa', NULL, 'asset', '1', '4', '1', '2026-07-18 05:49:08', NULL),
-('6', '211', 'Tài sản cố định hữu hình', NULL, 'asset', '1', '5', '1', '2026-07-18 05:49:08', NULL),
-('7', '331', 'Phải trả cho người bán', NULL, 'liability', '1', '6', '1', '2026-07-18 05:49:08', NULL),
-('8', '333', 'Thuế và các khoản phải nộp NN', NULL, 'liability', '1', '7', '1', '2026-07-18 05:49:08', NULL),
-('9', '334', 'Phải trả người lao động', NULL, 'liability', '1', '8', '1', '2026-07-18 05:49:08', NULL),
-('10', '411', 'Vốn đầu tư của chủ sở hữu', NULL, 'equity', '1', '9', '1', '2026-07-18 05:49:08', NULL),
-('11', '421', 'Lợi nhuận sau thuế chưa PP', NULL, 'equity', '1', '10', '1', '2026-07-18 05:49:08', NULL),
-('12', '511', 'Doanh thu bán hàng và CCDV', NULL, 'revenue', '1', '11', '1', '2026-07-18 05:49:08', NULL),
-('13', '515', 'Doanh thu hoạt động tài chính', NULL, 'revenue', '1', '12', '1', '2026-07-18 05:49:08', NULL),
-('14', '632', 'Giá vốn hàng bán', NULL, 'expense', '1', '13', '1', '2026-07-18 05:49:08', NULL),
-('15', '635', 'Chi phí tài chính', NULL, 'expense', '1', '14', '1', '2026-07-18 05:49:08', NULL),
-('16', '641', 'Chi phí bán hàng', NULL, 'expense', '1', '15', '1', '2026-07-18 05:49:08', NULL),
-('17', '642', 'Chi phí quản lý doanh nghiệp', NULL, 'expense', '1', '16', '1', '2026-07-18 05:49:08', NULL),
-('18', '711', 'Thu nhập khác', NULL, 'revenue', '1', '17', '1', '2026-07-18 05:49:08', NULL),
-('19', '811', 'Chi phí khác', NULL, 'expense', '1', '18', '1', '2026-07-18 05:49:08', NULL),
-('20', '141', 'Tạm ứng', NULL, 'asset', '1', '19', '1', '2026-07-18 06:10:16', NULL),
-('21', '138', 'Phải thu khác', NULL, 'asset', '1', '20', '1', '2026-07-18 06:10:16', NULL),
-('22', '153', 'Công cụ, dụng cụ', NULL, 'asset', '1', '21', '1', '2026-07-18 06:10:16', NULL),
-('23', '154', 'Chi phí SXKD dở dang (dịch vụ)', NULL, 'asset', '1', '22', '1', '2026-07-18 06:10:16', NULL),
-('24', '338', 'Phải trả, phải nộp khác', NULL, 'liability', '1', '23', '1', '2026-07-18 06:10:16', NULL),
-('25', '3331', 'Thuế GTGT phải nộp', NULL, 'liability', '1', '24', '1', '2026-07-18 06:10:16', NULL);
-
--- --------------------------------------------------------
--- Bang `acc_cost_items`
--- --------------------------------------------------------
-
-DROP TABLE IF EXISTS `acc_cost_items`;
-CREATE TABLE `acc_cost_items` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `code` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort_order` int NOT NULL DEFAULT '0',
-  `status` tinyint(1) NOT NULL DEFAULT '1',
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_acc_cost_items_code` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
--- Bang `acc_projects`
--- --------------------------------------------------------
-
-DROP TABLE IF EXISTS `acc_projects`;
-CREATE TABLE `acc_projects` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `code` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `sort_order` int NOT NULL DEFAULT '0',
-  `status` tinyint(1) NOT NULL DEFAULT '1',
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_acc_projects_code` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
--- Bang `acc_voucher_entries`
--- --------------------------------------------------------
-
-DROP TABLE IF EXISTS `acc_voucher_entries`;
-CREATE TABLE `acc_voucher_entries` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `voucher_id` int NOT NULL,
-  `account_id` int DEFAULT NULL,
-  `debit_account_id` int DEFAULT NULL,
-  `credit_account_id` int DEFAULT NULL,
-  `amount` decimal(15,2) NOT NULL DEFAULT '0.00',
-  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `cost_item_id` int DEFAULT NULL,
-  `project_id` int DEFAULT NULL,
-  `create_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_ave_voucher` (`voucher_id`),
-  KEY `idx_ave_account` (`account_id`),
-  KEY `fk_ave_cost_item` (`cost_item_id`),
-  KEY `fk_ave_project` (`project_id`),
-  KEY `fk_ave_debit` (`debit_account_id`),
-  KEY `fk_ave_credit` (`credit_account_id`),
-  CONSTRAINT `fk_ave_account` FOREIGN KEY (`account_id`) REFERENCES `acc_accounts` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `fk_ave_cost_item` FOREIGN KEY (`cost_item_id`) REFERENCES `acc_cost_items` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_ave_credit` FOREIGN KEY (`credit_account_id`) REFERENCES `acc_accounts` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `fk_ave_debit` FOREIGN KEY (`debit_account_id`) REFERENCES `acc_accounts` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `fk_ave_project` FOREIGN KEY (`project_id`) REFERENCES `acc_projects` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_ave_voucher` FOREIGN KEY (`voucher_id`) REFERENCES `acc_vouchers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `acc_voucher_entries` (`id`, `voucher_id`, `account_id`, `debit_account_id`, `credit_account_id`, `amount`, `description`, `cost_item_id`, `project_id`, `create_at`) VALUES
-('11', '11', NULL, '5', '7', '6000000.00', 'Nhập kho PNK-000001', NULL, NULL, '2026-07-18 11:19:08'),
-('15', '13', NULL, '5', '7', '6000000.00', 'Nhập kho PNK-000001', NULL, NULL, '2026-07-18 16:38:33'),
-('16', '14', NULL, '14', '5', '300000.00', 'Hàng thiếu PKK-000001', NULL, NULL, '2026-07-18 16:46:20'),
-('18', '16', NULL, '5', '7', '10000000.00', 'Nhập kho PNK-000001', NULL, NULL, '2026-07-19 04:45:40'),
-('19', '17', NULL, '3', '12', '1050000.00', 'Doanh thu HD-000001', NULL, NULL, '2026-07-19 04:45:42'),
-('20', '17', NULL, '14', '5', '600000.00', 'Giá vốn HD-000001', NULL, NULL, '2026-07-19 04:45:42'),
-('21', '18', NULL, '5', '7', '1000000.00', 'Nhập kho PNK-000001', NULL, NULL, '2026-07-19 06:36:36'),
-('22', '19', NULL, '5', '7', '600000.00', 'Nhập kho PNK-000002', NULL, NULL, '2026-07-19 06:36:56'),
-('23', '20', NULL, '3', '12', '950000.00', 'Doanh thu HD-000001', NULL, NULL, '2026-07-19 10:32:57'),
-('24', '20', NULL, '3', '25', '95000.00', 'Thuế GTGT HD-000001', NULL, NULL, '2026-07-19 10:32:57'),
-('25', '20', NULL, '14', '5', '600000.00', 'Giá vốn HD-000001', NULL, NULL, '2026-07-19 10:32:57'),
-('26', '21', NULL, '5', '7', '76550000.00', 'Nhập kho PNK-000001', NULL, NULL, '2026-07-19 11:11:57'),
-('27', '22', NULL, '5', '7', '63200000.00', 'Nhập kho PNK-000002', NULL, NULL, '2026-07-19 11:11:57'),
-('28', '23', NULL, '5', '7', '91040000.00', 'Nhập kho PNK-000003', NULL, NULL, '2026-07-19 11:11:57'),
-('29', '24', NULL, '3', '12', '4473040.00', 'Doanh thu HD-000001', NULL, NULL, '2026-07-19 11:11:57'),
-('30', '24', NULL, '3', '25', '447304.00', 'Thuế GTGT HD-000001', NULL, NULL, '2026-07-19 11:11:57'),
-('31', '24', NULL, '14', '5', '3420000.00', 'Giá vốn HD-000001', NULL, NULL, '2026-07-19 11:11:57'),
-('32', '25', NULL, '3', '12', '10488000.00', 'Doanh thu HD-000002', NULL, NULL, '2026-07-19 11:11:57'),
-('33', '25', NULL, '3', '25', '1048800.00', 'Thuế GTGT HD-000002', NULL, NULL, '2026-07-19 11:11:57'),
-('34', '25', NULL, '14', '5', '8250000.00', 'Giá vốn HD-000002', NULL, NULL, '2026-07-19 11:11:57'),
-('35', '26', NULL, '3', '12', '1154000.00', 'Doanh thu HD-000003', NULL, NULL, '2026-07-19 11:11:57'),
-('36', '26', NULL, '3', '25', '115400.00', 'Thuế GTGT HD-000003', NULL, NULL, '2026-07-19 11:11:57'),
-('37', '26', NULL, '14', '5', '820000.00', 'Giá vốn HD-000003', NULL, NULL, '2026-07-19 11:11:57');
-
--- --------------------------------------------------------
--- Bang `acc_vouchers`
--- --------------------------------------------------------
-
-DROP TABLE IF EXISTS `acc_vouchers`;
-CREATE TABLE `acc_vouchers` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `voucher_no` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `voucher_type` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `voucher_date` date NOT NULL,
-  `cash_account_id` int DEFAULT NULL,
-  `partner_id` int DEFAULT NULL,
-  `partner_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `amount` decimal(15,2) NOT NULL DEFAULT '0.00',
-  `status` tinyint(1) NOT NULL DEFAULT '0',
-  `created_by` int DEFAULT NULL,
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_acc_vouchers_no` (`voucher_no`),
-  KEY `idx_acc_vouchers_date` (`voucher_date`),
-  KEY `idx_acc_vouchers_cash` (`cash_account_id`),
-  KEY `idx_acc_vouchers_partner` (`partner_id`),
-  CONSTRAINT `fk_acc_vouchers_cash` FOREIGN KEY (`cash_account_id`) REFERENCES `acc_accounts` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `fk_acc_vouchers_partner` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `acc_vouchers` (`id`, `voucher_no`, `voucher_type`, `voucher_date`, `cash_account_id`, `partner_id`, `partner_name`, `reason`, `amount`, `status`, `created_by`, `create_at`, `update_at`) VALUES
-('11', 'PKT-000001', 'ke_toan', '2026-07-10', NULL, NULL, NULL, 'Tự động từ phiếu nhập PNK-000001', '6000000.00', '1', NULL, '2026-07-18 11:19:08', NULL),
-('13', 'PKT-000002', 'ke_toan', '2026-07-10', NULL, NULL, NULL, 'Tự động từ phiếu nhập PNK-000001', '6000000.00', '1', NULL, '2026-07-18 16:38:33', NULL),
-('14', 'PKT-000003', 'ke_toan', '2026-07-13', NULL, NULL, NULL, 'Tự động từ kiểm kê PKK-000001', '300000.00', '1', NULL, '2026-07-18 16:46:20', NULL),
-('16', 'PKT-000004', 'ke_toan', '2026-07-10', NULL, NULL, NULL, 'Tự động từ phiếu nhập PNK-000001', '10000000.00', '1', NULL, '2026-07-19 04:45:40', NULL),
-('17', 'PKT-000005', 'ke_toan', '2026-07-19', NULL, NULL, 'Khach Web', 'Tự động từ hoá đơn HD-000001', '1050000.00', '1', NULL, '2026-07-19 04:45:42', NULL),
-('18', 'PKT-000006', 'ke_toan', '2026-05-01', NULL, NULL, NULL, 'Tự động từ phiếu nhập PNK-000001', '1000000.00', '1', NULL, '2026-07-19 06:36:36', NULL),
-('19', 'PKT-000007', 'ke_toan', '2026-06-15', NULL, NULL, NULL, 'Tự động từ phiếu nhập PNK-000002', '600000.00', '1', NULL, '2026-07-19 06:36:56', NULL),
-('20', 'PKT-000008', 'ke_toan', '2026-07-19', NULL, NULL, NULL, 'Tự động từ hoá đơn HD-000001', '1045000.00', '1', NULL, '2026-07-19 10:32:57', NULL),
-('21', 'PKT-000009', 'ke_toan', '2026-03-05', NULL, '8', 'Công ty Bosch Việt Nam', 'Tự động từ phiếu nhập PNK-000001', '76550000.00', '1', NULL, '2026-07-19 11:11:57', NULL),
-('22', 'PKT-000010', 'ke_toan', '2026-04-12', NULL, '9', 'NCC Phụ tùng Miền Bắc', 'Tự động từ phiếu nhập PNK-000002', '63200000.00', '1', NULL, '2026-07-19 11:11:57', NULL),
-('23', 'PKT-000011', 'ke_toan', '2026-05-20', NULL, '8', 'Công ty Bosch Việt Nam', 'Tự động từ phiếu nhập PNK-000003', '91040000.00', '1', NULL, '2026-07-19 11:11:57', NULL),
-('24', 'PKT-000012', 'ke_toan', '2026-06-10', NULL, '4', 'Garage Thành Công', 'Tự động từ hoá đơn HD-000001', '4920344.00', '1', NULL, '2026-07-19 11:11:57', NULL),
-('25', 'PKT-000013', 'ke_toan', '2026-06-25', NULL, '5', 'Đại lý phụ tùng Phú Sơn', 'Tự động từ hoá đơn HD-000002', '11536800.00', '1', NULL, '2026-07-19 11:11:57', NULL),
-('26', 'PKT-000014', 'ke_toan', '2026-07-08', NULL, '6', 'Anh Nguyễn Văn Hùng', 'Tự động từ hoá đơn HD-000003', '1269400.00', '1', NULL, '2026-07-19 11:11:57', NULL);
 
 -- --------------------------------------------------------
 -- Bang `banners`
@@ -524,69 +341,6 @@ INSERT INTO `customer_groups` (`id`, `name`, `discount_percent`, `note`, `sort_o
 ('3', 'Garage đối tác', '8.00', NULL, '2', '1', '2026-07-18 14:39:18', NULL);
 
 -- --------------------------------------------------------
--- Bang `departments`
--- --------------------------------------------------------
-
-DROP TABLE IF EXISTS `departments`;
-CREATE TABLE `departments` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `sort_order` int NOT NULL DEFAULT '0',
-  `status` tinyint(1) NOT NULL DEFAULT '1',
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `departments` (`id`, `code`, `name`, `description`, `sort_order`, `status`, `create_at`, `update_at`) VALUES
-('1', 'KD', 'Phòng Kinh doanh', NULL, '0', '1', '2026-07-19 04:00:53', NULL),
-('2', 'KHO', 'Phòng Kho vận', NULL, '1', '1', '2026-07-19 04:00:53', NULL),
-('3', 'KT', 'Phòng Kế toán', NULL, '2', '1', '2026-07-19 04:00:53', NULL),
-('4', 'KT2', 'Phòng Kỹ thuật', NULL, '3', '1', '2026-07-19 04:00:53', NULL);
-
--- --------------------------------------------------------
--- Bang `employees`
--- --------------------------------------------------------
-
-DROP TABLE IF EXISTS `employees`;
-CREATE TABLE `employees` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `department_id` int DEFAULT NULL,
-  `position_id` int DEFAULT NULL,
-  `gender` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `dob` date DEFAULT NULL,
-  `phone` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `email` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `address` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `hire_date` date DEFAULT NULL,
-  `salary_base` decimal(15,2) NOT NULL DEFAULT '0.00',
-  `status` tinyint(1) NOT NULL DEFAULT '1',
-  `note` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_employees_code` (`code`),
-  KEY `idx_emp_dept` (`department_id`),
-  KEY `idx_emp_pos` (`position_id`),
-  CONSTRAINT `fk_emp_dept` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_emp_pos` FOREIGN KEY (`position_id`) REFERENCES `positions` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `employees` (`id`, `code`, `name`, `department_id`, `position_id`, `gender`, `dob`, `phone`, `email`, `address`, `hire_date`, `salary_base`, `status`, `note`, `create_at`, `update_at`) VALUES
-('2', 'NV-001', 'Nguyễn Văn An', '1', '1', 'Nam', '1988-04-12', '0901111001', 'an.nv@tanphat.vn', 'Hà Nội', '2020-01-15', '15000000.00', '1', NULL, '2026-07-19 11:11:56', NULL),
-('3', 'NV-002', 'Trần Thị Bình', '1', '2', 'Nữ', '1992-08-20', '0901111002', 'binh.tt@tanphat.vn', 'Hà Nội', '2021-03-01', '12000000.00', '1', NULL, '2026-07-19 11:11:56', NULL),
-('4', 'NV-003', 'Lê Hoàng Cường', '2', '3', 'Nam', '1990-11-05', '0901111003', 'cuong.lh@tanphat.vn', 'Hà Nội', '2019-06-10', '13000000.00', '1', NULL, '2026-07-19 11:11:56', NULL),
-('5', 'NV-004', 'Phạm Thị Dung', '3', '4', 'Nữ', '1991-02-28', '0901111004', 'dung.pt@tanphat.vn', 'Hà Nội', '2020-09-01', '14000000.00', '1', NULL, '2026-07-19 11:11:56', NULL),
-('6', 'NV-005', 'Hoàng Văn Em', '4', '1', 'Nam', '1987-07-17', '0901111005', 'em.hv@tanphat.vn', 'Hà Nội', '2018-02-20', '16000000.00', '1', NULL, '2026-07-19 11:11:56', NULL),
-('7', 'NV-006', 'Vũ Thị Giang', '4', '2', 'Nữ', '1994-12-03', '0901111006', 'giang.vt@tanphat.vn', 'Hà Nội', '2022-05-15', '11000000.00', '1', NULL, '2026-07-19 11:11:56', NULL),
-('8', 'NV-007', 'Đặng Quốc Huy', '2', '3', 'Nam', '1993-05-25', '0901111007', 'huy.dq@tanphat.vn', 'Hà Nội', '2021-11-08', '11500000.00', '1', NULL, '2026-07-19 11:11:56', NULL),
-('9', 'NV-008', 'Bùi Thị Lan', '3', '4', 'Nữ', '1995-09-14', '0901111008', 'lan.bt@tanphat.vn', 'Hà Nội', '2023-01-03', '10500000.00', '1', NULL, '2026-07-19 11:11:56', NULL);
-
--- --------------------------------------------------------
 -- Bang `galleries`
 -- --------------------------------------------------------
 
@@ -666,12 +420,10 @@ CREATE TABLE `goods_issues` (
   `warehouse_id` int NOT NULL,
   `partner_id` int DEFAULT NULL,
   `partner_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `counter_account_id` int DEFAULT NULL,
   `issue_date` date NOT NULL,
   `reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `total_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
   `status` tinyint(1) NOT NULL DEFAULT '0',
-  `acc_voucher_id` int DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `create_at` datetime DEFAULT NULL,
   `update_at` datetime DEFAULT NULL,
@@ -680,11 +432,7 @@ CREATE TABLE `goods_issues` (
   KEY `idx_issue_wh` (`warehouse_id`),
   KEY `idx_issue_status` (`status`),
   KEY `fk_issue_partner` (`partner_id`),
-  KEY `fk_issue_counter` (`counter_account_id`),
-  KEY `fk_issue_voucher` (`acc_voucher_id`),
-  CONSTRAINT `fk_issue_counter` FOREIGN KEY (`counter_account_id`) REFERENCES `acc_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_issue_partner` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_issue_voucher` FOREIGN KEY (`acc_voucher_id`) REFERENCES `acc_vouchers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_issue_warehouse` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -742,12 +490,10 @@ CREATE TABLE `goods_receipts` (
   `warehouse_id` int NOT NULL,
   `partner_id` int DEFAULT NULL,
   `partner_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `counter_account_id` int DEFAULT NULL,
   `receipt_date` date NOT NULL,
   `reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `total_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
   `status` tinyint(1) NOT NULL DEFAULT '0',
-  `acc_voucher_id` int DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `create_at` datetime DEFAULT NULL,
   `update_at` datetime DEFAULT NULL,
@@ -756,18 +502,14 @@ CREATE TABLE `goods_receipts` (
   KEY `idx_receipt_wh` (`warehouse_id`),
   KEY `idx_receipt_status` (`status`),
   KEY `fk_receipt_partner` (`partner_id`),
-  KEY `fk_receipt_counter` (`counter_account_id`),
-  KEY `fk_receipt_voucher` (`acc_voucher_id`),
-  CONSTRAINT `fk_receipt_counter` FOREIGN KEY (`counter_account_id`) REFERENCES `acc_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_receipt_partner` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_receipt_voucher` FOREIGN KEY (`acc_voucher_id`) REFERENCES `acc_vouchers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_receipt_warehouse` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `goods_receipts` (`id`, `receipt_no`, `receipt_type`, `warehouse_id`, `partner_id`, `partner_name`, `counter_account_id`, `receipt_date`, `reason`, `total_amount`, `status`, `acc_voucher_id`, `created_by`, `create_at`, `update_at`) VALUES
-('8', 'PNK-000001', 'nhap_mua', '1', '8', 'Công ty Bosch Việt Nam', '7', '2026-03-05', 'Nhập mua hàng', '76550000.00', '1', '21', '1', '2026-07-19 11:11:57', '2026-07-19 11:11:57'),
-('9', 'PNK-000002', 'nhap_mua', '1', '9', 'NCC Phụ tùng Miền Bắc', '7', '2026-04-12', 'Nhập mua hàng', '63200000.00', '1', '22', '1', '2026-07-19 11:11:57', '2026-07-19 11:11:57'),
-('10', 'PNK-000003', 'nhap_mua', '1', '8', 'Công ty Bosch Việt Nam', '7', '2026-05-20', 'Nhập mua hàng', '91040000.00', '1', '23', '1', '2026-07-19 11:11:57', '2026-07-19 11:11:57');
+INSERT INTO `goods_receipts` (`id`, `receipt_no`, `receipt_type`, `warehouse_id`, `partner_id`, `partner_name`, `receipt_date`, `reason`, `total_amount`, `status`, `created_by`, `create_at`, `update_at`) VALUES
+('8', 'PNK-000001', 'nhap_mua', '1', '8', 'Công ty Bosch Việt Nam', '2026-03-05', 'Nhập mua hàng', '76550000.00', '1', '1', '2026-07-19 11:11:57', '2026-07-19 11:11:57'),
+('9', 'PNK-000002', 'nhap_mua', '1', '9', 'NCC Phụ tùng Miền Bắc', '2026-04-12', 'Nhập mua hàng', '63200000.00', '1', '1', '2026-07-19 11:11:57', '2026-07-19 11:11:57'),
+('10', 'PNK-000003', 'nhap_mua', '1', '8', 'Công ty Bosch Việt Nam', '2026-05-20', 'Nhập mua hàng', '91040000.00', '1', '1', '2026-07-19 11:11:57', '2026-07-19 11:11:57');
 
 -- --------------------------------------------------------
 -- Bang `groups`
@@ -788,35 +530,6 @@ INSERT INTO `groups` (`id`, `name`, `create_at`, `update_at`) VALUES
 ('11', 'Staff', NULL, NULL);
 
 -- --------------------------------------------------------
--- Bang `leave_requests`
--- --------------------------------------------------------
-
-DROP TABLE IF EXISTS `leave_requests`;
-CREATE TABLE `leave_requests` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `employee_id` int NOT NULL,
-  `leave_type` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'annual',
-  `from_date` date NOT NULL,
-  `to_date` date NOT NULL,
-  `days` decimal(4,1) NOT NULL DEFAULT '1.0',
-  `reason` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `status` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
-  `approver_note` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `created_by` int DEFAULT NULL,
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_leave_emp` (`employee_id`),
-  KEY `idx_leave_status` (`status`),
-  CONSTRAINT `fk_leave_emp` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `leave_requests` (`id`, `employee_id`, `leave_type`, `from_date`, `to_date`, `days`, `reason`, `status`, `approver_note`, `created_by`, `create_at`, `update_at`) VALUES
-('2', '3', 'Nghỉ phép năm', '2026-07-22', '2026-07-24', '3.0', 'Về quê', 'pending', NULL, '1', '2026-07-19 11:11:56', NULL),
-('3', '6', 'Nghỉ ốm', '2026-06-10', '2026-06-11', '2.0', 'Khám bệnh', 'approved', NULL, '1', '2026-07-19 11:11:56', NULL),
-('4', '8', 'Nghỉ phép năm', '2026-05-02', '2026-05-03', '2.0', 'Việc gia đình', 'approved', NULL, '1', '2026-07-19 11:11:56', NULL);
-
--- --------------------------------------------------------
 -- Bang `login_tokens`
 -- --------------------------------------------------------
 
@@ -835,7 +548,7 @@ CREATE TABLE `login_tokens` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `login_tokens` (`id`, `user_id`, `token`, `create_at`, `client_ip`, `current_activity`) VALUES
-('274', '15', '38f01dbd890d357d625b3bd11a62f36e5b33f6a41b5adb18a2bfb1c7891a97e6', '2026-08-03 07:24:25', '127.0.0.1', '2026-08-03 07:24:25');
+('277', '15', 'c35f7d951daea71a4b990c1fcd13d5b3755a2e7ea2720dcababb71a3ac87b4a8', '2026-08-03 10:38:42', '127.0.0.1', '2026-08-03 10:38:42');
 
 -- --------------------------------------------------------
 -- Bang `members`
@@ -948,7 +661,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`, `ran_at`) VALUES
 ('41', '2026_07_28_000044_register_customers_module', '31', '2026-08-03 07:23:10'),
 ('42', '2026_07_28_000045_orders_split_address', '31', '2026-08-03 07:23:10'),
 ('43', '2026_07_29_000046_rename_phu_tung_to_hang_hoa', '31', '2026-08-03 07:23:10'),
-('44', '2026_08_03_000047_chuan_hoa_ten_bang_va_rang_buoc', '31', '2026-08-03 07:23:11');
+('44', '2026_08_03_000047_chuan_hoa_ten_bang_va_rang_buoc', '31', '2026-08-03 07:23:11'),
+('45', '2026_08_03_000048_go_bo_ke_toan_va_nhan_su', '32', '2026-08-03 10:39:10');
 
 -- --------------------------------------------------------
 -- Bang `modules`
@@ -981,16 +695,7 @@ INSERT INTO `modules` (`id`, `name`, `link`, `create_at`, `update_at`) VALUES
 ('19', 'Đời xe', 'car-years', '2026-07-18 04:24:33', NULL),
 ('20', 'Danh mục hàng hoá', 'part-categories', '2026-07-18 04:24:33', '2026-08-03 07:23:10'),
 ('21', 'Thông số kỹ thuật', 'attributes', '2026-07-18 05:27:04', NULL),
-('22', 'Danh mục tài khoản', 'accounts', '2026-07-18 05:49:08', NULL),
-('23', 'Mã phí', 'cost-items', '2026-07-18 05:49:08', NULL),
-('24', 'Mã vụ việc', 'projects', '2026-07-18 05:49:08', NULL),
-('25', 'Phiếu thu / chi', 'vouchers', '2026-07-18 05:49:08', NULL),
-('26', 'Sổ quỹ', 'cash-book', '2026-07-18 05:49:08', NULL),
-('27', 'Phiếu kế toán', 'journal', '2026-07-18 06:10:16', NULL),
 ('28', 'Đối tượng (khách/NCC)', 'partners', '2026-07-18 06:21:12', NULL),
-('29', 'Công nợ', 'debt', '2026-07-18 06:21:12', NULL),
-('30', 'Nhật ký chung', 'nhat-ky-chung', '2026-07-18 06:25:37', NULL),
-('31', 'Sổ cái / chi tiết TK', 'so-cai', '2026-07-18 06:25:37', NULL),
 ('32', 'Danh mục kho', 'warehouses', '2026-07-18 10:20:14', NULL),
 ('33', 'Phiếu nhập kho', 'goods-receipts', '2026-07-18 10:20:14', NULL),
 ('34', 'Phiếu xuất kho', 'goods-issues', '2026-07-18 10:20:14', NULL),
@@ -1008,10 +713,6 @@ INSERT INTO `modules` (`id`, `name`, `link`, `create_at`, `update_at`) VALUES
 ('46', 'Kiểm kê kho', 'stock-takes', '2026-07-18 16:38:01', NULL),
 ('47', 'Danh mục tin', 'news-categories', '2026-07-18 18:29:25', NULL),
 ('48', 'Dự án', 'du-an', '2026-07-18 18:29:25', NULL),
-('49', 'Phòng ban', 'departments', '2026-07-19 04:00:53', NULL),
-('50', 'Chức vụ', 'positions', '2026-07-19 04:00:53', NULL),
-('51', 'Nhân viên', 'employees', '2026-07-19 04:00:53', NULL),
-('52', 'Đơn nghỉ phép', 'leave-requests', '2026-07-19 04:00:53', NULL),
 ('53', 'Cấu hình website', 'settings', '2026-07-19 04:22:20', NULL),
 ('54', 'Đơn hàng', 'orders', '2026-07-19 04:31:45', NULL),
 ('55', 'Thư viện ảnh/video', 'galleries', '2026-07-19 04:57:08', NULL),
@@ -1670,34 +1371,10 @@ INSERT INTO `permissions` (`id`, `module_id`, `group_id`, `role`) VALUES
 ('325', '21', '9', 'add'),
 ('326', '21', '9', 'edit'),
 ('327', '21', '9', 'delete'),
-('328', '22', '9', 'view'),
-('329', '22', '9', 'add'),
-('330', '22', '9', 'edit'),
-('331', '22', '9', 'delete'),
-('332', '23', '9', 'view'),
-('333', '23', '9', 'add'),
-('334', '23', '9', 'edit'),
-('335', '23', '9', 'delete'),
-('336', '24', '9', 'view'),
-('337', '24', '9', 'add'),
-('338', '24', '9', 'edit'),
-('339', '24', '9', 'delete'),
-('340', '25', '9', 'view'),
-('341', '25', '9', 'add'),
-('342', '25', '9', 'edit'),
-('343', '25', '9', 'delete'),
-('344', '26', '9', 'view'),
-('345', '27', '9', 'view'),
-('346', '27', '9', 'add'),
-('347', '27', '9', 'edit'),
-('348', '27', '9', 'delete'),
 ('349', '28', '9', 'view'),
 ('350', '28', '9', 'add'),
 ('351', '28', '9', 'edit'),
 ('352', '28', '9', 'delete'),
-('353', '29', '9', 'view'),
-('354', '30', '9', 'view'),
-('355', '31', '9', 'view'),
 ('356', '32', '9', 'view'),
 ('357', '32', '9', 'add'),
 ('358', '32', '9', 'edit'),
@@ -1754,22 +1431,6 @@ INSERT INTO `permissions` (`id`, `module_id`, `group_id`, `role`) VALUES
 ('409', '48', '9', 'add'),
 ('410', '48', '9', 'edit'),
 ('411', '48', '9', 'delete'),
-('412', '49', '9', 'view'),
-('413', '49', '9', 'add'),
-('414', '49', '9', 'edit'),
-('415', '49', '9', 'delete'),
-('416', '50', '9', 'view'),
-('417', '50', '9', 'add'),
-('418', '50', '9', 'edit'),
-('419', '50', '9', 'delete'),
-('420', '51', '9', 'view'),
-('421', '51', '9', 'add'),
-('422', '51', '9', 'edit'),
-('423', '51', '9', 'delete'),
-('424', '52', '9', 'view'),
-('425', '52', '9', 'add'),
-('426', '52', '9', 'edit'),
-('427', '52', '9', 'delete'),
 ('428', '53', '9', 'view'),
 ('429', '53', '9', 'edit'),
 ('430', '54', '9', 'view'),
@@ -1806,35 +1467,12 @@ INSERT INTO `permissions` (`id`, `module_id`, `group_id`, `role`) VALUES
 ('461', '64', '9', 'edit'),
 ('462', '65', '9', 'view'),
 ('463', '65', '9', 'add'),
-('464', '65', '9', 'edit');
-INSERT INTO `permissions` (`id`, `module_id`, `group_id`, `role`) VALUES
+('464', '65', '9', 'edit'),
 ('465', '65', '9', 'delete'),
 ('469', '8', '9', 'add'),
 ('470', '9', '9', 'add'),
 ('471', '66', '9', 'view'),
 ('472', '66', '9', 'edit');
-
--- --------------------------------------------------------
--- Bang `positions`
--- --------------------------------------------------------
-
-DROP TABLE IF EXISTS `positions`;
-CREATE TABLE `positions` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `description` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `sort_order` int NOT NULL DEFAULT '0',
-  `status` tinyint(1) NOT NULL DEFAULT '1',
-  `create_at` datetime DEFAULT NULL,
-  `update_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO `positions` (`id`, `name`, `description`, `sort_order`, `status`, `create_at`, `update_at`) VALUES
-('1', 'Nhân viên', NULL, '0', '1', '2026-07-19 04:00:53', NULL),
-('2', 'Trưởng phòng', NULL, '1', '1', '2026-07-19 04:00:53', NULL),
-('3', 'Phó phòng', NULL, '2', '1', '2026-07-19 04:00:53', NULL),
-('4', 'Giám đốc', NULL, '3', '1', '2026-07-19 04:00:53', NULL);
 
 -- --------------------------------------------------------
 -- Bang `quotation_items`
@@ -1954,7 +1592,6 @@ CREATE TABLE `sales_invoices` (
   `total_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
   `cost_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
   `status` tinyint(1) NOT NULL DEFAULT '0',
-  `acc_voucher_id` int DEFAULT NULL,
   `einvoice_status` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'none',
   `einvoice_serial` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `einvoice_form` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -1970,18 +1607,16 @@ CREATE TABLE `sales_invoices` (
   KEY `idx_inv_status` (`status`),
   KEY `fk_inv_warehouse` (`warehouse_id`),
   KEY `fk_inv_quote` (`quotation_id`),
-  KEY `fk_inv_voucher` (`acc_voucher_id`),
   CONSTRAINT `fk_inv_customer` FOREIGN KEY (`customer_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_inv_quote` FOREIGN KEY (`quotation_id`) REFERENCES `quotations` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_inv_voucher` FOREIGN KEY (`acc_voucher_id`) REFERENCES `acc_vouchers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_inv_warehouse` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO `sales_invoices` (`id`, `invoice_no`, `customer_id`, `customer_name`, `warehouse_id`, `quotation_id`, `invoice_date`, `vat_rate`, `subtotal`, `tax_amount`, `total_amount`, `cost_amount`, `status`, `acc_voucher_id`, `einvoice_status`, `einvoice_serial`, `einvoice_form`, `einvoice_no`, `einvoice_issued_at`, `note`, `created_by`, `create_at`, `update_at`) VALUES
-('6', 'HD-000001', '4', 'Garage Thành Công', '1', NULL, '2026-06-10', '10.00', '4473040.00', '447304.00', '4920344.00', '3420000.00', '1', '24', 'issued', 'K26TTP', '1', '00000001', '2026-07-19 11:11:56', NULL, '1', '2026-07-19 11:11:57', '2026-07-19 11:11:57'),
-('7', 'HD-000002', '5', 'Đại lý phụ tùng Phú Sơn', '1', NULL, '2026-06-25', '10.00', '10488000.00', '1048800.00', '11536800.00', '8250000.00', '1', '25', 'issued', 'K26TTP', '1', '00000002', '2026-07-19 11:11:56', NULL, '1', '2026-07-19 11:11:57', '2026-07-19 11:11:57'),
-('8', 'HD-000003', '6', 'Anh Nguyễn Văn Hùng', '1', NULL, '2026-07-08', '10.00', '1154000.00', '115400.00', '1269400.00', '820000.00', '1', '26', 'issued', 'K26TTP', '1', '00000003', '2026-07-28 11:56:28', NULL, '1', '2026-07-19 11:11:57', '2026-07-28 11:56:28'),
-('9', 'HD-000004', '8', NULL, '1', NULL, '2026-07-28', '10.00', '590000.00', '59000.00', '649000.00', '420000.00', '1', NULL, 'issued', 'K26TTP', '1', '00000004', '2026-07-28 12:06:51', NULL, '15', '2026-07-28 11:57:05', '2026-07-28 12:06:51');
+INSERT INTO `sales_invoices` (`id`, `invoice_no`, `customer_id`, `customer_name`, `warehouse_id`, `quotation_id`, `invoice_date`, `vat_rate`, `subtotal`, `tax_amount`, `total_amount`, `cost_amount`, `status`, `einvoice_status`, `einvoice_serial`, `einvoice_form`, `einvoice_no`, `einvoice_issued_at`, `note`, `created_by`, `create_at`, `update_at`) VALUES
+('6', 'HD-000001', '4', 'Garage Thành Công', '1', NULL, '2026-06-10', '10.00', '4473040.00', '447304.00', '4920344.00', '3420000.00', '1', 'issued', 'K26TTP', '1', '00000001', '2026-07-19 11:11:56', NULL, '1', '2026-07-19 11:11:57', '2026-07-19 11:11:57'),
+('7', 'HD-000002', '5', 'Đại lý phụ tùng Phú Sơn', '1', NULL, '2026-06-25', '10.00', '10488000.00', '1048800.00', '11536800.00', '8250000.00', '1', 'issued', 'K26TTP', '1', '00000002', '2026-07-19 11:11:56', NULL, '1', '2026-07-19 11:11:57', '2026-07-19 11:11:57'),
+('8', 'HD-000003', '6', 'Anh Nguyễn Văn Hùng', '1', NULL, '2026-07-08', '10.00', '1154000.00', '115400.00', '1269400.00', '820000.00', '1', 'issued', 'K26TTP', '1', '00000003', '2026-07-28 11:56:28', NULL, '1', '2026-07-19 11:11:57', '2026-07-28 11:56:28'),
+('9', 'HD-000004', '8', NULL, '1', NULL, '2026-07-28', '10.00', '590000.00', '59000.00', '649000.00', '420000.00', '1', 'issued', 'K26TTP', '1', '00000004', '2026-07-28 12:06:51', NULL, '15', '2026-07-28 11:57:05', '2026-07-28 12:06:51');
 
 -- --------------------------------------------------------
 -- Bang `site_projects`
@@ -2164,15 +1799,12 @@ CREATE TABLE `stock_takes` (
   `surplus_value` decimal(15,2) NOT NULL DEFAULT '0.00',
   `shortage_value` decimal(15,2) NOT NULL DEFAULT '0.00',
   `status` tinyint(1) NOT NULL DEFAULT '0',
-  `acc_voucher_id` int DEFAULT NULL,
   `created_by` int DEFAULT NULL,
   `create_at` datetime DEFAULT NULL,
   `update_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_take_no` (`take_no`),
   KEY `idx_take_wh` (`warehouse_id`),
-  KEY `fk_take_voucher` (`acc_voucher_id`),
-  CONSTRAINT `fk_take_voucher` FOREIGN KEY (`acc_voucher_id`) REFERENCES `acc_vouchers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_take_warehouse` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -2237,7 +1869,7 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `status`, `group_id`, `current_activity`, `forgot_key`, `active_key`, `create_at`, `update_at`) VALUES
-('15', 'Tạ Hoàng An', 'hoangan.web@gmail.com', '$2y$10$jUjJwzRtdfDsVYWodWdgP.68TQ8yspp14uL9.WlBfAHPf30xpxnxC', '1', '9', '2021-12-11 03:00:48', NULL, NULL, NULL, NULL),
+('15', 'Tạ Hoàng An', 'hoangan.web@gmail.com', '$2y$10$68BDaDynYrReewCYLdCLfuTPWOAqPTYMR6SOuHvPdr8A5WYWk5FAu', '1', '9', '2021-12-11 03:00:48', NULL, NULL, NULL, NULL),
 ('16', 'Hoàng Anh', 'hoang@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '1', '10', NULL, NULL, NULL, NULL, NULL),
 ('17', 'Văn Tuấn', 'tuan@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '1', '11', NULL, NULL, NULL, NULL, NULL),
 ('20', 'Nguyễn Văn A', 'nguyenvana@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', '1', '9', NULL, NULL, NULL, '2021-09-15 18:23:26', NULL),
@@ -3057,7 +2689,8 @@ INSERT INTO `visits` (`id`, `url`, `referrer`, `keyword`, `ip`, `user_agent`, `m
 ('793', 'san-pham', 'http://localhost:88/tan-phat/du-an', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 04:41:57'),
 ('794', 'san-pham', 'http://localhost:88/tan-phat/san-pham?promo=1', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 04:41:57'),
 ('795', '/', 'http://localhost:88/tan-phat/san-pham', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 04:41:58'),
-('796', '/', 'http://localhost:88/tan-phat/san-pham', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 04:45:20');
+('796', '/', 'http://localhost:88/tan-phat/san-pham', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 04:45:20'),
+('797', '/', 'http://localhost:88/tan-phat/', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', NULL, '2026-08-03 09:23:12');
 
 -- --------------------------------------------------------
 -- Bang `warehouse_locations`

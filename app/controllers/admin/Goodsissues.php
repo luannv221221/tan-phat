@@ -100,7 +100,6 @@ class Goodsissues extends Controller {
             'warehouse_id'       => (int) $f['warehouse_id'],
             'partner_id'         => $this->partnerId(),
             'partner_name'       => !empty($f['partner_name']) ? trim($f['partner_name']) : null,
-            'counter_account_id' => $this->counterId(),
             'issue_date'         => $f['issue_date'],
             'reason'             => !empty($f['reason']) ? trim($f['reason']) : null,
             'total_amount'       => 0,
@@ -166,7 +165,6 @@ class Goodsissues extends Controller {
             'warehouse_id'       => (int) $f['warehouse_id'],
             'partner_id'         => $this->partnerId(),
             'partner_name'       => !empty($f['partner_name']) ? trim($f['partner_name']) : null,
-            'counter_account_id' => $this->counterId(),
             'issue_date'         => $f['issue_date'],
             'reason'             => !empty($f['reason']) ? trim($f['reason']) : null,
         ], $id);
@@ -295,12 +293,6 @@ class Goodsissues extends Controller {
     }
 
     // ===== Helper =====
-
-    private function counterId(){
-        $f = $this->__request->getFields();
-        $id = !empty($f['counter_account_id']) ? (int) $f['counter_account_id'] : 0;
-        return $id > 0 ? $id : null;
-    }
 
     private function partnerId(){
         $f = $this->__request->getFields();
