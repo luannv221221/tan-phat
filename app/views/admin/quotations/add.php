@@ -136,7 +136,18 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '0';
         var tr = document.createElement('tr'); tr.className='line-row';
         var sel = partSelect(data.part_id);
         var price = inp('line_price[]','price text-right', data.price);
-        sel.addEventListener('change', function(){ var o=sel.options[sel.selectedIndex]; var p=o?o.getAttribute('data-price'):0; if (p && !money(price.value)) price.value=p; recompute(); });
+        sel.addEventListener('change', function(){
+            var o=sel.options[sel.selectedIndex]; var p=o?o.getAttribute('data-price'):0;
+            if (p && !money(price.value)) price.value=p;
+            recompute();
+            // Chọn xong hàng ở dòng CUỐI thì tự đẻ dòng trống kế tiếp, khỏi bắt
+            // người nhập bấm "Thêm dòng" sau mỗi mặt hàng.
+            // Chỉ xét dòng cuối: đổi hàng hoá ở một dòng giữa bảng là sửa lại,
+            // không phải nhập thêm — sinh dòng ở đó chỉ tổ rác bảng.
+            // Dòng trống thừa lúc lưu không sao: buildLines() bỏ qua dòng chưa
+            // chọn hàng hoặc số lượng <= 0.
+            if (sel.value && tr === tbody.lastElementChild) addRow();
+        });
         tr.appendChild(td(sel));
         var q = inp('line_qty[]','qty text-right', data.qty); q.addEventListener('input', recompute); tr.appendChild(td(q));
         price.addEventListener('input', recompute); tr.appendChild(td(price));
