@@ -188,8 +188,15 @@ $renderMenu = function ($items) use (&$renderMenu){
         </div>
     </div>
 
-    <?php // Bộ lọc xe — thay cho ô tìm kiếm cũ ở hàng trên
-    $this->render('layouts/storefront/partials/car-filter'); ?>
+    <?php
+    // Bộ lọc xe — thay cho ô tìm kiếm cũ ở hàng trên.
+    // Bật/tắt tại admin > Cấu hình website. So với '0' chứ không so với '1':
+    // chỉ ẩn khi khách CHỦ ĐỘNG tắt, còn thiếu khoá (chưa chạy migration 000050)
+    // thì vẫn hiện — đẩy code lên trước migration không làm mất thanh lọc.
+    if (($settings['show_car_filter'] ?? '1') !== '0'){
+        $this->render('layouts/storefront/partials/car-filter');
+    }
+    ?>
 
     <nav class="header__primary-menu">
         <div class="d-md-none py-2 px-3 text-center">

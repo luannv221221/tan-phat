@@ -33,6 +33,26 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
             </div>
         </div>
 
+        <div class="card card-outline card-secondary">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-desktop mr-2"></i>Giao diện website</h3></div>
+            <div class="card-body">
+                <div class="form-group mb-0">
+                    <!-- Ô tick không tick thì trình duyệt KHÔNG gửi gì cả. Input hidden
+                         cùng tên đứng trước để lúc nào cũng có giá trị gửi lên; tick vào
+                         thì giá trị của ô tick ghi đè lên nó. -->
+                    <input type="hidden" name="show_car_filter" value="0"/>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" name="show_car_filter" id="show_car_filter" value="1" {{$s('show_car_filter','1')==='1'?'checked':''}}/>
+                        <label class="custom-control-label" for="show_car_filter">Hiện thanh lọc xe ở đầu trang</label>
+                    </div>
+                    <small class="form-text text-muted">
+                        Thanh chọn Thương hiệu / Dòng xe / Model / Năm sản xuất kèm ô tìm kiếm,
+                        nằm giữa logo và menu chính. Tắt đi thì phần đầu trang chỉ còn logo và menu.
+                    </small>
+                </div>
+            </div>
+        </div>
+
         <div class="card card-outline card-info">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-address-book mr-2"></i>Liên hệ</h3></div>
             <div class="card-body">

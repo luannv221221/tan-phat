@@ -224,6 +224,29 @@ $shopSrc = file_get_contents(__DIR__ . '/../app/controllers/Shop.php');
 ok(strpos($shopSrc, "carModels'") === false && strpos($shopSrc, "carBrands'") === false,
    'Shop::index() thoi truy van danh muc xe khong con ai dung');
 
+// ================================================================
+section('Bat/tat thanh loc tu admin');
+
+$seeded = $pdo->query("SELECT svalue FROM site_settings WHERE skey='show_car_filter'")->fetchColumn();
+ok($seeded === '1', 'Migration 000050 gieo show_car_filter = 1', var_export($seeded, true));
+
+$settingsCtrl = codeOnly(__DIR__ . '/../app/controllers/admin/Settings.php');
+ok(strpos($settingsCtrl, "'show_car_filter'") !== false,
+   'show_car_filter nam trong whitelist cua admin Settings');
+
+$formSrc = file_get_contents(__DIR__ . '/../app/views/admin/settings/form.php');
+// O tick khong tick thi trinh duyet khong gui gi -> phai co hidden cung ten
+// dung truoc, neu khong thi khong bao gio tat duoc.
+ok(preg_match('~type="hidden"\s+name="show_car_filter"\s+value="0"~', $formSrc) === 1,
+   'Form admin co input hidden = 0 di kem o tick');
+ok(strpos($formSrc, 'type="checkbox"') !== false && strpos($formSrc, 'id="show_car_filter"') !== false,
+   'Form admin co o tick show_car_filter');
+
+// Chi an khi bi TAT han. Thieu khoa (chua chay migration) van phai hien,
+// khong thi day code len truoc migration la mat thanh loc tren web khach.
+ok(strpos($master, "'show_car_filter'") !== false && strpos($master, "!== '0'") !== false,
+   'master.php an thanh loc khi = 0, thieu khoa thi van hien');
+
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'CF-TEST-%'");
 $pdo->exec("DELETE FROM car_models WHERE slug LIKE 'cf-test-%'");
