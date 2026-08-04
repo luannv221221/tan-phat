@@ -35,6 +35,31 @@ $hotline = !empty($settings['hotline']) ? $settings['hotline'] : '1900 0000';
 $hotlineTel = preg_replace('/[^0-9+]/', '', $hotline);
 $slogan = !empty($settings['site_slogan']) ? $settings['site_slogan'] : 'Phụ tùng & thiết bị gara ô tô';
 
+// Thanh xanh trên cùng bật/tắt ở admin > Cấu hình website. So với '0' chứ không
+// so với '1' vì lý do giống bộ lọc xe bên dưới: thiếu khoá thì vẫn hiện.
+$showTopbar = ($settings['show_topbar'] ?? '1') !== '0';
+
+/**
+ * Link tài khoản (Đăng ký/Đăng nhập, hoặc Tài khoản/Đăng xuất).
+ *
+ * Bình thường nằm ở thanh xanh. Tắt thanh xanh thì dời xuống hàng logo, vì
+ * menu website không có mục đăng nhập nào — mất thanh xanh là khách hết lối
+ * vào tài khoản.
+ *
+ * Viết thành closure chứ không tách ra partial: $this->render() dùng
+ * require_once, gọi lần thứ hai (bản mobile) sẽ không in ra gì cả.
+ */
+$renderAccountLinks = function () use ($memberName){
+    if (!empty($memberName)){
+        echo '<span class="hello">Xin chào, <b>' . e($memberName) . '</b></span>';
+        echo '<a href="' . _WEB_URL . '/thanh-vien">Tài khoản</a>';
+        echo '<a href="' . _WEB_URL . '/thanh-vien/dang-xuat">Đăng xuất</a>';
+    } else {
+        echo '<a href="' . _WEB_URL . '/thanh-vien/dang-ky">Đăng ký</a>';
+        echo '<a href="' . _WEB_URL . '/thanh-vien/dang-nhap">Đăng nhập</a>';
+    }
+};
+
 // Bộ render menu đa cấp cho theme (<ul class="menu"> lồng nhau)
 $renderMenu = function ($items) use (&$renderMenu){
     foreach ($items as $it){
@@ -80,6 +105,12 @@ $renderMenu = function ($items) use (&$renderMenu){
 .btn-outline-primary{color:var(--sf-accent);border-color:var(--sf-accent)}
 .btn-outline-primary:hover{background:var(--sf-accent);border-color:var(--sf-accent);color:#fff}
 .text-accent{color:var(--sf-accent)!important}
+/* Link tài khoản: ở thanh xanh thì chữ trắng, dời xuống hàng logo thì theo màu accent */
+.topbar__right .hello{color:#fff}
+.header__account{display:flex;align-items:center;gap:14px;white-space:nowrap;font-size:.95rem}
+.header__account a{color:var(--sf-accent)}
+.header__account a:hover{text-decoration:underline}
+.header__account .hello{color:#555}
 .price-now{color:var(--sf-accent);font-weight:700}
 .price-old-sm{color:#999;text-decoration:line-through;font-size:.9rem;margin-left:6px}
 .sf-section{margin:34px 0}
@@ -121,6 +152,7 @@ $renderMenu = function ($items) use (&$renderMenu){
 <body>
 
 <header class="header">
+    <?php if ($showTopbar): ?>
     <div class="topbar">
         <div class="container">
             <div class="row align-items-center">
@@ -131,20 +163,12 @@ $renderMenu = function ($items) use (&$renderMenu){
                     </ul>
                 </div>
                 <div class="col-12 col-md-4">
-                    <div class="topbar__right">
-                        <?php if (!empty($memberName)): ?>
-                            <span style="color:#fff">Xin chào, <b><?php echo e($memberName); ?></b></span>
-                            <a href="<?php echo _WEB_URL; ?>/thanh-vien">Tài khoản</a>
-                            <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-xuat">Đăng xuất</a>
-                        <?php else: ?>
-                            <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-ky">Đăng ký</a>
-                            <a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-nhap">Đăng nhập</a>
-                        <?php endif; ?>
-                    </div>
+                    <div class="topbar__right"><?php $renderAccountLinks(); ?></div>
                 </div>
             </div>
         </div>
     </div>
+    <?php endif; ?>
     <div class="py-3 top-header">
         <div class="container">
             <div class="row align-items-center g-3">
@@ -161,14 +185,19 @@ $renderMenu = function ($items) use (&$renderMenu){
                         <div class="header__hotline">
                             <a href="tel:<?php echo e($hotlineTel); ?>"><i class="fa fa-mobile" aria-hidden="true"></i> Hotline: <?php echo e($hotline); ?></a>
                         </div>
-                        <div class="header__cart">
-                            <a href="<?php echo _WEB_URL; ?>/gio-hang">
-                                <span class="header__cart--item"> Giỏ hàng </span>
-                                <span class="header__cart--item">
-                                    <i class="fa fa-shopping-cart" aria-hidden="true"></i>
-                                    <span class="count"><?php echo (int) $cartCount; ?></span>
-                                </span>
-                            </a>
+                        <div class="d-flex align-items-center" style="gap:22px">
+                            <?php if (!$showTopbar): ?>
+                            <div class="header__account"><?php $renderAccountLinks(); ?></div>
+                            <?php endif; ?>
+                            <div class="header__cart">
+                                <a href="<?php echo _WEB_URL; ?>/gio-hang">
+                                    <span class="header__cart--item"> Giỏ hàng </span>
+                                    <span class="header__cart--item">
+                                        <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+                                        <span class="count"><?php echo (int) $cartCount; ?></span>
+                                    </span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -184,6 +213,12 @@ $renderMenu = function ($items) use (&$renderMenu){
                         </div>
                     </div>
                 </div>
+                <?php if (!$showTopbar): ?>
+                <!-- Trên điện thoại không đủ chỗ nhét cạnh logo, cho xuống hàng riêng -->
+                <div class="col-12 d-md-none">
+                    <div class="header__account justify-content-end"><?php $renderAccountLinks(); ?></div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

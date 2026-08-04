@@ -247,6 +247,38 @@ ok(strpos($formSrc, 'type="checkbox"') !== false && strpos($formSrc, 'id="show_c
 ok(strpos($master, "'show_car_filter'") !== false && strpos($master, "!== '0'") !== false,
    'master.php an thanh loc khi = 0, thieu khoa thi van hien');
 
+// ================================================================
+section('Bat/tat thanh xanh tren cung — khong duoc mat loi dang nhap');
+
+$seededTop = $pdo->query("SELECT svalue FROM site_settings WHERE skey='show_topbar'")->fetchColumn();
+ok($seededTop === '1', 'Migration 000051 gieo show_topbar = 1', var_export($seededTop, true));
+
+ok(strpos($settingsCtrl, "'show_topbar'") !== false,
+   'show_topbar nam trong whitelist cua admin Settings');
+ok(preg_match('~type="hidden"\s+name="show_topbar"\s+value="0"~', $formSrc) === 1,
+   'Form admin co input hidden = 0 di kem o tick topbar');
+
+ok(strpos($master, '$showTopbar') !== false && strpos($master, "'show_topbar'") !== false,
+   'master.php doc show_topbar');
+
+// Bang `menus` KHONG co muc dang nhap nao, nen an topbar ma khong doi cho link
+// tai khoan la khach het loi vao tai khoan, va nguoi dang dang nhap khong con
+// nut dang xuat. Day la rang buoc nghiep vu, khong phai chi tiet giao dien.
+$menuUrls = $pdo->query("SELECT url FROM menus WHERE status=1")->fetchAll(PDO::FETCH_COLUMN);
+$menuCoDangNhap = false;
+foreach ($menuUrls as $u){
+    if (strpos((string) $u, 'thanh-vien') !== false) $menuCoDangNhap = true;
+}
+ok(!$menuCoDangNhap, 'Menu website van khong co muc dang nhap (nen rang buoc duoi day con y nghia)');
+
+ok(substr_count($master, '$renderAccountLinks()') >= 2,
+   'Link tai khoan duoc in o CA thanh xanh LAN hang logo (khong mat khi tat topbar)');
+
+// $this->render() dung require_once nen goi lan hai se im lang khong in gi.
+// Vi vay link tai khoan phai la closure, khong duoc tach thanh partial.
+ok(strpos($master, '$renderAccountLinks = function') !== false,
+   'Link tai khoan viet bang closure (partial + require_once se mat ban mobile)');
+
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'CF-TEST-%'");
 $pdo->exec("DELETE FROM car_models WHERE slug LIKE 'cf-test-%'");

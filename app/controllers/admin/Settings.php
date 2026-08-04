@@ -15,7 +15,7 @@ class Settings extends Controller {
     private $keys = ['site_name', 'site_slogan', 'meta_description', 'meta_keywords',
                      'og_image', 'hotline', 'email', 'address', 'facebook', 'zalo',
                      'bank_name', 'bank_account', 'bank_holder',
-                     'show_car_filter'];
+                     'show_car_filter', 'show_topbar'];
 
     function __construct(){
         $this->__model    = $this->model('SettingsModel');

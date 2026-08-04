@@ -36,7 +36,7 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
         <div class="card card-outline card-secondary">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-desktop mr-2"></i>Giao diện website</h3></div>
             <div class="card-body">
-                <div class="form-group mb-0">
+                <div class="form-group">
                     <!-- Ô tick không tick thì trình duyệt KHÔNG gửi gì cả. Input hidden
                          cùng tên đứng trước để lúc nào cũng có giá trị gửi lên; tick vào
                          thì giá trị của ô tick ghi đè lên nó. -->
@@ -48,6 +48,19 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                     <small class="form-text text-muted">
                         Thanh chọn Thương hiệu / Dòng xe / Model / Năm sản xuất kèm ô tìm kiếm,
                         nằm giữa logo và menu chính. Tắt đi thì phần đầu trang chỉ còn logo và menu.
+                    </small>
+                </div>
+
+                <div class="form-group mb-0">
+                    <input type="hidden" name="show_topbar" value="0"/>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" name="show_topbar" id="show_topbar" value="1" {{$s('show_topbar','1')==='1'?'checked':''}}/>
+                        <label class="custom-control-label" for="show_topbar">Hiện thanh xanh trên cùng</label>
+                    </div>
+                    <small class="form-text text-muted">
+                        Thanh chứa "Xây dựng báo giá", "Hệ thống chi nhánh" và phần Đăng ký / Đăng nhập.
+                        Tắt đi thì link Đăng ký / Đăng nhập (hoặc Tài khoản / Đăng xuất) tự dời xuống
+                        hàng logo, cạnh giỏ hàng — khách vẫn đăng nhập được.
                     </small>
                 </div>
             </div>
