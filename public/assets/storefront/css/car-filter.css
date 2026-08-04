@@ -1,0 +1,97 @@
+/* ============================================================
+   BỘ LỌC XE Ở HEADER — 4 ô chọn + ô từ khoá + nút tìm.
+   Markup ở app/views/layouts/storefront/partials/car-filter.php
+   ============================================================ */
+
+.car-filter {
+    padding-bottom: 14px;
+    background: #fff;
+}
+
+/* Cả hàng là MỘT khung viền, các ô ngăn nhau bằng vạch dọc mảnh — nên viền
+   đặt ở form, còn từng ô chỉ có border-right. */
+.car-filter__form {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #dcdcdc;
+    border-radius: 2px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.car-filter__select,
+.car-filter__input {
+    height: 42px;
+    min-width: 0;          /* cho phép flex item co lại dưới kích thước nội dung */
+    padding: 0 14px;
+    border: 0;
+    border-right: 1px solid #dcdcdc;
+    background: #fff;
+    color: #333;
+    font-size: 0.95rem;
+    outline: 0;
+}
+
+.car-filter__select {
+    flex: 1 1 0;
+    max-width: 210px;
+    padding-right: 32px;   /* chừa chỗ cho mũi tên vẽ bằng background */
+    cursor: pointer;
+
+    /* Mũi tên mặc định của <select> mỗi hệ điều hành một kiểu, có cái to và
+       đậm hơn hẳn mẫu thiết kế — nên tắt đi và tự vẽ chevron cho đồng nhất. */
+    -webkit-appearance: none;
+       -moz-appearance: none;
+            appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23666' stroke-width='1.4' d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 11px 7px;
+}
+
+.car-filter__select::-ms-expand { display: none; }
+
+.car-filter__input {
+    flex: 2 1 0;
+}
+
+.car-filter__input::placeholder { color: #999; }
+
+/* Ô đang thao tác được tô nền rất nhạt thay vì viền phát sáng: viền của ô nằm
+   chung khung với các ô khác nên đổi viền sẽ làm xô lệch cả hàng. */
+.car-filter__select:focus,
+.car-filter__input:focus {
+    background-color: #f6f9ff;
+}
+
+.car-filter__btn {
+    flex: 0 0 54px;
+    border: 0;
+    background: #ef5223;
+    color: #fff;
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.car-filter__btn:hover,
+.car-filter__btn:focus {
+    background: #d64517;
+}
+
+/* --- Màn hình nhỏ: 4 ô chọn xếp thành lưới 2x2, ô từ khoá + nút ở hàng dưới --- */
+@media (max-width: 767.98px) {
+    .car-filter__form { flex-wrap: wrap; }
+
+    .car-filter__select {
+        flex: 1 0 50%;
+        max-width: 50%;
+        border-bottom: 1px solid #dcdcdc;
+    }
+
+    /* Ô bên phải của mỗi hàng đã có viền ngoài của form rồi */
+    .car-filter__select:nth-child(2n) { border-right: 0; }
+
+    .car-filter__input { flex: 1 1 auto; }
+}

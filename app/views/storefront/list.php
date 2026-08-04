@@ -28,6 +28,18 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
          form lọc và chỉ tải lại trang danh sách thay vì thêm hàng vào giỏ. -->
     <form method="get" action="{{_WEB_URL.$listPath}}" id="facetForm"></form>
     {!! !empty($f['keyword']) ? '<input form="facetForm" type="hidden" name="q" value="'.e($f['keyword']).'"/>' : '' !!}
+    <?php
+    // Xe đang chọn do THANH LỌC TRÊN HEADER giữ, không có ô nào trong sidebar.
+    // Phải chép sang form facet dưới dạng hidden: form GET chỉ gửi đúng các ô
+    // thuộc về nó, nên thiếu mấy dòng này thì tick một danh mục ở sidebar sẽ
+    // âm thầm xoá mất lựa chọn xe của khách.
+    foreach (['car_brand' => 'carBrandId', 'car_body'  => 'carBodyTypeId',
+              'car_model' => 'carModelId', 'car_year'  => 'carYearId'] as $param => $key){
+        if (!empty($f[$key])){
+            echo '<input form="facetForm" type="hidden" name="' . $param . '" value="' . (int) $f[$key] . '"/>';
+        }
+    }
+    ?>
     <div class="row">
 
         <!-- Sidebar lọc -->
@@ -74,18 +86,6 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                     </div>
                 </div>
                 @endif
-
-                <div class="products__sidebar--item">
-                    <h3>Xe tương thích</h3>
-                    <div class="px-3">
-                        <select form="facetForm" name="car_model" class="form-select form-select-sm" onchange="document.getElementById('facetForm').submit()">
-                            <option value="">— Mọi xe —</option>
-                            @foreach ($carModels as $cm)
-                                <option value="{{(int)$cm['id']}}" {{((int)$f['carModelId']===(int)$cm['id'])?'selected':''}}>{{$cm['name']}}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
 
                 <div class="products__sidebar--item">
                     <h3>Khoảng giá (₫)</h3>

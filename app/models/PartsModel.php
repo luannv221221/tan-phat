@@ -110,11 +110,20 @@ class PartsModel extends Model {
      *   priceMin, priceMax : khoảng giá
      *   promo (bool)       : chỉ hàng có sale_price
      *   keyword            : tên/mã/oem
-     *   carModelId         : chỉ phụ tùng lắp cho model xe này (qua fitment)
+     *   carBrandId, carBodyTypeId, carModelId, carYearId
+     *                      : chỉ phụ tùng lắp cho xe này (qua fitment) — xem hasCarFilter()
      *   sort               : 'new'|'price_asc'|'price_desc'|'name'
      */
     public function storefront($filters = [], $limit = 0, $offset = 0){
         $q = $this->applyStorefront($this->selectWithJoins(), $filters);
+
+        // Một phụ tùng lắp cho nhiều đời xe sẽ ra nhiều dòng sau khi join
+        // part_fitments — gom lại để thẻ sản phẩm không hiện trùng.
+        // storefrontCount() KHÔNG gom: nó đã đếm COUNT(DISTINCT parts.id), thêm
+        // GROUP BY vào đó thì mỗi nhóm đếm ra 1 và first() trả về tổng = 1.
+        if ($this->hasCarFilter($filters)){
+            $q = $q->groupBy('parts.id');
+        }
 
         switch ($filters['sort'] ?? '') {
             case 'price_asc':  $q = $q->orderBy('parts.price', 'ASC'); break;
@@ -153,13 +162,46 @@ class PartsModel extends Model {
             });
         }
 
-        // Lọc theo model xe (phụ tùng lắp cho đời xe thuộc model) — TASK_87/93
-        if (!empty($filters['carModelId'])){
-            $q = $q->joinOn('part_fitments', 'parts.id', 'part_fitments.part_id')
-                   ->joinOn('car_years', 'part_fitments.car_year_id', 'car_years.id')
-                   ->where('car_years.model_id', '=', (int) $filters['carModelId'])
-                   ->groupBy('parts.id');
+        return $this->applyCarFilter($q, $filters);
+    }
+
+    /** Bộ lọc theo xe có được dùng không (dù chỉ 1 trong 4 mức) */
+    private function hasCarFilter($filters){
+        return !empty($filters['carBrandId']) || !empty($filters['carBodyTypeId'])
+            || !empty($filters['carModelId']) || !empty($filters['carYearId']);
+    }
+
+    /**
+     * Lọc theo xe: hãng / dòng xe (kiểu dáng) / model / đời xe — TASK_87/93.
+     *
+     * Phụ tùng nối vào xe qua part_fitments -> car_years, nên cả 4 mức dùng
+     * chung một cặp join. Chỉ áp điều kiện HẸP NHẤT khách đã chọn: đời xe đã
+     * hàm ý model, model đã hàm ý hãng lẫn kiểu dáng — xếp chồng thêm chỉ tốn
+     * join chứ không loại thêm được dòng nào.
+     */
+    private function applyCarFilter($q, $filters){
+        if (!$this->hasCarFilter($filters)) return $q;
+
+        $q = $q->joinOn('part_fitments', 'parts.id', 'part_fitments.part_id')
+               ->joinOn('car_years', 'part_fitments.car_year_id', 'car_years.id');
+
+        if (!empty($filters['carYearId'])){
+            return $q->where('car_years.id', '=', (int) $filters['carYearId']);
         }
+
+        if (!empty($filters['carModelId'])){
+            return $q->where('car_years.model_id', '=', (int) $filters['carModelId']);
+        }
+
+        $q = $q->joinOn('car_models', 'car_years.model_id', 'car_models.id');
+
+        if (!empty($filters['carBrandId'])){
+            $q = $q->where('car_models.brand_id', '=', (int) $filters['carBrandId']);
+        }
+        if (!empty($filters['carBodyTypeId'])){
+            $q = $q->where('car_models.body_type_id', '=', (int) $filters['carBodyTypeId']);
+        }
+
         return $q;
     }
 

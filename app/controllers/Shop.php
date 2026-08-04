@@ -12,7 +12,7 @@ class Shop extends Controller {
     const PER_PAGE = 12;
 
     private $__data = [];
-    private $__part, $__cat, $__pbrand, $__origin, $__cbrand, $__cmodel, $__stock;
+    private $__part, $__cat, $__pbrand, $__origin, $__stock;
     private $__img, $__attr, $__related, $__fitment, $__review, $__member;
 
     function __construct(){
@@ -20,8 +20,6 @@ class Shop extends Controller {
         $this->__cat     = $this->model('PartCategoriesModel');
         $this->__pbrand  = $this->model('ProductBrandsModel');
         $this->__origin  = $this->model('ProductOriginsModel');
-        $this->__cbrand  = $this->model('CarBrandsModel');
-        $this->__cmodel  = $this->model('CarModelsModel');
         $this->__stock   = $this->model('StocksModel');
         $this->__img     = $this->model('PartImagesModel');
         $this->__attr    = $this->model('PartAttributeValuesModel');
@@ -58,7 +56,12 @@ class Shop extends Controller {
             'priceMax'    => isset($g['price_max']) ? preg_replace('/[^\d]/', '', $g['price_max']) : '',
             'promo'       => $promoOnly || !empty($g['promo']),
             'keyword'     => isset($g['q']) ? trim($g['q']) : '',
-            'carModelId'  => !empty($g['car_model']) ? (int) $g['car_model'] : 0,
+            // Bộ lọc xe ở header. Tên tham số phải có tiền tố car_ vì `brand`
+            // đã là thương hiệu phụ tùng (Bosch, Denso) ở dòng ngay trên.
+            'carBrandId'    => !empty($g['car_brand']) ? (int) $g['car_brand'] : 0,
+            'carBodyTypeId' => !empty($g['car_body'])  ? (int) $g['car_body']  : 0,
+            'carModelId'    => !empty($g['car_model']) ? (int) $g['car_model'] : 0,
+            'carYearId'     => !empty($g['car_year'])  ? (int) $g['car_year']  : 0,
             'sort'        => isset($g['sort']) ? $g['sort'] : '',
         ];
 
@@ -112,8 +115,8 @@ class Shop extends Controller {
         $c['catOptions']    = $this->__cat->getTree();
         $c['brandOptions']  = $this->__pbrand->getLists();
         $c['originOptions'] = $this->__origin->getLists();
-        $c['carBrands']     = $this->__cbrand->getLists();
-        $c['carModels']     = $this->__cmodel->getLists();
+        // Không truyền danh mục xe xuống nữa: bộ lọc xe đã chuyển hẳn lên thanh
+        // lọc ở header, nó tự nạp danh mục trong partial car-filter.php.
 
         $this->render('layouts/storefront/master', $this->__data);
     }

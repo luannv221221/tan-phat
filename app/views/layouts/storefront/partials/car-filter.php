@@ -1,0 +1,178 @@
+<?php
+/**
+ * BỘ LỌC XE Ở HEADER — Hãng → Dòng xe → Model → Đời xe + ô từ khoá.
+ *
+ * Nằm trong header nên hiện ở MỌI trang storefront. Bấm nút thì chuyển sang
+ * /san-pham kèm car_brand/car_body/car_model/car_year/q — Shop::index() đọc
+ * các tham số này, PartsModel::applyCarFilter() lọc qua bảng part_fitments.
+ *
+ * Vì sao nhúng sẵn cả danh mục xe thay vì gọi AJAX: cây xe rất nhỏ (chục hãng,
+ * vài trăm model) nên tải hết một lần rẻ hơn nhiều so với mỗi lần đổi ô lại
+ * chờ một vòng mạng. Nếu về sau danh mục phình lên hàng nghìn dòng thì đổi
+ * fillOptions() sang gọi API là đủ, phần còn lại giữ nguyên.
+ *
+ * File này được master.php gọi qua $this->render() nên $this là Controller.
+ */
+
+$cfBrands = $this->model('CarBrandsModel')->getLists(true);
+$cfBodies = $this->model('CarBodyTypesModel')->getLists(true);
+$cfModels = $this->model('CarModelsModel')->getLists(['car_models.status' => 1]);
+$cfYears  = $this->model('CarYearsModel')->getLists(['car_years.status' => 1]);
+
+// Lựa chọn hiện tại, để khách ở /san-pham thấy đúng bộ lọc đang áp dụng
+$cfSel = [
+    'brand' => isset($_GET['car_brand']) ? (int) $_GET['car_brand'] : 0,
+    'body'  => isset($_GET['car_body'])  ? (int) $_GET['car_body']  : 0,
+    'model' => isset($_GET['car_model']) ? (int) $_GET['car_model'] : 0,
+    'year'  => isset($_GET['car_year'])  ? (int) $_GET['car_year']  : 0,
+];
+
+// id ép về chuỗi vì bên JS đem so với select.value — vốn luôn là chuỗi.
+$cfData = [
+    'bodyTypes' => [],
+    'models'    => [],
+    'years'     => [],
+];
+foreach ($cfBodies as $b){
+    $cfData['bodyTypes'][] = ['id' => (string) $b['id'], 'name' => $b['name']];
+}
+foreach ($cfModels as $m){
+    $cfData['models'][] = [
+        'id'    => (string) $m['id'],
+        'name'  => $m['name'],
+        'brand' => (string) $m['brand_id'],
+        'body'  => (string) $m['body_type_id'],   // rỗng nếu model chưa gắn kiểu dáng
+    ];
+}
+foreach ($cfYears as $y){
+    $cfData['years'][] = ['id' => (string) $y['id'], 'name' => $y['name'], 'model' => (string) $y['model_id']];
+}
+
+/** In ra các <option> kèm sẵn lựa chọn hiện tại */
+$cfOptions = function ($rows, $selected){
+    foreach ($rows as $r){
+        $sel = ((int) $r['id'] === (int) $selected) ? ' selected' : '';
+        echo '<option value="' . (int) $r['id'] . '"' . $sel . '>' . e($r['name']) . '</option>';
+    }
+};
+?>
+<div class="car-filter">
+    <div class="container">
+        <form class="car-filter__form" id="carFilterForm" action="<?php echo _WEB_URL; ?>/san-pham" method="get">
+            <select class="car-filter__select" name="car_brand" data-cf="brand" aria-label="Thương hiệu xe">
+                <option value="">Thương Hiệu</option>
+                <?php $cfOptions($cfBrands, $cfSel['brand']); ?>
+            </select>
+
+            <select class="car-filter__select" name="car_body" data-cf="body" aria-label="Dòng xe">
+                <option value="">Dòng Xe</option>
+                <?php $cfOptions($cfBodies, $cfSel['body']); ?>
+            </select>
+
+            <select class="car-filter__select" name="car_model" data-cf="model" aria-label="Model xe">
+                <option value="">Model Xe</option>
+                <?php $cfOptions($cfModels, $cfSel['model']); ?>
+            </select>
+
+            <select class="car-filter__select" name="car_year" data-cf="year" aria-label="Năm sản xuất">
+                <option value="">Năm sản xuất</option>
+                <?php $cfOptions($cfYears, $cfSel['year']); ?>
+            </select>
+
+            <input class="car-filter__input" type="search" name="q" placeholder="Phụ tùng bạn muốn tìm ?"
+                   value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
+
+            <button class="car-filter__btn" type="submit" aria-label="Tìm kiếm">
+                <i class="fa fa-search" aria-hidden="true"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+(function(){
+    var form = document.getElementById('carFilterForm');
+    if (!form) return;
+
+    // JSON_HEX_TAG đổi dấu ngoặc nhọn sang dạng < >. Thiếu cờ này,
+    // một tên xe chứa thẻ đóng script sẽ cắt ngang khối này và chèn được HTML
+    // tuỳ ý. (Cũng vì vậy mà comment đây không viết thẳng thẻ đó ra.)
+    var DATA = <?php echo json_encode($cfData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP); ?>;
+
+    var el = {};
+    ['brand', 'body', 'model', 'year'].forEach(function(k){
+        el[k] = form.querySelector('[data-cf="' + k + '"]');
+    });
+
+    // Dòng đầu mỗi ô là nhãn gợi ý ("Thương Hiệu"...). Nhớ lại trước khi dựng
+    // lại danh sách, nếu không thì sau lần lọc đầu tiên ô sẽ mất nhãn.
+    var labels = {};
+    Object.keys(el).forEach(function(k){ labels[k] = el[k].options[0].text; });
+
+    function option(value, text){
+        var o = document.createElement('option');
+        o.value = value;
+        o.textContent = text;   // gán qua textContent nên tên lấy từ CSDL không cần escape
+        return o;
+    }
+
+    /** Dựng lại một ô; giữ lựa chọn cũ nếu nó vẫn còn hợp lệ, không thì xoá */
+    function fill(select, items, label){
+        var keep = select.value, found = false;
+
+        select.textContent = '';
+        select.appendChild(option('', label));
+
+        items.forEach(function(it){
+            select.appendChild(option(it.id, it.name));
+            if (it.id === keep) found = true;
+        });
+
+        select.value = found ? keep : '';
+    }
+
+    function sync(){
+        var brand = el.brand.value;
+
+        // Dòng xe: chỉ giữ kiểu dáng mà hãng đang chọn thực sự có xe
+        fill(el.body, DATA.bodyTypes.filter(function(b){
+            return !brand || DATA.models.some(function(m){ return m.brand === brand && m.body === b.id; });
+        }), labels.body);
+
+        // Đọc lại sau mỗi fill(): lựa chọn cũ có thể vừa bị xoá vì không còn hợp lệ
+        var body = el.body.value;
+        var models = DATA.models.filter(function(m){
+            return (!brand || m.brand === brand) && (!body || m.body === body);
+        });
+        fill(el.model, models, labels.model);
+
+        // Chưa chọn model thì liệt kê đời xe của mọi model còn hợp lệ — tên đời
+        // xe đã kèm tên model ("Vios 2018-2023") nên không sợ nhầm.
+        var model = el.model.value;
+        var ids = model ? [model] : models.map(function(m){ return m.id; });
+        fill(el.year, DATA.years.filter(function(y){
+            return ids.indexOf(y.model) !== -1;
+        }), labels.year);
+    }
+
+    ['brand', 'body', 'model'].forEach(function(k){
+        el[k].addEventListener('change', sync);
+    });
+
+    // Ô để trống thì tắt đi cho khỏi lọt vào URL dưới dạng tham số rỗng.
+    form.addEventListener('submit', function(){
+        var off = [];
+        Array.prototype.forEach.call(form.elements, function(c){
+            if (c.name && !String(c.value).trim()){
+                c.disabled = true;
+                off.push(c);
+            }
+        });
+        // Trình duyệt đã gom dữ liệu form xong khi handler này kết thúc, nên bật
+        // lại ngay tick sau — để bấm Back (bfcache) không thấy các ô bị khoá.
+        setTimeout(function(){ off.forEach(function(c){ c.disabled = false; }); }, 0);
+    });
+
+    sync();   // thu hẹp ngay theo tham số đang có trên URL
+})();
+</script>

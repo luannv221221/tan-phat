@@ -71,6 +71,7 @@ $renderMenu = function ($items) use (&$renderMenu){
 <link rel="stylesheet" href="<?php echo $asset; ?>/css/owl.theme.default.min.css"/>
 <link rel="stylesheet" href="<?php echo $asset; ?>/css/own-carousel.min.css"/>
 <link rel="stylesheet" href="<?php echo asset("public/assets/storefront/css/style.css"); ?>"/>
+<link rel="stylesheet" href="<?php echo asset("public/assets/storefront/css/car-filter.css"); ?>"/>
 <style>
 /* ---- Bổ sung nhỏ cho storefront (không có trong theme) ---- */
 :root{--sf-accent:#2957a4;--sf-accent-d:#1d418d}
@@ -150,20 +151,12 @@ $renderMenu = function ($items) use (&$renderMenu){
                 <div class="col-2 d-md-none">
                     <button type="button" class="menu-toggle"><i class="fa fa-bars"></i></button>
                 </div>
-                <div class="col-7 col-md-2">
+                <div class="col-7 col-md-4">
                     <div class="header__logo text-center text-md-left">
                         <a href="<?php echo _WEB_URL; ?>/"><img src="<?php echo e($logoUrl); ?>" alt="<?php echo e($siteName); ?>"/></a>
                     </div>
                 </div>
-                <div class="col-5 px-5 d-none d-md-block">
-                    <form action="<?php echo _WEB_URL; ?>/san-pham" method="get">
-                        <div class="input-group header__search">
-                            <input type="search" name="q" class="form-control" placeholder="Tìm hàng hoá, mã, OEM..." value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
-                            <button type="submit" class="btn"><i class="fa fa-search" aria-hidden="true"></i></button>
-                        </div>
-                    </form>
-                </div>
-                <div class="col-5 d-none d-md-block">
+                <div class="col-md-8 d-none d-md-block">
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="header__hotline">
                             <a href="tel:<?php echo e($hotlineTel); ?>"><i class="fa fa-mobile" aria-hidden="true"></i> Hotline: <?php echo e($hotline); ?></a>
@@ -191,17 +184,13 @@ $renderMenu = function ($items) use (&$renderMenu){
                         </div>
                     </div>
                 </div>
-                <div class="col-12 d-md-none">
-                    <form action="<?php echo _WEB_URL; ?>/san-pham" method="get">
-                        <div class="input-group header__search">
-                            <input type="search" name="q" class="form-control" placeholder="Tìm kiếm..." value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
-                            <button type="submit" class="btn"><i class="fa fa-search" aria-hidden="true"></i></button>
-                        </div>
-                    </form>
-                </div>
             </div>
         </div>
     </div>
+
+    <?php // Bộ lọc xe — thay cho ô tìm kiếm cũ ở hàng trên
+    $this->render('layouts/storefront/partials/car-filter'); ?>
+
     <nav class="header__primary-menu">
         <div class="d-md-none py-2 px-3 text-center">
             <a href="<?php echo _WEB_URL; ?>/"><img src="<?php echo e($logoUrl); ?>" alt=""/></a>
