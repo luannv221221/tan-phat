@@ -142,6 +142,13 @@ class Stocktakes extends Controller {
         if (empty($items)){ Session::flash('msgError', 'Phiếu chưa có dòng hàng.'); $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return; }
 
         $wh = (int) $item['warehouse_id']; $date = $item['take_date']; $no = $item['take_no'];
+        // Chặn chốt lùi ngày — báo trước cho tử tế, engine cũng chặn lần nữa.
+        $lui = $this->__stock->kiemLuiNgay($wh, array_column($items, 'part_id'), $date, $this->__part);
+        if (!empty($lui)){
+            Session::flash('msgError', 'Phiếu đề ngày cũ hơn phát sinh đã có, sẽ làm sai tồn đầu kỳ của báo cáo: ' . implode('; ', $lui));
+            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
+        }
+
         $khongCoGiaVon = [];
         $this->__model->transaction(function($db) use ($id, $items, $wh, $date, $no, &$khongCoGiaVon){
             $surplus = 0.0; $shortage = 0.0;

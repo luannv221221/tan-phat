@@ -149,6 +149,18 @@ class Transfers extends Controller {
         if (!empty($short)){ Session::flash('msgError', 'Tồn kho nguồn không đủ: ' . implode('; ', $short)); $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return; }
 
         $date = $item['transfer_date']; $no = $item['transfer_no'];
+
+        // Chặn ghi sổ lùi ngày — phải xét CẢ HAI kho vì phiếu ghi thẻ ở cả hai.
+        $pids = array_column($items, 'part_id');
+        $lui  = array_merge(
+            $this->__stock->kiemLuiNgay($fromWh, $pids, $date, $this->__part),
+            $this->__stock->kiemLuiNgay($toWh, $pids, $date, $this->__part)
+        );
+        if (!empty($lui)){
+            Session::flash('msgError', 'Phiếu đề ngày cũ hơn phát sinh đã có, sẽ làm sai tồn đầu kỳ của báo cáo: ' . implode('; ', array_unique($lui)));
+            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
+        }
+
         $this->__model->transaction(function($db) use ($id, $items, $fromWh, $toWh, $date, $no){
             $total = 0.0;
             foreach ($items as $it){

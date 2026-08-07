@@ -13,6 +13,7 @@ class Cart extends Controller {
 
     private $__data = [];
     private $__part, $__quote, $__quoteItem, $__member, $__order, $__orderItem, $__reservation, $__settings, $__request, $__response;
+    private $__stock;
 
     function __construct(){
         $this->__part      = $this->model('PartsModel');
@@ -22,6 +23,7 @@ class Cart extends Controller {
         $this->__order     = $this->model('OrdersModel');
         $this->__orderItem = $this->model('OrderItemsModel');
         $this->__reservation = $this->model('StockReservationsModel');
+        $this->__stock     = $this->model('StocksModel');
         $this->__settings  = $this->model('SettingsModel');
         $this->__request   = new Request();
         $this->__response  = new Response();
@@ -180,6 +182,36 @@ class Cart extends Controller {
         $this->render('layouts/storefront/master', $this->__data);
     }
 
+    /**
+     * Những dòng giỏ hàng vượt quá tồn khả dụng.
+     *
+     * Gộp theo mã hàng trước khi so: giỏ có 2 dòng cùng mã, mỗi dòng 5, tồn 8
+     * mà so từng dòng thì cả hai đều lọt.
+     *
+     * @return array mô tả từng mã thiếu, rỗng nghĩa là đặt được
+     */
+    private function thieuTon($rows){
+        $can = [];
+        foreach ($rows as $r){
+            if (empty($r['part']['id'])) continue;
+            $pid = (int) $r['part']['id'];
+            $can[$pid] = ($can[$pid] ?? 0) + (float) $r['qty'];
+        }
+
+        $sl = function($v){ return rtrim(rtrim(number_format($v, 3), '0'), '.'); };
+
+        $thieu = [];
+        foreach ($can as $pid => $qty){
+            $co = $this->__stock->sellableByPart($pid);
+            if ($co + 1e-9 < $qty){
+                $p = $this->__part->getDetail($pid);
+                $ten = !empty($p['name']) ? $p['name'] : ('#' . $pid);
+                $thieu[] = $ten . ' (còn ' . $sl($co) . ', đặt ' . $sl($qty) . ')';
+            }
+        }
+        return $thieu;
+    }
+
     public function placeOrder(){
         $data = $this->buildRows($this->getCart());
         if (empty($data['rows'])){
@@ -210,6 +242,13 @@ class Cart extends Controller {
         // Email không bắt buộc, nhưng đã nhập thì phải đúng định dạng —
         // đây là địa chỉ dùng để gửi xác nhận đơn nên sai là mất liên lạc.
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors['email'] = 'Email không hợp lệ';
+
+        // Chốt 04/08/2026: chỉ cho đặt trong phạm vi kho còn.
+        // Đo bằng tồn KHẢ DỤNG (tổng tồn − phần đang giữ cho đơn khác), không
+        // phải tổng tồn: hai khách cùng đặt cái cuối cùng thì người sau phải bị
+        // chặn, chứ không phải cả hai cùng qua rồi gara mới phát hiện thiếu.
+        $thieu = $this->thieuTon($data['rows']);
+        if (!empty($thieu)) $errors['stock'] = 'Không đủ hàng: ' . implode('; ', $thieu);
         if (!empty($errors)){
             Session::flash('errors', $errors);
             Session::flash('old', $f);
@@ -217,34 +256,58 @@ class Cart extends Controller {
         }
 
         $memberId = Session::get('dataMember');
-        $orderId = $this->__order->add([
-            'order_no'       => $this->__order->nextNo(),
-            'member_id'      => !empty($memberId) ? (int) $memberId : null,
-            'customer_name'  => $name,
-            'phone'          => $phone,
-            'email'          => $email !== '' ? $email : null,
-            'address'        => $address,
-            // Chốt cả mã lẫn TÊN tại thời điểm đặt: danh mục hành chính còn đổi
-            // nữa thì đơn cũ vẫn giữ nguyên địa chỉ lúc khách đặt.
-            'province_code'  => $provinceCode,
-            'province_name'  => $area['province'],
-            'ward_code'      => $wardCode,
-            'ward_name'      => $area['ward'],
-            'note'           => !empty($f['note']) ? trim($f['note']) : null,
-            'payment_method' => $pay,
-            'subtotal'       => 0,
-            'total_amount'   => 0,
-            'status'         => 'new',
-        ]);
-        $total = $this->__orderItem->syncForOrder($orderId, $data['rows']);
-        $this->__order->edit(['subtotal' => $total, 'total_amount' => $total], $orderId);
 
-        // Giữ tồn (đặt trước) theo phụ tùng — chưa trừ tồn thật
-        $resv = [];
-        foreach ($data['rows'] as $r){
-            if (!empty($r['part']['id'])) $resv[] = ['part_id' => (int) $r['part']['id'], 'quantity' => (float) $r['qty']];
+        /* Tạo đơn + giữ tồn phải NGUYÊN TỬ và phải KIỂM LẠI TỒN bên trong.
+           Lần kiểm phía trên nằm ngoài transaction: hai khách bấm đặt cùng lúc
+           thì cả hai đều thấy còn hàng rồi cùng giữ -> bán quá tồn. Khoá dòng
+           tồn xong đọc lại là người sau phải xếp hàng và thấy số đã trừ. */
+        $orderId = 0;
+        $thieuLucChot = [];
+        $this->__order->transaction(function($db) use (
+            &$orderId, &$thieuLucChot, $data, $memberId, $name, $phone, $email,
+            $address, $provinceCode, $wardCode, $area, $f, $pay
+        ){
+            $resv = [];
+            foreach ($data['rows'] as $r){
+                if (!empty($r['part']['id'])) $resv[] = ['part_id' => (int) $r['part']['id'], 'quantity' => (float) $r['qty']];
+            }
+
+            $this->__stock->lockParts(array_column($resv, 'part_id'));
+
+            $thieuLucChot = $this->thieuTon($data['rows']);
+            if (!empty($thieuLucChot)) return;   // không tạo gì cả, transaction commit rỗng
+
+            $orderId = $this->__order->add([
+                'order_no'       => $this->__order->nextNo(),
+                'member_id'      => !empty($memberId) ? (int) $memberId : null,
+                'customer_name'  => $name,
+                'phone'          => $phone,
+                'email'          => $email !== '' ? $email : null,
+                'address'        => $address,
+                // Chốt cả mã lẫn TÊN tại thời điểm đặt: danh mục hành chính còn đổi
+                // nữa thì đơn cũ vẫn giữ nguyên địa chỉ lúc khách đặt.
+                'province_code'  => $provinceCode,
+                'province_name'  => $area['province'],
+                'ward_code'      => $wardCode,
+                'ward_name'      => $area['ward'],
+                'note'           => !empty($f['note']) ? trim($f['note']) : null,
+                'payment_method' => $pay,
+                'subtotal'       => 0,
+                'total_amount'   => 0,
+                'status'         => 'new',
+            ]);
+            $total = $this->__orderItem->syncForOrder($orderId, $data['rows']);
+            $this->__order->edit(['subtotal' => $total, 'total_amount' => $total], $orderId);
+
+            // Giữ tồn (đặt trước) theo phụ tùng — chưa trừ tồn thật
+            if (!empty($resv)) $this->__reservation->reserveForOrder($orderId, $resv);
+        });
+
+        if (!empty($thieuLucChot)){
+            Session::flash('errors', ['stock' => 'Không đủ hàng: ' . implode('; ', $thieuLucChot)]);
+            Session::flash('old', $f);
+            $this->__response->redirect('dat-hang'); return;
         }
-        if (!empty($resv)) $this->__reservation->reserveForOrder($orderId, $resv);
 
         Session::remove('cart');
         $order = $this->__order->getDetail($orderId);

@@ -96,6 +96,8 @@ class StocksModel extends Model {
      *   bq_mới = (SL_cũ*bq_cũ + SL_nhập*giá_nhập) / (SL_cũ + SL_nhập)
      */
     public function applyIn($warehouseId, $partId, $qty, $unitCost, $docType, $docId, $docNo, $date, $note = null){
+        $this->chanLuiNgay($warehouseId, $partId, $date);
+
         $qty      = (float) $qty;
         $unitCost = (float) $unitCost;
 
@@ -117,6 +119,8 @@ class StocksModel extends Model {
      * @return float đơn giá bình quân đã dùng (giá vốn/đơn vị)
      */
     public function applyOut($warehouseId, $partId, $qty, $docType, $docId, $docNo, $date, $note = null){
+        $this->chanLuiNgay($warehouseId, $partId, $date);
+
         $qty = (float) $qty;
 
         $r      = $this->getRowForUpdate($warehouseId, $partId);
@@ -149,8 +153,75 @@ class StocksModel extends Model {
         return $avg;
     }
 
+    /**
+     * Ngày phát sinh gần nhất của (kho, phụ tùng), hoặc null nếu chưa có.
+     * Lấy theo move_date lớn nhất chứ không theo id: thẻ ghi sau chưa chắc có
+     * ngày muộn hơn.
+     */
+    public function lastMoveDate($warehouseId, $partId){
+        $r = $this->table('stock_cards')
+                  ->select('MAX(`move_date`) AS ngay')
+                  ->where('warehouse_id', '=', (int) $warehouseId)
+                  ->where('part_id', '=', (int) $partId)
+                  ->first();
+
+        return !empty($r['ngay']) ? substr($r['ngay'], 0, 10) : null;
+    }
+
+    /**
+     * CHẶN GHI SỔ LÙI NGÀY.
+     *
+     * balance_qty trên thẻ là số dư luỹ kế theo THỨ TỰ GHI SỔ. Ghi sổ một phiếu
+     * đề ngày cũ hơn phát sinh cuối cùng thì thẻ mới mang ngày cũ nhưng số dư
+     * lại tính sau — mọi báo cáo cắt theo move_date (tồn đầu kỳ của thẻ kho,
+     * biến động theo ngày) đọc ra số sai.
+     *
+     * Chốt 04/08/2026: chặn hẳn thay vì dựng lại số dư theo ngày.
+     *
+     * Gọi ở ĐẦU applyIn/applyOut, TRƯỚC khi đụng vào số dư. Đặt ở addCard()
+     * là quá muộn: setBalance() chạy trước nó, nên ném lỗi ở đó sẽ để lại tồn
+     * đã sửa mà không có thẻ kho tương ứng. Ngoài transaction thì trạng thái
+     * hỏng đó nằm lại luôn.
+     */
+    private function chanLuiNgay($warehouseId, $partId, $date){
+        $cuoi = $this->lastMoveDate($warehouseId, $partId);
+        if ($cuoi !== null && substr($date, 0, 10) < $cuoi){
+            throw new \RuntimeException(
+                'Khong ghi so lui ngay duoc: phu tung ' . (int) $partId . ' o kho ' . (int) $warehouseId
+                . ' da co phat sinh ngay ' . $cuoi . ', phieu nay de ngay ' . substr($date, 0, 10)
+            );
+        }
+    }
+
+    /**
+     * Kiểm trước xem phiếu có bị lùi ngày không, để controller báo lỗi tử tế
+     * thay vì để exception của addCard() bắn ra trang lỗi.
+     *
+     * @return array mô tả từng mã vướng; rỗng nghĩa là ghi sổ được
+     */
+    public function kiemLuiNgay($warehouseId, array $partIds, $date, $partModel = null){
+        $ngay = substr($date, 0, 10);
+        $loi  = [];
+
+        foreach (array_unique(array_map('intval', $partIds)) as $pid){
+            if ($pid <= 0) continue;
+            $cuoi = $this->lastMoveDate($warehouseId, $pid);
+            if ($cuoi !== null && $ngay < $cuoi){
+                $ten = '#' . $pid;
+                if ($partModel !== null){
+                    $p = $partModel->getDetail($pid);
+                    if (!empty($p)) $ten = $p['code'] . ' - ' . $p['name'];
+                }
+                $loi[] = $ten . ' (đã có phát sinh ngày ' . $cuoi . ')';
+            }
+        }
+        return $loi;
+    }
+
     private function addCard($warehouseId, $partId, $date, $docType, $docId, $docNo,
                              $qtyIn, $qtyOut, $unitCost, $balanceQty, $balanceValue, $note){
+
+
         $this->insert('stock_cards', [
             'warehouse_id'  => (int) $warehouseId,
             'part_id'       => (int) $partId,
@@ -216,6 +287,23 @@ class StocksModel extends Model {
             $avg = $qty > 0 ? round($val / $qty, 2) : 0.0;
             $this->setBalance($warehouseId, $partId, $qty, $avg);
         }
+    }
+
+    /**
+     * Khoá mọi dòng tồn của các phụ tùng này tới hết transaction.
+     *
+     * Dùng khi cần "kiểm rồi mới ghi" mà không được để hai phiên chen nhau:
+     * hai khách cùng đặt cái cuối cùng thì cả hai đều thấy còn hàng nếu không
+     * khoá. Khoá xong phải ĐỌC LẠI tồn rồi mới quyết định.
+     *
+     * Chỉ có tác dụng khi đang trong transaction.
+     */
+    public function lockParts(array $partIds){
+        $ids = array_values(array_unique(array_map('intval', $partIds)));
+        if (empty($ids)) return;
+
+        $holes = implode(',', array_fill(0, count($ids), '?'));
+        $this->getRaw('SELECT `id` FROM `stocks` WHERE `part_id` IN (' . $holes . ') FOR UPDATE', $ids);
     }
 
     /** Tổng tồn của 1 phụ tùng trên MỌI kho (cho storefront — TASK_79) */

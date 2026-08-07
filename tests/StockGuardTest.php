@@ -154,6 +154,69 @@ ok(preg_match('~function invoice\(.*?transaction\(function~s', $oSrc) === 1,
 ok(preg_match('~function invoice\(.*?syncForInvoice~s', $oSrc) === 1,
    'syncForInvoice nam trong transaction do (chay long duoc)');
 
+// ================================================================
+section('CHAN ghi so lui ngay');
+
+$pdo->exec("DELETE FROM stock_cards WHERE part_id=$pid");
+$pdo->exec("DELETE FROM stocks WHERE part_id=$pid");
+
+$homNay   = date('Y-m-d');
+$homQua   = date('Y-m-d', strtotime('-1 day'));
+$tuanTruoc= date('Y-m-d', strtotime('-7 day'));
+
+$st->applyIn($whA, $pid, 5, 100000, 'receipt', 96001, 'BD-1', $homQua, null);
+ok($st->lastMoveDate($whA, $pid) === $homQua, 'Phat sinh cuoi la hom qua', $st->lastMoveDate($whA, $pid));
+
+// Ghi so ngay hom nay (moi hon) -> phai chay
+$st->applyIn($whA, $pid, 2, 100000, 'receipt', 96002, 'BD-2', $homNay, null);
+ok(abs($st->available($whA, $pid) - 7) < 1e-9, 'Ghi so ngay moi hon -> binh thuong');
+
+// Ghi so LUI ngay -> phai bi chan
+$nem = false;
+try {
+    $st->applyIn($whA, $pid, 3, 100000, 'receipt', 96003, 'BD-3', $tuanTruoc, null);
+} catch (\Throwable $e){ $nem = true; }
+ok($nem, 'Ghi so de ngay tuan truoc -> bi chan');
+ok(abs($st->available($whA, $pid) - 7) < 1e-9, 'Ton khong doi sau khi bi chan', $st->available($whA, $pid));
+
+$soThe = (int) $pdo->query("SELECT COUNT(*) FROM stock_cards WHERE part_id=$pid AND doc_id=96003")->fetchColumn();
+ok($soThe === 0, 'Khong sinh the kho nao cho phieu bi chan');
+
+// CUNG NGAY thi van cho — chi chan khi CU HON
+$st->applyIn($whA, $pid, 1, 100000, 'receipt', 96004, 'BD-4', $homNay, null);
+ok(abs($st->available($whA, $pid) - 8) < 1e-9, 'Cung ngay voi phat sinh cuoi -> van ghi duoc');
+
+// Kho KHAC thi khong lien quan
+$nem2 = false;
+try {
+    $st->applyIn($whB, $pid, 4, 100000, 'receipt', 96005, 'BD-5', $tuanTruoc, null);
+} catch (\Throwable $e){ $nem2 = true; }
+ok(!$nem2, 'Kho khac chua co phat sinh -> ghi ngay cu van duoc (khong chan oan)');
+
+// Helper bao loi tu te cho controller
+$loi = $st->kiemLuiNgay($whA, [$pid], $tuanTruoc);
+ok(count($loi) === 1, 'kiemLuiNgay() bat duoc ma vuong');
+ok($st->kiemLuiNgay($whA, [$pid], $homNay) === [], 'kiemLuiNgay() khong bao oan khi ngay hop le');
+
+foreach (['Goodsreceipts','Goodsissues','Salesinvoices','Stocktakes','Transfers'] as $c){
+    $src = codeOnly(__DIR__ . '/../app/controllers/admin/' . $c . '.php');
+    ok(strpos($src, 'kiemLuiNgay') !== false, "$c co kiem lui ngay truoc khi ghi so");
+}
+
+// ================================================================
+section('Dat hang ngoai web PHAI kiem ton');
+
+$cartSrc = codeOnly(__DIR__ . '/../app/controllers/Cart.php');
+ok(strpos($cartSrc, 'thieuTon') !== false, 'Cart co ham kiem ton');
+ok(strpos($cartSrc, 'sellableByPart') !== false,
+   'Do bang ton KHA DUNG (tru phan dang giu cho don khac), khong phai tong ton');
+ok(preg_match('~function placeOrder\(.*?transaction\(function~s', $cartSrc) === 1,
+   'Tao don + giu ton nam trong 1 transaction');
+ok(preg_match('~transaction\(function.*?lockParts~s', $cartSrc) === 1,
+   'Co khoa dong ton truoc khi kiem lai (chong hai khach cung dat cai cuoi)');
+ok(preg_match('~lockParts.*?thieuTon~s', $cartSrc) === 1,
+   'Kiem LAI ton SAU khi khoa — khoa xong khong doc lai thi khoa vo nghia');
+
 // ---- Don dep ----
 $pdo->exec("DELETE FROM stock_cards WHERE part_id IN ($pid, $pid2)");
 $pdo->exec("DELETE FROM stocks WHERE part_id IN ($pid, $pid2)");

@@ -218,6 +218,13 @@ class Goodsissues extends Controller {
         $date = $item['issue_date'];
         $no   = $item['issue_no'];
 
+        // Chặn ghi sổ lùi ngày — báo trước cho tử tế, engine cũng chặn lần nữa.
+        $lui = $this->__stock->kiemLuiNgay($wh, array_column($items, 'part_id'), $date, $this->__part);
+        if (!empty($lui)){
+            Session::flash('msgError', 'Phiếu đề ngày cũ hơn phát sinh đã có, sẽ làm sai tồn đầu kỳ của báo cáo: ' . implode('; ', $lui));
+            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
+        }
+
         $this->__model->transaction(function($db) use ($id, $item, $items, $wh, $date, $no){
             $total = 0.0;
             foreach ($items as $it){
