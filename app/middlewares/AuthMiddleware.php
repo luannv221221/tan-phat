@@ -33,6 +33,8 @@ class AuthMiddleware extends Middleware {
                 Session::remove('dataUser');
                 Session::remove('dataToken');
             }
+        }else{
+            $this->restoreFromRemember($loginTokenModel);
         }
 
         //trường hợp 1: Kiểm tra trang admin
@@ -51,6 +53,32 @@ class AuthMiddleware extends Middleware {
                 $response->redirect('admin');
             }
         }
+    }
+
+    /**
+     * Khôi phục phiên từ cookie "Ghi nhớ đăng nhập".
+     *
+     * Session PHP hết trước cookie là chuyện bình thường (đóng trình duyệt,
+     * file session bị dọn). Có cookie hợp lệ thì dựng lại phiên, không bắt
+     * đăng nhập lại.
+     */
+    private function restoreFromRemember($loginTokenModel){
+        $raw = \App\core\Cookie::get(\LoginToken::REMEMBER_COOKIE);
+        if (empty($raw)) return;
+
+        $row = $loginTokenModel->findByRemember($raw);
+        if (empty($row)){
+            // Cookie sai hoặc token đã bị dọn -> vứt cookie đi cho khỏi hỏi lại
+            // CSDL ở mọi request sau.
+            \App\core\Cookie::remove(\LoginToken::REMEMBER_COOKIE);
+            return;
+        }
+
+        // Cấp session id mới khi nâng từ cookie lên phiên đăng nhập — cùng lý do
+        // với Session::regenerate() lúc đăng nhập thường (chống session fixation).
+        Session::regenerate();
+        Session::set('dataToken', $row['id']);
+        Session::set('dataUser', $row['user_id']);
     }
 
     public function setActivity(){
@@ -86,6 +114,6 @@ class AuthMiddleware extends Middleware {
 
         $minutes = defined('_SESSION_IDLE_MINUTES') ? _SESSION_IDLE_MINUTES : 15;
 
-        $loginTokenModel->removeExpired($minutes);
+        $loginTokenModel->removeExpired($minutes, \LoginToken::REMEMBER_DAYS);
     }
 }

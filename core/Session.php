@@ -24,6 +24,15 @@ class Session{
 
         if (empty(session_id())){
 
+            // configs/session.php khai báo 'left_time' nhưng TRƯỚC ĐÂY không chỗ
+            // nào dùng — config chết. PHP vì thế chạy gc_maxlifetime mặc định
+            // 1440s, tức file session bị dọn sau 24 phút không thao tác, dù
+            // config ghi 86400. Nay áp đúng giá trị đã khai báo.
+            $left = isset($config['session']['left_time']) ? (int) $config['session']['left_time'] : 0;
+            if ($left > 0){
+                ini_set('session.gc_maxlifetime', $left);
+            }
+
             // Bảo vệ cookie session — bản cũ dùng mặc định của PHP, không đặt gì.
             session_set_cookie_params([
                 'lifetime' => 0,

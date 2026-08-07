@@ -4,6 +4,7 @@ use App\core\Request;
 use App\core\Session;
 use App\core\Response;
 use App\core\Hash;
+use App\core\Cookie;
 class Auth extends Controller{
 
     private $__data = [];
@@ -66,17 +67,35 @@ class Auth extends Controller{
                 // Bản cũ: md5(uniqid()) — uniqid() dựa trên thời gian nên đoán được.
                 $token = Hash::randomToken();
 
+                // Tick "Ghi nhớ đăng nhập" -> token được đo bằng NGÀY thay vì
+                // 15 phút không thao tác như mặc định (xem LoginToken::removeExpired).
+                $remember = !empty($this->__request->getFields()['remember']);
+
                 $dataToken = [
                     'user_id' => $userId,
                     'token' => $token,
+                    'remember' => $remember ? 1 : 0,
                     'create_at' => date('Y-m-d H:i:s'),
                     'client_ip' => get_client_ip()
                 ];
+
+                // Cookie giữ BẢN GỐC, CSDL chỉ giữ hash. CSDL lộ thì không ai
+                // dựng lại được cookie để vào tài khoản.
+                $rawCookie = '';
+                if ($remember){
+                    $rawCookie = Hash::randomToken();
+                    $dataToken['remember_hash'] = hash('sha256', $rawCookie);
+                }
 
                 $tokenId = $this->__loginTokenModel->add($dataToken);
 
                 if (!empty($tokenId)){
                     Session::set('dataToken', $tokenId);
+
+                    if ($remember){
+                        Cookie::set(LoginToken::REMEMBER_COOKIE, $rawCookie,
+                                    LoginToken::REMEMBER_DAYS * 86400);
+                    }
                 }
 
             }else{
@@ -107,6 +126,10 @@ class Auth extends Controller{
 
             Session::remove('dataUser');
         }
+
+        // Không xoá cookie ghi nhớ thì request kế tiếp middleware lại lấy cookie
+        // ra khôi phục phiên — bấm Đăng xuất xong vẫn đang đăng nhập.
+        Cookie::remove(LoginToken::REMEMBER_COOKIE);
 
         $this->__response->redirect('dang-nhap');
     }

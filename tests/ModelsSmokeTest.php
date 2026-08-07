@@ -40,7 +40,9 @@ $pdo->exec("CREATE TABLE users (
     status INTEGER, group_id INTEGER, current_activity TEXT
 )");
 $pdo->exec("CREATE TABLE permissions (id INTEGER PRIMARY KEY AUTOINCREMENT, module_id INTEGER, group_id INTEGER, role TEXT)");
-$pdo->exec("CREATE TABLE login_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, token TEXT, create_at TEXT, client_ip TEXT, current_activity TEXT)");
+// remember / remember_hash: them boi migration 000053 (ghi nho dang nhap admin).
+// Schema gia lap nay phai bam theo migration, khong thi removeExpired() vo.
+$pdo->exec("CREATE TABLE login_tokens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, token TEXT, remember INTEGER DEFAULT 0, remember_hash TEXT, create_at TEXT, client_ip TEXT, current_activity TEXT)");
 
 $pdo->exec("INSERT INTO groups (name) VALUES ('Admin'),('Manager'),('Staff')");
 

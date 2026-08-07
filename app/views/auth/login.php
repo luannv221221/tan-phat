@@ -34,6 +34,17 @@
                 {!! !empty($errors['password']) ? '<small class="text-danger">'.e($errors['password']).'</small>' : false !!}
             </div>
 
+            <div class="form-group">
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="login-remember" name="remember" value="1"/>
+                    <label class="custom-control-label" for="login-remember">Ghi nhớ đăng nhập trên máy này</label>
+                </div>
+                <small class="text-muted d-block mt-1">
+                    Không tích thì phiên tự thoát sau <?php echo (int) (defined('_SESSION_IDLE_MINUTES') ? _SESSION_IDLE_MINUTES : 15); ?> phút không thao tác.
+                    Đừng tích khi dùng máy công cộng.
+                </small>
+            </div>
+
             <button type="submit" class="btn btn-primary">Đăng nhập</button>
         </form>
 

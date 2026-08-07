@@ -3,6 +3,13 @@
 use App\core\Model;
 
 class LoginToken extends Model{
+
+    /** Tên cookie ghi nhớ đăng nhập — dùng chung Auth và AuthMiddleware */
+    const REMEMBER_COOKIE = 'tanphat_remember';
+
+    /** Số ngày giữ đăng nhập khi có tick "Ghi nhớ" */
+    const REMEMBER_DAYS = 30;
+
     protected $_table = 'login_tokens'; //Gán tên bảng
     protected $_fields = '*'; //Các field cần lấy khi fetch và fetchAll
     protected $_primary = 'id'; //Trường khoá chính
@@ -41,15 +48,35 @@ class LoginToken extends Model{
      *
      * @param int $minutes Số phút không hoạt động thì coi là hết hạn
      */
-    public function removeExpired($minutes = 15){
-        $limit = date('Y-m-d H:i:s', time() - ($minutes * 60));
+    public function removeExpired($minutes = 15, $rememberDays = 30){
+        $limit    = date('Y-m-d H:i:s', time() - ($minutes * 60));
+        $limitRem = date('Y-m-d H:i:s', time() - ($rememberDays * 86400));
 
+        // Token có tick "ghi nhớ" đo bằng NGÀY, còn lại đo bằng PHÚT.
+        // Trước đây mọi token đều bị xoá sau 15 phút không thao tác — đó chính
+        // là lý do phiên đăng nhập hay hết, không phải do session PHP.
         return $this->delete(
             $this->_table,
-            '(`current_activity` IS NOT NULL AND `current_activity` < ?)
-             OR (`current_activity` IS NULL AND `create_at` < ?)',
-            [$limit, $limit]
+            '(`remember` = 0 AND (
+                  (`current_activity` IS NOT NULL AND `current_activity` < ?)
+               OR (`current_activity` IS NULL AND `create_at` < ?)))
+             OR (`remember` = 1 AND (
+                  (`current_activity` IS NOT NULL AND `current_activity` < ?)
+               OR (`current_activity` IS NULL AND `create_at` < ?)))',
+            [$limit, $limit, $limitRem, $limitRem]
         );
+    }
+
+    /** Tìm token theo cookie ghi nhớ (so bằng HASH, cookie giữ bản gốc) */
+    public function findByRemember($rawCookie){
+        if ($rawCookie === '' || $rawCookie === null) return null;
+
+        $r = $this->table($this->_table)
+                  ->where('remember', '=', 1)
+                  ->where('remember_hash', '=', hash('sha256', $rawCookie))
+                  ->first();
+
+        return !empty($r) ? $r : null;
     }
 
     public function edit($data, $id){
