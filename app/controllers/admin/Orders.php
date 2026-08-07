@@ -108,24 +108,34 @@ class Orders extends Controller {
         }
         if (empty($lines)){ Session::flash('msgError', 'Đơn không có dòng hàng hợp lệ (sản phẩm đã xoá).'); $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return; }
 
-        $invId = $this->__inv->add([
-            'invoice_no'    => $this->__inv->nextNo(),
-            'customer_id'   => null,
-            'customer_name' => $item['customer_name'],
-            'warehouse_id'  => (int) $wh['id'],
-            'invoice_date'  => date('Y-m-d'),
-            'vat_rate'      => 0, // giá web đã là giá bán cuối
-            'subtotal'      => 0, 'tax_amount' => 0, 'total_amount' => 0, 'cost_amount' => 0,
-            'status'        => 0,
-            'note'          => 'Từ đơn hàng ' . $item['order_no'],
-            'created_by'    => Session::get('dataUser'),
-        ]);
-        $subtotal = $this->__invItem->syncForInvoice($invId, $lines);
-        $this->__inv->edit(['subtotal' => $subtotal, 'tax_amount' => 0, 'total_amount' => $subtotal], $invId);
-        $this->__model->edit(['sales_invoice_id' => $invId], $id);
+        /* Bốn thao tác ghi phải NGUYÊN TỬ. Trước đây chạy trần: đứt giữa chừng
+           thì được hoá đơn rỗng dòng hàng, hoặc đơn đã nhả giữ tồn mà chưa có
+           hoá đơn nào — hàng thành "không ai giữ, cũng chưa ai trừ". */
+        $invId = $this->__model->transaction(function($db) use ($item, $id, $wh, $lines){
+            $invId = $this->__inv->add([
+                'invoice_no'    => $this->__inv->nextNo(),
+                'customer_id'   => null,
+                'customer_name' => $item['customer_name'],
+                'warehouse_id'  => (int) $wh['id'],
+                'invoice_date'  => date('Y-m-d'),
+                'vat_rate'      => 0, // giá web đã là giá bán cuối
+                'subtotal'      => 0, 'tax_amount' => 0, 'total_amount' => 0, 'cost_amount' => 0,
+                'status'        => 0,
+                'note'          => 'Từ đơn hàng ' . $item['order_no'],
+                'created_by'    => Session::get('dataUser'),
+            ]);
 
-        // Nhả giữ tồn: từ đây hàng do hoá đơn quản (ghi sổ hoá đơn sẽ trừ tồn thật)
-        $this->__reservation->releaseForOrder($id);
+            // syncForInvoice() tự bọc transaction — chạy lồng được nhờ
+            // Database::transaction() nhận biết transaction đang mở.
+            $subtotal = $this->__invItem->syncForInvoice($invId, $lines);
+            $this->__inv->edit(['subtotal' => $subtotal, 'tax_amount' => 0, 'total_amount' => $subtotal], $invId);
+            $this->__model->edit(['sales_invoice_id' => $invId], $id);
+
+            // Nhả giữ tồn: từ đây hàng do hoá đơn quản (ghi sổ hoá đơn sẽ trừ tồn thật)
+            $this->__reservation->releaseForOrder($id);
+
+            return $invId;
+        });
 
         Session::flash('msg', 'Đã tạo hoá đơn nháp từ đơn ' . $item['order_no'] . '. Kiểm tra rồi "Ghi sổ" để trừ tồn & ghi doanh thu.');
         $this->__response->redirect('admin/sales-invoices/edit/' . $invId);

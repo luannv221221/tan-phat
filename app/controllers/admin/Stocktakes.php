@@ -142,13 +142,25 @@ class Stocktakes extends Controller {
         if (empty($items)){ Session::flash('msgError', 'Phiếu chưa có dòng hàng.'); $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return; }
 
         $wh = (int) $item['warehouse_id']; $date = $item['take_date']; $no = $item['take_no'];
-        $this->__model->transaction(function($db) use ($id, $items, $wh, $date, $no){
+        $khongCoGiaVon = [];
+        $this->__model->transaction(function($db) use ($id, $items, $wh, $date, $no, &$khongCoGiaVon){
             $surplus = 0.0; $shortage = 0.0;
             foreach ($items as $it){
                 $pid = (int) $it['part_id'];
                 $actual = (float) $it['actual_qty'];
                 $book = $this->__stock->available($wh, $pid);
                 $avg  = $this->__stock->avgCost($wh, $pid);
+
+                /* Phụ tùng chưa từng có ở kho này thì avgCost() = 0. Nhập hàng
+                   thừa vào với giá vốn 0 sẽ kéo bình quân gia quyền của cả mã
+                   hàng về 0, và mọi lần bán sau ghi giá vốn 0 -> lãi ảo.
+                   Lấy tạm bình quân của mã đó ở kho khác; vẫn không có thì ghi
+                   0 nhưng phải BÁO cho kế toán biết mà vào sửa. */
+                if ($avg <= 0){
+                    $avg = $this->__stock->avgCostAnyWarehouse($pid);
+                    if ($avg <= 0) $khongCoGiaVon[] = $pid;
+                }
+
                 $diff = round($actual - $book, 3);
                 if ($diff > 1e-9){
                     $this->__stock->applyIn($wh, $pid, $diff, $avg, self::DOC_TYPE, $id, $no, $date, $it['note']);
@@ -162,7 +174,19 @@ class Stocktakes extends Controller {
 
             $this->__model->edit(['status' => 1, 'surplus_value' => $surplus, 'shortage_value' => $shortage], $id);
         });
-        Session::flash('msg', 'Đã chốt ' . $no . ' — điều chỉnh tồn kho.');
+        $msg = 'Đã chốt ' . $no . ' — điều chỉnh tồn kho.';
+        if (!empty($khongCoGiaVon)){
+            // Không chặn chốt phiếu, nhưng phải nói ra: để im thì kế toán không
+            // bao giờ biết có hàng đang nằm kho với giá vốn bằng 0.
+            $ma = [];
+            foreach (array_unique($khongCoGiaVon) as $pid){
+                $p = $this->__part->getDetail($pid);
+                $ma[] = $p ? $p['code'] : ('#' . $pid);
+            }
+            $msg .= ' Lưu ý: ' . implode(', ', $ma)
+                  . ' chưa có giá vốn ở kho nào nên hàng thừa được ghi nhận giá 0 — vào sửa lại giá vốn.';
+        }
+        Session::flash('msg', $msg);
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
 

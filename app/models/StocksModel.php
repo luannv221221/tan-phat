@@ -25,6 +25,23 @@ class StocksModel extends Model {
                     ->first();
     }
 
+    /**
+     * Như getRow() nhưng KHOÁ dòng tới hết transaction (SELECT ... FOR UPDATE).
+     *
+     * applyIn/applyOut là đọc-tính-ghi đè. Hai người ghi sổ cùng lúc cho cùng
+     * một (kho, phụ tùng) mà không khoá thì cả hai đọc ra cùng số dư cũ, người
+     * ghi sau đè mất phần của người ghi trước — tồn sai mà không ai biết.
+     *
+     * Ngoài transaction thì FOR UPDATE chỉ là câu SELECT bình thường, vô hại.
+     */
+    private function getRowForUpdate($warehouseId, $partId){
+        $row = $this->firstRaw(
+            'SELECT * FROM `stocks` WHERE `warehouse_id` = ? AND `part_id` = ? FOR UPDATE',
+            [(int) $warehouseId, (int) $partId]
+        );
+        return !empty($row) ? $row : null;
+    }
+
     /** Số lượng tồn hiện tại (0 nếu chưa có) */
     public function available($warehouseId, $partId){
         $r = $this->getRow($warehouseId, $partId);
@@ -35,6 +52,24 @@ class StocksModel extends Model {
     public function avgCost($warehouseId, $partId){
         $r = $this->getRow($warehouseId, $partId);
         return $r ? (float) $r['avg_cost'] : 0.0;
+    }
+
+    /**
+     * Bình quân của 1 phụ tùng ở BẤT KỲ kho nào đang còn hàng.
+     *
+     * Dùng khi kiểm kê phát hiện thừa một mã chưa từng có ở kho đó: lấy giá
+     * vốn ở kho khác còn hơn là nhập vào với giá 0 rồi kéo bình quân về 0.
+     * Bình quân theo lượng chứ không lấy đại một kho.
+     */
+    public function avgCostAnyWarehouse($partId){
+        $r = $this->table($this->_table)
+                  ->select('SUM(`quantity` * `avg_cost`) AS gia_tri, SUM(`quantity`) AS so_luong')
+                  ->where('part_id', '=', (int) $partId)
+                  ->where('quantity', '>', 0)
+                  ->first();
+
+        $sl = (float) ($r['so_luong'] ?? 0);
+        return $sl > 0 ? round((float) $r['gia_tri'] / $sl, 2) : 0.0;
     }
 
     /** Ghi thẳng số dư stocks (upsert theo kho+phụ tùng) */
@@ -64,7 +99,7 @@ class StocksModel extends Model {
         $qty      = (float) $qty;
         $unitCost = (float) $unitCost;
 
-        $r      = $this->getRow($warehouseId, $partId);
+        $r      = $this->getRowForUpdate($warehouseId, $partId);
         $oldQty = $r ? (float) $r['quantity'] : 0.0;
         $oldAvg = $r ? (float) $r['avg_cost'] : 0.0;
 
@@ -84,11 +119,30 @@ class StocksModel extends Model {
     public function applyOut($warehouseId, $partId, $qty, $docType, $docId, $docNo, $date, $note = null){
         $qty = (float) $qty;
 
-        $r      = $this->getRow($warehouseId, $partId);
+        $r      = $this->getRowForUpdate($warehouseId, $partId);
         $oldQty = $r ? (float) $r['quantity'] : 0.0;
         $avg    = $r ? (float) $r['avg_cost'] : 0.0;
 
         $newQty = $oldQty - $qty;
+
+        /* LƯỚI CUỐI chặn tồn âm.
+         *
+         * Controller nào cũng đã kiểm tồn trước khi ghi sổ, nhưng kiểm nằm
+         * NGOÀI transaction: hai người bấm ghi sổ cùng lúc thì cả hai đều thấy
+         * đủ tồn rồi cùng trừ. Chặn ở đây là chốt cuối — ném exception để
+         * transaction của controller rollback, thay vì để tồn âm nằm im trong
+         * CSDL (tồn âm không có nghĩa gì về nghiệp vụ và rất khó truy lại).
+         *
+         * Dung sai 1e-9 vì số lượng là DECIMAL(15,3), so bằng 0 tuyệt đối sẽ
+         * vướng sai số dấu phẩy động.
+         */
+        if ($newQty < -1e-9){
+            throw new \RuntimeException(
+                'Ton kho khong du: kho ' . (int) $warehouseId . ', phu tung ' . (int) $partId
+                . ' con ' . $oldQty . ' ma xuat ' . $qty
+            );
+        }
+
         $this->setBalance($warehouseId, $partId, $newQty, $avg);
         $this->addCard($warehouseId, $partId, $date, $docType, $docId, $docNo,
                        0, $qty, $avg, $newQty, round($newQty * $avg, 2), $note);
@@ -334,12 +388,33 @@ class StocksModel extends Model {
     public function getBalanceBefore($partId, $warehouseId, $from){
         if ($from === '') return ['qty' => 0.0, 'value' => 0.0];
 
-        $q = $this->table('stock_cards')
-            ->where('part_id', '=', (int) $partId)
-            ->where('move_date', '<', $from);
-        if ($warehouseId > 0) $q = $q->where('warehouse_id', '=', (int) $warehouseId);
+        /* Kho = 0 nghĩa là "mọi kho" -> phải CỘNG số dư của từng kho.
+         *
+         * Bản cũ chỉ bỏ điều kiện warehouse_id rồi lấy thẻ mới nhất, mà
+         * balance_qty là số dư luỹ kế RIÊNG của kho ghi thẻ đó — nên phụ tùng
+         * nằm ở 2 kho sẽ trả về tồn của đúng một kho và coi đó là tổng.
+         * Hiện Thekho tự chọn kho mặc định nên chưa lộ, nhưng bỏ mặc định đi
+         * là sai ngay.
+         */
+        if ((int) $warehouseId <= 0){
+            $whs = $this->table('stock_cards')->select('DISTINCT `warehouse_id`')
+                        ->where('part_id', '=', (int) $partId)->get();
 
-        $row = $q->orderBy('id', 'DESC')->first();
+            $qty = 0.0; $val = 0.0;
+            foreach ($whs ?: [] as $w){
+                $r = $this->getBalanceBefore($partId, (int) $w['warehouse_id'], $from);
+                $qty += $r['qty'];
+                $val += $r['value'];
+            }
+            return ['qty' => $qty, 'value' => $val];
+        }
+
+        $row = $this->table('stock_cards')
+            ->where('part_id', '=', (int) $partId)
+            ->where('move_date', '<', $from)
+            ->where('warehouse_id', '=', (int) $warehouseId)
+            ->orderBy('id', 'DESC')->first();
+
         if (empty($row)) return ['qty' => 0.0, 'value' => 0.0];
         return ['qty' => (float) $row['balance_qty'], 'value' => (float) $row['balance_value']];
     }

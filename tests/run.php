@@ -22,6 +22,7 @@ $tests = [
     'CarFilterTest.php'           => 'NGHIEP VU — bo loc xe o header (MySQL that)',
     'OrderStockTest.php'          => 'NGHIEP VU — don hang tru/cong kho theo trang thai',
     'RememberLoginTest.php'       => 'BAO MAT — ghi nho dang nhap admin',
+    'StockGuardTest.php'          => 'NGHIEP VU — chot an toan cua kho (ton am, transaction long)',
 ];
 
 $php      = PHP_BINARY;

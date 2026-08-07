@@ -133,7 +133,28 @@ class Database extends Connection {
      *       $db->update('stock', [...], 'id = ?', [$id]);
      *   });
      */
+    /**
+     * Chạy $callback trong 1 transaction. LỒNG NHAU ĐƯỢC.
+     *
+     * Vì sao cần lồng: nhiều model có sẵn tự bọc transaction (syncForInvoice,
+     * syncForReceipt, syncForPart...). Controller muốn gộp mấy thao tác đó vào
+     * CÙNG một transaction thì bản cũ nổ ngay — PDO không cho beginTransaction()
+     * hai lần ("There is already an active transaction"). Hậu quả là chỗ cần
+     * gộp thì không dám gộp, ghi nửa chừng đứt là dữ liệu lệch.
+     *
+     * Lớp trong chỉ chạy callback và để lớp NGOÀI CÙNG quyết định commit hay
+     * rollback. Lớp trong ném exception thì nó nổi lên lớp ngoài -> rollback
+     * toàn bộ, đúng như mong đợi.
+     *
+     * Dựa vào PDO::inTransaction() chứ không tự đếm: mọi model dùng CHUNG một
+     * kết nối (xem Connection::$_shared) nên biến đếm phải là static, mà static
+     * thì lệch trạng thái thật nếu có ai gọi thẳng beginTransaction().
+     */
     public function transaction(\Closure $callback){
+        if ($this->_conn->inTransaction()){
+            return $callback($this);
+        }
+
         $this->beginTransaction();
         try{
             $result = $callback($this);
