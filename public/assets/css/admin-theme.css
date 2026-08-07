@@ -17,7 +17,9 @@
     --border-input:   #d8dce1;
     --text:           #212529;
     --text-muted:     #6b7280;
-    --sidebar-w:      188px;
+    /* 188px cắt cụt 15/56 nhãn ("Đối tượng (khách/NCC)" thiếu tới 39px).
+       232px = 188 + 39 + 5px dư, vừa đủ cho nhãn dài nhất hiện có. */
+    --sidebar-w:      232px;
     --sidebar-w-min:  64px;
     --sidebar-active: #e8eef7;
     --thead-bg:       #dbd0cb;
