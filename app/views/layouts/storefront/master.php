@@ -90,11 +90,11 @@ $renderMenu = function ($items) use (&$renderMenu){
 <?php if ($metaDesc !== ''): ?><meta property="og:description" content="<?php echo e($metaDesc); ?>"/><?php endif; ?>
 <?php if ($ogImageUrl !== ''): ?><meta property="og:image" content="<?php echo e($ogImageUrl); ?>"/><meta name="twitter:card" content="summary_large_image"/><?php endif; ?>
 
-<link rel="stylesheet" href="<?php echo $asset; ?>/css/bootstrap.min.css"/>
-<link rel="stylesheet" href="<?php echo $asset; ?>/css/font-awesome.min.css"/>
-<link rel="stylesheet" href="<?php echo $asset; ?>/css/owl.carousel.min.css"/>
-<link rel="stylesheet" href="<?php echo $asset; ?>/css/owl.theme.default.min.css"/>
-<link rel="stylesheet" href="<?php echo $asset; ?>/css/own-carousel.min.css"/>
+<link rel="stylesheet" href="<?php echo e($asset); ?>/css/bootstrap.min.css"/>
+<link rel="stylesheet" href="<?php echo e($asset); ?>/css/font-awesome.min.css"/>
+<link rel="stylesheet" href="<?php echo e($asset); ?>/css/owl.carousel.min.css"/>
+<link rel="stylesheet" href="<?php echo e($asset); ?>/css/owl.theme.default.min.css"/>
+<link rel="stylesheet" href="<?php echo e($asset); ?>/css/own-carousel.min.css"/>
 <link rel="stylesheet" href="<?php echo asset("public/assets/storefront/css/style.css"); ?>"/>
 <link rel="stylesheet" href="<?php echo asset("public/assets/storefront/css/car-filter.css"); ?>"/>
 <style>
@@ -359,7 +359,7 @@ $renderMenu = function ($items) use (&$renderMenu){
 <a id="button" href="#"></a>
 
 <script src="<?php echo _WEB_URL; ?>/public/assets/js/jquery-3.6.0.min.js"></script>
-<script src="<?php echo $asset; ?>/js/bootstrap.bundle.min.js"></script>
+<script src="<?php echo e($asset); ?>/js/bootstrap.bundle.min.js"></script>
 <script src="<?php echo asset("public/assets/storefront/js/owl.carousel.min.js"); ?>"></script>
 <script src="<?php echo asset("public/assets/storefront/js/own-carousel.min.js"); ?>"></script>
 <script src="<?php echo asset("public/assets/storefront/js/menu.js"); ?>"></script>

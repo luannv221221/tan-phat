@@ -20,7 +20,7 @@ $pcard = function ($p) use ($partsBase, $assetImg, $imgMap, $isMember, $stockMap
         <div class="products--item">
             <div class="item__image">
                 <a href="<?php echo e($url); ?>"><img src="<?php echo e($img); ?>" alt="<?php echo e($p['name']); ?>" loading="lazy"/></a>
-                <?php if ($hasSale): ?><span class="item--sales"><?php echo $off > 0 ? '-' . $off . '%' : 'KM'; ?></span><?php endif; ?>
+                <?php if ($hasSale): ?><span class="item--sales"><?php echo $off > 0 ? '-' . (int) $off . '%' : 'KM'; ?></span><?php endif; ?>
             </div>
             <div class="item__info">
                 <h3 class="item--name"><a href="<?php echo e($url); ?>"><?php echo e($p['name']); ?></a></h3>
@@ -65,8 +65,8 @@ $rootCats = array_slice($rootCats, 0, 8);
                         </div>
                         @endforeach
                     @else
-                        <div class="own-carousel__item"><img src="<?php echo $assetImg; ?>slide02.jpg" alt="Tân Phát"/></div>
-                        <div class="own-carousel__item"><img src="<?php echo $assetImg; ?>thiet_bi_garage.png" alt="Thiết bị gara"/></div>
+                        <div class="own-carousel__item"><img src="<?php echo e($assetImg); ?>slide02.jpg" alt="Tân Phát"/></div>
+                        <div class="own-carousel__item"><img src="<?php echo e($assetImg); ?>thiet_bi_garage.png" alt="Thiết bị gara"/></div>
                     @endif
                 </div>
             </div>

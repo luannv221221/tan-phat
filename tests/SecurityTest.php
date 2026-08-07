@@ -166,17 +166,79 @@ foreach ($allViews as $v){
     /* Tim cac cho `echo $bien` ma khong qua e() / htmlspecialchars / csrf_field.
        (Dung comment /* * / chu khong dung // — vi trong comment //, dau dong PHP
         van thoat khoi che do PHP va lam hong ca file.) */
-    if (preg_match_all('/<\?(?:php)?\s*echo\s+([^;?]+)/i', $html, $m)){
+    /* Bat CA BIEU THUC toi dau ';' hoac '?>'.
+       Ban cu dung [^;?]+ nen cat ngay tai dau '?' — moi ternary deu bi chat cut
+       ("$coMo ? 'is-open' : ''" chi con "$coMo"), khong con doc duoc hai nhanh
+       de biet no in ra chuoi hang hay in ra du lieu. Nay: moi ky tu khong phai
+       ';', va '?' chi dung lai khi la '?>'. */
+    if (preg_match_all('/<\?(?:php)?\s*echo\s+((?:[^;?]|\?(?!>))+)/i', $html, $m)){
         foreach ($m[1] as $expr){
             $expr = trim($expr);
 
-            // Bo qua neu da escape hoac la helper an toan
-            if (preg_match('/\b(e|htmlspecialchars|htmlentities|csrf_field|csrf_token)\s*\(/', $expr)) continue;
+            /* Bo qua neu da escape, hoac la helper CO Y in HTML tho
+               (icon() tra ve the <svg> minh tu viet, giong csrf_field()),
+               hoac la ham chi sinh ra CHU SO + dau phan cach. */
+            if (preg_match('/\b(e|htmlspecialchars|htmlentities|csrf_field|csrf_token'
+                         . '|icon|number_format|round|intval|floatval|count)\s*\(/', $expr)) continue;
 
             // Bo qua neu chi in hang so (_WEB_URL) va chuoi, khong co bien
             if (strpos($expr, '$') === false) continue;
 
-            $xss[] = str_replace(__DIR__ . '/../', '', $v) . ' -> echo ' . substr($expr, 0, 45);
+            /* Bo qua khi MOI bien deu bi ep sang so/bool — so nguyen thi khong
+               the mang the HTML nen khong can escape. Truoc day bat oan
+               `echo (int) $days` trong admin/dashboard.php.
+
+               Phai la MOI bien, khong phai "co it nhat mot cai": biểu thức
+               dang `(int) $a . $b` van ho $b ra ngoai. */
+            /* An toan khi MOI lan xuat hien cua bien deu nam trong mot ngu canh
+               khong the day du lieu ra HTML:
+                 (a) bi ep sang so/bool  -> `(int) $days`
+                 (b) nam trong isset()/empty() -> chi ra true/false
+                 (c) dung de SO SANH     -> `$off > 0`, `$a === $b`
+               Phai la MOI lan, khong phai "co it nhat mot": `(int) $a . $b`
+               van ho $b ra ngoai.
+
+               Ten bien lap phai KHAC $v — $v la file dang quet o vong ngoai. */
+            preg_match_all('/\$[A-Za-z_]\w*/', $expr, $vars, PREG_OFFSET_CAPTURE);
+            if (!empty($vars[0])){
+                $deuAnToan = true;
+                foreach ($vars[0] as $bien){
+                    $truoc = substr($expr, 0, $bien[1]);
+                    $sau   = substr($expr, $bien[1] + strlen($bien[0]));
+
+                    $epKieu  = preg_match('/\((?:int|integer|float|double|bool|boolean)\)\s*$/i', $truoc);
+                    $trongIsset = preg_match('/\b(?:isset|empty)\s*\($/', $truoc);
+                    $soSanh  = preg_match('/^\s*(?:===|!==|==|!=|<>|>=|<=|>|<)/', $sau)
+                            || preg_match('/(?:===|!==|==|!=|<>|>=|<=|>|<)\s*$/', $truoc);
+
+                    if (!$epKieu && !$trongIsset && !$soSanh){ $deuAnToan = false; break; }
+                }
+                if ($deuAnToan) continue;
+            }
+
+            /* json_encode nhung vao <script> — CHI an toan khi co JSON_HEX_TAG.
+               Thieu co do thi mot chuoi chua the dong script se cat ngang khoi
+               script va chen duoc HTML tuy y, nen van phai bao. */
+            if (preg_match('/\bjson_encode\s*\(/', $expr)){
+                if (strpos($expr, 'JSON_HEX_TAG') !== false) continue;
+            }
+
+            /* Bo qua ternary ma CA HAI nhanh deu la chuoi hang:
+                   $coMo ? 'is-open' : ''
+               Bien chi quyet dinh chon nhanh nao, gia tri in ra la chuoi minh
+               tu viet — thuong la ten class CSS. Du lieu nguoi dung khong the
+               lot ra ngoai. */
+            if (preg_match("/\?\s*'[^']*'\s*:\s*'[^']*'\s*$/", $expr)) continue;
+
+            /* Ngoai le da soi tay. $arrows la map HANG viet cung ngay dau
+               dashboard.php ('up' => '&uarr;', ...) — gia tri la HTML tac gia
+               tu viet, khoa xau thi chi ra rong chu khong chen duoc gi.
+               Ghi ro tung cai o day chu khong noi long luat quet, de moi cho
+               `echo $bien` MOI van bi bat. */
+            if (strpos($expr, '$arrows[') === 0) continue;
+
+            $xss[] = str_replace('\\', '/', str_replace(__DIR__ . '/../', '', $v))
+                   . ' -> echo ' . substr($expr, 0, 45);
         }
     }
 }

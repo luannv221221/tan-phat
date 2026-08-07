@@ -151,7 +151,7 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                                     <?php
                                     $off = ($hasSale && (float) $p['price'] > 0)
                                          ? (int) round((1 - $price / (float) $p['price']) * 100) : 0;
-                                    if ($hasSale): ?><span class="item--sales"><?php echo $off > 0 ? '-' . $off . '%' : 'KM'; ?></span><?php endif; ?>
+                                    if ($hasSale): ?><span class="item--sales"><?php echo $off > 0 ? '-' . (int) $off . '%' : 'KM'; ?></span><?php endif; ?>
                                 </div>
                                 <div class="item__info">
                                     <h3 class="item--name"><a href="{{$url}}">{{$p['name']}}</a></h3>
