@@ -87,7 +87,8 @@ if (!empty($listModules)) {
 
             <li>
                 <a href="<?php echo _WEB_URL.'/admin'; ?>"
-                   class="adm-nav__link <?php echo ($currentUrl === 'admin' || $currentUrl === '') ? 'is-active' : ''; ?>">
+                   class="adm-nav__link <?php echo ($currentUrl === 'admin' || $currentUrl === '') ? 'is-active' : ''; ?>"
+                   title="Tổng quan">
                     <?php echo icon('gauge'); ?>
                     <span class="adm-nav__text">Tổng quan</span>
                 </a>
@@ -112,7 +113,12 @@ if (!empty($listModules)) {
                 $drawn++;
                 ?>
                 <li class="adm-group <?php echo $groupActive ? 'is-open' : ''; ?> <?php echo $sep ? 'adm-group--sep' : ''; ?>">
-                    <a href="#" class="adm-nav__link <?php echo $groupActive ? 'is-active' : ''; ?>">
+                    <?php /* title: sidebar hẹp nên nhãn dài bị cắt còn "Quản lý hàng ...",
+                             và ở chế độ thu gọn thì nhãn bị ẩn hẳn. Dùng title chứ không
+                             vẽ tooltip bằng CSS vì .adm-nav có overflow-x:hidden — tooltip
+                             tràn ra ngoài sẽ bị cắt cụt. */ ?>
+                    <a href="#" class="adm-nav__link <?php echo $groupActive ? 'is-active' : ''; ?>"
+                       title="<?php echo e($groupName); ?>">
                         <?php echo icon($groupIcons[$groupName]); ?>
                         <span class="adm-nav__text"><?php echo e($groupName); ?></span>
                         <?php echo icon('chevron-down', 'adm-nav__caret'); ?>
@@ -121,7 +127,8 @@ if (!empty($listModules)) {
                         <?php foreach ($visible as $l): $m = $allowed[$l]; ?>
                             <li>
                                 <a href="<?php echo e(_WEB_URL.'/admin/'.$l); ?>"
-                                   class="adm-nav__link <?php echo $isActive($l) ? 'is-active' : ''; ?>">
+                                   class="adm-nav__link <?php echo $isActive($l) ? 'is-active' : ''; ?>"
+                                   title="<?php echo e($m['name']); ?>">
                                     <span class="adm-nav__text"><?php echo e($m['name']); ?></span>
                                 </a>
                             </li>
