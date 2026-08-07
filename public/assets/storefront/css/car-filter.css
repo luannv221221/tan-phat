@@ -10,12 +10,14 @@
 
 /* Cả hàng là MỘT khung viền, các ô ngăn nhau bằng vạch dọc mảnh — nên viền
    đặt ở form, còn từng ô chỉ có border-right. */
+/* KHÔNG dùng overflow:hidden ở đây: khung gợi ý là position:absolute đổ xuống
+   dưới form, bật overflow là bị cắt mất sạch. Bo góc chỉ 2px nên phần góc ô con
+   thò ra không nhìn thấy được. */
 .car-filter__form {
     display: flex;
     align-items: stretch;
     border: 1px solid #dcdcdc;
     border-radius: 2px;
-    overflow: hidden;
     background: #fff;
 }
 
@@ -51,8 +53,77 @@
 
 .car-filter__select::-ms-expand { display: none; }
 
-.car-filter__input {
+/* Bọc ô tìm để khung gợi ý neo theo nó. Chính div này mới là flex item, nên
+   nó nhận luôn phần co giãn mà ô input vốn giữ. */
+.car-filter__search {
+    position: relative;
     flex: 2 1 0;
+    min-width: 0;
+    display: flex;
+}
+
+.car-filter__input {
+    flex: 1 1 auto;
+    width: 100%;
+}
+
+/* --- Khung gợi ý --- */
+.car-filter__suggest {
+    position: absolute;
+    top: 100%;
+    left: -1px;
+    right: -1px;
+    z-index: 1050;          /* trên cả dropdown menu của theme */
+    max-height: 380px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #dcdcdc;
+    border-top: 0;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.cf-sug {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #333;
+    text-decoration: none;
+}
+
+.cf-sug:last-child { border-bottom: 0; }
+
+/* Bôi đậm bằng class thay vì :hover — phím mũi tên và chuột phải cùng chung
+   một trạng thái, nếu không thì di chuột sẽ thấy sáng hai dòng cùng lúc. */
+.cf-sug.is-on { background: #f6f9ff; }
+
+.cf-sug img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex: 0 0 40px;
+}
+
+.cf-sug__main { min-width: 0; }
+
+.cf-sug__name,
+.cf-sug__meta {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cf-sug__name { font-size: 0.92rem; }
+.cf-sug__meta { font-size: 0.8rem; color: #888; margin-top: 2px; }
+
+.cf-sug-empty {
+    padding: 14px 12px;
+    font-size: 0.9rem;
+    color: #888;
+    text-align: center;
 }
 
 .car-filter__input::placeholder { color: #999; }
@@ -93,5 +164,6 @@
     /* Ô bên phải của mỗi hàng đã có viền ngoài của form rồi */
     .car-filter__select:nth-child(2n) { border-right: 0; }
 
-    .car-filter__input { flex: 1 1 auto; }
+    /* Phần co giãn nằm ở div bọc, không phải ở input nữa */
+    .car-filter__search { flex: 1 1 auto; }
 }

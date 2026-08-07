@@ -346,6 +346,13 @@ Route::get('san-pham', 'shop/index');
 // Phải đặt TRƯỚC route 'san-pham/([a-z0-9\-]+)' thì không sao vì khác tiền tố.
 Route::get('khuyen-mai', 'shop/promo');
 Route::post('san-pham/danh-gia', 'shop/postReview');   // gửi đánh giá (TASK_84)
+
+// Gợi ý tìm kiếm (JSON) cho ô tìm ở thanh lọc header.
+// Để tiền tố RIÊNG chứ không phải 'san-pham/goi-y': route chi tiết sản phẩm
+// ngay dưới bắt mọi chuỗi a-z0-9- sau 'san-pham/', nên đặt chung tiền tố là
+// phải canh thứ tự khai báo — tách hẳn ra thì không bao giờ đụng nhau.
+Route::get('tim-kiem/goi-y', 'shop/suggest');
+
 Route::get('san-pham/([a-z0-9\-]+)', 'shop/detail/$1');
 
 // Giỏ hàng -> yêu cầu báo giá (TASK_83/94)

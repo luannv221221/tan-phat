@@ -279,6 +279,82 @@ ok(substr_count($master, '$renderAccountLinks()') >= 2,
 ok(strpos($master, '$renderAccountLinks = function') !== false,
    'Link tai khoan viet bang closure (partial + require_once se mat ban mobile)');
 
+// ================================================================
+section('Goi y tim kiem (ajax) o header');
+
+$shopAll = file_get_contents(__DIR__ . '/../app/controllers/Shop.php');
+ok(strpos($shopAll, 'public function suggest()') !== false, 'Shop::suggest() ton tai');
+ok(strpos($shopAll, 'application/json') !== false, 'suggest() tra Content-Type json');
+
+// Ton kho chi hien cho thanh vien (TASK_79) ma endpoint nay CONG KHAI.
+// Phai cat DUNG than ham suggest() roi moi kiem: quet ca file thi se trung
+// sellableByPart cua detail() nam ngay duoi va bao fail oan.
+$body = '';
+if (preg_match('~function suggest\(\)\s*\{(.*?)\n    \}~s', $shopAll, $mm)){
+    $body = $mm[1];
+}
+ok($body !== '', 'Tach duoc than ham suggest() de kiem tra');
+ok(strpos($body, 'sellableByPart') === false && strpos($body, 'StocksModel') === false,
+   'Than ham suggest() KHONG dung toi ton kho');
+
+$routes = codeOnly(__DIR__ . '/../routes/web.php');
+ok(strpos($routes, "'tim-kiem/goi-y'") !== false, 'Da dang ky route tim-kiem/goi-y');
+
+// Route chi tiet san pham bat MOI chuoi sau 'san-pham/'. Neu endpoint goi y
+// dat cung tien to thi phai canh thu tu khai bao — tach tien to rieng thi
+// khong bao gio dung nhau.
+ok(strpos($routes, "'san-pham/goi-y'") === false,
+   'Endpoint goi y khong nam duoi tien to san-pham/ (tranh dung route chi tiet)');
+
+$cf = file_get_contents($partial);
+ok(strpos($cf, 'car-filter__suggest') !== false, 'Partial co khung goi y');
+ok(strpos($cf, 'setTimeout(fetchSuggest') !== false, 'Co debounce truoc khi goi server');
+ok(strpos($cf, 'mine !== seq') !== false, 'Bo qua phan hoi ve tre (chong nhay ket qua cu)');
+ok(strpos($cf, 'textContent = it.name') !== false,
+   'Ten hang do vao textContent, khong dung innerHTML (chong chen the)');
+
+$css = file_get_contents(__DIR__ . '/../public/assets/storefront/css/car-filter.css');
+// overflow:hidden o .car-filter__form se cat sach khung goi y (position:absolute
+// do xuong duoi form). Da dinh mot lan roi.
+ok(!preg_match('~\.car-filter__form\s*\{[^}]*overflow:\s*hidden~s', $css),
+   'form KHONG co overflow:hidden (se cat mat khung goi y)');
+
+// ---- Kiem tra that qua HTTP neu Apache dang chay ----
+$base = 'http://localhost:88/tan-phat/tim-kiem/goi-y';
+$ctx  = stream_context_create(['http' => ['timeout' => 3, 'ignore_errors' => true]]);
+$hit  = @file_get_contents($base . '?q=loc', false, $ctx);
+
+if ($hit === false){
+    echo "  [SKIP] Apache khong chay — bo qua phan goi HTTP that\n";
+} else {
+    $d = json_decode($hit, true);
+    ok(is_array($d) && isset($d['items']), 'Tra ve JSON co khoa items');
+
+    $one = json_decode(@file_get_contents($base . '?q=l', false, $ctx), true);
+    ok(isset($one['items']) && count($one['items']) === 0, 'Duoi 2 ky tu -> rong');
+
+    ok(count($d['items']) > 0, 'Tu khoa "loc" ra ket qua', count($d['items']) . ' dong');
+
+    $keys = !empty($d['items']) ? array_keys($d['items'][0]) : [];
+    sort($keys);
+    ok($keys === ['code', 'image', 'name', 'price', 'url'],
+       'Chi tra dung 5 truong can cho goi y', implode(',', $keys));
+    ok(strpos($hit, 'quantity') === false && strpos($hit, 'stock') === false,
+       'Khong lo du lieu ton kho');
+
+    // Bo loc xe phai an vao goi y: dung xe ra, sai xe khong ra
+    $dung = json_decode(@file_get_contents($base . '?q=test&car_brand=2', false, $ctx), true);
+    $sai  = json_decode(@file_get_contents($base . '?q=test&car_brand=1', false, $ctx), true);
+    ok(count($dung['items']) > count($sai['items']),
+       'Chon dung xe ra nhieu ket qua hon chon sai xe',
+       'Honda=' . count($dung['items']) . ' Toyota=' . count($sai['items']));
+
+    // Tu khoa doc hai khong duoc pha truy van
+    @file_get_contents($base . "?q=" . rawurlencode("' OR 1=1 --"), false, $ctx);
+    $conParts = $pdo->query('SELECT COUNT(*) FROM parts')->fetchColumn();
+    ok($conParts > 0, 'Bang parts VAN CON sau khi thu injection', $conParts . ' dong');
+}
+
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'CF-TEST-%'");
 $pdo->exec("DELETE FROM car_models WHERE slug LIKE 'cf-test-%'");

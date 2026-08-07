@@ -10,6 +10,8 @@ use App\core\Session;
 class Shop extends Controller {
 
     const PER_PAGE = 12;
+    /** Số gợi ý tối đa trả về cho ô tìm kiếm ở header */
+    const SUGGEST_LIMIT = 8;
 
     private $__data = [];
     private $__part, $__cat, $__pbrand, $__origin, $__stock;
@@ -119,6 +121,53 @@ class Shop extends Controller {
         // lọc ở header, nó tự nạp danh mục trong partial car-filter.php.
 
         $this->render('layouts/storefront/master', $this->__data);
+    }
+
+    /**
+     * GỢI Ý TÌM KIẾM (JSON) — cho ô tìm ở thanh lọc trên header.
+     *
+     * Dùng lại đúng PartsModel::storefront() của trang danh sách, nên gợi ý
+     * và kết quả khi bấm Enter luôn khớp nhau: cùng bộ lọc xe đang chọn, cùng
+     * cách tìm theo tên/mã/mã OEM, cùng điều kiện chỉ lấy hàng đang bật.
+     *
+     * KHÔNG trả tồn kho: tồn chỉ hiện cho thành viên (TASK_79), mà endpoint này
+     * công khai — trả kèm là rò rỉ số liệu kho cho người chưa đăng nhập.
+     */
+    public function suggest(){
+        header('Content-Type: application/json; charset=utf-8');
+        header('X-Content-Type-Options: nosniff');
+
+        $g  = $_GET;
+        $kw = isset($g['q']) ? trim($g['q']) : '';
+
+        // Dưới 2 ký tự thì mọi thứ đều khớp -> vừa vô nghĩa vừa nặng DB.
+        if (mb_strlen($kw) < 2){
+            echo json_encode(['items' => []], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $rows = $this->__part->storefront([
+            'keyword'       => $kw,
+            'carBrandId'    => !empty($g['car_brand']) ? (int) $g['car_brand'] : 0,
+            'carBodyTypeId' => !empty($g['car_body'])  ? (int) $g['car_body']  : 0,
+            'carModelId'    => !empty($g['car_model']) ? (int) $g['car_model'] : 0,
+            'carYearId'     => !empty($g['car_year'])  ? (int) $g['car_year']  : 0,
+            'sort'          => 'name',
+        ], self::SUGGEST_LIMIT);
+
+        $items = [];
+        foreach ($rows as $p){
+            $img = $this->__img->primaryFor((int) $p['id']);
+            $items[] = [
+                'name'  => $p['name'],
+                'code'  => $p['code'],
+                'url'   => _WEB_URL . '/san-pham/' . $p['slug'],
+                'image' => !empty($img) ? (_WEB_URL . '/public/assets/uploads/parts/' . $img) : '',
+                'price' => (float) (!empty($p['sale_price']) ? $p['sale_price'] : $p['price']),
+            ];
+        }
+
+        echo json_encode(['items' => $items], JSON_UNESCAPED_UNICODE);
     }
 
     public function detail($slug = ''){

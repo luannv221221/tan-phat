@@ -79,8 +79,13 @@ $cfOptions = function ($rows, $selected){
                 <?php $cfOptions($cfYears, $cfSel['year']); ?>
             </select>
 
-            <input class="car-filter__input" type="search" name="q" placeholder="Phụ tùng bạn muốn tìm ?"
-                   value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
+            <div class="car-filter__search">
+                <input class="car-filter__input" type="search" name="q" placeholder="Phụ tùng bạn muốn tìm ?"
+                       autocomplete="off" role="combobox" aria-expanded="false"
+                       aria-controls="cfSuggest" aria-autocomplete="list"
+                       value="<?php echo e(isset($_GET['q']) ? $_GET['q'] : ''); ?>"/>
+                <div class="car-filter__suggest" id="cfSuggest" role="listbox" hidden></div>
+            </div>
 
             <button class="car-filter__btn" type="submit" aria-label="Tìm kiếm">
                 <i class="fa fa-search" aria-hidden="true"></i>
@@ -174,5 +179,124 @@ $cfOptions = function ($rows, $selected){
     });
 
     sync();   // thu hẹp ngay theo tham số đang có trên URL
+
+    // ---------------------------------------------------------------
+    // GỢI Ý TÌM KIẾM — gõ tới đâu gợi ý tới đó
+    // ---------------------------------------------------------------
+    var kw   = form.querySelector('.car-filter__input');
+    var box  = form.querySelector('.car-filter__suggest');
+    var timer = null, seq = 0, items = [], cur = -1;
+
+    function close(){
+        box.hidden = true;
+        box.textContent = '';
+        kw.setAttribute('aria-expanded', 'false');
+        items = []; cur = -1;
+    }
+
+    function highlight(i){
+        var els = box.querySelectorAll('.cf-sug');
+        if (!els.length) return;
+        if (cur >= 0 && els[cur]) els[cur].classList.remove('is-on');
+        cur = i;
+        if (cur >= 0 && els[cur]){
+            els[cur].classList.add('is-on');
+            els[cur].scrollIntoView({block: 'nearest'});
+        }
+    }
+
+    function money(n){ return n > 0 ? n.toLocaleString('vi-VN') + ' ₫' : 'Liên hệ'; }
+
+    function render(list){
+        box.textContent = '';
+        if (!list.length){
+            var e = document.createElement('div');
+            e.className = 'cf-sug-empty';
+            e.textContent = 'Không tìm thấy phụ tùng nào';
+            box.appendChild(e);
+            box.hidden = false;
+            kw.setAttribute('aria-expanded', 'true');
+            return;
+        }
+
+        list.forEach(function(it, i){
+            var a = document.createElement('a');
+            a.className = 'cf-sug';
+            a.href = it.url;
+            a.setAttribute('role', 'option');
+
+            if (it.image){
+                var img = document.createElement('img');
+                img.src = it.image; img.alt = ''; img.loading = 'lazy';
+                a.appendChild(img);
+            }
+
+            var main = document.createElement('span');
+            main.className = 'cf-sug__main';
+
+            // textContent, không phải innerHTML: tên hàng do người dùng nhập ở
+            // admin, dựng bằng chuỗi HTML là mở đường chèn thẻ tuỳ ý.
+            var nm = document.createElement('span');
+            nm.className = 'cf-sug__name';
+            nm.textContent = it.name;
+            main.appendChild(nm);
+
+            var meta = document.createElement('span');
+            meta.className = 'cf-sug__meta';
+            meta.textContent = it.code + ' · ' + money(it.price);
+            main.appendChild(meta);
+
+            a.appendChild(main);
+            a.addEventListener('mouseenter', function(){ highlight(i); });
+            box.appendChild(a);
+        });
+
+        box.hidden = false;
+        kw.setAttribute('aria-expanded', 'true');
+        cur = -1;
+    }
+
+    function fetchSuggest(){
+        var q = kw.value.trim();
+        if (q.length < 2){ close(); return; }
+
+        // Kèm luôn xe đang chọn để gợi ý khớp với kết quả lúc bấm Enter
+        var p = new URLSearchParams({q: q});
+        ['brand', 'body', 'model', 'year'].forEach(function(k){
+            if (el[k].value) p.append('car_' + (k === 'body' ? 'body' : k), el[k].value);
+        });
+
+        // Mạng không đảm bảo thứ tự trả về: đánh số rồi bỏ qua phản hồi cũ,
+        // nếu không thì gõ nhanh sẽ thấy gợi ý của ký tự trước đè lên.
+        var mine = ++seq;
+        fetch('<?php echo _WEB_URL; ?>/tim-kiem/goi-y?' + p.toString(), {headers: {'Accept': 'application/json'}})
+            .then(function(r){ return r.ok ? r.json() : {items: []}; })
+            .then(function(d){
+                if (mine !== seq) return;
+                items = d.items || [];
+                render(items);
+            })
+            .catch(function(){ if (mine === seq) close(); });
+    }
+
+    kw.addEventListener('input', function(){
+        clearTimeout(timer);
+        timer = setTimeout(fetchSuggest, 250);   // gõ xong mới hỏi, đỡ dội server
+    });
+
+    kw.addEventListener('keydown', function(e){
+        if (box.hidden) return;
+        var els = box.querySelectorAll('.cf-sug');
+        if (e.key === 'ArrowDown'){ e.preventDefault(); highlight(cur + 1 >= els.length ? 0 : cur + 1); }
+        else if (e.key === 'ArrowUp'){ e.preventDefault(); highlight(cur - 1 < 0 ? els.length - 1 : cur - 1); }
+        else if (e.key === 'Enter' && cur >= 0 && els[cur]){ e.preventDefault(); els[cur].click(); }
+        else if (e.key === 'Escape'){ close(); }
+    });
+
+    // mousedown chứ không phải click: blur chạy trước click, đóng mất khung là
+    // cú click rơi vào khoảng trống.
+    box.addEventListener('mousedown', function(e){ e.preventDefault(); });
+    kw.addEventListener('blur', function(){ setTimeout(close, 120); });
+    kw.addEventListener('focus', function(){ if (kw.value.trim().length >= 2) fetchSuggest(); });
 })();
 </script>
