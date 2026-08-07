@@ -160,6 +160,15 @@ body.adm-collapsed .adm-brand__tile { width: 40px; height: 40px; border-radius: 
 }
 .adm-sub .adm-nav__link .ic { display: none; }
 
+/* Vạch ngăn giữa các KHU VỰC của menu (việc hằng ngày | website | quản trị).
+   Đặt trên <li> của nhóm mở đầu khu, không phải dưới nhóm cuối khu trước —
+   nhóm cuối có thể bị ẩn vì phân quyền, lúc đó vạch cũng biến mất theo. */
+.adm-group--sep {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+
 /* Dải thu gọn dưới đáy sidebar */
 .adm-sidebar__foot {
     border-top: 1px solid var(--border);

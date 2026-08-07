@@ -16,26 +16,46 @@ $isActive = function ($link) use ($currentUrl) {
         || strpos($currentUrl, 'admin/' . $link . '/') === 0;
 };
 
-// Nhóm menu (thứ tự hiển thị) => các link thuộc nhóm
+/**
+ * Bố cục menu — xếp theo TẦN SUẤT DÙNG THẬT của một gara.
+ *
+ * Gara vận hành thủ công là chính, web chỉ là kênh bán thêm. Nên thứ tự là:
+ * việc làm hằng ngày ở quầy trước (bán hàng, kho), rồi tới dữ liệu nền
+ * (hàng hoá, danh mục xe), rồi khách hàng. Ba nhóm nội dung web bị đẩy hẳn
+ * xuống một khu riêng vì cả tuần mới đụng tới một lần.
+ *
+ * `products` ("Quản lý hàng hoá") trước đây nằm chung nhóm với tin tức/banner.
+ * Đó là danh mục sản phẩm lõi, không phải nội dung website — nay về nhóm
+ * "Hàng hoá", đứng cạnh chính các danh mục phụ trợ của nó.
+ */
 $menuGroups = [
-    'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
-    'Danh mục hàng hoá'  => ['part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
-    'Nội dung'           => ['products', 'news', 'news-categories', 'du-an', 'galleries', 'banners', 'menus'],
-    'Bán hàng'           => ['orders', 'quotations', 'sales-invoices', 'partners', 'bao-cao-ban-hang'],
+    // --- Khu 1: việc hằng ngày ở quầy ---
+    'Bán hàng'           => ['quotations', 'sales-invoices', 'orders', 'partners', 'bao-cao-ban-hang'],
     'Kho'                => ['goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
-    'CSKH'               => ['customers', 'chat', 'contact-messages', 'newsletter', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'customer-groups', 'reviews', 'bao-cao-cskh'],
+    'Hàng hoá'           => ['products', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
+    'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
+    'CSKH'               => ['customers', 'customer-groups', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'chat', 'contact-messages', 'reviews', 'newsletter', 'bao-cao-cskh'],
+
+    // --- Khu 2: trang bán hàng trên web ---
+    'Quản lý website'    => ['news', 'news-categories', 'du-an', 'galleries', 'banners', 'menus'],
+
+    // --- Khu 3: quản trị ---
     'Hệ thống'           => ['users', 'groups', 'settings', 'thong-ke'],
 ];
 
 $groupIcons = [
-    'Danh mục xe'        => 'car',
-    'Danh mục hàng hoá'  => 'cog',
-    'Nội dung'           => 'folder-open',
     'Bán hàng'           => 'shopping-cart',
     'Kho'                => 'warehouse',
+    'Hàng hoá'           => 'cog',
+    'Danh mục xe'        => 'car',
     'CSKH'               => 'headset',
+    'Quản lý website'    => 'folder-open',
     'Hệ thống'           => 'sliders-horizontal',
 ];
+
+// Nhóm nào MỞ ĐẦU một khu vực thì vẽ vạch ngăn phía trên. Để dạng danh sách
+// chứ không viết cứng một tên, sau này tách thêm khu chỉ cần thêm vào đây.
+$groupSeparators = ['Quản lý website', 'Hệ thống'];
 
 // Mục con trong nhóm không có icon (giống mẫu), nên không cần bảng icon riêng.
 
@@ -73,6 +93,7 @@ if (!empty($listModules)) {
                 </a>
             </li>
 
+            <?php $drawn = 0; ?>
             <?php foreach ($menuGroups as $groupName => $links): ?>
                 <?php
                 // các link trong nhóm mà user có quyền
@@ -83,8 +104,14 @@ if (!empty($listModules)) {
                 // nhóm mở nếu có 1 link đang active
                 $groupActive = false;
                 foreach ($visible as $l) { if ($isActive($l)) { $groupActive = true; break; } }
+
+                // Vạch ngăn khu vực. Chỉ vẽ khi ĐÃ có nhóm nào hiện phía trên —
+                // user quyền hẹp có thể không thấy nhóm nào ở khu trước, lúc đó
+                // vạch sẽ nằm chỏng chơ trên đỉnh menu.
+                $sep = ($drawn > 0 && in_array($groupName, $groupSeparators, true));
+                $drawn++;
                 ?>
-                <li class="adm-group <?php echo $groupActive ? 'is-open' : ''; ?>">
+                <li class="adm-group <?php echo $groupActive ? 'is-open' : ''; ?> <?php echo $sep ? 'adm-group--sep' : ''; ?>">
                     <a href="#" class="adm-nav__link <?php echo $groupActive ? 'is-active' : ''; ?>">
                         <?php echo icon($groupIcons[$groupName]); ?>
                         <span class="adm-nav__text"><?php echo e($groupName); ?></span>
