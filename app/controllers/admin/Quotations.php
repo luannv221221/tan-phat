@@ -224,14 +224,22 @@ class Quotations extends Controller {
 
     // ===== Helper =====
 
+    /**
+     * KHÔNG còn ghi customer_name và note: hai ô đó đã bỏ khỏi form (04/08/2026).
+     *
+     * Quan trọng là phải bỏ khỏi ĐÂY chứ không chỉ bỏ ô ngoài giao diện. Hàm
+     * này dùng chung cho cả thêm lẫn sửa; ô không còn thì $f không có giá trị,
+     * để nguyên hai dòng cũ là mỗi lần sửa một phiếu cũ sẽ XOÁ TRẮNG tên khách
+     * vãng lai và ghi chú đã lưu trước đây.
+     *
+     * Cột trong CSDL giữ nguyên — dữ liệu cũ còn đó, màn hình danh sách vẫn đọc.
+     */
     private function headerData($f){
         return [
             'customer_id'   => $this->customerId(),
-            'customer_name' => !empty($f['customer_name']) ? trim($f['customer_name']) : null,
             'quote_date'    => $f['quote_date'],
             'valid_until'   => !empty($f['valid_until']) ? $f['valid_until'] : null,
             'vat_rate'      => $this->parseRate(isset($f['vat_rate']) ? $f['vat_rate'] : 0),
-            'note'          => !empty($f['note']) ? trim($f['note']) : null,
         ];
     }
 

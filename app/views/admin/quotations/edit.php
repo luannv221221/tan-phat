@@ -82,16 +82,6 @@ $sel = function($field, $default = '') use ($old, $item){ return isset($old[$fie
                 </select>
             </div>
         </div>
-        <div class="form-row">
-            <div class="form-group col-md-6">
-                <label>Tên khách (nếu vãng lai)</label>
-                <input type="text" name="customer_name" class="form-control" value="{{$sel('customer_name')}}"/>
-            </div>
-            <div class="form-group col-md-6">
-                <label>Ghi chú</label>
-                <input type="text" name="note" class="form-control" value="{{$sel('note')}}"/>
-            </div>
-        </div>
     </div></div>
 
     <div class="card card-outline card-info">

@@ -158,14 +158,6 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group col-md-4">
-                    <label>Tên khách (nếu vãng lai)</label>
-                    <input type="text" name="customer_name" class="form-control" value="{{$sel('customer_name')}}"/>
-                </div>
-                <div class="form-group col-md-4">
-                    <label>Ghi chú</label>
-                    <input type="text" name="note" class="form-control" value="{{$sel('note')}}"/>
-                </div>
             </div>
         </div></div>
 

@@ -430,14 +430,22 @@ class Salesinvoices extends Controller {
 
     // ===== Helper =====
 
+    /**
+     * KHÔNG còn ghi customer_name và note: hai ô đó đã bỏ khỏi form (04/08/2026).
+     *
+     * Phải bỏ khỏi ĐÂY chứ không chỉ bỏ ô ngoài giao diện — hàm này dùng chung
+     * cho cả thêm lẫn sửa, ô không còn thì $f rỗng, để nguyên là mỗi lần sửa
+     * một hoá đơn cũ sẽ XOÁ TRẮNG tên khách vãng lai và ghi chú đã lưu.
+     *
+     * Cột trong CSDL giữ nguyên. Hoá đơn tạo từ đơn hàng web vẫn được gán
+     * customer_name (xem Orders::invoice) nên chỗ đó không mất tên khách.
+     */
     private function headerData($f){
         return [
             'customer_id'   => $this->customerId(),
-            'customer_name' => !empty($f['customer_name']) ? trim($f['customer_name']) : null,
             'warehouse_id'  => (int) $f['warehouse_id'],
             'invoice_date'  => $f['invoice_date'],
             'vat_rate'      => $this->parseRate(isset($f['vat_rate']) ? $f['vat_rate'] : 0),
-            'note'          => !empty($f['note']) ? trim($f['note']) : null,
         ];
     }
 

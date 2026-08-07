@@ -54,16 +54,6 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '0';
                     </select>
                 </div>
             </div>
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label>Tên khách (nếu vãng lai)</label>
-                    <input type="text" name="customer_name" class="form-control" value="{{!empty($old['customer_name'])?$old['customer_name']:''}}"/>
-                </div>
-                <div class="form-group col-md-6">
-                    <label>Ghi chú</label>
-                    <input type="text" name="note" class="form-control" value="{{!empty($old['note'])?$old['note']:''}}"/>
-                </div>
-            </div>
         </div>
     </div>
 

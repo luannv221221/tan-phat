@@ -64,14 +64,6 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '10';
                         @endforeach
                     </select>
                 </div>
-                <div class="form-group col-md-4">
-                    <label>Tên khách (nếu vãng lai)</label>
-                    <input type="text" name="customer_name" class="form-control" value="{{!empty($old['customer_name'])?$old['customer_name']:''}}"/>
-                </div>
-                <div class="form-group col-md-4">
-                    <label>Ghi chú</label>
-                    <input type="text" name="note" class="form-control" value="{{!empty($old['note'])?$old['note']:''}}"/>
-                </div>
             </div>
             <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Ghi sổ sẽ định khoản <b>Nợ 131/Có 511</b> (doanh thu), <b>Nợ 131/Có 3331</b> (thuế), <b>Nợ 632/Có 156</b> (giá vốn) và trừ tồn kho. Công nợ khách lên qua TK 131.</p>
         </div>
