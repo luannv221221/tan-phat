@@ -9,12 +9,20 @@ class OrdersModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
+    /**
+     * Mã trạng thái giữ nguyên như cũ (chỉ đổi nhãn hiển thị) để không phải
+     * chuyển đổi dữ liệu đơn đang có. 'returned' là mã mới.
+     *
+     * Hai trạng thái có ĐỘNG TỚI KHO — xem Orders::setStatus():
+     *   completed -> trừ kho     |     returned -> cộng lại kho
+     */
     public static $statuses = [
-        'new'       => 'Mới',
+        'new'       => 'Chờ xử lý',
         'confirmed' => 'Đã xác nhận',
         'shipping'  => 'Đang giao',
-        'completed' => 'Hoàn tất',
+        'completed' => 'Hoàn thành',
         'cancelled' => 'Đã huỷ',
+        'returned'  => 'Hoàn hàng',
     ];
     public static $payments = ['bank_transfer' => 'Chuyển khoản', 'cod' => 'Thanh toán khi nhận hàng (COD)'];
 

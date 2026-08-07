@@ -16,9 +16,15 @@
         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=confirmed'}}" class="btn btn-sm btn-outline-info">Xác nhận</a>
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=shipping'}}" class="btn btn-sm btn-outline-primary">Đang giao</a>
-        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=completed'}}" class="btn btn-sm btn-outline-success">Hoàn tất</a>
+        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=completed'}}" class="btn btn-sm btn-outline-success" onclick="return confirm('Hoàn thành đơn này sẽ TRỪ TỒN KHO. Tiếp tục?')">Hoàn thành</a>
+        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=returned'}}" class="btn btn-sm btn-outline-warning" onclick="return confirm('Hoàn hàng sẽ CỘNG TỒN KHO trở lại. Tiếp tục?')">Hoàn hàng</a>
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=cancelled'}}" class="btn btn-sm btn-outline-danger">Huỷ</a>
         @endif
+
+        {!! !empty($item['stock_applied'])
+            ? '<div class="mt-2 small text-success"><i class="fas fa-check-circle mr-1"></i>Đơn này ĐÃ trừ tồn kho'
+              . (!empty($warehouseName) ? ' tại ' . e($warehouseName) : '') . '.</div>'
+            : '' !!}
     </div>
 </div>
 

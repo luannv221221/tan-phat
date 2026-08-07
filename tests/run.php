@@ -20,6 +20,7 @@ $tests = [
     'CarCatalogTest.php'          => 'NGHIEP VU — cay danh muc xe (MySQL that)',
     'PartsTest.php'               => 'NGHIEP VU — phu tung + lien ket xe (MySQL that)',
     'CarFilterTest.php'           => 'NGHIEP VU — bo loc xe o header (MySQL that)',
+    'OrderStockTest.php'          => 'NGHIEP VU — don hang tru/cong kho theo trang thai',
 ];
 
 $php      = PHP_BINARY;

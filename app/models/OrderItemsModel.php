@@ -20,6 +20,15 @@ class OrderItemsModel extends Model {
      * @param array $rows mỗi phần tử: ['part'=>partRow, 'qty'=>, 'price'=>, 'amount'=>]
      * @return float tổng tiền
      */
+    /**
+     * Chốt giá vốn của 1 dòng lúc đơn trừ kho.
+     * Hoàn hàng sẽ cộng lại đúng con số này chứ không lấy bình quân tại thời
+     * điểm hoàn — lấy bình quân mới là phá giá vốn của cả mã hàng.
+     */
+    public function setCost($id, $unitCost, $amount){
+        return $this->updateById(['unit_cost' => $unitCost, 'cost_amount' => $amount], (int) $id);
+    }
+
     public function syncForOrder($orderId, array $rows){
         $orderId = (int) $orderId;
         return $this->transaction(function($db) use ($orderId, $rows){
