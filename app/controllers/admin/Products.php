@@ -680,6 +680,11 @@ class Products extends Controller {
             'oem_code'        => !empty($f['oem_code']) ? trim($f['oem_code']) : null,
             'name'            => trim($f['name']),
             'slug'            => $slug,
+            // Loại quyết định NGHIỆP VỤ (dịch vụ thì bỏ mọi chốt kho), tách khỏi
+            // danh mục vốn chỉ lo hiển thị. Giá trị lạ -> về 'part' cho an toàn:
+            // đoán nhầm thành dịch vụ là hàng thật thoát kiểm tồn.
+            'item_type'       => isset(PartsModel::$loaiHang[$f['item_type'] ?? ''])
+                                 ? $f['item_type'] : PartsModel::LOAI_PHU_TUNG,
             'category_id'     => $this->validFk($this->__catModel,    $f['category_id']     ?? null),
             'brand_id'        => $this->validFk($this->__brandModel,  $f['brand_id']        ?? null),
             'manufacturer_id' => $this->validFk($this->__mnfModel,    $f['manufacturer_id'] ?? null),

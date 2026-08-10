@@ -50,6 +50,17 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                     </div>
 
                     <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>Loại <span class="text-danger">*</span></label>
+                            <select name="item_type" class="form-control">
+                                @foreach (PartsModel::$loaiHang as $ma => $ten)
+                                <option value="{{$ma}}" {{(!empty($old['item_type']) && $old['item_type']==$ma)?'selected':''}}>{{$ten}}</option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">
+                                Dịch vụ không có tồn kho: không nhập/xuất kho, bán ra không bị chặn vì thiếu hàng.
+                            </small>
+                        </div>
                         <div class="form-group col-md-8">
                             <label>Danh mục</label>
                             <select name="category_id" class="form-control">

@@ -48,7 +48,7 @@ class Thekho extends Controller {
         }
 
         $this->__data['content']['page_name']   = 'Thẻ kho';
-        $this->__data['content']['parts']       = $this->__part->getForSelect();
+        $this->__data['content']['parts']       = $this->__part->getForSelect(true);
         $this->__data['content']['warehouses']  = $this->__warehouse->getActive();
         $this->__data['content']['part']        = $part;
         $this->__data['content']['cards']       = $cards;

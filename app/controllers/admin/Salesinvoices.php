@@ -185,9 +185,18 @@ class Salesinvoices extends Controller {
 
         $wh = (int) $item['warehouse_id'];
 
-        // Chặn nếu tồn không đủ (gộp cùng hàng hoá)
+        /* DỊCH VỤ không đi qua kho: "thay dầu" tồn luôn bằng 0, kiểm tồn nó là
+           chặn mọi hoá đơn dịch vụ. Tách ra ngay từ đây rồi dùng chung $loai
+           cho cả bước kiểm lẫn bước ghi sổ, để hai bước không lệch nhau. */
+        $loai = $this->__part->loaiTheoId(array_column($items, 'part_id'));
+
+        // Chặn nếu tồn không đủ (gộp cùng hàng hoá) — chỉ với hàng CÓ kho
         $need = [];
-        foreach ($items as $it){ $need[(int) $it['part_id']] = ($need[(int) $it['part_id']] ?? 0) + (float) $it['quantity']; }
+        foreach ($items as $it){
+            $pid = (int) $it['part_id'];
+            if (!PartsModel::coKho($loai[$pid] ?? PartsModel::LOAI_PHU_TUNG)) continue;
+            $need[$pid] = ($need[$pid] ?? 0) + (float) $it['quantity'];
+        }
         $short = [];
         foreach ($need as $partId => $qty){
             if ($this->__stock->available($wh, $partId) + 1e-9 < $qty){
@@ -213,10 +222,21 @@ class Salesinvoices extends Controller {
             $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
         }
 
-        $this->__model->transaction(function($db) use ($id, $item, $items, $wh, $date, $no, $rate){
+        $this->__model->transaction(function($db) use ($id, $item, $items, $wh, $date, $no, $rate, $loai){
             $subtotal = 0.0; $cost = 0.0;
             foreach ($items as $it){
-                $avg = $this->__stock->applyOut($wh, (int) $it['part_id'], (float) $it['quantity'],
+                $pid = (int) $it['part_id'];
+
+                // Dịch vụ: không trừ kho, không sinh thẻ kho. Giá vốn = 0 —
+                // công thợ chưa được theo dõi ở đâu cả, ghi bừa một con số vào
+                // đây là làm sai lãi gộp. Doanh thu vẫn ghi nhận đầy đủ.
+                if (!PartsModel::coKho($loai[$pid] ?? PartsModel::LOAI_PHU_TUNG)){
+                    $this->__itemModel->setCost((int) $it['id'], 0, 0);
+                    $subtotal += (float) $it['amount'];
+                    continue;
+                }
+
+                $avg = $this->__stock->applyOut($wh, $pid, (float) $it['quantity'],
                     self::DOC_TYPE, $id, $no, $date, $it['note']);
                 $costAmt = round((float) $it['quantity'] * $avg, 2);
                 $this->__itemModel->setCost((int) $it['id'], $avg, $costAmt);
@@ -264,9 +284,17 @@ class Salesinvoices extends Controller {
             $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
         }
 
-        $this->__model->transaction(function($db) use ($id, $items, $wh){
+        $loaiHuy = $this->__part->loaiTheoId(array_column($items, 'part_id'));
+        $this->__model->transaction(function($db) use ($id, $items, $wh, $loaiHuy){
             foreach ($items as $it){
-                $this->__stock->reverseDoc($wh, (int) $it['part_id'], self::DOC_TYPE, $id);
+                $pid = (int) $it['part_id'];
+
+                // Dịch vụ lúc ghi sổ không sinh thẻ kho nên cũng không có gì để
+                // đảo. Gọi reverseDoc cho nó là tự đẻ ra một dòng `stocks` với
+                // số lượng 0 — rác trong báo cáo tồn.
+                if (PartsModel::coKho($loaiHuy[$pid] ?? PartsModel::LOAI_PHU_TUNG)){
+                    $this->__stock->reverseDoc($wh, $pid, self::DOC_TYPE, $id);
+                }
                 $this->__itemModel->setCost((int) $it['id'], 0, 0);
             }
             $this->__model->edit(['status' => 0, 'cost_amount' => 0], $id);

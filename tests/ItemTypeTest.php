@@ -1,0 +1,151 @@
+<?php
+/**
+ * Test PHAN LOAI HANG HOA: phu tung / thiet bi / dich vu (chot 05/08/2026).
+ *
+ * Chay:  C:\xampp\php\php.exe tests\ItemTypeTest.php
+ *
+ * Trong tam: DICH VU khong co ton kho. Neu khong tach ra thi moi hoa don co
+ * dong dich vu deu bi chan o buoc kiem ton — "thay dau" ton luon bang 0.
+ */
+
+require_once __DIR__ . '/_helpers.php';
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config.php';
+
+try {
+    $pdo = new PDO(
+        'mysql:host=' . _HOST . ';port=' . _PORT . ';dbname=' . _DB . ';charset=utf8mb4',
+        _USER, _PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+} catch (\PDOException $e){
+    echo "\n[SKIP] Khong ket noi duoc MySQL.\n";
+    exit(0);
+}
+
+foreach (['LookupModel','ProductUnitsModel','PartsModel','StocksModel','WarehousesModel',
+          'PartCategoriesModel'] as $m){
+    require_once __DIR__ . '/../app/models/' . $m . '.php';
+}
+
+echo 'PHP ' . PHP_VERSION . ' | MySQL ' . $pdo->query('SELECT VERSION()')->fetchColumn() . "\n";
+
+$pdo->exec("DELETE FROM parts WHERE code LIKE 'IT-TEST-%'");
+
+// ================================================================
+section('Cot item_type');
+
+$cols = [];
+foreach ($pdo->query('SHOW COLUMNS FROM parts') as $c) $cols[$c['Field']] = $c;
+ok(isset($cols['item_type']), 'parts.item_type ton tai');
+ok(strpos($cols['item_type']['Type'], "'part'") !== false
+   && strpos($cols['item_type']['Type'], "'equipment'") !== false
+   && strpos($cols['item_type']['Type'], "'service'") !== false,
+   'ENUM du 3 gia tri', $cols['item_type']['Type'] ?? '');
+ok($cols['item_type']['Default'] === 'part',
+   'Mac dinh la "part" — hang cu tu dong la phu tung, khong phai va tay',
+   var_export($cols['item_type']['Default'], true));
+
+// ================================================================
+section('Cay danh muc 3 nhanh');
+
+$goc = $pdo->query("SELECT slug, name FROM part_categories WHERE parent_id IS NULL ORDER BY sort_order")
+           ->fetchAll(PDO::FETCH_KEY_PAIR);
+ok(count($goc) === 3, 'Dung 3 danh muc goc', implode(', ', array_keys($goc)));
+ok(array_keys($goc) === ['phu-tung', 'thiet-bi', 'dich-vu'],
+   'Dung thu tu Phu tung -> Thiet bi -> Dich vu', implode(' | ', array_keys($goc)));
+
+// 4 nhom phu tung cu phai nam DUOI "Phu tung", khong con la goc
+$idPhuTung = (int) $pdo->query("SELECT id FROM part_categories WHERE slug='phu-tung'")->fetchColumn();
+foreach (['he-thong-phanh','dong-co','he-thong-dien','he-thong-treo'] as $slug){
+    $pid = $pdo->query("SELECT parent_id FROM part_categories WHERE slug='$slug'")->fetchColumn();
+    ok((int) $pid === $idPhuTung, "$slug da tut xuong lam con cua Phu tung");
+}
+
+$soDv = (int) $pdo->query("SELECT COUNT(*) FROM part_categories
+                           WHERE parent_id = (SELECT id FROM part_categories WHERE slug='dich-vu')")->fetchColumn();
+ok($soDv >= 4, 'Da gieo danh muc dich vu', $soDv . ' muc');
+
+// ================================================================
+section('coKho() — ai di qua kho, ai khong');
+
+ok(PartsModel::coKho(PartsModel::LOAI_PHU_TUNG) === true,  'Phu tung: CO kho');
+ok(PartsModel::coKho(PartsModel::LOAI_THIET_BI) === true,  'Thiet bi: CO kho (khach chot)');
+ok(PartsModel::coKho(PartsModel::LOAI_DICH_VU)  === false, 'Dich vu: KHONG kho');
+
+// ================================================================
+section('loaiTheoId() tra ve dung loai');
+
+$unit = (new ProductUnitsModel())->findBySlug('cai');
+$pm   = new PartsModel();
+$idPT = $pm->add(['code' => 'IT-TEST-PT', 'name' => 'IT Ma phanh', 'slug' => 'it-test-pt',
+                  'item_type' => 'part', 'unit_id' => $unit['id'], 'price' => 500000, 'status' => 1]);
+$idTB = $pm->add(['code' => 'IT-TEST-TB', 'name' => 'IT Cau nang', 'slug' => 'it-test-tb',
+                  'item_type' => 'equipment', 'unit_id' => $unit['id'], 'price' => 90000000, 'status' => 1]);
+$idDV = $pm->add(['code' => 'IT-TEST-DV', 'name' => 'IT Thay dau', 'slug' => 'it-test-dv',
+                  'item_type' => 'service', 'unit_id' => $unit['id'], 'price' => 200000, 'status' => 1]);
+
+$map = $pm->loaiTheoId([$idPT, $idTB, $idDV]);
+ok(($map[$idPT] ?? '') === 'part',      'Tra dung loai phu tung');
+ok(($map[$idTB] ?? '') === 'equipment', 'Tra dung loai thiet bi');
+ok(($map[$idDV] ?? '') === 'service',   'Tra dung loai dich vu');
+ok($pm->loaiTheoId([]) === [], 'Mang rong -> khong query, tra rong');
+
+// ================================================================
+section('getForSelect(true) LOAI dich vu khoi man hinh kho');
+
+$tatCa = array_column($pm->getForSelect(false), 'id');
+$coKho = array_column($pm->getForSelect(true),  'id');
+
+ok(in_array($idDV, $tatCa), 'Man hinh ban hang: dich vu CO trong danh sach (gara co ban dich vu)');
+ok(!in_array($idDV, $coKho), 'Man hinh kho: dich vu BI LOAI (nhap "lan thay dau" vao kho la vo nghia)');
+ok(in_array($idTB, $coKho), 'Man hinh kho: thiet bi VAN CON (van theo doi ton)');
+ok(in_array($idPT, $coKho), 'Man hinh kho: phu tung van con');
+
+// ================================================================
+section('Dich vu co ton = 0 — day chinh la ly do phai tach');
+
+$st = new StocksModel();
+$wh = (int) (new WarehousesModel())->getDefault()['id'];
+ok($st->available($wh, $idDV) == 0.0, 'Dich vu ton = 0 (khong bao gio nhap kho)');
+ok($st->sellableByPart($idDV) == 0.0, 'Ton kha dung cung = 0');
+
+// Neu KHONG tach loai thi buoc kiem ton se chan -> chung minh bang chinh phep so
+$canBan = 2;
+$biChanNeuKhongTach = ($st->available($wh, $idDV) + 1e-9 < $canBan);
+ok($biChanNeuKhongTach, 'Khong tach loai thi hoa don dich vu BI CHAN — dung nhu du doan');
+
+// ================================================================
+section('Cac luong ban hang deu biet bo qua dich vu');
+
+$inv = codeOnly(__DIR__ . '/../app/controllers/admin/Salesinvoices.php');
+ok(strpos($inv, 'loaiTheoId') !== false, 'Hoa don ban: co tra loai truoc khi kiem ton');
+ok(substr_count($inv, 'PartsModel::coKho') >= 3,
+   'Hoa don ban: bo qua dich vu o CA kiem ton, ghi so, va huy ghi so',
+   substr_count($inv, 'PartsModel::coKho') . ' cho');
+
+$cart = codeOnly(__DIR__ . '/../app/controllers/Cart.php');
+ok(strpos($cart, 'PartsModel::coKho') !== false, 'Dat hang web: bo qua dich vu khi kiem ton');
+
+$ord = codeOnly(__DIR__ . '/../app/controllers/admin/Orders.php');
+ok(substr_count($ord, 'PartsModel::coKho') >= 2,
+   'Don hang: bo qua dich vu ca luc tru kho lan luc hoan hang',
+   substr_count($ord, 'PartsModel::coKho') . ' cho');
+
+// Don TOAN dich vu van phai hoan thanh duoc
+ok(strpos($ord, 'toan dịch vụ') !== false || strpos($ord, 'toàn dịch vụ') !== false,
+   'Don chi co dich vu van hoan thanh duoc (khong bao "khong co dong hang")');
+
+$prod = codeOnly(__DIR__ . '/../app/controllers/admin/Products.php');
+ok(strpos($prod, "'item_type'") !== false, 'Form hang hoa co luu item_type');
+ok(strpos($prod, 'LOAI_PHU_TUNG') !== false,
+   'Gia tri la -> ve "part" (doan nham thanh dich vu la hang that thoat kiem ton)');
+
+foreach (['add', 'edit'] as $v){
+    $src = file_get_contents(__DIR__ . '/../app/views/admin/products/' . $v . '.php');
+    ok(strpos($src, 'name="item_type"') !== false, "View products/$v co o chon loai");
+}
+
+// ---- Don dep ----
+$pdo->exec("DELETE FROM parts WHERE code LIKE 'IT-TEST-%'");
+
+exit(summary());

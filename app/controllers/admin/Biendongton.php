@@ -41,7 +41,7 @@ class Biendongton extends Controller {
         foreach ($result['rows'] as $r){ $sumIn += (float) $r['in']; $sumOut += (float) $r['out']; }
 
         $this->__data['content']['page_name']    = 'Biến động tồn theo ngày';
-        $this->__data['content']['parts']        = $this->__part->getForSelect();
+        $this->__data['content']['parts']        = $this->__part->getForSelect(true);
         $this->__data['content']['warehouses']   = $this->__warehouse->getActive();
         $this->__data['content']['filterPart']   = $partId;
         $this->__data['content']['filterWh']     = $whId;

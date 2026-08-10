@@ -208,14 +208,23 @@ class Orders extends Controller {
         }
 
         $items = $this->__itemModel->getByOrder($id);
+
+        // Dịch vụ không đi qua kho -> loại khỏi phần trừ tồn ngay từ đây.
+        // Đơn chỉ toàn dịch vụ thì $lines rỗng và vẫn hoàn thành được bình thường.
+        $loai  = $this->__part->loaiTheoId(array_column($items, 'part_id'));
         $lines = [];
         foreach ($items as $it){
             if (empty($it['part_id']) || (float) $it['quantity'] <= 0) continue;
+            if (!PartsModel::coKho($loai[(int) $it['part_id']] ?? PartsModel::LOAI_PHU_TUNG)) continue;
             $lines[] = $it;
         }
+        // Đơn CHỈ có dịch vụ thì không có gì để trừ — vẫn phải hoàn thành được.
         if (empty($lines)){
-            Session::flash('msgError', 'Đơn không có dòng hàng hợp lệ để trừ kho.');
-            $this->__response->redirect($back); return false;
+            $this->__model->edit(['status' => 'completed', 'stock_applied' => 1], $id);
+            $this->__reservation->releaseForOrder($id);
+            Session::flash('msg', 'Đã hoàn thành. Đơn toàn dịch vụ nên không trừ tồn kho.');
+            $this->__response->redirect($back);
+            return false;
         }
 
         $wh = $this->__warehouse->getDefault();
@@ -281,11 +290,17 @@ class Orders extends Controller {
         $items = $this->__itemModel->getByOrder($id);
         $no    = $item['order_no'];
         $date  = date('Y-m-d');
+        $loai  = $this->__part->loaiTheoId(array_column($items, 'part_id'));
 
-        $this->__model->transaction(function($db) use ($id, $items, $whId, $no, $date){
+        $this->__model->transaction(function($db) use ($id, $items, $whId, $no, $date, $loai){
             foreach ($items as $it){
                 $qty = (float) $it['quantity'];
                 if (empty($it['part_id']) || $qty <= 0) continue;
+
+                // Dịch vụ lúc hoàn thành không trừ kho thì lúc hoàn hàng cũng
+                // không được cộng vào — cộng là đẻ ra tồn cho thứ không có thật.
+                if (!PartsModel::coKho($loai[(int) $it['part_id']] ?? PartsModel::LOAI_PHU_TUNG)) continue;
+
                 $this->__stock->applyIn($whId, (int) $it['part_id'], $qty, (float) $it['unit_cost'],
                     self::DOC_IN, $id, $no, $date, 'Hoàn hàng đơn ' . $no);
             }

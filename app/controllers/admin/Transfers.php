@@ -39,7 +39,7 @@ class Transfers extends Controller {
     }
     private function formData(){
         $this->__data['content']['warehouses'] = $this->__warehouse->getActive();
-        $this->__data['content']['parts']      = $this->__part->getForSelect();
+        $this->__data['content']['parts']      = $this->__part->getForSelect(true);
     }
 
     public function index(){

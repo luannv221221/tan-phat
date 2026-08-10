@@ -22,6 +22,7 @@ $vSale    = isset($old['sale_price']) ? $old['sale_price'] : ($item['sale_price'
 $vWar     = isset($old['warranty_month']) ? $old['warranty_month'] : $item['warranty_month'];
 $vDesc    = isset($old['description']) ? $old['description'] : $item['description'];
 $selCat   = isset($old['category_id'])     ? $old['category_id']     : $item['category_id'];
+$selLoai  = isset($old['item_type'])       ? $old['item_type']       : $item['item_type'];
 $selUnit  = isset($old['unit_id'])         ? $old['unit_id']         : $item['unit_id'];
 $selBrand = isset($old['brand_id'])        ? $old['brand_id']        : $item['brand_id'];
 $selMnf   = isset($old['manufacturer_id']) ? $old['manufacturer_id'] : $item['manufacturer_id'];
@@ -64,6 +65,17 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                     </div>
 
                     <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>Loại <span class="text-danger">*</span></label>
+                            <select name="item_type" class="form-control">
+                                @foreach (PartsModel::$loaiHang as $ma => $ten)
+                                <option value="{{$ma}}" {{$selLoai==$ma?'selected':''}}>{{$ten}}</option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">
+                                Dịch vụ không có tồn kho: không nhập/xuất kho, bán ra không bị chặn vì thiếu hàng.
+                            </small>
+                        </div>
                         <div class="form-group col-md-8">
                             <label>Danh mục</label>
                             <select name="category_id" class="form-control">

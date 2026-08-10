@@ -11,6 +11,45 @@ class PartsModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
+    /**
+     * Phân loại hàng hoá (cột `item_type`) — chốt 05/08/2026.
+     *
+     * Quyết định NGHIỆP VỤ, tách khỏi danh mục (danh mục chỉ lo hiển thị):
+     *   part / equipment : có tồn kho, bán ra phải đủ tồn — chạy y như trước
+     *   service          : KHÔNG có tồn, bỏ qua mọi chốt kho
+     *
+     * Thiếu cái này thì "thay dầu" có tồn = 0 và mọi hoá đơn dịch vụ bị chặn
+     * ngay ở bước kiểm tồn.
+     */
+    const LOAI_PHU_TUNG = 'part';
+    const LOAI_THIET_BI = 'equipment';
+    const LOAI_DICH_VU  = 'service';
+
+    public static $loaiHang = [
+        self::LOAI_PHU_TUNG => 'Phụ tùng',
+        self::LOAI_THIET_BI => 'Thiết bị',
+        self::LOAI_DICH_VU  => 'Dịch vụ',
+    ];
+
+    /** Mặt hàng này có đi qua kho không (dịch vụ thì không) */
+    public static function coKho($itemType){
+        return $itemType !== self::LOAI_DICH_VU;
+    }
+
+    /** Tra loại của nhiều mặt hàng cùng lúc: [part_id => item_type] */
+    public function loaiTheoId(array $partIds){
+        $ids = array_values(array_unique(array_map('intval', $partIds)));
+        if (empty($ids)) return [];
+
+        $rows = $this->table($this->_table)
+                     ->select('`id`, `item_type`')
+                     ->whereIn('id', $ids)->get();
+
+        $map = [];
+        foreach ($rows ?: [] as $r){ $map[(int) $r['id']] = $r['item_type']; }
+        return $map;
+    }
+
     /** Các cột hay lấy kèm tên danh mục/thương hiệu */
     protected function selectWithJoins(){
         return $this->table($this->_table)
@@ -208,14 +247,23 @@ class PartsModel extends Model {
     /**
      * Phụ tùng đang bật cho dropdown dòng hàng (nhập/xuất kho, báo giá, hoá đơn).
      * Kèm đơn vị + giá bán (price/sale_price) để form tự điền đơn giá khi chọn.
+     *
+     * @param bool $chiHangCoKho true = BỎ dịch vụ. Dùng cho màn hình kho: nhập
+     *   một "lần thay dầu" vào kho là vô nghĩa, và nó sẽ đẻ ra thẻ kho rác.
+     *   Báo giá / hoá đơn thì để false vì gara CÓ bán dịch vụ.
      */
-    public function getForSelect(){
-        $rows = $this->table($this->_table)
+    public function getForSelect($chiHangCoKho = false){
+        $q = $this->table($this->_table)
             ->select('`parts`.`id`, `parts`.`code`, `parts`.`name`, `parts`.`price`, '
-                   . '`parts`.`sale_price`, `part_units`.`name` AS unit_name')
+                   . '`parts`.`sale_price`, `parts`.`item_type`, `part_units`.`name` AS unit_name')
             ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
-            ->where('parts.status', '=', 1)
-            ->orderBy('parts.name', 'ASC')->get();
+            ->where('parts.status', '=', 1);
+
+        if ($chiHangCoKho){
+            $q = $q->where('parts.item_type', '!=', self::LOAI_DICH_VU);
+        }
+
+        $rows = $q->orderBy('parts.name', 'ASC')->get();
 
         $imgs = $this->primaryImageMap();
         foreach ($rows as $i => $r){

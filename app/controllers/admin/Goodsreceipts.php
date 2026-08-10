@@ -50,7 +50,7 @@ class Goodsreceipts extends Controller {
     private function formData(){
         $this->__data['content']['warehouses'] = $this->__warehouse->getActive();
         $this->__data['content']['partners']   = $this->__partner->getActive();
-        $this->__data['content']['parts']      = $this->__part->getForSelect();
+        $this->__data['content']['parts']      = $this->__part->getForSelect(true);
         // KHO-3: vị trí trong kho (select phụ thuộc kho) cho ô "Vị trí" dòng hàng
         $this->__data['content']['locations']  = $this->__location->getActiveList();
     }

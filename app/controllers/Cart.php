@@ -194,6 +194,11 @@ class Cart extends Controller {
         $can = [];
         foreach ($rows as $r){
             if (empty($r['part']['id'])) continue;
+
+            // Dịch vụ không có tồn — kiểm tồn nó là chặn khách đặt dịch vụ.
+            $loai = isset($r['part']['item_type']) ? $r['part']['item_type'] : PartsModel::LOAI_PHU_TUNG;
+            if (!PartsModel::coKho($loai)) continue;
+
             $pid = (int) $r['part']['id'];
             $can[$pid] = ($can[$pid] ?? 0) + (float) $r['qty'];
         }

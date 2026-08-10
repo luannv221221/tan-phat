@@ -69,10 +69,13 @@ ok(!empty($catLocGio) && !empty($catMaPhanh), 'Cay danh muc phu tung co "Loc gio
 $nhatBan = (new ProductOriginsModel())->findBySlug('nhat-ban');
 ok(!empty($nhatBan) && $nhatBan['name'] === 'Nhật Bản', 'Tieng Viet co dau dung', $nhatBan['name'] ?? '');
 
-// Danh muc phai co phan cap
+// Danh muc phai co phan cap.
+// Truoc migration 000054 co 4-5 goc ngang hang. Nay gom con DUNG 3 goc
+// (Phu tung / Thiet bi / Dich vu), mon cu tut xuong lam con — nen o day chi
+// con kiem "co phan cap". Cau truc 3 nhanh do ItemTypeTest kiem chi tiet.
 $root = $pdo->query("SELECT COUNT(*) FROM part_categories WHERE parent_id IS NULL")->fetchColumn();
 $child = $pdo->query("SELECT COUNT(*) FROM part_categories WHERE parent_id IS NOT NULL")->fetchColumn();
-ok($root >= 4 && $child >= 12, "Danh muc co phan cap: $root goc, $child con");
+ok($root >= 3 && $child >= 12, "Danh muc co phan cap: $root goc, $child con");
 
 // ================================================================
 section('TASK_86 — tao phu tung');
