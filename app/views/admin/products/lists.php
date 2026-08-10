@@ -3,11 +3,24 @@
 $qs = '';
 if ($keyword !== '')      $qs .= '&keyword=' . urlencode($keyword);
 if (!empty($filterCat))   $qs .= '&category_id=' . (int) $filterCat;
+if (!empty($filterLoai))  $qs .= '&item_type=' . urlencode($filterLoai);
 if (!empty($filterPromo)) $qs .= '&promo=1';
 if (!empty($filterAttrId)) $qs .= '&attr_id=' . (int) $filterAttrId;
 if (isset($filterAttrVal) && $filterAttrVal !== '') $qs .= '&attr_val=' . urlencode($filterAttrVal);
 
 $exportQs = $qs !== '' ? '?' . ltrim($qs, '&') : '';
+
+/* Link cho từng tab nhóm hàng: giữ nguyên MỌI bộ lọc khác, chỉ đổi item_type.
+   Dựng lại từ $qs chứ không ghép tay từng tham số — thêm bộ lọc mới sau này
+   là tab tự giữ theo, khỏi phải nhớ sửa ở đây. */
+$tabUrl = function ($loai) use ($qs){
+    $p = [];
+    parse_str(ltrim($qs, '&'), $p);
+    unset($p['page']);
+    if ($loai === '') unset($p['item_type']); else $p['item_type'] = $loai;
+    $s = http_build_query($p);
+    return _WEB_URL . '/admin/products' . ($s !== '' ? '?' . $s : '');
+};
 
 $pStart = max(1, $page - 3);
 $pEnd   = min($totalPages, $page + 3);
@@ -47,8 +60,25 @@ $to     = min($page * $perPage, $total);
         </div>
     </div>
 
+    <!-- Ba nhóm hàng: khách muốn nhìn thấy đúng cây Phụ tùng / Thiết bị / Dịch vụ -->
+    <ul class="nav nav-tabs px-3 pt-2" style="border-bottom:1px solid #dee2e6">
+        <li class="nav-item">
+            <a class="nav-link {{empty($filterLoai)?'active':''}}" href="{{$tabUrl('')}}">
+                Tất cả <span class="badge badge-light ml-1">{{(int)($demTheoLoai[''] ?? 0)}}</span>
+            </a>
+        </li>
+        @foreach ($loaiHang as $ma => $ten)
+        <li class="nav-item">
+            <a class="nav-link {{$filterLoai===$ma?'active':''}}" href="{{$tabUrl($ma)}}">
+                {{$ten}} <span class="badge badge-light ml-1">{{(int)($demTheoLoai[$ma] ?? 0)}}</span>
+            </a>
+        </li>
+        @endforeach
+    </ul>
+
     <div class="card-body border-bottom">
         <form method="get" class="form-row align-items-end">
+            {!! !empty($filterLoai) ? '<input type="hidden" name="item_type" value="'.e($filterLoai).'"/>' : '' !!}
             <div class="form-group col-md-4 mb-2">
                 <label class="mb-1 small">Tìm kiếm</label>
                 <div class="position-relative">
@@ -94,7 +124,7 @@ $to     = min($page * $perPage, $total);
             </div>
             <div class="form-group col-md-2 mb-2">
                 <button type="submit" class="btn btn-sm btn-info"><i class="fas fa-search mr-1"></i> Lọc</button>
-                @if ($keyword !== '' || !empty($filterCat) || !empty($filterPromo) || !empty($filterAttrId))
+                @if ($keyword !== '' || !empty($filterCat) || !empty($filterPromo) || !empty($filterAttrId) || !empty($filterLoai))
                 <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-sm btn-default">Xoá</a>
                 @endif
             </div>
@@ -109,6 +139,7 @@ $to     = min($page * $perPage, $total);
                     <th style="width:80px" class="text-center">Ảnh</th>
                     <th style="width:12%">Mã</th>
                     <th>Tên hàng hoá</th>
+                    <th style="width:90px" class="text-center">Loại</th>
                     <th style="width:15%">Danh mục</th>
                     <th style="width:12%">Thương hiệu</th>
                     <th style="width:12%" class="text-right">Giá</th>
@@ -128,6 +159,13 @@ $to     = min($page * $perPage, $total);
                     </td>
                     <td><code>{{$item['code']}}</code></td>
                     <td class="font-weight-bold">{{$item['name']}}</td>
+                    <td class="text-center">
+                        {!! $item['item_type'] === 'service'
+                            ? '<span class="badge badge-info">Dịch vụ</span>'
+                            : ($item['item_type'] === 'equipment'
+                                ? '<span class="badge badge-warning">Thiết bị</span>'
+                                : '<span class="badge badge-light border">Phụ tùng</span>') !!}
+                    </td>
                     <td>{!! !empty($item['category_name']) ? e($item['category_name']) : '<span class="text-muted">—</span>' !!}</td>
                     <td>{!! !empty($item['brand_name']) ? e($item['brand_name']) : '<span class="text-muted">—</span>' !!}</td>
                     <td class="text-right">{{number_format((float)$item['price'], 0, ',', '.')}} ₫</td>
@@ -146,7 +184,7 @@ $to     = min($page * $perPage, $total);
                 @endforeach
             @else
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-4">
+                    <td colspan="10" class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-2x d-block mb-2"></i> Không có hàng hoá nào khớp
                     </td>
                 </tr>

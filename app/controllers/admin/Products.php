@@ -81,9 +81,17 @@ class Products extends Controller {
         $attrVal = isset($f['attr_val']) ? trim($f['attr_val']) : '';
         $page    = isset($f['page']) && (int) $f['page'] > 0 ? (int) $f['page'] : 1;
 
+        // Lọc theo nhóm hàng (phụ tùng / thiết bị / dịch vụ) — khách muốn nhìn
+        // thấy đúng 3 nhánh này cả trong admin, không chỉ ngoài web.
+        $loai = (isset($f['item_type']) && isset(PartsModel::$loaiHang[$f['item_type']]))
+              ? $f['item_type'] : '';
+
         $filters = [];
         if ($catId > 0){
             $filters['parts.category_id'] = $catId;
+        }
+        if ($loai !== ''){
+            $filters['parts.item_type'] = $loai;
         }
 
         $total      = $this->__model->countLists($filters, $keyword, $promo, $attrId, $attrVal);
@@ -109,6 +117,22 @@ class Products extends Controller {
         $this->__data['content']['attributes']    = $this->__attrModel->getActive();
         $this->__data['content']['keyword']       = $keyword;
         $this->__data['content']['filterCat']     = $catId;
+        $this->__data['content']['filterLoai']    = $loai;
+
+        // Số lượng từng nhóm cho tab. Đếm theo ĐÚNG bộ lọc đang áp (từ khoá,
+        // danh mục, khuyến mãi...) trừ chính điều kiện nhóm — nếu không thì
+        // con số trên tab không khớp với số dòng khi bấm vào.
+        $demTheoLoai = [];
+        foreach (array_keys(PartsModel::$loaiHang) as $ma){
+            $fl = $filters;
+            $fl['parts.item_type'] = $ma;
+            $demTheoLoai[$ma] = $this->__model->countLists($fl, $keyword, $promo, $attrId, $attrVal);
+        }
+        $fAll = $filters; unset($fAll['parts.item_type']);
+        $demTheoLoai['']  = $this->__model->countLists($fAll, $keyword, $promo, $attrId, $attrVal);
+        $this->__data['content']['demTheoLoai'] = $demTheoLoai;
+        $this->__data['content']['loaiHang']    = PartsModel::$loaiHang;
+
         $this->__data['content']['filterPromo']   = $promo;
         $this->__data['content']['filterAttrId']  = $attrId;
         $this->__data['content']['filterAttrVal'] = $attrVal;

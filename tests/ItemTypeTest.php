@@ -145,6 +145,31 @@ foreach (['add', 'edit'] as $v){
     ok(strpos($src, 'name="item_type"') !== false, "View products/$v co o chon loai");
 }
 
+// ================================================================
+section('Admin cung hien thi 3 nhom');
+
+$prodCtrl = codeOnly(__DIR__ . '/../app/controllers/admin/Products.php');
+ok(strpos($prodCtrl, "'parts.item_type'") !== false, 'Danh sach hang hoa loc duoc theo nhom');
+ok(strpos($prodCtrl, 'demTheoLoai') !== false, 'Co dem so luong tung nhom cho tab');
+
+// So tren tab phai dem theo DUNG bo loc dang ap (tu khoa, danh muc...), tru
+// chinh dieu kien nhom — khong thi bam vao tab ra so dong khac voi so tren tab.
+ok(preg_match('~demTheoLoai.*?countLists\(\$fl, \$keyword, \$promo~s', $prodCtrl) === 1,
+   'Dem tung nhom van giu cac bo loc khac (so tren tab khop so dong)');
+
+$listView = file_get_contents(__DIR__ . '/../app/views/admin/products/lists.php');
+ok(strpos($listView, 'nav-tabs') !== false, 'View co dai tab 3 nhom');
+ok(strpos($listView, '$tabUrl') !== false, 'Tab giu nguyen cac bo loc khac khi chuyen');
+ok(strpos($listView, 'item_type') !== false, 'View co cot/nhan loai');
+
+// Them 1 cot vao bang thi colspan cua dong "khong co du lieu" phai tang theo,
+// khong thi dong do bi hut vao mot ben.
+preg_match_all('~<th[\s>]~', $listView, $ths);
+preg_match('~colspan="(\d+)"~', $listView, $cs);
+ok(count($ths[0]) === (int) ($cs[1] ?? 0),
+   'So cot <th> khop colspan cua dong rong',
+   count($ths[0]) . ' cot vs colspan=' . ($cs[1] ?? '?'));
+
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'IT-TEST-%'");
 
