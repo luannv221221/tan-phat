@@ -176,7 +176,7 @@ $selType = !empty($old['type']) ? $old['type'] : 'nhap_mua';
         var tr = document.createElement('tr'); tr.className = 'line-row';
         tr.appendChild(td(buildSelect('line_part[]', PARTS, data.part_id)));
 
-        var q = inp('line_qty[]', 'qty text-right', data.qty); q.addEventListener('input', recompute);
+        var q = inp('line_qty[]', 'qty text-right', data.qty); soLuong(q); q.addEventListener('input', recompute);
         tr.appendChild(td(q));
         var c = inp('line_cost[]', 'cost text-right', data.cost); c.addEventListener('input', recompute);
         tr.appendChild(td(c));

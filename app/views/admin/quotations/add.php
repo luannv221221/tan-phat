@@ -139,7 +139,7 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '0';
             if (sel.value && tr === tbody.lastElementChild) addRow();
         });
         tr.appendChild(td(sel));
-        var q = inp('line_qty[]','qty text-right', data.qty); q.addEventListener('input', recompute); tr.appendChild(td(q));
+        var q = inp('line_qty[]','qty text-right', data.qty); soLuong(q); q.addEventListener('input', recompute); tr.appendChild(td(q));
         price.addEventListener('input', recompute); tr.appendChild(td(price));
         var discVal = (data.disc === 0 || data.disc) ? data.disc : '';
         if (discVal === '' || discVal == null){ var gd = groupDisc(); if (gd > 0) discVal = gd; }

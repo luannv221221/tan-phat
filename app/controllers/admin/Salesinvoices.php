@@ -190,6 +190,17 @@ class Salesinvoices extends Controller {
            cho cả bước kiểm lẫn bước ghi sổ, để hai bước không lệch nhau. */
         $loai = $this->__part->loaiTheoId(array_column($items, 'part_id'));
 
+        // Hoá đơn để trống kho nhưng lại có hàng thật -> không biết trừ ở đâu.
+        // Xảy ra khi hoá đơn lập lúc chỉ có dịch vụ, sau đó thêm dòng hàng vào.
+        $canKho = false;
+        foreach ($items as $it){
+            if (PartsModel::coKho($loai[(int) $it['part_id']] ?? PartsModel::LOAI_PHU_TUNG)){ $canKho = true; break; }
+        }
+        if ($canKho && $wh <= 0){
+            Session::flash('msgError', 'Hoá đơn có hàng hoá nên phải chọn kho xuất trước khi ghi sổ.');
+            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
+        }
+
         // Chặn nếu tồn không đủ (gộp cùng hàng hoá) — chỉ với hàng CÓ kho
         $need = [];
         foreach ($items as $it){
@@ -471,7 +482,9 @@ class Salesinvoices extends Controller {
     private function headerData($f){
         return [
             'customer_id'   => $this->customerId(),
-            'warehouse_id'  => (int) $f['warehouse_id'],
+            // NULL khi hoá đơn toàn dịch vụ — không gán bừa một kho để rồi
+            // báo cáo kho nhìn như có phát sinh ở đó.
+            'warehouse_id'  => !empty($f['warehouse_id']) ? (int) $f['warehouse_id'] : null,
             'invoice_date'  => $f['invoice_date'],
             'vat_rate'      => $this->parseRate(isset($f['vat_rate']) ? $f['vat_rate'] : 0),
         ];
@@ -495,13 +508,35 @@ class Salesinvoices extends Controller {
     private function validateInput(){
         $f = $this->__request->getFields();
         $errors = [];
+        $lines = $this->buildLines();
+
+        /* Kho xuất chỉ BẮT BUỘC khi hoá đơn có hàng thật.
+           Hoá đơn toàn dịch vụ ("thay dầu", "bảo dưỡng") không xuất gì khỏi kho
+           cả — bắt chọn kho là bắt điền một thông tin vô nghĩa, và người dùng
+           sẽ chọn đại một kho rồi số liệu kho nhìn như có phát sinh. */
         $whId = !empty($f['warehouse_id']) ? (int) $f['warehouse_id'] : 0;
-        if ($whId <= 0 || empty($this->__warehouse->getDetail($whId))){
-            $errors['warehouse_id'] = 'Chọn kho xuất hàng';
+        if ($this->coHangCanKho($lines)){
+            if ($whId <= 0 || empty($this->__warehouse->getDetail($whId))){
+                $errors['warehouse_id'] = 'Hoá đơn có hàng hoá nên phải chọn kho xuất';
+            }
+        } elseif ($whId > 0 && empty($this->__warehouse->getDetail($whId))){
+            $errors['warehouse_id'] = 'Kho không hợp lệ';
         }
+
         if (empty($f['invoice_date'])) $errors['invoice_date'] = 'Chọn ngày hoá đơn';
-        if (empty($this->buildLines())) $errors['lines'] = 'Hoá đơn phải có ít nhất 1 dòng hàng';
+        if (empty($lines)) $errors['lines'] = 'Hoá đơn phải có ít nhất 1 dòng hàng';
         return $errors;
+    }
+
+    /** Hoá đơn có ít nhất một dòng đi qua kho (tức không phải toàn dịch vụ) */
+    private function coHangCanKho($lines){
+        if (empty($lines)) return false;
+
+        $loai = $this->__part->loaiTheoId(array_column($lines, 'part_id'));
+        foreach ($lines as $ln){
+            if (PartsModel::coKho($loai[(int) $ln['part_id']] ?? PartsModel::LOAI_PHU_TUNG)) return true;
+        }
+        return false;
     }
 
     private function buildLines(){

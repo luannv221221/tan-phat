@@ -212,7 +212,7 @@ $sel = function($field, $default = '') use ($old, $item){
             data = data || {};
             var tr = document.createElement('tr'); tr.className='line-row';
             tr.appendChild(td(buildSelect('line_part[]', PARTS, data.part_id)));
-            var q = inp('line_qty[]','qty text-right',data.qty); q.addEventListener('input', recompute); tr.appendChild(td(q));
+            var q = soLuong(inp('line_qty[]','qty text-right',data.qty)); q.addEventListener('input', recompute); tr.appendChild(td(q));
             var c = inp('line_cost[]','cost text-right',data.cost); c.addEventListener('input', recompute); tr.appendChild(td(c));
             var amtTd = document.createElement('td'); amtTd.className='text-right align-middle';
             var amtSpan = document.createElement('span'); amtSpan.className='amt'; amtSpan.textContent='0'; amtTd.appendChild(amtSpan); tr.appendChild(amtTd);

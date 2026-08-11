@@ -36,13 +36,14 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '10';
                     {!! !empty($errors['invoice_date'])?'<small class="text-danger">'.e($errors['invoice_date']).'</small>':false !!}
                 </div>
                 <div class="form-group col-md-5">
-                    <label>Kho xuất <span class="text-danger">*</span></label>
+                    <label>Kho xuất</label>
                     <select name="warehouse_id" class="form-control">
-                        <option value="">— Chọn kho —</option>
+                        <option value="">— Không cần (hoá đơn chỉ có dịch vụ) —</option>
                         @foreach ($warehouses as $w)
                         <option value="{{$w['id']}}" {{(!empty($old['warehouse_id']) && $old['warehouse_id']==$w['id'])?'selected':''}}>{{$w['code'].' - '.$w['name']}}</option>
                         @endforeach
                     </select>
+                    <small class="form-text text-muted">Có dòng hàng hoá thì bắt buộc chọn; toàn dịch vụ thì để trống.</small>
                     {!! !empty($errors['warehouse_id'])?'<small class="text-danger">'.e($errors['warehouse_id']).'</small>':false !!}
                 </div>
                 <div class="form-group col-md-2">
@@ -147,7 +148,7 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '10';
             if (sel.value && tr === tbody.lastElementChild) addRow();
         });
         tr.appendChild(td(sel));
-        var q = inp('line_qty[]','qty text-right', data.qty); q.addEventListener('input', recompute); tr.appendChild(td(q));
+        var q = inp('line_qty[]','qty text-right', data.qty); soLuong(q); q.addEventListener('input', recompute); tr.appendChild(td(q));
         price.addEventListener('input', recompute); tr.appendChild(td(price));
         var discVal = (data.disc === 0 || data.disc) ? data.disc : (data.part_id ? '' : groupDisc());
         if (discVal === '' || discVal == null){ var gd = groupDisc(); if (gd > 0) discVal = gd; }

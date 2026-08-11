@@ -327,6 +327,49 @@ foreach (['add', 'edit'] as $v){
 
 $pdo->exec("DELETE FROM part_attributes WHERE slug LIKE 'it-attr-%'");
 
+// ================================================================
+section('Hoa don toan dich vu khong can kho xuat');
+
+$whNull = $pdo->query("SELECT IS_NULLABLE FROM information_schema.COLUMNS
+                       WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='sales_invoices'
+                         AND COLUMN_NAME='warehouse_id'")->fetchColumn();
+ok($whNull === 'YES', 'sales_invoices.warehouse_id cho phep de trong', $whNull);
+
+$invSrc = codeOnly(__DIR__ . '/../app/controllers/admin/Salesinvoices.php');
+ok(strpos($invSrc, 'coHangCanKho') !== false, 'Co ham xet hoa don co hang that hay khong');
+ok(preg_match('~function validateInput.*?coHangCanKho~s', $invSrc) === 1,
+   'Luc luu: chi bat buoc chon kho khi co dong hang hoa');
+ok(preg_match('~function post\(.*?\$canKho && \$wh <= 0~s', $invSrc) === 1,
+   'Luc ghi so: co hang ma thieu kho -> chan (hoa don lap luc toan dich vu, sau them hang vao)');
+
+foreach (['add', 'edit'] as $v){
+    $s = file_get_contents(__DIR__ . '/../app/views/admin/sales-invoices/' . $v . '.php');
+    ok(strpos($s, 'chỉ có dịch vụ') !== false, "View sales-invoices/$v: o kho noi ro khi nao duoc de trong");
+}
+
+// ================================================================
+section('O so luong: mac dinh 1, co nut tang giam, phai > 0');
+
+$js2 = file_get_contents(__DIR__ . '/../public/assets/js/admin.js');
+ok(strpos($js2, 'window.soLuong') !== false, 'Ham soLuong dat trong admin.js (dung chung)');
+ok(strpos($js2, "el.type = 'number'") !== false, 'O so luong la input number -> co nut tang/giam');
+ok(strpos($js2, "el.value = '1'") !== false, 'Mac dinh 1');
+ok(strpos($js2, "step = 'any'") !== false, 'step=any -> van nhap duoc so le (2.5 lit dau)');
+ok(preg_match("~blur.*?v <= 0.*?el\.value = '1'~s", $js2) === 1, 'Go 0 hoac so am -> keo ve 1 khi roi o');
+ok(strpos($js2, 'return el;') !== false, 'Tra ve chinh phan tu de goi long: td(soLuong(inp(...)))');
+
+// Ap du 12 man hinh dung mau bang dong hang — sot mot cai la nguoi dung
+// thay o nay co nut tang giam, o kia khong.
+$manHinh = ['quotations/add','quotations/edit','sales-invoices/add','sales-invoices/edit',
+            'goods-receipts/add','goods-receipts/edit','goods-issues/add','goods-issues/edit',
+            'transfers/add','transfers/edit','stock-takes/add','stock-takes/edit'];
+$sot = [];
+foreach ($manHinh as $mh){
+    $s = file_get_contents(__DIR__ . '/../app/views/admin/' . $mh . '.php');
+    if (strpos($s, 'soLuong(') === false) $sot[] = $mh;
+}
+ok(empty($sot), 'Ca 12 man hinh dong hang deu dung soLuong()', implode(', ', $sot));
+
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'IT-TEST-%'");
 

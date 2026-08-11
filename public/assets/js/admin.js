@@ -260,3 +260,39 @@
     sel.addEventListener('change', apDung);
     apDung();
 })();
+
+/* ============================================================
+   Ô SỐ LƯỢNG trong bảng "Dòng hàng"
+   ============================================================
+
+   Mặc định 1, có nút tăng/giảm, và không cho <= 0.
+
+   Đặt ở đây chứ không chép vào từng view: mẫu bảng dòng hàng đang nằm ở 10
+   file (báo giá, hoá đơn, nhập/xuất/chuyển kho, kiểm kê), mỗi file một kiểu
+   viết. Thêm hàm vào từng file là lần sau sửa lại phải nhớ đủ 10 chỗ.
+
+   step="any" để vẫn nhập được số lẻ (2.5 lít dầu) nhưng nút mũi tên vẫn
+   nhảy từng đơn vị. min nhỏ hơn 1 vạch thay vì min=1 vì lý do đó.
+
+   Trả về chính phần tử để gọi lồng được: td(soLuong(inp(...)))
+*/
+window.soLuong = function (el) {
+    if (!el) return el;
+
+    el.type = 'number';
+    el.min  = '0.001';
+    el.step = 'any';
+    if (el.value === '' || el.value === null) el.value = '1';
+
+    // Gõ tay số 0 hoặc số âm thì kéo về mức nhỏ nhất khi rời ô.
+    // Chặn ở đây cho người dùng thấy ngay, server vẫn tự bỏ dòng qty <= 0.
+    el.addEventListener('blur', function () {
+        var v = parseFloat(el.value);
+        if (!isFinite(v) || v <= 0) {
+            el.value = '1';
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
+    return el;
+};
