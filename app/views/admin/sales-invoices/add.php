@@ -6,6 +6,8 @@ foreach ($parts as $p){
         'label' => $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : ''),
         'price' => (int) (!empty($p['sale_price']) ? $p['sale_price'] : $p['price']),
         'img'   => !empty($p['image']) ? _WEB_URL . '/public/assets/uploads/parts/' . $p['image'] : '',
+        // Để lọc ô chọn hàng theo việc có chọn kho hay không
+        'loai'  => $p['item_type'],
     ];
 }
 $initRows = [];
@@ -126,11 +128,50 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '10';
         var rate = num(vatEl.value); var tax = Math.round(sub * rate / 100);
         subEl.textContent = fmt(sub); taxEl.textContent = fmt(tax); grEl.textContent = fmt(sub + tax);
     }
+    /* Kho xuất để trống = hoá đơn CHỈ có dịch vụ -> ô chọn hàng chỉ liệt kê
+       dịch vụ. Cho chọn cả ắc quy rồi mới báo "phải chọn kho" là bắt người
+       dùng làm sai xong mới bắt sửa. */
+    var whEl = document.querySelector('select[name="warehouse_id"]');
+
+    function danhSachHang(){
+        if (whEl && whEl.value !== '') return PARTS;
+        return PARTS.filter(function (op){ return op.loai === 'service'; });
+    }
+
+    function napOption(s, selected){
+        s.textContent = '';
+        var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn hàng hoá —'; s.appendChild(o0);
+        danhSachHang().forEach(function (op){
+            var o=document.createElement('option'); o.value=op.id; o.textContent=op.label;
+            o.setAttribute('data-price', op.price);
+            if (op.img) o.setAttribute('data-img', op.img);
+            if (String(op.id)===String(selected)) o.selected=true;
+            s.appendChild(o);
+        });
+    }
+
     function partSelect(selected){
         var s = document.createElement('select'); s.name='line_part[]'; s.className='form-control form-control-sm part-sel js-search'; s.setAttribute('data-placeholder','Gõ tên hoặc mã hàng hoá...');
-        var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn hàng hoá —'; s.appendChild(o0);
-        PARTS.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; o.setAttribute('data-price', op.price); if (op.img) o.setAttribute('data-img', op.img); if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
+        napOption(s, selected);
         return s;
+    }
+
+    /* Đổi kho -> nạp lại mọi ô chọn hàng. Hàng đã chọn mà không còn hợp lệ
+       (bỏ kho trong khi dòng đang là ắc quy) thì xoá luôn, kèm xoá chữ trong
+       ô tìm kiếm phủ bên trên — không thì nhìn vẫn thấy tên hàng cũ dù
+       select đã rỗng. */
+    if (whEl){
+        whEl.addEventListener('change', function(){
+            tbody.querySelectorAll('select[name="line_part[]"]').forEach(function (s){
+                var cu = s.value;
+                napOption(s, cu);
+                if (s.value !== cu){
+                    var w = s.closest('.ss');
+                    if (w){ var i = w.querySelector('.ss__input'); if (i) i.value = ''; }
+                }
+            });
+            recompute();
+        });
     }
     function td(child, cls){ var t=document.createElement('td'); if (cls) t.className=cls; if (child) t.appendChild(child); return t; }
     function inp(name, cls, val){ var i=document.createElement('input'); i.type='text'; i.name=name; i.className='form-control form-control-sm '+cls; i.value=(val===0||val)?val:''; return i; }

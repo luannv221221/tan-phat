@@ -370,6 +370,30 @@ foreach ($manHinh as $mh){
 }
 ok(empty($sot), 'Ca 12 man hinh dong hang deu dung soLuong()', implode(', ', $sot));
 
+// ================================================================
+section('O chon hang loc theo viec co chon kho hay khong');
+
+/* Mau thuan cu: chon "Khong can kho (hoa don chi co dich vu)" nhung o chon
+   hang van liet ke ac quy, bugi -> chon xong moi bao loi "phai chon kho".
+   Nay loc ngay tu dau: khong chon kho -> chi hien dich vu. */
+foreach (['add', 'edit'] as $v){
+    $s = file_get_contents(__DIR__ . '/../app/views/admin/sales-invoices/' . $v . '.php');
+
+    ok(strpos($s, "'loai'  => \$p['item_type']") !== false,
+       "sales-invoices/$v: du lieu o chon hang co kem loai");
+    ok(strpos($s, 'function danhSachHang') !== false,
+       "sales-invoices/$v: co ham loc danh sach theo kho");
+    ok(preg_match("~danhSachHang.*?op\.loai === 'service'~s", $s) === 1,
+       "sales-invoices/$v: khong chon kho -> chi con dich vu");
+    ok(preg_match('~whEl\.addEventListener\(.change.~s', $s) === 1,
+       "sales-invoices/$v: doi kho thi nap lai moi o chon hang");
+
+    // Doi kho ma khong xoa chu trong o tim kiem phu ben tren thi nhin van
+    // thay ten hang cu du select da rong — nguoi dung tuong van con chon.
+    ok(strpos($s, "ss__input") !== false,
+       "sales-invoices/$v: xoa ca chu trong o tim kiem khi lua chon khong con hop le");
+}
+
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'IT-TEST-%'");
 
