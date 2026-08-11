@@ -3,7 +3,7 @@
 $qs = '';
 if ($keyword !== '')      $qs .= '&keyword=' . urlencode($keyword);
 if (!empty($filterCat))   $qs .= '&category_id=' . (int) $filterCat;
-if (!empty($filterLoai))  $qs .= '&item_type=' . urlencode($filterLoai);
+if (!empty($filterLoai))  $qs .= '&tab=' . urlencode($filterLoai);
 if (!empty($filterPromo)) $qs .= '&promo=1';
 if (!empty($filterAttrId)) $qs .= '&attr_id=' . (int) $filterAttrId;
 if (isset($filterAttrVal) && $filterAttrVal !== '') $qs .= '&attr_val=' . urlencode($filterAttrVal);
@@ -13,11 +13,11 @@ $exportQs = $qs !== '' ? '?' . ltrim($qs, '&') : '';
 /* Link cho từng tab nhóm hàng: giữ nguyên MỌI bộ lọc khác, chỉ đổi item_type.
    Dựng lại từ $qs chứ không ghép tay từng tham số — thêm bộ lọc mới sau này
    là tab tự giữ theo, khỏi phải nhớ sửa ở đây. */
-$tabUrl = function ($loai) use ($qs){
+$tabUrl = function ($tab) use ($qs){
     $p = [];
     parse_str(ltrim($qs, '&'), $p);
     unset($p['page']);
-    if ($loai === '') unset($p['item_type']); else $p['item_type'] = $loai;
+    if ($tab === '') unset($p['tab']); else $p['tab'] = $tab;
     $s = http_build_query($p);
     return _WEB_URL . '/admin/products' . ($s !== '' ? '?' . $s : '');
 };
@@ -74,11 +74,24 @@ $to     = min($page * $perPage, $total);
             </a>
         </li>
         @endforeach
+
+        <?php /* Tách khỏi 3 tab trên bằng vạch dọc: đây là THUỘC TÍNH (được
+                 đăng web) chứ không phải loại hàng thứ tư, nên nó chồng lấn
+                 với cả ba — một cái ắc quy vừa là Phụ tùng vừa có thể nằm ở
+                 tab này. Để liền mạch là người dùng tưởng 4 tab cộng lại
+                 bằng "Tất cả". */ ?>
+        <li class="nav-item ml-2 pl-2" style="border-left:1px solid #dee2e6">
+            <a class="nav-link {{$filterLoai===$tabWeb?'active':''}}" href="{{$tabUrl($tabWeb)}}"
+               title="Hàng hoá được tích Hiển thị website">
+                <i class="fas fa-globe mr-1"></i>Sản phẩm website
+                <span class="badge badge-light ml-1">{{(int)($demTheoLoai[$tabWeb] ?? 0)}}</span>
+            </a>
+        </li>
     </ul>
 
     <div class="card-body border-bottom">
         <form method="get" class="form-row align-items-end">
-            {!! !empty($filterLoai) ? '<input type="hidden" name="item_type" value="'.e($filterLoai).'"/>' : '' !!}
+            {!! !empty($filterLoai) ? '<input type="hidden" name="tab" value="'.e($filterLoai).'"/>' : '' !!}
             <div class="form-group col-md-4 mb-2">
                 <label class="mb-1 small">Tìm kiếm</label>
                 <div class="position-relative">

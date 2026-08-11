@@ -30,6 +30,9 @@ class Products extends Controller {
     private $labelMany = 'Quản lý hàng hoá';
     private $viewDir   = 'admin/products';
 
+    /** Tab "Sản phẩm website" — lọc theo THUỘC TÍNH được đăng web, không phải loại hàng */
+    const TAB_WEB = 'web';
+
     private $perPage = 20;
 
     function __construct(){
@@ -81,18 +84,19 @@ class Products extends Controller {
         $attrVal = isset($f['attr_val']) ? trim($f['attr_val']) : '';
         $page    = isset($f['page']) && (int) $f['page'] > 0 ? (int) $f['page'] : 1;
 
-        // Lọc theo nhóm hàng (phụ tùng / thiết bị / dịch vụ) — khách muốn nhìn
-        // thấy đúng 3 nhánh này cả trong admin, không chỉ ngoài web.
-        $loai = (isset($f['item_type']) && isset(PartsModel::$loaiHang[$f['item_type']]))
-              ? $f['item_type'] : '';
+        /* Tab phân nhóm. MỘT tham số `tab` cho cả 4 tab lọc, vì chúng loại trừ
+           nhau khi bấm — dùng hai tham số riêng thì phải tự nhớ xoá cái kia.
+              part / equipment / service : lọc theo LOẠI hàng
+              web                        : lọc theo THUỘC TÍNH được đăng web
+           'web' không phải loại hàng thứ tư nên nó chồng lấn với 3 tab trên. */
+        $tab = isset($f['tab']) ? $f['tab'] : '';
+        if (!isset(PartsModel::$loaiHang[$tab]) && $tab !== self::TAB_WEB) $tab = '';
 
         $filters = [];
         if ($catId > 0){
             $filters['parts.category_id'] = $catId;
         }
-        if ($loai !== ''){
-            $filters['parts.item_type'] = $loai;
-        }
+        $filters = array_merge($filters, $this->locTheoTab($tab));
 
         $total      = $this->__model->countLists($filters, $keyword, $promo, $attrId, $attrVal);
         $totalPages = (int) ceil($total / $this->perPage);
@@ -117,21 +121,23 @@ class Products extends Controller {
         $this->__data['content']['attributes']    = $this->__attrModel->getActive();
         $this->__data['content']['keyword']       = $keyword;
         $this->__data['content']['filterCat']     = $catId;
-        $this->__data['content']['filterLoai']    = $loai;
+        $this->__data['content']['filterLoai']    = $tab;
 
-        // Số lượng từng nhóm cho tab. Đếm theo ĐÚNG bộ lọc đang áp (từ khoá,
-        // danh mục, khuyến mãi...) trừ chính điều kiện nhóm — nếu không thì
-        // con số trên tab không khớp với số dòng khi bấm vào.
-        $demTheoLoai = [];
-        foreach (array_keys(PartsModel::$loaiHang) as $ma){
-            $fl = $filters;
-            $fl['parts.item_type'] = $ma;
-            $demTheoLoai[$ma] = $this->__model->countLists($fl, $keyword, $promo, $attrId, $attrVal);
+        /* Số lượng từng tab. Đếm theo ĐÚNG bộ lọc đang áp (từ khoá, danh mục,
+           khuyến mãi...) nhưng BỎ điều kiện của tab — nếu không thì con số
+           trên tab không khớp với số dòng khi bấm vào. */
+        $fGoc = $filters;
+        unset($fGoc['parts.item_type'], $fGoc['parts.show_on_web']);
+
+        $demTheoLoai = ['' => $this->__model->countLists($fGoc, $keyword, $promo, $attrId, $attrVal)];
+        foreach (array_merge(array_keys(PartsModel::$loaiHang), [self::TAB_WEB]) as $ma){
+            $demTheoLoai[$ma] = $this->__model->countLists(
+                array_merge($fGoc, $this->locTheoTab($ma)), $keyword, $promo, $attrId, $attrVal);
         }
-        $fAll = $filters; unset($fAll['parts.item_type']);
-        $demTheoLoai['']  = $this->__model->countLists($fAll, $keyword, $promo, $attrId, $attrVal);
+
         $this->__data['content']['demTheoLoai'] = $demTheoLoai;
         $this->__data['content']['loaiHang']    = PartsModel::$loaiHang;
+        $this->__data['content']['tabWeb']      = self::TAB_WEB;
 
         $this->__data['content']['filterPromo']   = $promo;
         $this->__data['content']['filterAttrId']  = $attrId;
@@ -144,6 +150,17 @@ class Products extends Controller {
         $this->__data['content']['msgError']     = Session::flash('msgError');
 
         $this->render('layouts/admin/master_admin', $this->__data);
+    }
+
+    /**
+     * Điều kiện lọc của một tab. Tách ra hàm riêng để chỗ ĐẾM và chỗ LỌC dùng
+     * chung đúng một luật — viết hai nơi là sớm muộn lệch nhau, rồi số trên
+     * tab không khớp số dòng bên dưới.
+     */
+    private function locTheoTab($tab){
+        if ($tab === self::TAB_WEB) return ['parts.show_on_web' => 1];
+        if (isset(PartsModel::$loaiHang[$tab])) return ['parts.item_type' => $tab];
+        return [];
     }
 
     // ================= Thêm =================

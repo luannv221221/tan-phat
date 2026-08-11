@@ -153,12 +153,33 @@ ok(strpos($prodCtrl, "'parts.item_type'") !== false, 'Danh sach hang hoa loc duo
 ok(strpos($prodCtrl, 'demTheoLoai') !== false, 'Co dem so luong tung nhom cho tab');
 
 // So tren tab phai dem theo DUNG bo loc dang ap (tu khoa, danh muc...), tru
-// chinh dieu kien nhom — khong thi bam vao tab ra so dong khac voi so tren tab.
-ok(preg_match('~demTheoLoai.*?countLists\(\$fl, \$keyword, \$promo~s', $prodCtrl) === 1,
-   'Dem tung nhom van giu cac bo loc khac (so tren tab khop so dong)');
+// chinh dieu kien cua tab — khong thi bam vao tab ra so dong khac so tren tab.
+ok(preg_match('~unset\(\$fGoc\[.parts\.item_type.\], \$fGoc\[.parts\.show_on_web.\]\)~s', $prodCtrl) === 1,
+   'Dem tung tab: bo dieu kien CUA TAB nhung giu cac bo loc khac');
+ok(preg_match('~demTheoLoai\[\$ma\] = \$this->__model->countLists\(\s*array_merge\(\$fGoc, \$this->locTheoTab~s', $prodCtrl) === 1,
+   'Cho DEM va cho LOC dung chung ham locTheoTab() — khong viet luat hai noi');
 
 $listView = file_get_contents(__DIR__ . '/../app/views/admin/products/lists.php');
 ok(strpos($listView, 'nav-tabs') !== false, 'View co dai tab 3 nhom');
+
+// --- Tab thu 5: San pham website ---
+ok(strpos($prodCtrl, "TAB_WEB = 'web'") !== false, 'Co tab "San pham website"');
+ok(preg_match("~TAB_WEB.*?'parts\.show_on_web' => 1~s", $prodCtrl) === 1,
+   'Tab web loc theo show_on_web, khong phai theo loai hang');
+ok(strpos($listView, 'Sản phẩm website') !== false, 'View co tab San pham website');
+
+// Tab web CHONG LAN voi 3 tab loai (mot cai ac quy vua la Phu tung vua len
+// web) nen phai tach ra bang vach, khong thi nguoi dung tuong 4 tab cong lai
+// bang "Tat ca".
+ok(strpos($listView, 'border-left') !== false, 'Tab web duoc tach khoi 3 tab loai bang vach');
+
+// Dem thuc te: 3 tab loai phai cong lai bang "Tat ca", con tab web thi khong
+$demLoai = 0;
+foreach (array_keys(PartsModel::$loaiHang) as $ma){
+    $demLoai += $pm->countLists(['parts.item_type' => $ma], '', false, 0, '');
+}
+$demAll = $pm->countLists([], '', false, 0, '');
+ok($demLoai === $demAll, '3 tab loai cong lai = Tat ca', "$demLoai vs $demAll");
 ok(strpos($listView, '$tabUrl') !== false, 'Tab giu nguyen cac bo loc khac khi chuyen');
 ok(strpos($listView, 'item_type') !== false, 'View co cot/nhan loai');
 
