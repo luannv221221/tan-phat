@@ -170,7 +170,10 @@ $to     = min($page * $perPage, $total);
                     <td>{!! !empty($item['brand_name']) ? e($item['brand_name']) : '<span class="text-muted">—</span>' !!}</td>
                     <td class="text-right">{{number_format((float)$item['price'], 0, ',', '.')}} ₫</td>
                     <td class="text-center">
-                        {!! $item['status']==1 ? '<span class="badge badge-success">Hiển thị</span>' : '<span class="badge badge-secondary">Ẩn</span>' !!}
+                        {!! $item['status']==1 ? '<span class="badge badge-success">Kinh doanh</span>' : '<span class="badge badge-secondary">Ngừng</span>' !!}
+                        {!! ($item['status']==1 && $item['show_on_web']!=1)
+                            ? '<span class="badge badge-light border text-muted d-block mt-1" title="Vẫn xuất hoá đơn / nhập xuất kho được">Không lên web</span>'
+                            : '' !!}
                     </td>
                     <td class="text-center">
                         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))

@@ -133,12 +133,24 @@ class PartsModel extends Model {
         return $this->table($this->_table)->where('slug', '=', $slug)->first();
     }
 
+    /**
+     * Điều kiện để một mặt hàng ĐƯỢC LÊN WEBSITE.
+     *
+     * Hai cờ khác nhau, đừng gộp:
+     *   status      — còn kinh doanh không (gác cả ô chọn hàng bên admin)
+     *   show_on_web — có đăng lên web không
+     * Hàng ngừng đăng web vẫn phải xuất hoá đơn và nhập/xuất kho được.
+     */
+    private function chiHangLenWeb($q){
+        return $q->where('parts.status', '=', 1)
+                 ->where('parts.show_on_web', '=', 1);
+    }
+
     /** Chi tiết 1 phụ tùng kèm tên danh mục/thương hiệu/xuất xứ/đơn vị — cho storefront */
     public function getBySlugFull($slug){
-        return $this->selectWithJoins()
-            ->where('parts.slug', '=', $slug)
-            ->where('parts.status', '=', 1)
-            ->first();
+        return $this->chiHangLenWeb(
+            $this->selectWithJoins()->where('parts.slug', '=', $slug)
+        )->first();
     }
 
     /**
@@ -181,7 +193,7 @@ class PartsModel extends Model {
     }
 
     private function applyStorefront($q, $filters){
-        $q = $q->where('parts.status', '=', 1);
+        $q = $this->chiHangLenWeb($q);
 
         if (!empty($filters['categoryIds'])) $q = $q->whereIn('parts.category_id', $filters['categoryIds']);
         if (!empty($filters['brandIds']))    $q = $q->whereIn('parts.brand_id', $filters['brandIds']);
@@ -330,10 +342,11 @@ class PartsModel extends Model {
      * @param array $filters   lọc thêm, vd ['parts.category_id' => 3]
      */
     public function getByCarYear($carYearId, $filters = []){
-        $q = $this->selectWithJoins()
-                  ->joinOn('part_fitments', 'parts.id', 'part_fitments.part_id')
-                  ->where('part_fitments.car_year_id', '=', $carYearId)
-                  ->where('parts.status', '=', 1);
+        $q = $this->chiHangLenWeb(
+            $this->selectWithJoins()
+                 ->joinOn('part_fitments', 'parts.id', 'part_fitments.part_id')
+                 ->where('part_fitments.car_year_id', '=', $carYearId)
+        );
 
         foreach ($filters as $field => $value){
             $q = $q->where($field, '=', $value);
@@ -370,11 +383,12 @@ class PartsModel extends Model {
 
     /** Phụ tùng lắp cho bất kỳ đời nào của một model */
     public function getByModel($modelId, $filters = []){
-        $q = $this->selectWithJoins()
-                  ->joinOn('part_fitments', 'parts.id', 'part_fitments.part_id')
-                  ->joinOn('car_years', 'part_fitments.car_year_id', 'car_years.id')
-                  ->where('car_years.model_id', '=', $modelId)
-                  ->where('parts.status', '=', 1);
+        $q = $this->chiHangLenWeb(
+            $this->selectWithJoins()
+                 ->joinOn('part_fitments', 'parts.id', 'part_fitments.part_id')
+                 ->joinOn('car_years', 'part_fitments.car_year_id', 'car_years.id')
+                 ->where('car_years.model_id', '=', $modelId)
+        );
 
         foreach ($filters as $field => $value){
             $q = $q->where($field, '=', $value);

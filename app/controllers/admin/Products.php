@@ -718,7 +718,10 @@ class Products extends Controller {
             'sale_price'      => (isset($f['sale_price']) && $f['sale_price'] !== '') ? $this->parseMoney($f['sale_price']) : null,
             'warranty_month'  => (isset($f['warranty_month']) && $f['warranty_month'] !== '') ? (int) $f['warranty_month'] : null,
             'description'     => !empty($f['description']) ? trim($f['description']) : null,
+            // Hai cờ ĐỘC LẬP: ngừng đăng web không đồng nghĩa ngừng kinh doanh.
+            // Hàng tắt show_on_web vẫn phải xuất hoá đơn và nhập/xuất kho được.
             'status'          => !empty($f['status']) ? 1 : 0,
+            'show_on_web'     => !empty($f['show_on_web']) ? 1 : 0,
         ];
     }
 

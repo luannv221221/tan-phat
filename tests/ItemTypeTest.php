@@ -208,6 +208,58 @@ $homeSrc = file_get_contents(__DIR__ . '/../app/views/storefront/home.php');
 ok(strpos($homeSrc, "=== 0") !== false,
    'Trang chu lay danh muc goc -> tu dung 3 nhom, khong phai sua tay');
 
+// ================================================================
+section('show_on_web tach roi khoi status');
+
+$c2 = [];
+foreach ($pdo->query('SHOW COLUMNS FROM parts') as $c) $c2[$c['Field']] = $c;
+ok(isset($c2['show_on_web']), 'parts.show_on_web ton tai');
+ok($c2['show_on_web']['Default'] === '1', 'Mac dinh 1 — hang moi tao la co len web');
+
+// (int) ngay tu day: add() tra ve lastId() dang CHUOI, so === voi so nguyen
+// ben duoi thi luon false — va cac assertion dang PHU DINH se pass gia.
+$idWeb = (int) $pm->add(['code' => 'IT-TEST-WEB', 'name' => 'IT Hang len web', 'slug' => 'it-test-web',
+                   'item_type' => 'part', 'unit_id' => $unit['id'], 'price' => 100000,
+                   'status' => 1, 'show_on_web' => 1]);
+
+$coTrenWeb = function($id) use ($pm){
+    foreach ($pm->storefront([]) as $r){ if ((int) $r['id'] === $id) return true; }
+    return false;
+};
+$coTrongOChon = function($id) use ($pm){
+    foreach ($pm->getForSelect(false) as $r){ if ((int) $r['id'] === $id) return true; }
+    return false;
+};
+
+ok($coTrenWeb($idWeb),    'Bat ca hai co -> hien tren web');
+ok($coTrongOChon($idWeb), 'Bat ca hai co -> co trong o chon hoa don');
+
+// TAT rieng co web: phai bien mat khoi web NHUNG con trong o chon.
+// Day la ca quan trong nhat — truoc day chi co mot co `status` gac ca hai
+// duong, tat de go khoi web la mat luon kha nang xuat hoa don.
+$pdo->prepare('UPDATE parts SET show_on_web=0 WHERE id=?')->execute([$idWeb]);
+ok(!$coTrenWeb($idWeb),   'Tat show_on_web -> BIEN MAT khoi web');
+ok($coTrongOChon($idWeb), 'Tat show_on_web -> VAN xuat hoa don / nhap xuat kho duoc');
+ok($pm->getBySlugFull('it-test-web') === false || empty($pm->getBySlugFull('it-test-web')),
+   'Trang chi tiet cung khong vao duoc');
+
+// TAT status: phai bien mat khoi CA HAI
+$pdo->prepare('UPDATE parts SET show_on_web=1, status=0 WHERE id=?')->execute([$idWeb]);
+ok(!$coTrenWeb($idWeb),    'Tat status -> mat khoi web');
+ok(!$coTrongOChon($idWeb), 'Tat status -> mat khoi ca o chon (ngung kinh doanh han)');
+
+$prodSrc = codeOnly(__DIR__ . '/../app/controllers/admin/Products.php');
+ok(strpos($prodSrc, "'show_on_web'") !== false, 'Form hang hoa co luu show_on_web');
+
+foreach (['add', 'edit'] as $v){
+    $s = file_get_contents(__DIR__ . '/../app/views/admin/products/' . $v . '.php');
+    ok(strpos($s, 'name="show_on_web"') !== false, "View products/$v co o Hien thi website");
+    ok(strpos($s, 'Đang kinh doanh') !== false,
+       "View products/$v doi nhan o cu thanh 'Dang kinh doanh' (khong con mo ho)");
+}
+
+$pdo->prepare('DELETE FROM parts WHERE id=?')->execute([$idWeb]);
+
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'IT-TEST-%'");
 

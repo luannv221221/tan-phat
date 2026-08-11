@@ -158,8 +158,19 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                     <div class="form-group mb-0">
                         <div class="custom-control custom-switch">
                             <input type="checkbox" class="custom-control-input" name="status" id="status" value="1" checked/>
-                            <label class="custom-control-label" for="status">Hiển thị</label>
+                            <label class="custom-control-label" for="status">Đang kinh doanh</label>
                         </div>
+                        <small class="form-text text-muted mb-2">
+                            Tắt là gỡ khỏi mọi nơi: website, hoá đơn, báo giá, phiếu kho.
+                        </small>
+
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" name="show_on_web" id="show_on_web" value="1" checked/>
+                            <label class="custom-control-label" for="show_on_web">Hiển thị website</label>
+                        </div>
+                        <small class="form-text text-muted">
+                            Tắt là chỉ gỡ khỏi website; vẫn xuất hoá đơn và nhập/xuất kho bình thường.
+                        </small>
                     </div>
                 </div>
             </div>
