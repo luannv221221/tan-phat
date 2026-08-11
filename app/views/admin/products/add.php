@@ -31,7 +31,7 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                             <input type="text" class="form-control" name="code" placeholder="VD: PT-0001" value="{{!empty($old['code'])?$old['code']:''}}"/>
                             {!! !empty($errors['code'])?'<small class="text-danger">'.e($errors['code']).'</small>':false !!}
                         </div>
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-6 js-theo-loai" data-loai="part">
                             <label>Mã OEM</label>
                             <input type="text" class="form-control" name="oem_code" value="{{!empty($old['oem_code'])?$old['oem_code']:''}}"/>
                         </div>
@@ -85,7 +85,7 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                         </div>
                     </div>
 
-                    <div class="form-row">
+                    <div class="form-row js-theo-loai" data-loai="part equipment">
                         <div class="form-group col-md-4">
                             <label>Thương hiệu</label>
                             <select name="brand_id" class="form-control">
@@ -178,7 +178,7 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
 
         <!-- Cột phải: lắp cho đời xe -->
         <div class="col-lg-5">
-            <div class="card card-outline card-info">
+            <div class="card card-outline card-info js-theo-loai" data-loai="part">
                 <div class="card-header"><h3 class="card-title"><i class="fas fa-link mr-2"></i>Lắp cho đời xe</h3></div>
                 <div class="card-body">
                     @if (empty($fitGroups))
@@ -214,13 +214,17 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                     <p class="text-muted mb-0"><i class="fas fa-info-circle mr-1"></i> Chưa có thông số nào. Tạo ở menu <b>Thông số kỹ thuật</b>.</p>
                     @else
                         @foreach ($attributes as $at)
-                        <div class="form-group row mb-2">
+                        <div class="form-group row mb-2 js-theo-loai" data-loai="{{$at['item_types']}}">
                             <label class="col-5 col-form-label col-form-label-sm">{{$at['name']}}{!! !empty($at['unit']) ? ' <span class="text-muted">('.e($at['unit']).')</span>' : '' !!}</label>
                             <div class="col-7">
                                 <input type="text" class="form-control form-control-sm" name="attr[{{$at['id']}}]" value="{{ isset($attrValues[$at['id']]) ? $attrValues[$at['id']] : '' }}"/>
                             </div>
                         </div>
                         @endforeach
+                        <p class="text-muted mb-0 js-khong-co-thong-so" style="display:none">
+                            <i class="fas fa-info-circle mr-1"></i> Loại hàng này chưa có thông số nào.
+                            Thêm ở menu <b>Thông số kỹ thuật</b> và tick đúng loại.
+                        </p>
                     @endif
                 </div>
             </div>

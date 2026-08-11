@@ -723,12 +723,51 @@ class Products extends Controller {
             'status'          => !empty($f['status']) ? 1 : 0,
             'show_on_web'     => !empty($f['show_on_web']) ? 1 : 0,
         ];
+
+        return $this->boTruongKhongThuocLoai($data);
+    }
+
+    /**
+     * Xoá các trường không thuộc loại hàng đã chọn.
+     *
+     * Form đã ẩn chúng bằng JS, nhưng ẩn KHÔNG phải là không gửi:
+     *   - người dùng điền "Mã OEM" rồi mới đổi Loại sang Dịch vụ -> ô ẩn đi
+     *     nhưng giá trị vẫn nằm trong form và vẫn được gửi lên
+     *   - ai đó gửi thẳng POST thì chẳng có JS nào chặn
+     * Không dọn ở đây là dữ liệu rác nằm im trong CSDL, sau này lọc/báo cáo
+     * theo mấy cột đó sẽ ra kết quả khó hiểu.
+     */
+    private function boTruongKhongThuocLoai($data){
+        $loai = $data['item_type'];
+
+        // Mã OEM chỉ có nghĩa với phụ tùng thay thế
+        if ($loai !== PartsModel::LOAI_PHU_TUNG){
+            $data['oem_code'] = null;
+        }
+
+        // Dịch vụ không có thương hiệu / hãng sản xuất / xuất xứ
+        if ($loai === PartsModel::LOAI_DICH_VU){
+            $data['brand_id']        = null;
+            $data['manufacturer_id'] = null;
+            $data['origin_id']       = null;
+        }
+
+        return $data;
     }
 
     /** Gán hàng hoá cho các đời xe được tick (lọc bỏ id không tồn tại) */
     private function syncFitments($partId){
         $f     = $this->__request->getFields();
         $picked = isset($f['fitments']) && is_array($f['fitments']) ? $f['fitments'] : [];
+
+        // Chỉ PHỤ TÙNG mới lắp cho đời xe. Thiết bị (cầu nâng) và dịch vụ
+        // (thay dầu) không gắn xe — khách đã chốt. Truyền mảng rỗng chứ không
+        // return sớm: đổi loại từ phụ tùng sang dịch vụ thì phải XOÁ liên kết cũ.
+        $loai = isset($f['item_type']) ? $f['item_type'] : PartsModel::LOAI_PHU_TUNG;
+        if ($loai !== PartsModel::LOAI_PHU_TUNG){
+            $this->__fitment->syncForPart($partId, []);
+            return;
+        }
 
         $valid = [];
         foreach ($picked as $yearId){
@@ -757,11 +796,29 @@ class Products extends Controller {
         $this->__relatedModel->syncForPart($partId, $valid);
     }
 
-    /** Lưu giá trị thông số kỹ thuật được nhập (attr[attribute_id] = value) — TASK_90 */
+    /**
+     * Lưu giá trị thông số kỹ thuật được nhập (attr[attribute_id] = value) — TASK_90.
+     *
+     * Chỉ nhận thông số CÓ ÁP cho loại hàng đang lưu. Đổi loại từ Thiết bị
+     * sang Dịch vụ thì "Tải trọng" phải mất hẳn, chứ không nằm lại âm thầm
+     * rồi lòi ra ở trang chi tiết ngoài web.
+     */
     private function syncAttrs($partId){
         $f   = $this->__request->getFields();
         $map = isset($f['attr']) && is_array($f['attr']) ? $f['attr'] : [];
-        $this->__attrValModel->syncForPart($partId, $map);
+
+        $loai = isset($f['item_type']) ? $f['item_type'] : PartsModel::LOAI_PHU_TUNG;
+        $hopLe = [];
+        foreach ($this->__attrModel->getForItemType($loai) as $at){
+            $hopLe[(int) $at['id']] = true;
+        }
+
+        $loc = [];
+        foreach ($map as $attrId => $val){
+            if (isset($hopLe[(int) $attrId])) $loc[$attrId] = $val;
+        }
+
+        $this->__attrValModel->syncForPart($partId, $loc);
     }
 
     /** Tìm hàng hoá (JSON) cho ô chọn phụ kiện đi kèm — TASK_81 */

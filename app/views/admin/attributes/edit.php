@@ -29,6 +29,28 @@
                         <input type="text" class="form-control" name="unit" style="max-width:200px" value="{{!empty($old['unit'])?$old['unit']:(!empty($item['unit'])?$item['unit']:'')}}"/>
                     </div>
 
+                    <?php
+                    // item_types luu dang SET (chuoi phay). Doi ve mang de tick lai.
+                    $loaiDangChon = isset($old['item_types'])
+                        ? (array) $old['item_types']
+                        : array_filter(explode(',', (string) ($item['item_types'] ?? '')));
+                    ?>
+                    <div class="form-group">
+                        <label class="d-block">Áp dụng cho loại hàng</label>
+                        @foreach ($loaiHang as $ma => $ten)
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            <input type="checkbox" class="custom-control-input" name="item_types[]"
+                                   id="lt_{{$ma}}" value="{{$ma}}"
+                                   {{in_array($ma, $loaiDangChon)?'checked':''}}/>
+                            <label class="custom-control-label" for="lt_{{$ma}}">{{$ten}}</label>
+                        </div>
+                        @endforeach
+                        <small class="form-text text-muted">
+                            Thông số này chỉ hiện khi thêm/sửa hàng hoá thuộc loại đã tick.
+                            Không tick gì thì hiểu là áp cho cả ba.
+                        </small>
+                    </div>
+
                     <div class="form-group">
                         <label>Thứ tự hiển thị</label>
                         <input type="number" class="form-control" name="sort_order" style="max-width:150px" value="{{isset($old['sort_order'])?$old['sort_order']:$item['sort_order']}}"/>

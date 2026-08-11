@@ -30,6 +30,23 @@
                     </div>
 
                     <div class="form-group">
+                        <label class="d-block">Áp dụng cho loại hàng</label>
+                        @foreach ($loaiHang as $ma => $ten)
+                        <div class="custom-control custom-checkbox custom-control-inline">
+                            <input type="checkbox" class="custom-control-input" name="item_types[]"
+                                   id="lt_{{$ma}}" value="{{$ma}}"
+                                   {{(empty($old['item_types']) || in_array($ma, (array)$old['item_types']))?'checked':''}}/>
+                            <label class="custom-control-label" for="lt_{{$ma}}">{{$ten}}</label>
+                        </div>
+                        @endforeach
+                        <small class="form-text text-muted">
+                            Thông số này chỉ hiện khi thêm/sửa hàng hoá thuộc loại đã tick.
+                            Ví dụ "Thời gian thực hiện" chỉ tick Dịch vụ, "Tải trọng" chỉ tick Thiết bị.
+                            Không tick gì thì hiểu là áp cho cả ba.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
                         <label>Thứ tự hiển thị</label>
                         <input type="number" class="form-control" name="sort_order" style="max-width:150px" value="{{!empty($old['sort_order'])?$old['sort_order']:'0'}}"/>
                     </div>

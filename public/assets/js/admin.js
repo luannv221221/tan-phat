@@ -216,3 +216,47 @@
         }
     } catch (e) {}
 })();
+
+/* ============================================================
+   FORM HÀNG HOÁ — ẩn/hiện trường theo Loại (phụ tùng/thiết bị/dịch vụ)
+   ============================================================
+
+   Mỗi khối chỉ dành cho một số loại thì gắn:
+       <div class="js-theo-loai" data-loai="part equipment"> ... </div>
+
+   Bắt "Thay dầu máy" điền Mã OEM, Xuất xứ, Lắp cho đời xe là vô nghĩa và
+   dễ nhập bậy. Khối thông số kỹ thuật lấy data-loai thẳng từ CSDL, nên
+   khách tự thêm thông số và tick loại trong admin là form tự đổi theo,
+   không cần sửa code.
+
+   LƯU Ý: đây chỉ là lớp giao diện. Server VẪN phải tự xoá các trường không
+   thuộc loại đã chọn (xem Products::filterTheoLoai) — ẩn bằng JS không ngăn
+   được ai đó gửi thẳng dữ liệu lên. */
+(function () {
+    var sel = document.querySelector('select[name="item_type"]');
+    if (!sel) return;
+
+    var khoi = Array.prototype.slice.call(document.querySelectorAll('.js-theo-loai'));
+
+    function apDung() {
+        var loai = sel.value;
+
+        khoi.forEach(function (el) {
+            // data-loai ngăn cách bằng dấu phẩy (từ cột SET) hoặc khoảng trắng
+            var ds = (el.getAttribute('data-loai') || '').split(/[\s,]+/).filter(Boolean);
+            var hop = ds.length === 0 || ds.indexOf(loai) !== -1;
+            el.style.display = hop ? '' : 'none';
+        });
+
+        // Ẩn hết thông số thì nói ra, đừng để cái thẻ trống trơn
+        var thongSo = 0;
+        khoi.forEach(function (el) {
+            if (el.style.display !== 'none' && el.querySelector('input[name^="attr["]')) thongSo++;
+        });
+        var bao = document.querySelector('.js-khong-co-thong-so');
+        if (bao) bao.style.display = thongSo === 0 ? '' : 'none';
+    }
+
+    sel.addEventListener('change', apDung);
+    apDung();
+})();

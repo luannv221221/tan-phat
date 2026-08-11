@@ -21,6 +21,9 @@ class Attributes extends Controller {
 
     function __construct(){
         $this->__model    = $this->model('AttributesModel');
+        // Nạp để dùng PartsModel::$loaiHang — danh sách loại hàng chỉ khai báo
+        // một chỗ duy nhất, thêm loại mới không phải sửa ở đây.
+        $this->model('PartsModel');
         $this->__request  = new Request();
         $this->__response = new Response();
     }
@@ -28,6 +31,7 @@ class Attributes extends Controller {
     private function baseData(){
         $this->__data['content']['routeBase'] = $this->routeBase;
         $this->__data['content']['labelOne']  = $this->labelOne;
+        $this->__data['content']['loaiHang']  = PartsModel::$loaiHang;
     }
 
     public function index(){
@@ -153,12 +157,27 @@ class Attributes extends Controller {
         ]);
     }
 
+    /**
+     * Thông số này áp cho những loại hàng nào (cột SET item_types).
+     *
+     * Không tick gì -> mặc định CẢ BA. Lưu chuỗi rỗng thì thông số biến mất
+     * khỏi mọi form và người tạo không hiểu vì sao vừa tạo xong đã không thấy.
+     */
+    private function loaiApDung($f){
+        $hopLe = array_keys(PartsModel::$loaiHang);
+        $chon  = isset($f['item_types']) && is_array($f['item_types'])
+               ? array_values(array_intersect($f['item_types'], $hopLe)) : [];
+
+        return implode(',', empty($chon) ? $hopLe : $chon);
+    }
+
     private function buildData(){
         $f = $this->__request->getFields();
         return [
             'name'       => trim($f['name']),
             'slug'       => slugify(!empty($f['slug']) ? $f['slug'] : $f['name']),
             'unit'       => !empty($f['unit']) ? trim($f['unit']) : null,
+            'item_types' => $this->loaiApDung($f),
             'sort_order' => isset($f['sort_order']) ? (int) $f['sort_order'] : 0,
             'status'     => !empty($f['status']) ? 1 : 0,
         ];

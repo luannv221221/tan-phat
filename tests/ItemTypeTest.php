@@ -260,6 +260,73 @@ foreach (['add', 'edit'] as $v){
 
 $pdo->prepare('DELETE FROM parts WHERE id=?')->execute([$idWeb]);
 
+// ================================================================
+section('Thong so ky thuat DONG theo loai hang');
+
+require_once __DIR__ . '/../app/models/AttributesModel.php';
+$am = new AttributesModel();
+$pdo->exec("DELETE FROM part_attributes WHERE slug LIKE 'it-attr-%'");
+
+$nowA = date('Y-m-d H:i:s');
+$themAttr = function($ten, $slug, $loai) use ($pdo, $nowA){
+    $pdo->prepare("INSERT INTO part_attributes (name,slug,item_types,sort_order,status,create_at)
+                   VALUES (?,?,?,0,1,?)")->execute([$ten, $slug, $loai, $nowA]);
+    return (int) $pdo->lastInsertId();
+};
+
+$aDv = $themAttr('IT Thoi gian thuc hien', 'it-attr-tg', 'service');
+$aTb = $themAttr('IT Tai trong',           'it-attr-tt', 'equipment');
+$aAll= $themAttr('IT Ap ca ba',            'it-attr-all', 'part,equipment,service');
+
+$coAttr = function($loai, $id) use ($am){
+    foreach ($am->getForItemType($loai) as $a){ if ((int) $a['id'] === $id) return true; }
+    return false;
+};
+
+ok($coAttr('service', $aDv),   'Thong so tick Dich vu -> hien o Dich vu');
+ok(!$coAttr('part', $aDv),     'Thong so tick Dich vu -> KHONG lot sang Phu tung');
+ok(!$coAttr('equipment', $aDv),'Thong so tick Dich vu -> KHONG lot sang Thiet bi');
+ok($coAttr('equipment', $aTb) && !$coAttr('service', $aTb), 'Thong so tick Thiet bi chi o Thiet bi');
+ok($coAttr('part', $aAll) && $coAttr('equipment', $aAll) && $coAttr('service', $aAll),
+   'Thong so tick ca ba -> hien o ca ba');
+
+// Thong so co truoc migration mac dinh 'part,equipment,service' -> khong duoc mat
+$soCu  = (int) $pdo->query("SELECT COUNT(*) FROM part_attributes WHERE slug NOT LIKE 'it-attr-%' AND status=1")->fetchColumn();
+$thayCu = 0;
+foreach ($am->getForItemType('part') as $a){ if (strpos($a['slug'], 'it-attr-') !== 0) $thayCu++; }
+ok($soCu === $thayCu, 'Thong so co san van hien du (migration khong lam mat cai nao)', "$thayCu/$soCu");
+
+// Don vi tinh cho dich vu
+$dv = $pdo->query("SELECT COUNT(*) FROM part_units WHERE slug IN ('lan','gio','goi')")->fetchColumn();
+ok((int) $dv === 3, 'Da gieo don vi Lan / Gio / Goi cho dich vu', $dv);
+
+// --- Chot phia SERVER: an bang JS khong ngan duoc ai gui thang du lieu len ---
+$prodSrc2 = codeOnly(__DIR__ . '/../app/controllers/admin/Products.php');
+ok(strpos($prodSrc2, 'boTruongKhongThuocLoai') !== false,
+   'Server tu bo truong khong thuoc loai (khong tin vao viec JS da an)');
+ok(preg_match('~boTruongKhongThuocLoai.*?oem_code.*?null~s', $prodSrc2) === 1,
+   'Ma OEM bi xoa khi khong phai phu tung');
+ok(preg_match('~function syncFitments.*?LOAI_PHU_TUNG.*?syncForPart\(\$partId, \[\]\)~s', $prodSrc2) === 1,
+   'Doi loai khoi phu tung -> XOA lien ket doi xe cu (khong chi bo qua)');
+ok(preg_match('~function syncAttrs.*?getForItemType~s', $prodSrc2) === 1,
+   'Chi luu thong so co ap cho loai dang chon');
+
+$attrCtrl = codeOnly(__DIR__ . '/../app/controllers/admin/Attributes.php');
+ok(strpos($attrCtrl, 'loaiApDung') !== false, 'Man hinh thong so cho chon loai ap dung');
+ok(strpos($attrCtrl, 'empty($chon) ? $hopLe') !== false,
+   'Khong tick gi -> hieu la ca ba (khong tao thong so vo hinh)');
+
+$js = file_get_contents(__DIR__ . '/../public/assets/js/admin.js');
+ok(strpos($js, 'js-theo-loai') !== false, 'admin.js co bo an/hien theo loai');
+foreach (['add', 'edit'] as $v){
+    $s = file_get_contents(__DIR__ . '/../app/views/admin/products/' . $v . '.php');
+    ok(substr_count($s, 'js-theo-loai') >= 3,
+       "View products/$v da gan nhan theo loai cho OEM / thuong hieu / lap cho doi xe",
+       substr_count($s, 'js-theo-loai') . ' khoi');
+}
+
+$pdo->exec("DELETE FROM part_attributes WHERE slug LIKE 'it-attr-%'");
+
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'IT-TEST-%'");
 
