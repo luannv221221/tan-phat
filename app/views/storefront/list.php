@@ -48,11 +48,16 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                 <div class="products__sidebar--item">
                     <h3>Danh mục</h3>
                     <div class="px-3">
+                        <?php /* depth <= 2 chứ không phải <= 1.
+                                 Cây danh mục nay sâu 3 tầng (Phụ tùng > Hệ thống
+                                 phanh > Má phanh). Giữ mức <= 1 là mất hẳn tầng
+                                 lá — mà HÀNG HOÁ GẮN VÀO LÁ, nên khách không lọc
+                                 xuống được tới nhóm hàng cụ thể nữa. */ ?>
                         @foreach ($catOptions as $c)
-                            @if ((int) $c['depth'] <= 1)
-                            <div class="form-check" style="padding-left:{{1.5+(int)$c['depth']*1}}rem">
+                            @if ((int) $c['depth'] <= 2)
+                            <div class="form-check {{(int)$c['depth']===0?'mt-2':''}}" style="padding-left:{{1.5+(int)$c['depth']*0.9}}rem">
                                 <input class="form-check-input" form="facetForm" type="checkbox" id="cat{{(int)$c['id']}}" name="category[]" value="{{(int)$c['id']}}" {{$inArr($c['id'],$f['categoryIds'])?'checked':''}} onchange="document.getElementById('facetForm').submit()"/>
-                                <label class="form-check-label" for="cat{{(int)$c['id']}}">{{$c['name']}}</label>
+                                <label class="form-check-label {{(int)$c['depth']===0?'font-weight-bold':''}}" for="cat{{(int)$c['id']}}">{{$c['name']}}</label>
                             </div>
                             @endif
                         @endforeach

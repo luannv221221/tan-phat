@@ -170,6 +170,44 @@ ok(count($ths[0]) === (int) ($cs[1] ?? 0),
    'So cot <th> khop colspan cua dong rong',
    count($ths[0]) . ' cot vs colspan=' . ($cs[1] ?? '?'));
 
+// ================================================================
+section('Website: bo loc danh muc phai voi toi tang co hang');
+
+/* Cay danh muc nay sau 3 tang (Phu tung > He thong phanh > Ma phanh) va HANG
+   HOA GAN VAO LA. Neu view chi hien depth <= 1 thi khach khong loc xuong duoc
+   toi nhom hang cu the — dung luc dung lai cay 05/08/2026 da dinh dung loi nay,
+   ca 10/10 danh muc co hang deu bi an. */
+$listSrc = file_get_contents(__DIR__ . '/../app/views/storefront/list.php');
+ok(preg_match("~\\\$c\['depth'\]\s*<=\s*(\d+)~", $listSrc, $mm) === 1,
+   'Doc duoc muc depth toi da ma view chiu hien');
+$depthView = (int) ($mm[1] ?? 0);
+
+// Tinh do sau that cua moi danh muc DANG CO HANG
+$par = [];
+foreach ($pdo->query('SELECT id, parent_id FROM part_categories') as $r){
+    $par[(int) $r['id']] = $r['parent_id'] === null ? 0 : (int) $r['parent_id'];
+}
+$doSau = function($id) use (&$par){ $n = 0; $c = $par[$id] ?? 0; while ($c){ $n++; $c = $par[$c] ?? 0; } return $n; };
+
+$sauNhat = -1; $soCoHang = 0;
+foreach ($pdo->query('SELECT DISTINCT category_id FROM parts WHERE status=1 AND category_id IS NOT NULL') as $r){
+    $soCoHang++;
+    $sauNhat = max($sauNhat, $doSau((int) $r['category_id']));
+}
+
+if ($soCoHang === 0){
+    echo "  [SKIP] Chua co hang nao gan danh muc\n";
+} else {
+    ok($sauNhat <= $depthView,
+       'Moi danh muc co hang deu nam trong tam hien cua bo loc',
+       "sau nhat = $sauNhat, view hien toi depth $depthView");
+}
+
+// Trang chu chi lay depth 0 -> dung bang so danh muc goc (3 nhom)
+$homeSrc = file_get_contents(__DIR__ . '/../app/views/storefront/home.php');
+ok(strpos($homeSrc, "=== 0") !== false,
+   'Trang chu lay danh muc goc -> tu dung 3 nhom, khong phai sua tay');
+
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'IT-TEST-%'");
 
