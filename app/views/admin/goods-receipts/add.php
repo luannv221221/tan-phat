@@ -178,7 +178,7 @@ $selType = !empty($old['type']) ? $old['type'] : 'nhap_mua';
 
         var q = inp('line_qty[]', 'qty text-right', data.qty); soLuong(q); q.addEventListener('input', recompute);
         tr.appendChild(td(q));
-        var c = inp('line_cost[]', 'cost text-right', data.cost); c.addEventListener('input', recompute);
+        var c = oTien(inp('line_cost[]', 'cost text-right', data.cost)); c.addEventListener('input', recompute);
         tr.appendChild(td(c));
 
         var amtTd = document.createElement('td'); amtTd.className='text-right align-middle';

@@ -135,7 +135,7 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
             </div>
             <div class="form-group col-md-3">
                 <label>Phí sửa (₫)</label>
-                <input type="text" name="fee" class="form-control text-right" value="{{$v('fee','0')}}"/>
+                <input type="number" min="0" step="1" name="fee" class="form-control text-right" value="{{$v('fee','0')}}"/>
             </div>
         </div>
         <div class="form-group">

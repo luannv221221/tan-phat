@@ -77,7 +77,7 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
         data = data || {};
         var tr = document.createElement('tr'); tr.className='line-row';
         tr.appendChild(td(buildSelect('line_part[]', PARTS, data.part_id)));
-        tr.appendChild(td(soLuong(inp('line_actual[]','text-right',data.actual))));
+        tr.appendChild(td(soDem(inp('line_actual[]','text-right',data.actual))));
         tr.appendChild(td(inp('line_note[]','',data.note)));
         var rm = document.createElement('button'); rm.type='button'; rm.className='btn btn-sm btn-outline-danger rm-row'; rm.innerHTML='&times;';
         tr.appendChild(td(rm,'text-center'));

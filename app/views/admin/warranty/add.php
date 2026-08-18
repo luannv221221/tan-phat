@@ -63,7 +63,7 @@
                 </div>
                 <div class="form-group col-md-3">
                     <label>Phí sửa (₫)</label>
-                    <input type="text" name="fee" class="form-control text-right" value="{{!empty($old['fee'])?$old['fee']:'0'}}"/>
+                    <input type="number" min="0" step="1" name="fee" class="form-control text-right" value="{{!empty($old['fee'])?$old['fee']:'0'}}"/>
                 </div>
             </div>
             <div class="form-group">

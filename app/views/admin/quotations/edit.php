@@ -70,7 +70,7 @@ $sel = function($field, $default = '') use ($old, $item){ return isset($old[$fie
             </div>
             <div class="form-group col-md-2">
                 <label>Thuế GTGT (%)</label>
-                <input type="text" name="vat_rate" id="vat_rate" class="form-control text-right" value="{{$sel('vat_rate','0')}}"/>
+                <input type="number" min="0" max="100" step="any" name="vat_rate" id="vat_rate" class="form-control text-right" value="{{$sel('vat_rate','0')}}"/>
             </div>
             <div class="form-group col-md-4">
                 <label>Khách hàng</label>
@@ -155,7 +155,7 @@ $sel = function($field, $default = '') use ($old, $item){ return isset($old[$fie
         data = data || {};
         var tr = document.createElement('tr'); tr.className='line-row';
         var sel = partSelect(data.part_id);
-        var price = inp('line_price[]','price text-right', data.price);
+        var price = oTien(inp('line_price[]','price text-right', data.price));
         sel.addEventListener('change', function(){
             var o=sel.options[sel.selectedIndex]; var p=o?o.getAttribute('data-price'):0;
             if (p && !money(price.value)) price.value=p;
@@ -169,7 +169,7 @@ $sel = function($field, $default = '') use ($old, $item){ return isset($old[$fie
         price.addEventListener('input', recompute); tr.appendChild(td(price));
         var discVal = (data.disc === 0 || data.disc) ? data.disc : '';
         if (discVal === '' || discVal == null){ var gd = groupDisc(); if (gd > 0) discVal = gd; }
-        var disc = inp('line_disc[]','disc text-right', discVal); disc.addEventListener('input', recompute); tr.appendChild(td(disc));
+        var disc = oPhanTram(inp('line_disc[]','disc text-right', discVal)); disc.addEventListener('input', recompute); tr.appendChild(td(disc));
         var amtTd = document.createElement('td'); amtTd.className='text-right align-middle';
         var amtSpan = document.createElement('span'); amtSpan.className='amt'; amtSpan.textContent='0'; amtTd.appendChild(amtSpan); tr.appendChild(amtTd);
         tr.appendChild(td(inp('line_note[]','', data.note)));

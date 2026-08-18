@@ -14,7 +14,7 @@
                 </div>
                 <div class="form-group">
                     <label>Chiết khấu (%)</label>
-                    <input type="text" name="discount_percent" class="form-control" style="max-width:150px" value="{{!empty($old['discount_percent'])?$old['discount_percent']:'0'}}"/>
+                    <input type="number" min="0" max="100" step="any" name="discount_percent" class="form-control" style="max-width:150px" value="{{!empty($old['discount_percent'])?$old['discount_percent']:'0'}}"/>
                 </div>
                 <div class="form-group">
                     <label>Ghi chú</label>

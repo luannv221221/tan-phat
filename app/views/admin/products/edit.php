@@ -139,12 +139,12 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                     <div class="form-row">
                         <div class="form-group col-md-5">
                             <label>Giá bán (₫) <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="price" value="{{$vPrice}}"/>
+                            <input type="number" min="0" step="1" class="form-control" name="price" value="{{$vPrice}}"/>
                             {!! !empty($errors['price'])?'<small class="text-danger">'.e($errors['price']).'</small>':false !!}
                         </div>
                         <div class="form-group col-md-4">
                             <label>Giá khuyến mãi (₫)</label>
-                            <input type="text" class="form-control" name="sale_price" value="{{$vSale}}"/>
+                            <input type="number" min="0" step="1" class="form-control" name="sale_price" value="{{$vSale}}"/>
                         </div>
                         <div class="form-group col-md-3">
                             <label>Bảo hành (tháng)</label>

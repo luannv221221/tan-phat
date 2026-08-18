@@ -260,39 +260,61 @@
     sel.addEventListener('change', apDung);
     apDung();
 })();
-
 /* ============================================================
-   Ô SỐ LƯỢNG trong bảng "Dòng hàng"
+   CÁC Ô NHẬP SỐ trong form quản trị
    ============================================================
 
-   Mặc định 1, có nút tăng/giảm, và không cho <= 0.
+   Ô để type="text" thì gõ "abc" vào Đơn giá vẫn trôi, tới lúc lưu mới
+   thành 0 mà không báo gì. Đổi hết sang type="number" để trình duyệt chặn
+   ngay và có sẵn nút tăng/giảm.
 
-   Đặt ở đây chứ không chép vào từng view: mẫu bảng dòng hàng đang nằm ở 10
-   file (báo giá, hoá đơn, nhập/xuất/chuyển kho, kiểm kê), mỗi file một kiểu
-   viết. Thêm hàm vào từng file là lần sau sửa lại phải nhớ đủ 10 chỗ.
+   Đặt ở đây chứ không chép vào từng view: mẫu bảng dòng hàng nằm ở 12 file,
+   mỗi file một kiểu viết. Tất cả đều trả về chính phần tử để gọi lồng được:
+       td(oTien(inp('line_price[]', ...)))
 
-   step="any" để vẫn nhập được số lẻ (2.5 lít dầu) nhưng nút mũi tên vẫn
-   nhảy từng đơn vị. min nhỏ hơn 1 vạch thay vì min=1 vì lý do đó.
-
-   Trả về chính phần tử để gọi lồng được: td(soLuong(inp(...)))
+   step="any" cho phép số lẻ (2.5 lít dầu, VAT 8.5%) nhưng nút mũi tên vẫn
+   nhảy từng đơn vị.
 */
-window.soLuong = function (el) {
-    if (!el) return el;
+(function () {
+    'use strict';
 
-    el.type = 'number';
-    el.min  = '0.001';
-    el.step = 'any';
-    if (el.value === '' || el.value === null) el.value = '1';
+    function soHoa(el, min, macDinh, step, max) {
+        if (!el) return el;
 
-    // Gõ tay số 0 hoặc số âm thì kéo về mức nhỏ nhất khi rời ô.
-    // Chặn ở đây cho người dùng thấy ngay, server vẫn tự bỏ dòng qty <= 0.
-    el.addEventListener('blur', function () {
-        var v = parseFloat(el.value);
-        if (!isFinite(v) || v <= 0) {
-            el.value = '1';
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-    });
+        el.type = 'number';
+        el.min  = String(min);
+        el.step = step || 'any';
+        if (max !== undefined) el.max = String(max);
+        if ((el.value === '' || el.value === null) && macDinh !== null) el.value = String(macDinh);
 
-    return el;
-};
+        // Gõ tay giá trị ngoài khoảng thì kéo về mức hợp lệ khi rời ô.
+        // Chặn ở đây cho người dùng thấy ngay; server vẫn tự lọc lại.
+        el.addEventListener('blur', function () {
+            var v = parseFloat(el.value);
+            if (el.value === '' && macDinh === null) return;   // cho phép để trống
+            if (!isFinite(v) || v < min) v = (macDinh !== null ? macDinh : min);
+            if (max !== undefined && v > max) v = max;
+            if (String(v) !== el.value) {
+                el.value = String(v);
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+
+        return el;
+    }
+
+    /* Số lượng bán / nhập / xuất / chuyển: bắt buộc > 0, mặc định 1.
+       min là 0.001 chứ không phải 1 để vẫn nhập được 2.5 lít dầu. */
+    window.soLuong = function (el) { return soHoa(el, 0.001, 1, 'any'); };
+
+    /* Số ĐẾM khi kiểm kê: 0 là hợp lệ và rất quan trọng — "sổ ghi 5, thực tế
+       không còn cái nào". Ép về 1 như số lượng bán là che mất khoản thiếu. */
+    window.soDem = function (el) { return soHoa(el, 0, 0, 'any'); };
+
+    /* Tiền (VNĐ): không âm, bước 1 đồng. Để TRỐNG được — đơn giá bỏ trống
+       nghĩa là chưa nhập, khác hẳn với 0 đồng. */
+    window.oTien = function (el) { return soHoa(el, 0, null, '1'); };
+
+    /* Phần trăm (CK, VAT): 0–100. */
+    window.oPhanTram = function (el) { return soHoa(el, 0, null, 'any', 100); };
+})();

@@ -374,9 +374,12 @@ section('O so luong: mac dinh 1, co nut tang giam, phai > 0');
 $js2 = file_get_contents(__DIR__ . '/../public/assets/js/admin.js');
 ok(strpos($js2, 'window.soLuong') !== false, 'Ham soLuong dat trong admin.js (dung chung)');
 ok(strpos($js2, "el.type = 'number'") !== false, 'O so luong la input number -> co nut tang/giam');
-ok(strpos($js2, "el.value = '1'") !== false, 'Mac dinh 1');
-ok(strpos($js2, "step = 'any'") !== false, 'step=any -> van nhap duoc so le (2.5 lit dau)');
-ok(preg_match("~blur.*?v <= 0.*?el\.value = '1'~s", $js2) === 1, 'Go 0 hoac so am -> keo ve 1 khi roi o');
+ok(preg_match("~window\.soLuong.*?soHoa\(el, 0\.001, 1,~s", $js2) === 1,
+   'So luong ban: min > 0, mac dinh 1');
+ok(strpos($js2, "el.step = step || 'any'") !== false,
+   'Mac dinh step=any -> van nhap duoc so le (2.5 lit dau)');
+ok(preg_match("~blur.*?v < min.*?macDinh~s", $js2) === 1,
+   'Ra ngoai khoang -> keo ve muc hop le khi roi o');
 ok(strpos($js2, 'return el;') !== false, 'Tra ve chinh phan tu de goi long: td(soLuong(inp(...)))');
 
 // Ap du 12 man hinh dung mau bang dong hang — sot mot cai la nguoi dung
@@ -387,9 +390,10 @@ $manHinh = ['quotations/add','quotations/edit','sales-invoices/add','sales-invoi
 $sot = [];
 foreach ($manHinh as $mh){
     $s = file_get_contents(__DIR__ . '/../app/views/admin/' . $mh . '.php');
-    if (strpos($s, 'soLuong(') === false) $sot[] = $mh;
+    // Kiem ke dung soDem (cho phep 0), cac man khac dung soLuong (ep > 0)
+    if (strpos($s, 'soLuong(') === false && strpos($s, 'soDem(') === false) $sot[] = $mh;
 }
-ok(empty($sot), 'Ca 12 man hinh dong hang deu dung soLuong()', implode(', ', $sot));
+ok(empty($sot), 'Ca 12 man hinh dong hang deu so hoa o so luong', implode(', ', $sot));
 
 // ================================================================
 section('O chon hang loc theo viec co chon kho hay khong');
@@ -414,6 +418,82 @@ foreach (['add', 'edit'] as $v){
     ok(strpos($s, "ss__input") !== false,
        "sales-invoices/$v: xoa ca chu trong o tim kiem khi lua chon khong con hop le");
 }
+
+// ================================================================
+section('Truong so / ngay dung dung kieu input');
+
+/* Loi khach bao: go "abc" vao Don gia van troi, toi luc luu moi thanh 0 ma
+   khong bao gi. Nguyen nhan: o de type="text". */
+
+$viewDir = __DIR__ . '/../app/views/admin/';
+$moiView = array_merge(glob($viewDir . '*/add.php'), glob($viewDir . '*/edit.php'),
+                       glob($viewDir . '*/lists.php'), glob($viewDir . '*/form.php'));
+
+// --- 1. Khong con o SO nao de type="text" ---
+$soConText = [];
+foreach ($moiView as $v){
+    $html = file_get_contents($v);
+    if (preg_match_all('~<input[^>]*>~', $html, $m)){
+        foreach ($m[0] as $tag){
+            if (strpos($tag, 'type="text"') === false) continue;
+            if (!preg_match('~name="([a-z_]+)"~', $tag, $n)) continue;
+            $ten = $n[1];
+            $laSo = preg_match('~^(price|sale_price|vat_rate|discount_percent|fee|amount|cost|rate|sort_order|warranty_month|qty|quantity)$~', $ten)
+                 || preg_match('~_(price|amount|cost|rate|percent|qty)$~', $ten);
+            if ($laSo) $soConText[] = basename(dirname($v)) . '/' . basename($v) . ': ' . $ten;
+        }
+    }
+}
+ok(empty($soConText), 'Khong con o SO nao de type="text"', implode('; ', array_slice($soConText, 0, 5)));
+
+// --- 2. Moi o NGAY deu type="date" ---
+$ngayConText = [];
+foreach ($moiView as $v){
+    $html = file_get_contents($v);
+    if (preg_match_all('~<input[^>]*name="[a-z_]*date[a-z_]*"[^>]*>~', $html, $m)){
+        foreach ($m[0] as $tag){
+            if (strpos($tag, 'type="date"') === false && strpos($tag, 'type="hidden"') === false){
+                $ngayConText[] = basename(dirname($v)) . '/' . basename($v);
+            }
+        }
+    }
+}
+ok(empty($ngayConText), 'Moi o NGAY deu dung type="date"', implode('; ', $ngayConText));
+
+// --- 3. Cac o do JS sinh ---
+$js = file_get_contents(__DIR__ . '/../public/assets/js/admin.js');
+foreach (['soLuong', 'soDem', 'oTien', 'oPhanTram'] as $h){
+    ok(strpos($js, 'window.' . $h) !== false, "admin.js co ham $h()");
+}
+ok(preg_match("~window\.oPhanTram.*?100\)~s", $js) === 1, 'Phan tram gioi han 0-100');
+ok(preg_match("~window\.oTien.*?soHoa\(el, 0, null, '1'\)~s", $js) === 1,
+   'Tien: khong am, buoc 1 dong, DE TRONG duoc (khac han 0 dong)');
+
+/* Kiem ke dem duoc 0 la HOP LE — "so ghi 5, thuc te khong con cai nao".
+   Dung soLuong (ep > 0) o day la am tham doi 0 thanh 1, che mat khoan thieu 5.
+   Day dung la loi da mac phai o commit 997018f. */
+ok(preg_match("~window\.soDem.*?soHoa\(el, 0, 0,~s", $js) === 1, 'Kiem ke: cho phep dem 0');
+foreach (['add', 'edit'] as $v){
+    $s2 = file_get_contents($viewDir . 'stock-takes/' . $v . '.php');
+    ok(strpos($s2, "soDem(inp('line_actual") !== false, "stock-takes/$v dung soDem cho so dem");
+    ok(strpos($s2, "soLuong(inp('line_actual") === false && strpos($s2, 'soLuong(soDem') === false,
+       "stock-takes/$v KHONG con boc soLuong (se ep 0 thanh 1, che mat khoan thieu)");
+}
+
+// --- 4. Moi o line_ so deu duoc boc, khong con text tho ---
+$chuaBoc = [];
+foreach ($moiView as $v){
+    $html = file_get_contents($v);
+    foreach (['line_price' => 'oTien', 'line_cost' => 'oTien',
+              'line_disc' => 'oPhanTram', 'line_qty' => 'soLuong', 'line_actual' => 'soDem'] as $truong => $ham){
+        if (strpos($html, "inp('" . $truong . "[]'") === false) continue;
+        if (!preg_match('~(' . $ham . '|soLuong)\(\s*inp\(.' . $truong . '~', $html)
+            && !preg_match('~' . $ham . '\(\w+\)~', $html)){
+            $chuaBoc[] = basename(dirname($v)) . '/' . basename($v) . ':' . $truong;
+        }
+    }
+}
+ok(empty($chuaBoc), 'Moi o so trong bang dong hang deu duoc so hoa', implode('; ', $chuaBoc));
 
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'IT-TEST-%'");
