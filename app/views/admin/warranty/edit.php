@@ -96,7 +96,7 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
             </div>
             <div class="form-group col-md-4">
                 <label>Điện thoại</label>
-                <input type="text" name="phone" class="form-control" value="{{$v('phone')}}"/>
+                <input type="tel" name="phone" class="form-control" value="{{$v('phone')}}"/>
             </div>
         </div>
         <div class="form-row">

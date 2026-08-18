@@ -36,7 +36,7 @@
                         </div>
                         <div class="form-group col-md-4">
                             <label>Điện thoại</label>
-                            <input type="text" class="form-control" name="phone" value="{{!empty($old['phone'])?$old['phone']:(!empty($item['phone'])?$item['phone']:'')}}"/>
+                            <input type="tel" class="form-control" name="phone" value="{{!empty($old['phone'])?$old['phone']:(!empty($item['phone'])?$item['phone']:'')}}"/>
                         </div>
                     </div>
                     <div class="form-group">

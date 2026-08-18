@@ -426,8 +426,17 @@ section('Truong so / ngay dung dung kieu input');
    khong bao gi. Nguyen nhan: o de type="text". */
 
 $viewDir = __DIR__ . '/../app/views/admin/';
-$moiView = array_merge(glob($viewDir . '*/add.php'), glob($viewDir . '*/edit.php'),
-                       glob($viewDir . '*/lists.php'), glob($viewDir . '*/form.php'));
+
+/* Quet MOI file view, khong chi admin/ va khong chi add|edit|lists|form.
+   Ban dau chi quet admin/ nen bo sot price_min/price_max ngoai storefront —
+   khach phai hoi "ra soat het chua" moi lo ra. */
+$moiView = [];
+$duyet = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(__DIR__ . '/../app/views'));
+foreach ($duyet as $ff){
+    if ($ff->isFile() && $ff->getExtension() === 'php') $moiView[] = $ff->getPathname();
+}
+sort($moiView);
+ok(count($moiView) > 100, 'Quet toan bo view (ca admin lan storefront)', count($moiView) . ' file');
 
 // --- 1. Khong con o SO nao de type="text" ---
 $soConText = [];
@@ -439,7 +448,8 @@ foreach ($moiView as $v){
             if (!preg_match('~name="([a-z_]+)"~', $tag, $n)) continue;
             $ten = $n[1];
             $laSo = preg_match('~^(price|sale_price|vat_rate|discount_percent|fee|amount|cost|rate|sort_order|warranty_month|qty|quantity)$~', $ten)
-                 || preg_match('~_(price|amount|cost|rate|percent|qty)$~', $ten);
+                 || preg_match('~_(price|amount|cost|rate|percent|qty)$~', $ten)
+                 || preg_match('~^price_(min|max)$~', $ten);
             if ($laSo) $soConText[] = basename(dirname($v)) . '/' . basename($v) . ': ' . $ten;
         }
     }
@@ -494,6 +504,20 @@ foreach ($moiView as $v){
     }
 }
 ok(empty($chuaBoc), 'Moi o so trong bang dong hang deu duoc so hoa', implode('; ', $chuaBoc));
+
+// --- 5. Email / dien thoai dung kieu rieng (goi ban phim dung tren dien thoai) ---
+$saiKieu = [];
+foreach ($moiView as $v){
+    $html = file_get_contents($v);
+    if (preg_match_all('~<input[^>]*>~', $html, $m)){
+        foreach ($m[0] as $tag){
+            if (strpos($tag, 'type="text"') === false) continue;
+            if (preg_match('~name="(email)"~', $tag))            $saiKieu[] = basename(dirname($v)) . '/email';
+            if (preg_match('~name="(phone|hotline)"~', $tag, $p)) $saiKieu[] = basename(dirname($v)) . '/' . $p[1];
+        }
+    }
+}
+ok(empty($saiKieu), 'Email dung type=email, dien thoai dung type=tel', implode('; ', array_unique($saiKieu)));
 
 // ---- Don dep ----
 $pdo->exec("DELETE FROM parts WHERE code LIKE 'IT-TEST-%'");

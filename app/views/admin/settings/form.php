@@ -70,8 +70,8 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
             <div class="card-header"><h3 class="card-title"><i class="fas fa-address-book mr-2"></i>Liên hệ</h3></div>
             <div class="card-body">
                 <div class="form-row">
-                    <div class="form-group col-md-4"><label>Hotline</label><input type="text" name="hotline" class="form-control" value="{{$s('hotline')}}"/></div>
-                    <div class="form-group col-md-4"><label>Email</label><input type="text" name="email" class="form-control" value="{{$s('email')}}"/></div>
+                    <div class="form-group col-md-4"><label>Hotline</label><input type="tel" name="hotline" class="form-control" value="{{$s('hotline')}}"/></div>
+                    <div class="form-group col-md-4"><label>Email</label><input type="email" name="email" class="form-control" value="{{$s('email')}}"/></div>
                     <div class="form-group col-md-4"><label>Địa chỉ</label><input type="text" name="address" class="form-control" value="{{$s('address')}}"/></div>
                 </div>
                 <div class="form-row">

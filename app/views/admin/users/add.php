@@ -15,7 +15,7 @@
 
         <div class="form-group">
             <label for="">Email</label>
-            <input type="text" class="form-control" name="email" placeholder="Email..." value="{{!empty($old['email'])?$old['email']:''}}"/>
+            <input type="email" class="form-control" name="email" placeholder="Email..." value="{{!empty($old['email'])?$old['email']:''}}"/>
             {!! !empty($errors['email'])?'<span style="color:red">'.$errors['email'].'</span>':false !!}
         </div>
 

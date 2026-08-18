@@ -41,7 +41,7 @@ $isActive  = isset($old['status'])     ? !empty($old['status'])     : ((int) $it
                     <div class="form-row">
                         <div class="form-group col-md-4">
                             <label>Điện thoại</label>
-                            <input type="text" class="form-control" name="phone" value="{{$v('phone')}}"/>
+                            <input type="tel" class="form-control" name="phone" value="{{$v('phone')}}"/>
                         </div>
                         <div class="form-group col-md-4">
                             <label>Thứ tự</label>

@@ -95,8 +95,8 @@ $assetImg  = _WEB_URL . '/public/assets/storefront/images/';
                 <div class="products__sidebar--item">
                     <h3>Khoảng giá (₫)</h3>
                     <div class="px-3 d-flex gap-2">
-                        <input type="text" class="form-control form-control-sm" form="facetForm" name="price_min" placeholder="Từ" value="{{$f['priceMin']}}"/>
-                        <input type="text" class="form-control form-control-sm" form="facetForm" name="price_max" placeholder="Đến" value="{{$f['priceMax']}}"/>
+                        <input type="number" min="0" step="1000" class="form-control form-control-sm" form="facetForm" name="price_min" placeholder="Từ" value="{{$f['priceMin']}}"/>
+                        <input type="number" min="0" step="1000" class="form-control form-control-sm" form="facetForm" name="price_max" placeholder="Đến" value="{{$f['priceMax']}}"/>
                     </div>
                 </div>
 

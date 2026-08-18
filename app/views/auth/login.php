@@ -18,7 +18,7 @@
                     <div class="input-group-prepend">
                         <span class="input-group-text"><?php echo icon('at-sign'); ?></span>
                     </div>
-                    <input id="login-email" name="email" type="text" class="form-control" placeholder="Email..."/>
+                    <input id="login-email" name="email" type="email" class="form-control" placeholder="Email..."/>
                 </div>
                 {!! !empty($errors['email']) ? '<small class="text-danger">'.e($errors['email']).'</small>' : false !!}
             </div>
