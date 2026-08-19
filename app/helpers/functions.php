@@ -453,3 +453,141 @@ function phan_trang_html(array $pg, $baseUrl = null, $nhan = 'dòng'){
 
     return $chon . '<nav><ul class="pagination pagination-sm mb-0">' . $ds . '</ul></nav>';
 }
+
+/* ==========================================================================
+ * BIỂU MẪU IN (báo giá / hoá đơn)
+ * ========================================================================== */
+
+/**
+ * Logo dạng data URI để nhúng thẳng vào biểu mẫu in.
+ *
+ * KHÔNG trả về URL: file Word tải về sẽ được mở ở máy khác, lúc đó
+ * <img src="http://localhost:88/..."> chỉ ra ô ảnh vỡ. Nhúng base64 thì logo
+ * đi theo file, in ở đâu cũng có. Logo hiện 7KB nên không đáng ngại.
+ *
+ * Ưu tiên logo đã cấu hình trong Cấu hình website, chưa đặt thì lấy logo
+ * mặc định của giao diện — đúng cái đang hiện ở đầu trang bán hàng.
+ */
+function logo_in_an(array $settings = []){
+    $goc = __DIR__ . '/../../';
+
+    $duongDan = !empty($settings['logo'])
+        ? $goc . ltrim($settings['logo'], '/')
+        : $goc . 'public/assets/storefront/images/logo.png';
+
+    if (!is_file($duongDan)) return '';
+
+    $duoi = strtolower(pathinfo($duongDan, PATHINFO_EXTENSION));
+    $mime = ($duoi === 'jpg' || $duoi === 'jpeg') ? 'image/jpeg'
+          : ($duoi === 'svg' ? 'image/svg+xml' : ($duoi === 'gif' ? 'image/gif' : 'image/png'));
+
+    return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($duongDan));
+}
+
+/**
+ * Số tiền bằng chữ — dòng bắt buộc trên hoá đơn Việt Nam.
+ *
+ * Luật đọc tiếng Việt có mấy chỗ bẫy, xử lý đủ ở đây:
+ *   15    -> "mười lăm"        (không phải "mười năm")
+ *   21    -> "hai mươi mốt"    (không phải "hai mươi một")
+ *   24    -> "hai mươi tư"     (nhưng 104 vẫn là "một trăm linh bốn")
+ *   105   -> "một trăm linh năm"
+ *   nhóm giữa phải đọc đủ 3 chữ số: 1.309.000 -> "một triệu ba trăm linh
+ *   chín nghìn", bỏ "linh" đi là thành "ba trăm chín nghìn" — sai số.
+ */
+function doc_so_tien($so){
+    $so = (int) round((float) $so);
+    if ($so === 0) return 'Không đồng';
+
+    $am = $so < 0;
+    $so = abs($so);
+
+    $chuSo = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+
+    /* Đọc một nhóm 3 chữ số. $day = còn nhóm lớn hơn đứng trước, khi đó phải
+       đọc đủ cả hàng trăm dù nó bằng 0. */
+    $docNhom = function($n, $day) use ($chuSo){
+        $tram  = intdiv($n, 100);
+        $chuc  = intdiv($n % 100, 10);
+        $donVi = $n % 10;
+
+        $s = '';
+        if ($tram > 0 || $day) $s .= $chuSo[$tram] . ' trăm';
+
+        if ($chuc === 0){
+            if ($donVi > 0) $s .= ($tram > 0 || $day) ? ' linh ' . $chuSo[$donVi] : $chuSo[$donVi];
+        } elseif ($chuc === 1){
+            $s .= ' mười';
+            if ($donVi === 5)      $s .= ' lăm';
+            elseif ($donVi > 0)    $s .= ' ' . $chuSo[$donVi];
+        } else {
+            $s .= ' ' . $chuSo[$chuc] . ' mươi';
+            if ($donVi === 1)      $s .= ' mốt';
+            elseif ($donVi === 4)  $s .= ' tư';
+            elseif ($donVi === 5)  $s .= ' lăm';
+            elseif ($donVi > 0)    $s .= ' ' . $chuSo[$donVi];
+        }
+        return trim($s);
+    };
+
+    // Tách thành từng nhóm 3 chữ số, tính từ hàng đơn vị đi lên
+    $nhom = [];
+    while ($so > 0){ $nhom[] = $so % 1000; $so = intdiv($so, 1000); }
+
+    $donViNhom = ['', ' nghìn', ' triệu', ' tỷ'];
+    $phan = [];
+    for ($i = count($nhom) - 1; $i >= 0; $i--){
+        if ($nhom[$i] === 0) continue;
+        // Nhóm vượt quá "tỷ" (>= 1000 tỷ): đọc tiếp bằng "tỷ" ghép, hiếm gặp
+        // với hoá đơn nhưng thà đọc dài còn hơn ra chuỗi cụt.
+        $dv = isset($donViNhom[$i]) ? $donViNhom[$i] : str_repeat(' tỷ', intdiv($i, 3));
+        $phan[] = $docNhom($nhom[$i], $i < count($nhom) - 1) . $dv;
+    }
+
+    $ket = implode(' ', $phan) . ' đồng';
+    if ($am) $ket = 'Âm ' . $ket;
+
+    return mb_strtoupper(mb_substr($ket, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($ket, 1, null, 'UTF-8');
+}
+
+/**
+ * Dựng biểu mẫu in cho một chứng từ (báo giá / hoá đơn).
+ *
+ * KHÔNG đi qua Controller::render(): view này phải ra HTML nguyên vẹn từng
+ * byte. render() đẩy view qua Template::run() — bộ này quét {{ }}, @if,
+ * @foreach... bằng regex trên toàn văn bản, mà biểu mẫu in có sẵn CSS
+ * `@media print { ... }`, `@page`. Nay chưa đụng nhau, nhưng thêm một quy tắc
+ * CSS nữa là có ngày trúng. In ấn thì không đáng đánh cược.
+ *
+ * @param array  $ct       thông tin chứng từ (loai, so, ngay, nhanKy...)
+ * @param mixed  $khach    dòng partners hoặc ['name' => 'Khách vãng lai']
+ * @param array  $dong     dòng hàng, mỗi dòng cần có item_type + amount
+ * @param array  $settings cấu hình website (tên công ty, địa chỉ, logo...)
+ * @param string $urlWord  link tải bản Word
+ * @param bool   $laWord   true = đang xuất Word (ẩn thanh công cụ)
+ */
+function in_chung_tu(array $ct, $khach, array $dong, array $settings, $urlWord = '', $laWord = false){
+    /* Tiền hàng hoá / tiền dịch vụ tính LẠI từ dòng, còn cộng-thuế-tổng thì
+       lấy số đã lưu ở đầu chứng từ. Số đã lưu mới là số chứng từ thực sự mang
+       (hoá đơn ghi sổ rồi thì nó là căn cứ kế toán); tính lại hết là in ra một
+       con số khác với con số trong sổ. */
+    $tong = ['hang' => 0.0, 'dichvu' => 0.0];
+    foreach ($dong as $d){
+        $amt = (float) $d['amount'];
+        if (isset($d['item_type']) && $d['item_type'] === 'service') $tong['dichvu'] += $amt;
+        else                                                        $tong['hang']   += $amt;
+    }
+    $tong['subtotal'] = (float) $ct['subtotal'];
+    $tong['vat_rate'] = (float) $ct['vatRate'];
+    $tong['tax']      = (float) $ct['tax'];
+    $tong['total']    = (float) $ct['total'];
+
+    require __DIR__ . '/../views/admin/print/chung-tu.php';
+}
+
+/** Header để trình duyệt tải về dạng file Word thay vì mở trên trang */
+function header_word($tenFile){
+    header('Content-Type: application/msword; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . preg_replace('/[^A-Za-z0-9._-]/', '', $tenFile) . '.doc"');
+    header('Cache-Control: max-age=0');
+}

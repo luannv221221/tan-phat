@@ -17,6 +17,17 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                     <div class="form-group col-md-6"><label>Slogan</label><input type="text" name="site_slogan" class="form-control" value="{{$s('site_slogan')}}"/></div>
                 </div>
                 <div class="form-group">
+                    <label>Logo</label>
+                    {!! !empty($settings['logo']) ? '<img src="'.e(media_url($settings['logo'])).'" style="height:48px;background:#fff;border:1px solid #ddd;border-radius:4px;padding:4px;display:block;margin-bottom:6px"/>' : '' !!}
+                    <input type="file" name="logo_file" accept="image/*" class="form-control-file"/>
+                    <input type="text" name="logo" class="form-control mt-1" placeholder="hoặc đường dẫn ảnh" value="{{$s('logo')}}"/>
+                    <small class="form-text text-muted">
+                        Dùng cho đầu trang bán hàng và <b>biểu mẫu in báo giá / hoá đơn</b>.
+                        Bỏ trống thì lấy logo mặc định của giao diện.
+                    </small>
+                </div>
+
+                <div class="form-group">
                     <label>Meta description (mô tả SEO mặc định)</label>
                     <textarea name="meta_description" class="form-control" rows="2">{{$s('meta_description')}}</textarea>
                 </div>
@@ -73,6 +84,13 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                     <div class="form-group col-md-4"><label>Hotline</label><input type="tel" name="hotline" class="form-control" value="{{$s('hotline')}}"/></div>
                     <div class="form-group col-md-4"><label>Email</label><input type="email" name="email" class="form-control" value="{{$s('email')}}"/></div>
                     <div class="form-group col-md-4"><label>Địa chỉ</label><input type="text" name="address" class="form-control" value="{{$s('address')}}"/></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Mã số thuế</label>
+                        <input type="text" name="tax_code" class="form-control" value="{{$s('tax_code')}}"/>
+                        <small class="form-text text-muted">In ở đầu biểu mẫu báo giá / hoá đơn.</small>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-6"><label>Facebook (URL)</label><input type="text" name="facebook" class="form-control" value="{{$s('facebook')}}"/></div>

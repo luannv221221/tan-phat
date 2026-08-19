@@ -452,6 +452,51 @@ class Salesinvoices extends Controller {
         return $xml;
     }
 
+    /**
+     * BIỂU MẪU IN — mở trên trình duyệt để in / lưu PDF, hoặc ?word=1 để tải .doc.
+     * Dùng chung mẫu với báo giá: app/views/admin/print/chung-tu.php
+     */
+    public function inAn($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+
+        $f      = $this->__request->getFields();
+        $laWord = !empty($f['word']);
+
+        $khach = !empty($item['customer_id']) ? $this->__partner->getDetail((int) $item['customer_id']) : null;
+        if (empty($khach) && !empty($item['customer_name'])) $khach = ['name' => $item['customer_name']];
+
+        $ct = [
+            'loai'         => 'HOÁ ĐƠN BÁN HÀNG',
+            'so'           => $item['invoice_no'],
+            'ngay'         => $item['invoice_date'],
+            'hieuLuc'      => null,
+            'ghiChu'       => $item['note'],
+            'subtotal'     => $item['subtotal'],
+            'vatRate'      => $item['vat_rate'],
+            'tax'          => $item['tax_amount'],
+            'total'        => $item['total_amount'],
+            // Hoá đơn là chứng từ đòi tiền -> in kèm số tài khoản để khách chuyển khoản
+            'hienNganHang' => true,
+            'nhanKy'       => ['NGƯỜI MUA HÀNG', 'ĐẠI DIỆN BÊN BÁN'],
+            /* Chỉ tự bật hộp thoại In khi tới từ nút "In / Lưu PDF" (?in=1).
+               Mở thẳng /print/<id> thì chỉ xem — dán link cho người khác mà
+               nó tự nhảy hộp thoại in là khó chịu, và không kịp soát lại
+               chứng từ trước khi in. */
+            'tuMoHopIn'    => !$laWord && !empty($f['in']),
+        ];
+
+        if ($laWord) header_word($item['invoice_no']);
+
+        in_chung_tu($ct, $khach, $this->__itemModel->getByInvoice($id),
+            $this->model('SettingsModel')->map(),
+            _WEB_URL . '/admin/' . $this->routeBase . '/print/' . (int) $id . '?word=1',
+            $laWord);
+    }
+
     public function delete($id){
         $item = $this->__model->getDetail($id);
         if (empty($item)){

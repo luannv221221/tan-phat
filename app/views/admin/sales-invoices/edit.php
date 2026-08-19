@@ -146,6 +146,9 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
     </div>
 
     <div class="card"><div class="card-body">
+        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/print/'.$item['id'].'?in=1'}}" target="_blank" class="btn btn-sm btn-outline-dark"><i class="fas fa-print mr-1"></i> In / Lưu PDF</a>
+        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/print/'.$item['id'].'?word=1'}}" class="btn btn-sm btn-outline-dark"><i class="fas fa-file-word mr-1"></i> Tải Word</a>
+        <span class="mx-2 text-muted">|</span>
         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/unpost/'.$item['id']}}" onclick="return confirm('Huỷ ghi sổ sẽ hoàn tồn kho. Tiếp tục?')" class="btn btn-warning"><i class="fas fa-unlock mr-1"></i> Huỷ ghi sổ</a>
         @endif
@@ -260,6 +263,8 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
             @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
             <a href="{{_WEB_URL.'/admin/'.$routeBase.'/post/'.$item['id']}}" onclick="return confirm('Ghi sổ hoá đơn này? (lưu trước nếu vừa sửa)')" class="btn btn-success"><i class="fas fa-lock mr-1"></i> Ghi sổ</a>
             @endif
+    <a href="{{_WEB_URL.'/admin/'.$routeBase.'/print/'.$item['id'].'?in=1'}}" target="_blank" class="btn btn-sm btn-outline-dark"><i class="fas fa-print mr-1"></i> In / Lưu PDF</a>
+            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/print/'.$item['id'].'?word=1'}}" class="btn btn-sm btn-outline-dark"><i class="fas fa-file-word mr-1"></i> Tải Word</a>
             @if (route('admin/'.$routeBase.'/delete/'.$item['id']))
             <a href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" onclick="return confirm('Xoá hoá đơn nháp này?')" class="btn btn-outline-danger"><i class="fas fa-trash mr-1"></i> Xoá</a>
             @endif

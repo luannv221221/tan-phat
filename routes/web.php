@@ -67,6 +67,11 @@ Route::group('admin', function(){
    Route::post('services/edit/(\d+)', 'admin/services/postEdit/$1');
    Route::get('services/delete/(\d+)', 'admin/services/delete/$1');
 
+   /* Biểu mẫu in báo giá / hoá đơn. Cùng một route lo hai đường ra:
+      không tham số -> mở trang in (Ctrl+P ra PDF); ?word=1 -> tải file .doc. */
+   Route::get('quotations/print/(\d+)', 'admin/quotations/inAn/$1');
+   Route::get('sales-invoices/print/(\d+)', 'admin/salesinvoices/inAn/$1');
+
    //Route products (Quản lý phụ tùng — CRUD đầy đủ + gán đời xe)
    Route::get('products', 'admin/products');
    Route::get('products/add', 'admin/products/add');

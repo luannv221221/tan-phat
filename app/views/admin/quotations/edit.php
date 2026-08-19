@@ -79,6 +79,9 @@ $tabs = [
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=rejected'}}" class="btn btn-sm btn-outline-danger">Từ chối</a>
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=draft'}}" class="btn btn-sm btn-outline-secondary">Nháp</a>
         @endif
+        <span class="mx-2 text-muted">|</span>
+        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/print/'.$item['id'].'?in=1'}}" target="_blank" class="btn btn-sm btn-outline-dark"><i class="fas fa-print mr-1"></i> In / Lưu PDF</a>
+        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/print/'.$item['id'].'?word=1'}}" class="btn btn-sm btn-outline-dark"><i class="fas fa-file-word mr-1"></i> Tải Word</a>
         @if (route('admin/sales-invoices/add'))
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/convert/'.$item['id']}}" onclick="return confirm('Tạo hoá đơn bán (nháp) từ báo giá này?')" class="btn btn-sm btn-primary float-right"><i class="fas fa-file-export mr-1"></i> Chuyển thành hoá đơn</a>
         @endif

@@ -211,6 +211,53 @@ class Quotations extends Controller {
         $this->__response->redirect('admin/sales-invoices/edit/' . $invId);
     }
 
+    /**
+     * BIỂU MẪU IN — mở trên trình duyệt để in / lưu PDF, hoặc ?word=1 để tải .doc.
+     *
+     * Cùng một mẫu cho cả hai đường ra, xem app/views/admin/print/chung-tu.php.
+     */
+    public function inAn($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+
+        $f      = $this->__request->getFields();
+        $laWord = !empty($f['word']);
+
+        $khach = !empty($item['customer_id']) ? $this->__partner->getDetail((int) $item['customer_id']) : null;
+        // Khách vãng lai không có dòng trong `partners`, chỉ còn cái tên trên phiếu
+        if (empty($khach) && !empty($item['customer_name'])) $khach = ['name' => $item['customer_name']];
+
+        $ct = [
+            'loai'         => 'BÁO GIÁ',
+            'so'           => $item['quote_no'],
+            'ngay'         => $item['quote_date'],
+            'hieuLuc'      => $item['valid_until'],
+            'ghiChu'       => $item['note'],
+            'subtotal'     => $item['subtotal'],
+            'vatRate'      => $item['vat_rate'],
+            'tax'          => $item['tax_amount'],
+            'total'        => $item['total_amount'],
+            // Báo giá chưa phải đòi tiền nên không in số tài khoản
+            'hienNganHang' => false,
+            'nhanKy'       => ['KHÁCH HÀNG', 'ĐẠI DIỆN BÊN BÁN'],
+            /* Chỉ tự bật hộp thoại In khi tới từ nút "In / Lưu PDF" (?in=1).
+               Mở thẳng /print/<id> thì chỉ xem — dán link cho người khác mà
+               nó tự nhảy hộp thoại in là khó chịu, và không kịp soát lại
+               chứng từ trước khi in. */
+            'tuMoHopIn'    => !$laWord && !empty($f['in']),
+        ];
+
+        if ($laWord) header_word($item['quote_no']);
+
+        in_chung_tu($ct, $khach, $this->__itemModel->getByQuotation($id),
+            $this->model('SettingsModel')->map(),
+            _WEB_URL . '/admin/' . $this->routeBase . '/print/' . (int) $id . '?word=1',
+            $laWord);
+    }
+
     public function delete($id){
         $item = $this->__model->getDetail($id);
         if (empty($item)){
