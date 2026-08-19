@@ -539,13 +539,34 @@ class Salesinvoices extends Controller {
         return false;
     }
 
+    /**
+     * Dòng hoá đơn gộp từ CẢ HAI tab: Hàng hoá (line_*) và Dịch vụ (sv_*).
+     *
+     * Xuống CSDL vẫn là `sales_invoice_items` chung một bảng, phân biệt nhau
+     * bằng `parts.item_type` — nên bước ghi sổ (trừ kho, tính giá vốn) không
+     * phải biết gì về tab.
+     *
+     * Tên ô của hai bảng phải KHÁC nhau (line_ / sv_): dùng chung một tên thì
+     * thứ tự phần tử phụ thuộc thứ tự DOM, đổi chỗ tab một cái là số lượng
+     * nhảy sang mặt hàng khác mà chẳng có lỗi nào báo.
+     */
     private function buildLines(){
-        $f      = $this->__request->getFields();
-        $parts  = isset($f['line_part'])  && is_array($f['line_part'])  ? $f['line_part']  : [];
-        $qtys   = isset($f['line_qty'])   && is_array($f['line_qty'])   ? $f['line_qty']   : [];
-        $prices = isset($f['line_price']) && is_array($f['line_price']) ? $f['line_price'] : [];
-        $discs  = isset($f['line_disc'])  && is_array($f['line_disc'])  ? $f['line_disc']  : [];
-        $notes  = isset($f['line_note'])  && is_array($f['line_note'])  ? $f['line_note']  : [];
+        return array_merge($this->docDong('line_'), $this->docDong('sv_'));
+    }
+
+    /** Đọc một bảng dòng hàng theo tiền tố tên ô ('line_' hoặc 'sv_') */
+    private function docDong($tienTo){
+        $f   = $this->__request->getFields();
+        $lay = function($ten) use ($f, $tienTo){
+            $k = $tienTo . $ten;
+            return isset($f[$k]) && is_array($f[$k]) ? $f[$k] : [];
+        };
+
+        $parts  = $lay('part');
+        $qtys   = $lay('qty');
+        $prices = $lay('price');
+        $discs  = $lay('disc');
+        $notes  = $lay('note');
 
         $lines = [];
         foreach ($parts as $i => $p){

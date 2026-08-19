@@ -400,24 +400,49 @@ section('O chon hang loc theo viec co chon kho hay khong');
 
 /* Mau thuan cu: chon "Khong can kho (hoa don chi co dich vu)" nhung o chon
    hang van liet ke ac quy, bugi -> chon xong moi bao loi "phai chon kho".
-   Nay loc ngay tu dau: khong chon kho -> chi hien dich vu. */
+
+   Ban dau xu ly bang cach LOC danh sach trong o chon: chua chon kho thi o chon
+   chi con dich vu. Tu 19/08/2026 hoa don co hai TAB rieng (Hang hoa / Dich vu)
+   nen luat gon hon: chua chon kho -> KHOA han tab Hang hoa kem loi nhac.
+
+   Y DINH KHONG DOI: khong the dat hang hoa len hoa don chua chon kho xuat.
+   Duoi day khang dinh theo cach lam moi. */
 foreach (['add', 'edit'] as $v){
     $s = file_get_contents(__DIR__ . '/../app/views/admin/sales-invoices/' . $v . '.php');
 
-    ok(strpos($s, "'loai'  => \$p['item_type']") !== false,
-       "sales-invoices/$v: du lieu o chon hang co kem loai");
-    ok(strpos($s, 'function danhSachHang') !== false,
-       "sales-invoices/$v: co ham loc danh sach theo kho");
-    ok(preg_match("~danhSachHang.*?op\.loai === 'service'~s", $s) === 1,
-       "sales-invoices/$v: khong chon kho -> chi con dich vu");
-    ok(preg_match('~whEl\.addEventListener\(.change.~s', $s) === 1,
-       "sales-invoices/$v: doi kho thi nap lai moi o chon hang");
+    ok(strpos($s, 'LOAI_DICH_VU') !== false,
+       "sales-invoices/$v: chia mat hang ve tab theo item_type");
+    ok(strpos($s, "'line_'") !== false && strpos($s, "'sv_'") !== false,
+       "sales-invoices/$v: hai tab dung hai bo ten o (line_ / sv_)");
 
-    // Doi kho ma khong xoa chu trong o tim kiem phu ben tren thi nhin van
-    // thay ten hang cu du select da rong — nguoi dung tuong van con chon.
-    ok(strpos($s, "ss__input") !== false,
-       "sales-invoices/$v: xoa ca chu trong o tim kiem khi lua chon khong con hop le");
+    ok(strpos($s, 'function apLuatKho') !== false,
+       "sales-invoices/$v: co luat rang buoc kho");
+    ok(strpos($s, "id=\"canh-bao-kho\"") !== false,
+       "sales-invoices/$v: chua chon kho -> hien loi nhac ngay tren tab Hang hoa");
+    ok(preg_match('~nut\.disabled\s*=\s*!mo~', $s) === 1,
+       "sales-invoices/$v: chua chon kho -> khoa nut them dong hang hoa");
+    ok(preg_match('~whEl\.addEventListener\(.change.~s', $s) === 1,
+       "sales-invoices/$v: doi kho thi ap lai luat ngay");
+
+    /* KHONG duoc disable o cua dong da nhap. O disabled thi trinh duyet khong
+       gui len — do that: nhap 1 dong hang roi bo kho di, form gui len 0 dong
+       hang hoa. Hoa don luu em ru va MAT HANG, ma chot "co hang thi phai co
+       kho" phia may chu cung khong keu vi no khong thay dong nao. */
+    ok(preg_match('~\.line-row[^
+]*\.disabled\s*=~', $s) !== 1,
+       "sales-invoices/$v: KHONG disable o cua dong da nhap (se lam mat du lieu khi gui)");
+    ok(preg_match('~querySelectorAll\(.\.ss__input.\)[^
+]*disabled~', $s) !== 1,
+       "sales-invoices/$v: KHONG disable o tim kiem cua dong da nhap");
 }
+
+/* Chot phia may chu van con nguyen — giao dien chi la lop chan thu nhat.
+   Ai gui thang POST thi khong co JS nao can duoc. */
+$ctrlHd = codeOnly(__DIR__ . '/../app/controllers/admin/Salesinvoices.php');
+ok(strpos($ctrlHd, 'coHangCanKho') !== false,
+   'Salesinvoices: van kiem tra "co hang hoa thi bat buoc co kho" o phia may chu');
+ok(strpos($ctrlHd, "docDong('line_')") !== false && strpos($ctrlHd, "docDong('sv_')") !== false,
+   'Salesinvoices: buildLines() doc CA HAI bo ten o');
 
 // ================================================================
 section('Truong so / ngay dung dung kieu input');

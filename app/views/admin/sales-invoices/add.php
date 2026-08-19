@@ -1,26 +1,55 @@
 <?php
-$partJs = [];
+/* ---------------------------------------------------------------------------
+ * Dòng hoá đơn tách làm HAI TAB: Hàng hoá và Dịch vụ — cùng kiểu với báo giá.
+ *
+ * Ô của tab dịch vụ mang tiền tố `sv_` thay vì `line_`; hai bảng dùng chung
+ * một tên ô thì thứ tự phần tử phụ thuộc thứ tự DOM, đổi chỗ tab một cái là
+ * số lượng nhảy sang mặt hàng khác mà chẳng có lỗi nào báo.
+ *
+ * KHÁC BÁO GIÁ Ở CHỖ KHO: hoá đơn có hàng hoá thì bắt buộc chọn kho xuất
+ * (ghi sổ mới biết trừ ở đâu), còn hoá đơn toàn dịch vụ thì để trống kho.
+ * Trước đây luật này thể hiện bằng cách LỌC ô chọn hàng: chưa chọn kho thì ô
+ * chọn chỉ còn dịch vụ. Nay đã có tab riêng cho dịch vụ nên luật gọn hơn:
+ * chưa chọn kho -> KHOÁ hẳn tab Hàng hoá và nói rõ lý do.
+ * --------------------------------------------------------------------------- */
+
+// Chia mặt hàng về đúng tab.
+$hangJs = $dichVuJs = [];
 foreach ($parts as $p){
-    $partJs[] = [
+    $row = [
         'id'    => (int) $p['id'],
         'label' => $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : ''),
         'price' => (int) (!empty($p['sale_price']) ? $p['sale_price'] : $p['price']),
         'img'   => !empty($p['image']) ? _WEB_URL . '/public/assets/uploads/parts/' . $p['image'] : '',
-        // Để lọc ô chọn hàng theo việc có chọn kho hay không
-        'loai'  => $p['item_type'],
     ];
+    if ($p['item_type'] === PartsModel::LOAI_DICH_VU) $dichVuJs[] = $row;
+    else                                              $hangJs[]   = $row;
 }
-$initRows = [];
-if (!empty($old['line_part']) && is_array($old['line_part'])){
-    foreach ($old['line_part'] as $i => $p){
-        $initRows[] = ['part_id' => (int) $p,
-            'qty'   => isset($old['line_qty'][$i]) ? $old['line_qty'][$i] : '',
-            'price' => isset($old['line_price'][$i]) ? $old['line_price'][$i] : '',
-            'disc'  => isset($old['line_disc'][$i]) ? $old['line_disc'][$i] : '',
-            'note'  => isset($old['line_note'][$i]) ? $old['line_note'][$i] : ''];
+
+// Dòng người dùng vừa nhập (form quay lại vì lỗi) — đọc theo tiền tố của tab.
+$doiDong = function($tienTo) use ($old){
+    $rows = [];
+    if (empty($old[$tienTo . 'part']) || !is_array($old[$tienTo . 'part'])) return $rows;
+    foreach ($old[$tienTo . 'part'] as $i => $p){
+        $rows[] = [
+            'part_id' => (int) $p,
+            'qty'     => isset($old[$tienTo . 'qty'][$i])   ? $old[$tienTo . 'qty'][$i]   : '',
+            'price'   => isset($old[$tienTo . 'price'][$i]) ? $old[$tienTo . 'price'][$i] : '',
+            'disc'    => isset($old[$tienTo . 'disc'][$i])  ? $old[$tienTo . 'disc'][$i]  : '',
+            'note'    => isset($old[$tienTo . 'note'][$i])  ? $old[$tienTo . 'note'][$i]  : '',
+        ];
     }
-}
+    return $rows;
+};
+$initHang   = $doiDong('line_');
+$initDichVu = $doiDong('sv_');
+
 $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '10';
+
+$tabs = [
+    ['ma' => 'hang',   'nhan' => 'Hàng hoá', 'cot' => 'Hàng hoá', 'icon' => 'fa-boxes'],
+    ['ma' => 'dichvu', 'nhan' => 'Dịch vụ',  'cot' => 'Dịch vụ',  'icon' => 'fa-screwdriver-wrench'],
+];
 ?>
 <form action="" method="post">
     <?php echo csrf_field(); ?>
@@ -73,29 +102,73 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '10';
     </div>
 
     <div class="card card-outline card-info">
-        <div class="card-header">
-            <h3 class="card-title"><i class="fas fa-list-ol mr-2"></i>Dòng hàng bán</h3>
-            <div class="card-tools"><button type="button" id="add-line" class="btn btn-sm btn-info"><i class="fas fa-plus mr-1"></i> Thêm dòng</button></div>
+        <div class="card-header p-0 pt-1 border-bottom-0">
+            <ul class="nav nav-tabs" id="line-tabs">
+                <?php foreach ($tabs as $i => $t): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo $i === 0 ? 'active' : ''; ?>" href="#"
+                       data-pane="<?php echo e($t['ma']); ?>">
+                        <i class="fas <?php echo e($t['icon']); ?> mr-1"></i><?php echo e($t['nhan']); ?>
+                        <span class="badge badge-secondary ml-1" id="dem-<?php echo e($t['ma']); ?>">0</span>
+                    </a>
+                </li>
+                <?php endforeach; ?>
+            </ul>
         </div>
-        <div class="card-body table-responsive p-0">
-            <table class="table table-sm mb-0">
-                <thead><tr>
-                    <th style="width:30%">Hàng hoá</th>
-                    <th style="width:11%" class="text-right">Số lượng</th>
-                    <th style="width:15%" class="text-right">Đơn giá bán</th>
-                    <th style="width:9%" class="text-right">CK %</th>
-                    <th style="width:15%" class="text-right">Thành tiền</th>
-                    <th>Ghi chú</th>
-                    <th style="width:44px"></th>
-                </tr></thead>
-                <tbody id="lines"></tbody>
-                <tfoot>
-                    <tr><th colspan="4" class="text-right">Cộng chưa thuế</th><th class="text-right"><span id="sub-total">0</span> ₫</th><th colspan="2"></th></tr>
-                    <tr><th colspan="4" class="text-right">Thuế GTGT</th><th class="text-right"><span id="tax-total">0</span> ₫</th><th colspan="2"></th></tr>
-                    <tr><th colspan="4" class="text-right">Tổng thanh toán</th><th class="text-right"><span id="grand-total">0</span> ₫</th><th colspan="2"></th></tr>
-                </tfoot>
-            </table>
+
+        <?php foreach ($tabs as $i => $t): ?>
+        <div class="pane-dong" id="pane-<?php echo e($t['ma']); ?>" <?php echo $i === 0 ? '' : 'style="display:none"'; ?>>
+            <?php if ($t['ma'] === 'hang'): ?>
+            <?php /* Chỉ tab Hàng hoá mới có cảnh báo này. Hiện/ẩn bằng JS theo ô Kho xuất. */ ?>
+            <div class="alert alert-warning mb-0 rounded-0" id="canh-bao-kho" style="display:none">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                Chưa chọn <b>Kho xuất</b> nên không thêm được dòng hàng hoá — ghi sổ sẽ không biết trừ tồn ở kho nào.
+                Chọn kho ở trên, hoặc chuyển sang tab <b>Dịch vụ</b> nếu hoá đơn này chỉ có công thợ.
+            </div>
+            <?php endif; ?>
+            <div class="card-body py-2 border-bottom text-right">
+                <button type="button" class="btn btn-sm btn-info" id="add-<?php echo e($t['ma']); ?>">
+                    <i class="fas fa-plus mr-1"></i> Thêm dòng <?php echo e(mb_strtolower($t['nhan'], 'UTF-8')); ?>
+                </button>
+            </div>
+            <div class="card-body table-responsive p-0">
+                <table class="table table-sm mb-0">
+                    <thead><tr>
+                        <th style="width:30%"><?php echo e($t['cot']); ?></th>
+                        <th style="width:11%" class="text-right">Số lượng</th>
+                        <th style="width:15%" class="text-right">Đơn giá bán</th>
+                        <th style="width:9%" class="text-right">CK %</th>
+                        <th style="width:15%" class="text-right">Thành tiền</th>
+                        <th>Ghi chú</th>
+                        <th style="width:44px"></th>
+                    </tr></thead>
+                    <tbody id="lines-<?php echo e($t['ma']); ?>"></tbody>
+                    <?php /* Tổng tiền nằm trong <tfoot> của chính bảng dòng hàng để cột tiền
+                             thẳng hàng với cột "Thành tiền". Vẽ ở CẢ HAI tab (vòng lặp này
+                             chạy 2 lần) nên mở tab nào cũng thấy đủ tổng — vì vậy dùng class
+                             chứ không dùng id, id trùng nhau thì getElementById chỉ thấy
+                             bản đầu. */ ?>
+                    <tfoot>
+                        <tr><th colspan="4" class="text-right font-weight-normal">Tiền hàng hoá</th>
+                            <th class="text-right font-weight-normal"><span class="js-tong-hang">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right font-weight-normal">Tiền dịch vụ</th>
+                            <th class="text-right font-weight-normal"><span class="js-tong-dichvu">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right">Cộng chưa thuế</th>
+                            <th class="text-right"><span class="js-sub-total">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right">Thuế GTGT</th>
+                            <th class="text-right"><span class="js-tax-total">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right">Tổng thanh toán</th>
+                            <th class="text-right text-danger"><span class="js-grand-total">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
+        <?php endforeach; ?>
         {!! !empty($errors['lines'])?'<div class="card-body py-2"><small class="text-danger">'.e($errors['lines']).'</small></div>':false !!}
     </div>
 
@@ -107,105 +180,188 @@ $vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '10';
 
 <script>
 (function () {
-    var PARTS = {!! json_encode($partJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
-    var INIT  = {!! json_encode($initRows, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
-    var DISC  = {!! json_encode((object)$partnerDiscounts, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
-    var tbody = document.getElementById('lines');
-    var subEl = document.getElementById('sub-total'), taxEl = document.getElementById('tax-total'), grEl = document.getElementById('grand-total');
-    var vatEl = document.getElementById('vat_rate');
+    var DU_LIEU = {
+        hang:   {!! json_encode($hangJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!},
+        dichvu: {!! json_encode($dichVuJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!}
+    };
+    var BAN_DAU = {
+        hang:   {!! json_encode($initHang, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!},
+        dichvu: {!! json_encode($initDichVu, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!}
+    };
+    var DISC = {!! json_encode((object)$partnerDiscounts, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+
+    var vatEl   = document.getElementById('vat_rate');
     var custSel = document.querySelector('select[name="customer_id"]');
-    function groupDisc(){ var v = custSel ? custSel.value : ''; return (v && DISC[v] != null) ? parseFloat(DISC[v]) : 0; }
+    var whEl    = document.querySelector('select[name="warehouse_id"]');
+
     function fmt(n){ return (n || 0).toLocaleString('vi-VN'); }
     function num(v){ return parseFloat(String(v || '').replace(/[^\d.]/g, '')) || 0; }
     function money(v){ return parseInt(String(v || '').replace(/[^\d]/g, ''), 10) || 0; }
+    function groupDisc(){ var v = custSel ? custSel.value : ''; return (v && DISC[v] != null) ? parseFloat(DISC[v]) : 0; }
+    function coKho(){ return !!(whEl && whEl.value !== ''); }
+
+    var bang = {};
+
+    // Khối tổng vẽ ở cả hai tab nên phải ghi vào MỌI ô cùng tên, không phải một ô.
+    function dat(ten, giaTri){
+        document.querySelectorAll('.js-' + ten).forEach(function (e){ e.textContent = giaTri; });
+    }
+
     function recompute(){
-        var sub = 0;
-        tbody.querySelectorAll('.line-row').forEach(function (r){
-            var d = num(r.querySelector('.disc').value); if (d < 0) d = 0; if (d > 100) d = 100;
-            var amt = Math.round(num(r.querySelector('.qty').value) * money(r.querySelector('.price').value) * (1 - d / 100));
-            r.querySelector('.amt').textContent = fmt(amt); sub += amt;
-        });
-        var rate = num(vatEl.value); var tax = Math.round(sub * rate / 100);
-        subEl.textContent = fmt(sub); taxEl.textContent = fmt(tax); grEl.textContent = fmt(sub + tax);
-    }
-    /* Kho xuất để trống = hoá đơn CHỈ có dịch vụ -> ô chọn hàng chỉ liệt kê
-       dịch vụ. Cho chọn cả ắc quy rồi mới báo "phải chọn kho" là bắt người
-       dùng làm sai xong mới bắt sửa. */
-    var whEl = document.querySelector('select[name="warehouse_id"]');
+        var tHang   = bang.hang.tong();
+        var tDichVu = bang.dichvu.tong();
+        var sub     = tHang + tDichVu;
+        var tax     = Math.round(sub * num(vatEl.value) / 100);
 
-    function danhSachHang(){
-        if (whEl && whEl.value !== '') return PARTS;
-        return PARTS.filter(function (op){ return op.loai === 'service'; });
+        dat('tong-hang',   fmt(tHang));
+        dat('tong-dichvu', fmt(tDichVu));
+        dat('sub-total',   fmt(sub));
+        dat('tax-total',   fmt(tax));
+        dat('grand-total', fmt(sub + tax));
+
+        document.getElementById('dem-hang').textContent   = bang.hang.dem();
+        document.getElementById('dem-dichvu').textContent = bang.dichvu.dem();
     }
 
-    function napOption(s, selected){
-        s.textContent = '';
-        var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn hàng hoá —'; s.appendChild(o0);
-        danhSachHang().forEach(function (op){
-            var o=document.createElement('option'); o.value=op.id; o.textContent=op.label;
-            o.setAttribute('data-price', op.price);
-            if (op.img) o.setAttribute('data-img', op.img);
-            if (String(op.id)===String(selected)) o.selected=true;
-            s.appendChild(o);
-        });
-    }
+    function taoBang(ma, tienTo, DS, nhanTrong){
+        var tbody = document.getElementById('lines-' + ma);
 
-    function partSelect(selected){
-        var s = document.createElement('select'); s.name='line_part[]'; s.className='form-control form-control-sm part-sel js-search'; s.setAttribute('data-placeholder','Gõ tên hoặc mã hàng hoá...');
-        napOption(s, selected);
-        return s;
-    }
-
-    /* Đổi kho -> nạp lại mọi ô chọn hàng. Hàng đã chọn mà không còn hợp lệ
-       (bỏ kho trong khi dòng đang là ắc quy) thì xoá luôn, kèm xoá chữ trong
-       ô tìm kiếm phủ bên trên — không thì nhìn vẫn thấy tên hàng cũ dù
-       select đã rỗng. */
-    if (whEl){
-        whEl.addEventListener('change', function(){
-            tbody.querySelectorAll('select[name="line_part[]"]').forEach(function (s){
-                var cu = s.value;
-                napOption(s, cu);
-                if (s.value !== cu){
-                    var w = s.closest('.ss');
-                    if (w){ var i = w.querySelector('.ss__input'); if (i) i.value = ''; }
-                }
+        function partSelect(selected){
+            var s = document.createElement('select');
+            s.name = tienTo + 'part[]';
+            s.className = 'form-control form-control-sm part-sel js-search';
+            s.setAttribute('data-placeholder', nhanTrong);
+            var o0 = document.createElement('option'); o0.value = ''; o0.textContent = nhanTrong; s.appendChild(o0);
+            DS.forEach(function (op){
+                var o = document.createElement('option');
+                o.value = op.id; o.textContent = op.label; o.setAttribute('data-price', op.price);
+                if (op.img) o.setAttribute('data-img', op.img);
+                if (String(op.id) === String(selected)) o.selected = true;
+                s.appendChild(o);
             });
+            return s;
+        }
+        function td(child, cls){ var t = document.createElement('td'); if (cls) t.className = cls; if (child) t.appendChild(child); return t; }
+        function inp(name, cls, val){ var i = document.createElement('input'); i.type = 'text'; i.name = name; i.className = 'form-control form-control-sm ' + cls; i.value = (val === 0 || val) ? val : ''; return i; }
+
+        function addRow(data){
+            data = data || {};
+            var tr = document.createElement('tr'); tr.className = 'line-row';
+            var sel = partSelect(data.part_id);
+            var price = oTien(inp(tienTo + 'price[]', 'price text-right', data.price));
+
+            sel.addEventListener('change', function (){
+                var o = sel.options[sel.selectedIndex];
+                var p = o ? o.getAttribute('data-price') : 0;
+                if (p && !money(price.value)) price.value = p;
+                recompute();
+                // Chọn xong ở dòng CUỐI thì tự đẻ dòng trống kế tiếp — xem giải
+                // thích đầy đủ ở quotations/add.php.
+                if (sel.value && tr === tbody.lastElementChild) addRow();
+            });
+            tr.appendChild(td(sel));
+
+            var q = inp(tienTo + 'qty[]', 'qty text-right', data.qty); soLuong(q);
+            q.addEventListener('input', recompute); tr.appendChild(td(q));
+
+            price.addEventListener('input', recompute); tr.appendChild(td(price));
+
+            var discVal = (data.disc === 0 || data.disc) ? data.disc : '';
+            if (discVal === '' || discVal == null){ var gd = groupDisc(); if (gd > 0) discVal = gd; }
+            var disc = oPhanTram(inp(tienTo + 'disc[]', 'disc text-right', discVal));
+            disc.addEventListener('input', recompute); tr.appendChild(td(disc));
+
+            var amtTd = document.createElement('td'); amtTd.className = 'text-right align-middle';
+            var amtSpan = document.createElement('span'); amtSpan.className = 'amt'; amtSpan.textContent = '0';
+            amtTd.appendChild(amtSpan); tr.appendChild(amtTd);
+
+            tr.appendChild(td(inp(tienTo + 'note[]', '', data.note)));
+
+            var rm = document.createElement('button'); rm.type = 'button';
+            rm.className = 'btn btn-sm btn-outline-danger rm-row'; rm.innerHTML = '&times;';
+            tr.appendChild(td(rm, 'text-center'));
+
+            tbody.appendChild(tr); recompute();
+        }
+
+        function tong(){
+            var s = 0;
+            tbody.querySelectorAll('.line-row').forEach(function (r){
+                var d = num(r.querySelector('.disc').value); if (d < 0) d = 0; if (d > 100) d = 100;
+                var amt = Math.round(num(r.querySelector('.qty').value) * money(r.querySelector('.price').value) * (1 - d / 100));
+                r.querySelector('.amt').textContent = fmt(amt); s += amt;
+            });
+            return s;
+        }
+
+        /* Chỉ đếm dòng ĐÃ chọn mặt hàng. 'select.part-sel' chứ không phải
+           '.part-sel': ô tìm kiếm phủ lên trên chép nguyên className của select
+           nên cũng mang class đó — bỏ 'select.' đi là mỗi dòng đếm thành hai. */
+        function dem(){
+            var n = 0;
+            tbody.querySelectorAll('.line-row select.part-sel').forEach(function (s){ if (s.value) n++; });
+            return n;
+        }
+
+        document.getElementById('add-' + ma).addEventListener('click', function (){ addRow(); });
+        tbody.addEventListener('click', function (e){
+            if (e.target && e.target.classList.contains('rm-row')){
+                var r = e.target.closest('.line-row'); if (r) r.remove(); recompute();
+            }
+        });
+
+        return { addRow: addRow, tong: tong, dem: dem, tbody: tbody };
+    }
+
+    bang.hang   = taoBang('hang',   'line_', DU_LIEU.hang,   '— Chọn hàng hoá —');
+    bang.dichvu = taoBang('dichvu', 'sv_',   DU_LIEU.dichvu, '— Chọn dịch vụ —');
+
+    /* Chưa chọn kho -> chặn THÊM dòng hàng hoá và nói rõ lý do.
+
+       CỐ Ý KHÔNG disable các ô của dòng đã nhập. Ô disabled thì trình duyệt
+       KHÔNG gửi lên — đo được: nhập 1 dòng hàng rồi bỏ kho đi, form gửi lên
+       0 dòng hàng hoá. Hoá đơn sẽ lưu êm ru và mất hàng, mà chốt "có hàng thì
+       phải có kho" phía máy chủ cũng không kêu vì nó có thấy dòng nào đâu.
+
+       Để nguyên cho gửi lên thì controller chặn kèm thông báo, và form quay
+       lại vẫn còn đủ những gì đã gõ. Cảnh báo hiện ngay nên người dùng biết
+       trước chứ không phải bấm Lưu mới biết. */
+    function apLuatKho(){
+        var mo   = coKho();
+        var canh = document.getElementById('canh-bao-kho');
+        var nut  = document.getElementById('add-hang');
+        var pane = document.getElementById('pane-hang');
+
+        if (canh) canh.style.display = mo ? 'none' : '';
+        if (nut)  nut.disabled = !mo;
+        pane.style.opacity = mo ? '' : '.65';
+    }
+
+    document.getElementById('line-tabs').addEventListener('click', function (e){
+        var a = e.target.closest('a[data-pane]');
+        if (!a) return;
+        e.preventDefault();
+        this.querySelectorAll('a[data-pane]').forEach(function (x){ x.classList.remove('active'); });
+        a.classList.add('active');
+        document.querySelectorAll('.pane-dong').forEach(function (p){ p.style.display = 'none'; });
+        document.getElementById('pane-' + a.getAttribute('data-pane')).style.display = '';
+    });
+
+    if (custSel){
+        custSel.addEventListener('change', function (){
+            var gd = groupDisc();
+            document.querySelectorAll('.pane-dong .line-row .disc').forEach(function (d){ d.value = gd > 0 ? gd : ''; });
             recompute();
         });
     }
-    function td(child, cls){ var t=document.createElement('td'); if (cls) t.className=cls; if (child) t.appendChild(child); return t; }
-    function inp(name, cls, val){ var i=document.createElement('input'); i.type='text'; i.name=name; i.className='form-control form-control-sm '+cls; i.value=(val===0||val)?val:''; return i; }
-    function addRow(data){
-        data = data || {};
-        var tr = document.createElement('tr'); tr.className='line-row';
-        var sel = partSelect(data.part_id);
-        var price = oTien(inp('line_price[]','price text-right', data.price));
-        sel.addEventListener('change', function(){
-            var o=sel.options[sel.selectedIndex]; var p=o?o.getAttribute('data-price'):0;
-            if (p && !money(price.value)) price.value=p;
-            recompute();
-            // Chọn xong hàng ở dòng CUỐI thì tự đẻ dòng trống kế tiếp — xem
-            // giải thích đầy đủ ở quotations/add.php.
-            if (sel.value && tr === tbody.lastElementChild) addRow();
-        });
-        tr.appendChild(td(sel));
-        var q = inp('line_qty[]','qty text-right', data.qty); soLuong(q); q.addEventListener('input', recompute); tr.appendChild(td(q));
-        price.addEventListener('input', recompute); tr.appendChild(td(price));
-        var discVal = (data.disc === 0 || data.disc) ? data.disc : (data.part_id ? '' : groupDisc());
-        if (discVal === '' || discVal == null){ var gd = groupDisc(); if (gd > 0) discVal = gd; }
-        var disc = oPhanTram(inp('line_disc[]','disc text-right', discVal)); disc.addEventListener('input', recompute); tr.appendChild(td(disc));
-        var amtTd = document.createElement('td'); amtTd.className='text-right align-middle';
-        var amtSpan = document.createElement('span'); amtSpan.className='amt'; amtSpan.textContent='0'; amtTd.appendChild(amtSpan); tr.appendChild(amtTd);
-        tr.appendChild(td(inp('line_note[]','', data.note)));
-        var rm = document.createElement('button'); rm.type='button'; rm.className='btn btn-sm btn-outline-danger rm-row'; rm.innerHTML='&times;';
-        tr.appendChild(td(rm,'text-center'));
-        tbody.appendChild(tr); recompute();
-    }
-    document.getElementById('add-line').addEventListener('click', function (){ addRow(); });
-    // Đổi khách -> áp % chiết khấu nhóm KH cho mọi dòng
-    if (custSel){ custSel.addEventListener('change', function (){ var gd = groupDisc(); tbody.querySelectorAll('.line-row .disc').forEach(function (d){ d.value = gd > 0 ? gd : ''; }); recompute(); }); }
+    if (whEl) whEl.addEventListener('change', apLuatKho);
     vatEl.addEventListener('input', recompute);
-    tbody.addEventListener('click', function (e){ if (e.target && e.target.classList.contains('rm-row')){ var r=e.target.closest('.line-row'); if (r) r.remove(); recompute(); } });
-    if (INIT.length){ INIT.forEach(addRow); } else { addRow(); }
+
+    ['hang', 'dichvu'].forEach(function (ma){
+        if (BAN_DAU[ma].length) BAN_DAU[ma].forEach(function (r){ bang[ma].addRow(r); });
+        else bang[ma].addRow();
+    });
+    recompute();
+    apLuatKho();
 })();
 </script>
