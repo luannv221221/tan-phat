@@ -191,6 +191,35 @@ foreach (['add', 'edit'] as $v){
 }
 
 // ---------------------------------------------------------------------------
+section('Doi mat hang thi gia phai di theo mat hang moi');
+
+/* LOI THAT, khach bao 19/08/2026. Ban cu:
+       if (p && !money(price.value)) price.value = p;
+   "chi dien khi o gia dang trong", y la dung de gia nguoi dung tu go. Nhung
+   no khong phan biet duoc gia NGUOI DUNG go voi gia do CHINH NO vua dien cho
+   mat hang TRUOC DO. Chon Ac quy (1.380.000) roi doi dong do sang Bugi thi
+   gia van nam nguyen 1.380.000 -> hoa don luu sai gia, khong co gi bao.
+   Da xay ra that tren HD-000006. */
+foreach (['quotations/add', 'quotations/edit',
+          'sales-invoices/add', 'sales-invoices/edit'] as $v){
+    $s = file_get_contents($goc . 'app/views/admin/' . $v . '.php');
+
+    /* Phai bo comment JS truoc khi soi: codeOnly() chi bo comment PHP, ma
+       chinh cho sua nay co comment trich lai nguyen doan code cu de giai
+       thich — grep thang vao la trung comment, bao fail oan. */
+    preg_match('~<script>(.*?)</script>~s', $s, $m);
+    $ma = preg_replace('~/\*.*?\*/~s', '', isset($m[1]) ? $m[1] : '');
+    $ma = preg_replace('~//[^
+]*~', '', $ma);
+
+    ok(strpos($ma, '!money(price.value)') === false,
+       "$v: KHONG con chot 'chi dien khi o gia dang trong'",
+       'Chot do giu lai gia cua mat hang truoc do khi doi hang');
+    ok(preg_match('~if \(p\)\s*price\.value = p;~', $ma) === 1,
+       "$v: doi mat hang -> gia luon lay theo mat hang moi");
+}
+
+// ---------------------------------------------------------------------------
 section('Controller bao gia gop dong cua ca hai tab');
 
 $q = codeOnly($goc . 'app/controllers/admin/Quotations.php');

@@ -269,7 +269,21 @@ $tabs = [
             sel.addEventListener('change', function (){
                 var o = sel.options[sel.selectedIndex];
                 var p = o ? o.getAttribute('data-price') : 0;
-                if (p && !money(price.value)) price.value = p;
+                /* Đổi mặt hàng thì giá PHẢI đi theo mặt hàng mới.
+
+                   Bản cũ là `if (p && !money(price.value))` — chỉ điền khi ô giá
+                   đang trống, với ý "đừng đè giá người dùng tự gõ". Nhưng nó
+                   không phân biệt được giá người dùng gõ với giá do CHÍNH NÓ
+                   vừa điền cho mặt hàng TRƯỚC ĐÓ. Hậu quả: chọn Ắc quy
+                   (1.380.000) rồi đổi dòng đó sang Bugi thì giá vẫn nằm nguyên
+                   1.380.000 — hoá đơn lưu sai giá mà không có gì báo.
+                   Đã xảy ra thật trên HD-000006.
+
+                   Chọn mặt hàng là hành động rõ ràng, giá theo đó là đúng.
+                   Muốn giá riêng thì gõ đè sau khi đã chọn xong hàng. Mở phiếu
+                   cũ ra sửa KHÔNG bị ảnh hưởng: dòng cũ dựng thẳng từ dữ liệu
+                   đã lưu, không đi qua sự kiện change này. */
+                if (p) price.value = p;
                 recompute();
                 if (sel.value && tr === tbody.lastElementChild) addRow();
             });
