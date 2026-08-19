@@ -148,24 +148,40 @@ $tabs = [
                         <th style="width:44px"></th>
                     </tr></thead>
                     <tbody id="lines-<?php echo e($t['ma']); ?>"></tbody>
+                    <?php /* Tổng tiền đặt trong <tfoot> của CHÍNH bảng dòng hàng, giống
+                             hoá đơn / phiếu nhập / phiếu xuất — cột tiền nhờ thế thẳng
+                             hàng với cột "Thành tiền" ở trên.
+
+                             Bản đầu tiên để riêng một .card-footer với
+                             <div class="col-md-6 offset-md-6">: offset chừa trống nửa
+                             trái, đo được 496 x 236 px nền trắng trơn ngay dưới bảng,
+                             nhìn như nội dung nạp hỏng.
+
+                             Vẽ ở CẢ HAI tab (vòng lặp này chạy 2 lần) nên đang mở tab
+                             nào cũng thấy đủ tổng — vì vậy dùng class chứ không dùng id,
+                             id trùng nhau thì getElementById chỉ thấy bản đầu. */ ?>
+                    <tfoot>
+                        <tr><th colspan="4" class="text-right font-weight-normal">Tiền hàng hoá</th>
+                            <th class="text-right font-weight-normal"><span class="js-tong-hang">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right font-weight-normal">Tiền dịch vụ</th>
+                            <th class="text-right font-weight-normal"><span class="js-tong-dichvu">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right">Cộng chưa thuế</th>
+                            <th class="text-right"><span class="js-sub-total">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right">Thuế GTGT</th>
+                            <th class="text-right"><span class="js-tax-total">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                        <tr><th colspan="4" class="text-right">Tổng cộng</th>
+                            <th class="text-right text-danger"><span class="js-grand-total">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
         <?php endforeach; ?>
 
-        <div class="card-footer">
-            <div class="row">
-                <div class="col-md-6 offset-md-6">
-                    <table class="table table-sm mb-0">
-                        <tr><td>Tiền hàng hoá</td><td class="text-right"><span id="tong-hang">0</span> ₫</td></tr>
-                        <tr><td>Tiền dịch vụ</td><td class="text-right"><span id="tong-dichvu">0</span> ₫</td></tr>
-                        <tr class="border-top"><th>Cộng chưa thuế</th><th class="text-right"><span id="sub-total">0</span> ₫</th></tr>
-                        <tr><td>Thuế GTGT</td><td class="text-right"><span id="tax-total">0</span> ₫</td></tr>
-                        <tr><th class="h5 mb-0">Tổng cộng</th><th class="text-right h5 mb-0 text-danger"><span id="grand-total">0</span> ₫</th></tr>
-                    </table>
-                </div>
-            </div>
-        </div>
         {!! !empty($errors['lines'])?'<div class="card-body py-2"><small class="text-danger">'.e($errors['lines']).'</small></div>':false !!}
     </div>
 
@@ -200,17 +216,22 @@ $tabs = [
 
     var bang = {};
 
+    // Khối tổng vẽ ở cả hai tab nên phải ghi vào MỌI ô cùng tên, không phải một ô.
+    function dat(ten, giaTri){
+        document.querySelectorAll('.js-' + ten).forEach(function (e){ e.textContent = giaTri; });
+    }
+
     function recompute(){
         var tHang   = bang.hang.tong();
         var tDichVu = bang.dichvu.tong();
         var sub     = tHang + tDichVu;
         var tax     = Math.round(sub * num(vatEl.value) / 100);
 
-        document.getElementById('tong-hang').textContent   = fmt(tHang);
-        document.getElementById('tong-dichvu').textContent = fmt(tDichVu);
-        document.getElementById('sub-total').textContent   = fmt(sub);
-        document.getElementById('tax-total').textContent   = fmt(tax);
-        document.getElementById('grand-total').textContent = fmt(sub + tax);
+        dat('tong-hang',   fmt(tHang));
+        dat('tong-dichvu', fmt(tDichVu));
+        dat('sub-total',   fmt(sub));
+        dat('tax-total',   fmt(tax));
+        dat('grand-total', fmt(sub + tax));
 
         document.getElementById('dem-hang').textContent   = bang.hang.dem();
         document.getElementById('dem-dichvu').textContent = bang.dichvu.dem();

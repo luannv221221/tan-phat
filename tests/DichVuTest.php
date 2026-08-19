@@ -165,12 +165,29 @@ foreach (['add', 'edit'] as $v){
     ok(strpos($s, 'LOAI_DICH_VU') !== false,
        "quotations/$v: chia mat hang ve tab theo item_type");
 
-    // Tong tien phai co du 3 dong
-    foreach (['tong-hang', 'tong-dichvu', 'grand-total'] as $id){
-        ok(strpos($s, 'id="' . $id . '"') !== false, "quotations/$v: co o tong `$id`");
+    /* Tong tien phai co du cac dong. Dung CLASS chu khong phai id: khoi tong
+       ve o ca hai tab nen id se trung nhau, ma getElementById chi thay ban dau. */
+    foreach (['tong-hang', 'tong-dichvu', 'sub-total', 'tax-total', 'grand-total'] as $o){
+        ok(strpos($s, 'class="js-' . $o . '"') !== false, "quotations/$v: co o tong `$o`");
+        ok(strpos($s, 'id="' . $o . '"') === false,
+           "quotations/$v: `$o` khong dung id (ve 2 lan se trung id)");
     }
     ok(strpos($s, 'tHang + tDichVu') !== false,
        "quotations/$v: cong chua thue = tien hang hoa + tien dich vu");
+
+    /* Khoi tong tien phai nam trong <tfoot> cua chinh bang dong hang, giong
+       7 man hinh chung tu con lai (hoa don, phieu nhap, phieu xuat...).
+
+       Ban dau viet thanh .card-footer voi <div class="col-md-6 offset-md-6">.
+       offset-md-6 chua trong nua trai: do duoc 496 x 236 px nen trang tron
+       ngay duoi bang — nhin nhu noi dung nap hong. Dat trong <tfoot> thi
+       cot tien tu thang hang voi cot "Thanh tien" o tren, va khong con o trong. */
+    // codeOnly(): chinh file nay co comment trich lai doan markup cu de giai
+    // thich, grep thang vao text nguon se trung comment va bao fail oan.
+    ok(strpos(codeOnly($goc . 'app/views/admin/quotations/' . $v . '.php'), 'offset-md-') === false,
+       "quotations/$v: KHONG chua mot cot luoi rong canh khoi tong tien");
+    ok(strpos($s, '<tfoot>') !== false,
+       "quotations/$v: tong tien nam trong <tfoot> cua bang dong hang");
 }
 
 // ---------------------------------------------------------------------------
