@@ -98,15 +98,21 @@ class Products extends Controller {
         }
         $filters = array_merge($filters, $this->locTheoTab($tab));
 
+        /* Số dòng/trang do người dùng chọn ở chân bảng (?per_page=), 0 = tất cả.
+           Màn hình này cắt dưới CSDL bằng LIMIT/OFFSET chứ không cắt trên mảng
+           như các danh sách khác — catalogue hàng hoá là bảng dài nhất hệ thống. */
+        $perPage    = phan_trang_so_dong($this->perPage);
         $total      = $this->__model->countLists($filters, $keyword, $promo, $attrId, $attrVal);
-        $totalPages = (int) ceil($total / $this->perPage);
-        if ($totalPages > 0 && $page > $totalPages){
+        $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+        if ($totalPages < 1) $totalPages = 1;
+        if ($page > $totalPages){
             $page = $totalPages;
         }
-        $offset = ($page - 1) * $this->perPage;
+        $offset = ($page - 1) * $perPage;
 
         $this->__data['content']['page_name']     = $this->labelMany;
-        $dataList = $this->__model->getLists($filters, $keyword, $this->perPage, $offset, $promo, $attrId, $attrVal);
+        // getLists() hiểu limit = 0 là "lấy hết" nên "Tất cả" không cần nhánh riêng.
+        $dataList = $this->__model->getLists($filters, $keyword, $perPage, $offset, $promo, $attrId, $attrVal);
         $this->__data['content']['dataList']      = $dataList;
 
         // Ảnh đại diện cho cột "Ảnh". Ảnh nằm ở bảng part_images chứ không phải
@@ -143,7 +149,7 @@ class Products extends Controller {
         $this->__data['content']['filterAttrId']  = $attrId;
         $this->__data['content']['filterAttrVal'] = $attrVal;
         $this->__data['content']['page']          = $page;
-        $this->__data['content']['perPage']      = $this->perPage;
+        $this->__data['content']['perPage']      = $perPage;
         $this->__data['content']['total']        = $total;
         $this->__data['content']['totalPages']   = $totalPages;
         $this->__data['content']['msg']          = Session::flash('msg');
@@ -716,7 +722,7 @@ class Products extends Controller {
 
         $slug = slugify(!empty($f['slug']) ? $f['slug'] : $f['name']);
 
-        return [
+        $data = [
             'code'            => trim($f['code']),
             'oem_code'        => !empty($f['oem_code']) ? trim($f['oem_code']) : null,
             'name'            => trim($f['name']),

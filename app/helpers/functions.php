@@ -295,3 +295,161 @@ function nav_url($url){
     if (preg_match('~^https?://~i', $url)) return $url;
     return _WEB_URL . '/' . ltrim($url, '/');
 }
+
+/* ==========================================================================
+ * PHÂN TRANG DANH SÁCH ADMIN
+ *
+ * Trước đây chỉ Hàng hoá và Khách hàng có phân trang, mọi màn hình còn lại
+ * đổ HẾT bản ghi ra một trang. Danh sách chứng từ (báo giá, hoá đơn, phiếu
+ * kho...) chỉ dài thêm chứ không ngắn đi, nên sớm muộn cũng thành trang vài
+ * nghìn dòng.
+ *
+ * Cách cắt ở ĐÂY là cắt trên MẢNG đã lấy về, không phải LIMIT/OFFSET dưới
+ * CSDL. Đổi lại chỉ thêm 2 dòng cho mỗi controller thay vì phải sửa chữ ký
+ * getLists() của từng model (mỗi model một kiểu tham số). Với quy mô một
+ * gara thì truy vấn vẫn y như hiện tại — chỗ này không làm chậm thêm gì so
+ * với trước, chỉ cắt bớt phần đem ra vẽ.
+ *
+ * Màn hình nào ĐÃ cắt dưới CSDL (Hàng hoá, Khách hàng) thì giữ nguyên đường
+ * đó, chỉ mượn lại phần giao diện phan_trang_html().
+ * ========================================================================== */
+
+/** Các mức số dòng/trang cho ô chọn. 0 = xem tất cả (thêm riêng ở dưới). */
+function phan_trang_muc(){
+    return [10, 20, 50, 100];
+}
+
+/**
+ * Cắt $rows theo tham số ?page= và ?per_page= trên URL.
+ *
+ * @param  array $rows    toàn bộ bản ghi đã lấy về
+ * @param  int   $macDinh số dòng/trang khi URL chưa chọn gì
+ * @return array ['rows','total','perPage','page','totalPages','from','to']
+ *               perPage = 0 nghĩa là đang xem tất cả.
+ */
+function phan_trang_so_dong($macDinh = 20){
+    $raw = isset($_GET['per_page']) ? strtolower(trim((string) $_GET['per_page'])) : '';
+
+    if ($raw === 'all') return 0;                                   // xem tất cả
+    if ($raw !== '' && in_array((int) $raw, phan_trang_muc(), true)) return (int) $raw;
+
+    // Giá trị lạ (?per_page=99999) rơi về mặc định chứ không tin theo URL —
+    // không thì ai cũng ép được trang đổ hết bảng ra.
+    return (int) $macDinh;
+}
+
+function phan_trang(array $rows, $macDinh = 20){
+    $perPage = phan_trang_so_dong($macDinh);
+    $total   = count($rows);
+
+    // ceil(0/20) = 0 -> phải kẹp về 1, không thì $page thành 0 và offset âm,
+    // array_slice() với offset âm đếm ngược từ cuối mảng (trang rỗng ra dữ liệu).
+    $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+    if ($totalPages < 1) $totalPages = 1;
+
+    $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+    if ($page < 1) $page = 1;
+    if ($page > $totalPages) $page = $totalPages;
+
+    $offset = ($page - 1) * $perPage;
+
+    return [
+        // GIỮ KHOÁ (tham số thứ 4 = true): nhiều bảng đánh số thứ tự bằng
+        // {{$key+1}}. Đánh số lại từ 0 thì sang trang 2 cột STT lại chạy từ 1.
+        'rows'       => $perPage > 0 ? array_slice($rows, $offset, $perPage, true) : $rows,
+        'total'      => $total,
+        'perPage'    => $perPage,
+        'page'       => $page,
+        'totalPages' => $totalPages,
+        'from'       => $total > 0 ? $offset + 1 : 0,
+        'to'         => $perPage > 0 ? min($offset + $perPage, $total) : $total,
+    ];
+}
+
+/**
+ * Chuỗi query giữ nguyên bộ lọc hiện tại, bỏ các tham số của chính phân trang.
+ *
+ * `module` là tham số ĐƯỜNG DẪN do rewrite sinh ra (xem .htaccess), không phải
+ * bộ lọc — kéo theo là link ra /admin/quotations?module=admin/quotations.
+ */
+function phan_trang_qs(array $boThem = []){
+    $p = $_GET;
+    foreach (array_merge(['module', 'page', 'per_page'], $boThem) as $k){
+        unset($p[$k]);
+    }
+    return http_build_query($p);
+}
+
+/**
+ * Thanh phân trang (đặt trong .card-footer). Trả về chuỗi HTML.
+ *
+ * @param array  $pg      kết quả phan_trang()
+ * @param string $baseUrl URL danh sách. Để trống thì lấy chính URL đang mở —
+ *                        đúng cho mọi màn hình danh sách nên không view nào
+ *                        phải tự ghép, và không lệ thuộc biến $routeBase (có
+ *                        view không đặt biến này).
+ * @param string $nhan    danh từ đếm được: "báo giá", "hoá đơn"...
+ */
+function phan_trang_html(array $pg, $baseUrl = null, $nhan = 'dòng'){
+    if ($baseUrl === null){
+        $mod = isset($_GET['module']) ? trim((string) $_GET['module'], '/') : 'admin';
+        $baseUrl = _WEB_URL . '/' . $mod;
+    }
+    $qs = phan_trang_qs();
+
+    $lk = function($page, $perPage) use ($baseUrl, $qs){
+        $p = [];
+        if ($qs !== '') parse_str($qs, $p);
+        if ($perPage !== null) $p['per_page'] = $perPage;
+        elseif (isset($_GET['per_page'])) $p['per_page'] = $_GET['per_page'];
+        if ($page > 1) $p['page'] = $page;
+        $s = http_build_query($p);
+        return e($baseUrl . ($s !== '' ? '?' . $s : ''));
+    };
+
+    $total   = (int) $pg['total'];
+    $page    = (int) $pg['page'];
+    $pages   = (int) $pg['totalPages'];
+    $perPage = (int) $pg['perPage'];
+
+    // Ô chọn số dòng/trang. Là <select> chứ không phải chuỗi link vì có 5 mức,
+    // xếp hàng ngang thì chật và dễ bấm nhầm sang số trang ngay cạnh.
+    $opts = '';
+    foreach (phan_trang_muc() as $m){
+        $opts .= '<option value="' . $m . '"' . ($perPage === $m ? ' selected' : '') . '>' . $m . '</option>';
+    }
+    $opts .= '<option value="all"' . ($perPage === 0 ? ' selected' : '') . '>Tất cả</option>';
+
+    $chon = '<div class="d-flex align-items-center">'
+          . '<span class="text-muted small mr-2">Hiển thị</span>'
+          . '<select class="form-control form-control-sm js-per-page" style="width:auto"'
+          . ' data-base="' . e($baseUrl) . '" data-qs="' . e($qs) . '">' . $opts . '</select>'
+          . '<span class="text-muted small ml-2">'
+          . ($total > 0 ? (int) $pg['from'] . '–' . (int) $pg['to'] . ' / ' . $total : '0')
+          . ' ' . e($nhan) . '</span></div>';
+
+    if ($pages <= 1) return $chon;
+
+    // Cửa sổ 7 số quanh trang hiện tại; hai đầu luôn có trang 1 và trang cuối.
+    $start = max(1, $page - 3);
+    $end   = min($pages, $page + 3);
+
+    $ds = '<li class="page-item ' . ($page <= 1 ? 'disabled' : '') . '">'
+        . '<a class="page-link" href="' . $lk($page - 1, null) . '">&laquo;</a></li>';
+    if ($start > 1){
+        $ds .= '<li class="page-item"><a class="page-link" href="' . $lk(1, null) . '">1</a></li>'
+             . '<li class="page-item disabled"><span class="page-link">…</span></li>';
+    }
+    for ($i = $start; $i <= $end; $i++){
+        $ds .= '<li class="page-item ' . ($i === $page ? 'active' : '') . '">'
+             . '<a class="page-link" href="' . $lk($i, null) . '">' . $i . '</a></li>';
+    }
+    if ($end < $pages){
+        $ds .= '<li class="page-item disabled"><span class="page-link">…</span></li>'
+             . '<li class="page-item"><a class="page-link" href="' . $lk($pages, null) . '">' . $pages . '</a></li>';
+    }
+    $ds .= '<li class="page-item ' . ($page >= $pages ? 'disabled' : '') . '">'
+         . '<a class="page-link" href="' . $lk($page + 1, null) . '">&raquo;</a></li>';
+
+    return $chon . '<nav><ul class="pagination pagination-sm mb-0">' . $ds . '</ul></nav>';
+}

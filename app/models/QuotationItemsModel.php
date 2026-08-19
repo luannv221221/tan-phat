@@ -13,8 +13,10 @@ class QuotationItemsModel extends Model {
 
     public function getByQuotation($quotationId){
         return $this->table($this->_table)
+            // item_type để form báo giá xếp dòng vào đúng tab (Hàng hoá / Dịch vụ)
             ->select('`quotation_items`.*, `parts`.`code` AS part_code, '
-                   . '`parts`.`name` AS part_name, `part_units`.`name` AS unit_name')
+                   . '`parts`.`name` AS part_name, `parts`.`item_type` AS item_type, '
+                   . '`part_units`.`name` AS unit_name')
             ->joinOn('parts', 'quotation_items.part_id', 'parts.id')
             ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
             ->where('quotation_items.quotation_id', '=', (int) $quotationId)

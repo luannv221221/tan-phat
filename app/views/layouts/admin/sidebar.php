@@ -27,12 +27,16 @@ $isActive = function ($link) use ($currentUrl) {
  * `products` ("Quản lý hàng hoá") trước đây nằm chung nhóm với tin tức/banner.
  * Đó là danh mục sản phẩm lõi, không phải nội dung website — nay về nhóm
  * "Hàng hoá", đứng cạnh chính các danh mục phụ trợ của nó.
+ *
+ * `services` ("Dịch vụ") nằm NGAY DƯỚI `products` trong cùng nhóm chứ không
+ * tách thành nhóm riêng: dịch vụ vẫn là dòng trong bảng `parts`, và một nhóm
+ * chỉ chứa đúng một mục thì bấm hai lần mới tới nơi.
  */
 $menuGroups = [
     // --- Khu 1: việc hằng ngày ở quầy ---
     'Bán hàng'           => ['quotations', 'sales-invoices', 'orders', 'partners', 'bao-cao-ban-hang'],
     'Kho'                => ['goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
-    'Hàng hoá'           => ['products', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
+    'Hàng hoá'           => ['products', 'services', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
     'CSKH'               => ['customers', 'customer-groups', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'chat', 'contact-messages', 'reviews', 'newsletter', 'bao-cao-cskh'],
 

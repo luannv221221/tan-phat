@@ -371,8 +371,8 @@ foreach (['add', 'edit'] as $v){
 // ================================================================
 section('O so luong: mac dinh 1, co nut tang giam, phai > 0');
 
-$js2 = file_get_contents(__DIR__ . '/../public/assets/js/admin.js');
-ok(strpos($js2, 'window.soLuong') !== false, 'Ham soLuong dat trong admin.js (dung chung)');
+$js2 = file_get_contents(__DIR__ . '/../public/assets/js/so-input.js');
+ok(strpos($js2, 'window.soLuong') !== false, 'Ham soLuong dat trong so-input.js (dung chung)');
 ok(strpos($js2, "el.type = 'number'") !== false, 'O so luong la input number -> co nut tang/giam');
 ok(preg_match("~window\.soLuong.*?soHoa\(el, 0\.001, 1,~s", $js2) === 1,
    'So luong ban: min > 0, mac dinh 1');
@@ -471,10 +471,51 @@ foreach ($moiView as $v){
 ok(empty($ngayConText), 'Moi o NGAY deu dung type="date"', implode('; ', $ngayConText));
 
 // --- 3. Cac o do JS sinh ---
-$js = file_get_contents(__DIR__ . '/../public/assets/js/admin.js');
+$js = file_get_contents(__DIR__ . '/../public/assets/js/so-input.js');
 foreach (['soLuong', 'soDem', 'oTien', 'oPhanTram'] as $h){
-    ok(strpos($js, 'window.' . $h) !== false, "admin.js co ham $h()");
+    ok(strpos($js, 'window.' . $h) !== false, "so-input.js co ham $h()");
 }
+
+/* THU TU NAP SCRIPT — loi that, phat hien 19/08/2026 khi mo trang bang trinh duyet.
+
+   Bang dong hang cua bao gia / hoa don / phieu kho la <script> viet thang trong
+   view, chay NGAY giua <body>. admin.js lai nam cuoi <body>. Khi 4 ham tren con
+   nam trong admin.js thi view goi oTien(...) luc no chua ton tai:
+
+       Uncaught ReferenceError: oTien is not defined
+
+   Ca 12 man hinh dong hang khong dung noi mot dong, nut "Thêm dòng" chet theo.
+   Grep ma nguon van thay day du "oTien(" nen bo test cu PASS het — chi mo trang
+   that moi lo. Ba khang dinh duoi giu dung thu tu nay. */
+$layout = file_get_contents(__DIR__ . '/../app/views/layouts/admin/master_admin.php');
+$head   = substr($layout, 0, strpos($layout, '</head>'));
+
+ok(strpos($head, 'so-input.js') !== false,
+   'so-input.js nap trong <head> (truoc noi dung trang)',
+   'Nap sau noi dung la view goi phai ham chua dinh nghia');
+
+$adminJs = file_get_contents(__DIR__ . '/../public/assets/js/admin.js');
+foreach (['soLuong', 'soDem', 'oTien', 'oPhanTram'] as $h){
+    ok(strpos($adminJs, 'window.' . $h) === false,
+       "Ham $h() KHONG con nam trong admin.js (admin.js nap o cuoi <body>)");
+}
+
+// Moi ham ma script trong view goi toi deu phai duoc dinh nghia o file nap som
+$thieu = [];
+foreach (glob(__DIR__ . '/../app/views/admin/*/*.php') as $v){
+    $html = file_get_contents($v);
+    if (!preg_match_all('~<script>(.*?)</script>~s', $html, $mm)) continue;
+    foreach ($mm[1] as $block){
+        foreach (['soLuong', 'soDem', 'oTien', 'oPhanTram'] as $h){
+            if (strpos($block, $h . '(') === false) continue;
+            if (strpos($js, 'window.' . $h) === false){
+                $thieu[] = basename(dirname($v)) . '/' . basename($v) . ' -> ' . $h;
+            }
+        }
+    }
+}
+ok(empty($thieu), 'Ham nao view goi thi deu co trong file nap som',
+   implode('; ', array_unique($thieu)));
 ok(preg_match("~window\.oPhanTram.*?100\)~s", $js) === 1, 'Phan tram gioi han 0-100');
 ok(preg_match("~window\.oTien.*?soHoa\(el, 0, null, '1'\)~s", $js) === 1,
    'Tien: khong am, buoc 1 dong, DE TRONG duoc (khac han 0 dong)');

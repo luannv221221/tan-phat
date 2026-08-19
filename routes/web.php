@@ -58,6 +58,15 @@ Route::group('admin', function(){
 
    Route::get('users/delete/(\d+)', 'admin/users/delete/$1');
 
+   /* Dịch vụ — cùng bảng `parts` với hàng hoá (item_type = 'service'), chỉ
+      khác màn hình nhập: gọn còn tên + tiền. Xem app/controllers/admin/Services.php */
+   Route::get('services', 'admin/services');
+   Route::get('services/add', 'admin/services/add');
+   Route::post('services/add', 'admin/services/postAdd');
+   Route::get('services/edit/(\d+)', 'admin/services/edit/$1');
+   Route::post('services/edit/(\d+)', 'admin/services/postEdit/$1');
+   Route::get('services/delete/(\d+)', 'admin/services/delete/$1');
+
    //Route products (Quản lý phụ tùng — CRUD đầy đủ + gán đời xe)
    Route::get('products', 'admin/products');
    Route::get('products/add', 'admin/products/add');

@@ -54,6 +54,37 @@ class PartCategoriesModel extends Model {
         return $out;
     }
 
+    /**
+     * Một NHÁNH của cây, tính từ danh mục gốc có slug cho trước (kèm chính nó).
+     *
+     * Màn hình Dịch vụ chỉ được chọn danh mục nằm dưới nhánh "Dịch vụ" — đổ cả
+     * cây ra thì người nhập gán nhầm dịch vụ vào "Hệ thống phanh" và nó biến
+     * mất khỏi mọi bộ lọc theo nhóm.
+     *
+     * `depth` được tính LẠI từ gốc nhánh (gốc = 0) để thụt đầu dòng trong ô
+     * chọn không thừa một cấp.
+     */
+    public function nhanhTheoSlug($slug){
+        $cay = $this->getTree();
+
+        $goc = null;
+        foreach ($cay as $i => $c){
+            if ($c['slug'] === $slug){ $goc = $i; break; }
+        }
+        if ($goc === null) return [];
+
+        $mocDepth = (int) $cay[$goc]['depth'];
+        $out = [];
+        for ($i = $goc; $i < count($cay); $i++){
+            // getTree() duyệt theo chiều sâu nên cả nhánh nằm LIỀN nhau; gặp
+            // node có depth <= gốc (mà không phải chính gốc) là đã sang nhánh khác.
+            if ($i > $goc && (int) $cay[$i]['depth'] <= $mocDepth) break;
+            $cay[$i]['depth'] = (int) $cay[$i]['depth'] - $mocDepth;
+            $out[] = $cay[$i];
+        }
+        return $out;
+    }
+
     /** ID của mọi hậu duệ (con, cháu...) — để loại khỏi dropdown chọn cha khi sửa */
     public function getDescendantIds($id){
         $all = $this->table($this->_table)->select('`id`, `parent_id`')->get();

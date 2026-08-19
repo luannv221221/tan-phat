@@ -13,6 +13,13 @@
     <link type="text/css" rel="stylesheet" href="<?php echo asset('public/assets/css/admin-theme.css'); ?>"/>
     <!-- Font Awesome — còn vài view dùng <i class="fas ..."> trong nội dung -->
     <link rel="stylesheet" href="<?php echo _WEB_URL.'/public/assets/vendor/fontawesome/css/all.min.css' ?>"/>
+
+    <!-- soLuong() / soDem() / oTien() / oPhanTram() — PHẢI nạp ở <head>.
+         Bảng dòng hàng của báo giá, hoá đơn, phiếu kho là <script> viết thẳng
+         trong view nên chạy NGAY giữa <body>, trước mọi script cuối trang.
+         Để mấy hàm này trong admin.js (cuối body) là view gọi phải hàm chưa
+         tồn tại -> "oTien is not defined" và bảng không dựng nổi một dòng. -->
+    <script src="<?php echo asset('public/assets/js/so-input.js'); ?>"></script>
 </head>
 
 <body class="adm">

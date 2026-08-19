@@ -260,61 +260,27 @@
     sel.addEventListener('change', apDung);
     apDung();
 })();
-/* ============================================================
-   CÁC Ô NHẬP SỐ trong form quản trị
-   ============================================================
 
-   Ô để type="text" thì gõ "abc" vào Đơn giá vẫn trôi, tới lúc lưu mới
-   thành 0 mà không báo gì. Đổi hết sang type="number" để trình duyệt chặn
-   ngay và có sẵn nút tăng/giảm.
+/* ==========================================================================
+   Ô "Hiển thị [20] dòng" ở chân mọi bảng danh sách admin.
 
-   Đặt ở đây chứ không chép vào từng view: mẫu bảng dòng hàng nằm ở 12 file,
-   mỗi file một kiểu viết. Tất cả đều trả về chính phần tử để gọi lồng được:
-       td(oTien(inp('line_price[]', ...)))
-
-   step="any" cho phép số lẻ (2.5 lít dầu, VAT 8.5%) nhưng nút mũi tên vẫn
-   nhảy từng đơn vị.
-*/
+   Gắn ở document chứ không gắn từng ô: thanh phân trang do PHP dựng sẵn nên
+   lúc nào cũng có mặt từ đầu, nhưng làm thế này thì bảng nào nạp bằng ajax
+   sau đó cũng chạy luôn, khỏi phải nhớ gọi lại.
+   ========================================================================== */
 (function () {
-    'use strict';
+    document.addEventListener('change', function (e) {
+        var s = e.target;
+        if (!s || !s.classList || !s.classList.contains('js-per-page')) return;
 
-    function soHoa(el, min, macDinh, step, max) {
-        if (!el) return el;
+        var p = new URLSearchParams(s.getAttribute('data-qs') || '');
+        p.set('per_page', s.value);
 
-        el.type = 'number';
-        el.min  = String(min);
-        el.step = step || 'any';
-        if (max !== undefined) el.max = String(max);
-        if ((el.value === '' || el.value === null) && macDinh !== null) el.value = String(macDinh);
+        /* Bỏ ?page: đang ở trang 9 của mức 10 dòng, đổi sang mức 100 thì trang 9
+           không còn tồn tại. Về trang 1 cho chắc. */
+        p.delete('page');
 
-        // Gõ tay giá trị ngoài khoảng thì kéo về mức hợp lệ khi rời ô.
-        // Chặn ở đây cho người dùng thấy ngay; server vẫn tự lọc lại.
-        el.addEventListener('blur', function () {
-            var v = parseFloat(el.value);
-            if (el.value === '' && macDinh === null) return;   // cho phép để trống
-            if (!isFinite(v) || v < min) v = (macDinh !== null ? macDinh : min);
-            if (max !== undefined && v > max) v = max;
-            if (String(v) !== el.value) {
-                el.value = String(v);
-                el.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-        });
-
-        return el;
-    }
-
-    /* Số lượng bán / nhập / xuất / chuyển: bắt buộc > 0, mặc định 1.
-       min là 0.001 chứ không phải 1 để vẫn nhập được 2.5 lít dầu. */
-    window.soLuong = function (el) { return soHoa(el, 0.001, 1, 'any'); };
-
-    /* Số ĐẾM khi kiểm kê: 0 là hợp lệ và rất quan trọng — "sổ ghi 5, thực tế
-       không còn cái nào". Ép về 1 như số lượng bán là che mất khoản thiếu. */
-    window.soDem = function (el) { return soHoa(el, 0, 0, 'any'); };
-
-    /* Tiền (VNĐ): không âm, bước 1 đồng. Để TRỐNG được — đơn giá bỏ trống
-       nghĩa là chưa nhập, khác hẳn với 0 đồng. */
-    window.oTien = function (el) { return soHoa(el, 0, null, '1'); };
-
-    /* Phần trăm (CK, VAT): 0–100. */
-    window.oPhanTram = function (el) { return soHoa(el, 0, null, 'any', 100); };
+        var qs = p.toString();
+        window.location.href = s.getAttribute('data-base') + (qs ? '?' + qs : '');
+    });
 })();

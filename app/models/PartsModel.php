@@ -405,6 +405,48 @@ class PartsModel extends Model {
         return $this->table($this->_table)->where('code', '=', $code)->first();
     }
 
+    /**
+     * Mã tự sinh theo tiền tố, ví dụ nextCode('DV-') -> 'DV-0001'.
+     *
+     * Đọc số ĐUÔI của mọi mã cùng tiền tố rồi +1, chứ không đếm số dòng: xoá
+     * một dịch vụ giữa chừng là số dòng tụt xuống và mã mới đè lên mã cũ.
+     * Vẫn kiểm tra lại bằng findByCode() phòng khi có mã nhập tay chen vào.
+     */
+    public function nextCode($prefix){
+        $rows = $this->table($this->_table)->select('`code`')
+                     ->whereLike('code', $prefix . '%')->get();
+
+        $max = 0;
+        foreach ($rows ?: [] as $r){
+            if (preg_match('/(\d+)$/', $r['code'], $m)) $max = max($max, (int) $m[1]);
+        }
+
+        for ($i = $max + 1; $i < $max + 1000; $i++){
+            $ma = $prefix . str_pad($i, 4, '0', STR_PAD_LEFT);
+            if (empty($this->findByCode($ma))) return $ma;
+        }
+        return $prefix . time();
+    }
+
+    /**
+     * Slug chưa ai dùng, sinh từ $ten. $boQuaId là chính bản ghi đang sửa.
+     *
+     * Màn hình Dịch vụ không có ô slug (khách chỉ nhập tên + tiền) nên phải tự
+     * né trùng ở đây; hai dịch vụ trùng tên là chuyện thường ("Thay dầu").
+     */
+    public function slugTrong($ten, $boQuaId = null){
+        $goc = slugify($ten);
+        if ($goc === '') $goc = 'dich-vu';
+
+        $slug = $goc;
+        for ($i = 2; $i < 1000; $i++){
+            $co = $this->findBySlug($slug);
+            if (empty($co) || ($boQuaId !== null && (int) $co['id'] === (int) $boQuaId)) return $slug;
+            $slug = $goc . '-' . $i;
+        }
+        return $goc . '-' . time();
+    }
+
     public function add($data){
         $data['create_at'] = date('Y-m-d H:i:s');
         $this->addNew($data);

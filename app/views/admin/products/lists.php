@@ -22,10 +22,10 @@ $tabUrl = function ($tab) use ($qs){
     return _WEB_URL . '/admin/products' . ($s !== '' ? '?' . $s : '');
 };
 
-$pStart = max(1, $page - 3);
-$pEnd   = min($totalPages, $page + 3);
-$from   = $total > 0 ? ($page - 1) * $perPage + 1 : 0;
-$to     = min($page * $perPage, $total);
+/* perPage = 0 nghĩa là "Tất cả": $page*$perPage ra 0 nên min() cho $to = 0
+   và dòng "Hiển thị 1-0" là sai. Tách nhánh riêng. */
+$from = $total > 0 ? ($perPage > 0 ? ($page - 1) * $perPage + 1 : 1) : 0;
+$to   = $perPage > 0 ? min($page * $perPage, $total) : $total;
 ?>
 @if (!empty($msg))
 <div class="alert alert-success alert-dismissible">
@@ -209,36 +209,11 @@ $to     = min($page * $perPage, $total);
         </table>
     </div>
 
-    @if ($total > 0)
-    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap">
-        <span class="text-muted small">Hiển thị {{$from}}–{{$to}} trên tổng {{$total}} hàng hoá</span>
-        @if ($totalPages > 1)
-        <nav>
-            <ul class="pagination pagination-sm mb-0">
-                <li class="page-item {{$page<=1?'disabled':''}}">
-                    <a class="page-link" href="{{_WEB_URL.'/admin/'.$routeBase.'?page='.($page-1).$qs}}">«</a>
-                </li>
-                @if ($pStart > 1)
-                <li class="page-item"><a class="page-link" href="{{_WEB_URL.'/admin/'.$routeBase.'?page=1'.$qs}}">1</a></li>
-                <li class="page-item disabled"><span class="page-link">…</span></li>
-                @endif
-                @for ($p = $pStart; $p <= $pEnd; $p++)
-                <li class="page-item {{$p==$page?'active':''}}">
-                    <a class="page-link" href="{{_WEB_URL.'/admin/'.$routeBase.'?page='.$p.$qs}}">{{$p}}</a>
-                </li>
-                @endfor
-                @if ($pEnd < $totalPages)
-                <li class="page-item disabled"><span class="page-link">…</span></li>
-                <li class="page-item"><a class="page-link" href="{{_WEB_URL.'/admin/'.$routeBase.'?page='.$totalPages.$qs}}">{{$totalPages}}</a></li>
-                @endif
-                <li class="page-item {{$page>=$totalPages?'disabled':''}}">
-                    <a class="page-link" href="{{_WEB_URL.'/admin/'.$routeBase.'?page='.($page+1).$qs}}">»</a>
-                </li>
-            </ul>
-        </nav>
-        @endif
+<?php if ($total > 0): ?>
+    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem">
+        {!! phan_trang_html(['total'=>$total,'perPage'=>$perPage,'page'=>$page,'totalPages'=>$totalPages,'from'=>$from,'to'=>$to], _WEB_URL.'/admin/'.$routeBase, 'hàng hoá') !!}
     </div>
-    @endif
+<?php endif; ?>
 </div>
 
 <script>

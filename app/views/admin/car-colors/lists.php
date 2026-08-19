@@ -1,3 +1,4 @@
+<?php $pg = phan_trang((array) $dataList); $dataList = $pg['rows']; ?>
 @if (!empty($msg))
 <div class="alert alert-success alert-dismissible">
     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
@@ -70,4 +71,9 @@
             </tbody>
         </table>
     </div>
+<?php if ($pg['total'] > 0): ?>
+    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem">
+        {!! phan_trang_html($pg) !!}
+    </div>
+<?php endif; ?>
 </div>

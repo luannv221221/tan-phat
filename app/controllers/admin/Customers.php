@@ -45,18 +45,26 @@ class Customers extends Controller {
         $status  = isset($f['status']) ? (string) $f['status'] : '';
         $page    = (isset($f['page']) && (int) $f['page'] > 0) ? (int) $f['page'] : 1;
 
+        // Số dòng/trang chọn ở chân bảng; 0 = "Tất cả".
+        $perPage    = phan_trang_so_dong($this->perPage);
         $total      = $this->__model->adminCount($keyword, $status);
-        $totalPages = (int) ceil($total / $this->perPage);
-        if ($totalPages > 0 && $page > $totalPages) $page = $totalPages;
+        $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
+        if ($totalPages < 1) $totalPages = 1;
+        if ($page > $totalPages) $page = $totalPages;
+
+        /* adminList() ghép thẳng vào "LIMIT n" — mà LIMIT 0 trong MySQL là
+           KHÔNG dòng nào chứ không phải "hết". Nên "Tất cả" phải quy ra một
+           số thật lớn, không truyền 0 xuống. */
+        $limit = $perPage > 0 ? $perPage : PHP_INT_MAX;
 
         $this->baseData();
         $c = &$this->__data['content'];
         $c['page_name']  = $this->labelMany;
-        $c['dataList']   = $this->__model->adminList($keyword, $status, $this->perPage, ($page - 1) * $this->perPage);
+        $c['dataList']   = $this->__model->adminList($keyword, $status, $limit, ($page - 1) * $perPage);
         $c['keyword']    = $keyword;
         $c['filterSt']   = $status;
         $c['page']       = $page;
-        $c['perPage']    = $this->perPage;
+        $c['perPage']    = $perPage;
         $c['total']      = $total;
         $c['totalPages'] = $totalPages;
         $c['msg']        = Session::flash('msg');

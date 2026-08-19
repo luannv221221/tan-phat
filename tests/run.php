@@ -24,6 +24,8 @@ $tests = [
     'RememberLoginTest.php'       => 'BAO MAT — ghi nho dang nhap admin',
     'StockGuardTest.php'          => 'NGHIEP VU — chot an toan cua kho (ton am, transaction long)',
     'ItemTypeTest.php'            => 'NGHIEP VU — phan loai phu tung / thiet bi / dich vu',
+    'PhanTrangTest.php'           => 'GIAO DIEN — phan trang + o chon so dong/trang',
+    'DichVuTest.php'              => 'NGHIEP VU — man hinh Dich vu + tab bao gia',
 ];
 
 $php      = PHP_BINARY;

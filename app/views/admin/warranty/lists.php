@@ -1,3 +1,4 @@
+<?php $pg = phan_trang((array) $dataList); $dataList = $pg['rows']; ?>
 <?php
 $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'success', 'cancelled' => 'danger'];
 ?>
@@ -84,4 +85,9 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
             </tbody>
         </table>
     </div>
+<?php if ($pg['total'] > 0): ?>
+    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem">
+        {!! phan_trang_html($pg) !!}
+    </div>
+<?php endif; ?>
 </div>

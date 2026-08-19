@@ -86,12 +86,15 @@
         </table>
     </div>
 
-    @if ($totalPages > 1)
-    <div class="card-footer text-center">
-        @for ($i = 1; $i <= $totalPages; $i++)
-            <a class="btn btn-sm {{$i===(int)$page?'btn-primary':'btn-default'}}"
-               href="{{_WEB_URL.'/admin/'.$routeBase.'?page='.$i.'&keyword='.urlencode($keyword).'&status='.urlencode($filterSt)}}">{{$i}}</a>
-        @endfor
+<?php
+/* Chân bảng dùng chung phan_trang_html() như mọi danh sách khác. Bản cũ tự vẽ
+   một dãy nút số, và tự ghép ?keyword=&status= — thêm bộ lọc mới là quên sửa;
+   hàm dùng chung giữ NGUYÊN mọi tham số đang có trên URL. */
+$from = $total > 0 ? ($perPage > 0 ? ($page - 1) * $perPage + 1 : 1) : 0;
+$to   = $perPage > 0 ? min($page * $perPage, $total) : $total;
+if ($total > 0): ?>
+    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap" style="gap:.5rem">
+        {!! phan_trang_html(['total'=>$total,'perPage'=>$perPage,'page'=>$page,'totalPages'=>$totalPages,'from'=>$from,'to'=>$to], _WEB_URL.'/admin/'.$routeBase, 'khách hàng') !!}
     </div>
-    @endif
+<?php endif; ?>
 </div>

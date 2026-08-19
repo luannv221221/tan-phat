@@ -262,17 +262,40 @@ class Quotations extends Controller {
         $f = $this->__request->getFields();
         $errors = [];
         if (empty($f['quote_date'])) $errors['quote_date'] = 'Chọn ngày báo giá';
-        if (empty($this->buildLines())) $errors['lines'] = 'Báo giá phải có ít nhất 1 dòng hàng';
+        // "hàng hoá HOẶC dịch vụ": báo giá chỉ toàn dịch vụ (thay dầu, rửa xe)
+        // là hoàn toàn hợp lệ với một gara.
+        if (empty($this->buildLines())) $errors['lines'] = 'Báo giá phải có ít nhất 1 dòng hàng hoá hoặc dịch vụ';
         return $errors;
     }
 
+    /**
+     * Dòng báo giá gộp từ CẢ HAI tab: Hàng hoá (line_*) và Dịch vụ (sv_*).
+     *
+     * Hai tab là chuyện của giao diện — xuống CSDL vẫn là `quotation_items`
+     * chung một bảng, phân biệt nhau bằng `parts.item_type`. Nhờ vậy tổng tiền,
+     * thuế và bước "chuyển thành hoá đơn" không phải biết gì về tab.
+     *
+     * Tên ô của hai bảng phải KHÁC nhau (line_ / sv_). Dùng chung một tên thì
+     * thứ tự phần tử phụ thuộc thứ tự DOM — chỉ cần đổi chỗ hai tab hoặc bọc
+     * thêm một thẻ là số lượng lệch sang mặt hàng khác mà không báo lỗi gì.
+     */
     private function buildLines(){
+        return array_merge($this->docDong('line_'), $this->docDong('sv_'));
+    }
+
+    /** Đọc một bảng dòng hàng theo tiền tố tên ô ('line_' hoặc 'sv_') */
+    private function docDong($tienTo){
         $f      = $this->__request->getFields();
-        $parts  = isset($f['line_part'])  && is_array($f['line_part'])  ? $f['line_part']  : [];
-        $qtys   = isset($f['line_qty'])   && is_array($f['line_qty'])   ? $f['line_qty']   : [];
-        $prices = isset($f['line_price']) && is_array($f['line_price']) ? $f['line_price'] : [];
-        $discs  = isset($f['line_disc'])  && is_array($f['line_disc'])  ? $f['line_disc']  : [];
-        $notes  = isset($f['line_note'])  && is_array($f['line_note'])  ? $f['line_note']  : [];
+        $lay    = function($ten) use ($f, $tienTo){
+            $k = $tienTo . $ten;
+            return isset($f[$k]) && is_array($f[$k]) ? $f[$k] : [];
+        };
+
+        $parts  = $lay('part');
+        $qtys   = $lay('qty');
+        $prices = $lay('price');
+        $discs  = $lay('disc');
+        $notes  = $lay('note');
 
         $lines = [];
         foreach ($parts as $i => $p){
