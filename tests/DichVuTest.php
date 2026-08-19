@@ -220,6 +220,42 @@ foreach (['quotations/add', 'quotations/edit',
 }
 
 // ---------------------------------------------------------------------------
+section('Da chon mat hang o dong nay thi dong khac khong chon lai duoc');
+
+/* Khach bao 19/08/2026: chon PT-0008 o mot dong roi van chon lai duoc chinh
+   no o dong duoi. Trung dong la loi nhap lieu chu khong phai nhu cau — can
+   nhieu thi tang so luong. Loc thang khoi danh sach thi khong bam nham duoc,
+   thay vi cho chon xong moi bao loi. */
+foreach (['quotations/add', 'quotations/edit',
+          'sales-invoices/add', 'sales-invoices/edit'] as $v){
+    $s  = file_get_contents($goc . 'app/views/admin/' . $v . '.php');
+    preg_match('~<script>(.*?)</script>~s', $s, $m);
+    $ma = preg_replace('~/\*.*?\*/~s', '', isset($m[1]) ? $m[1] : '');
+    $ma = preg_replace('~//[^
+]*~', '', $ma);
+
+    ok(strpos($ma, 'function napOption') !== false,
+       "$v: co ham nap lai danh sach o chon");
+    ok(preg_match('~oDongKhac\[s\.value\]\s*=\s*true~', $ma) === 1,
+       "$v: gom cac mat hang dang dung o dong KHAC");
+    ok(preg_match('~if \(oDongKhac\[op\.id\][^
+]*return;~', $ma) === 1,
+       "$v: bo mat hang da co o dong khac ra khoi danh sach");
+
+    /* Phai GIU mat hang chinh dong nay dang chon. Phieu lap truoc khi co luat
+       nay co the da co dong trung (HD-000005 dang co 2 dong PT-0006) — loc
+       mat thi mo phieu ra thay o trong, luu mot cai la bay luon dong do. */
+    ok(strpos($ma, 'String(op.id) !== String(dangChon)') !== false,
+       "$v: VAN giu mat hang chinh dong nay dang chon (phieu cu co the da trung)");
+
+    ok(strpos($ma, 'napLaiTatCa();') !== false, "$v: doi/xoa dong thi nap lai moi o chon");
+    ok(preg_match('~r\.remove\(\);\s*napLaiTatCa\(\);~', $ma) === 1,
+       "$v: xoa dong thi tra mat hang ve danh sach");
+    ok(strpos($ma, 'conHangDeChon()') !== false,
+       "$v: het hang de chon thi thoi de dong trong");
+}
+
+// ---------------------------------------------------------------------------
 section('Controller bao gia gop dong cua ca hai tab');
 
 $q = codeOnly($goc . 'app/controllers/admin/Quotations.php');

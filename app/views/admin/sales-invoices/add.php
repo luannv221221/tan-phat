@@ -231,15 +231,56 @@ $tabs = [
             s.name = tienTo + 'part[]';
             s.className = 'form-control form-control-sm part-sel js-search';
             s.setAttribute('data-placeholder', nhanTrong);
-            var o0 = document.createElement('option'); o0.value = ''; o0.textContent = nhanTrong; s.appendChild(o0);
+            napOption(s, selected);
+            return s;
+        }
+
+        /* Nạp danh sách cho MỘT ô chọn, BỎ những mặt hàng đã có ở dòng khác.
+
+           Chọn trùng một mặt hàng trên hai dòng là lỗi nhập liệu chứ không phải
+           nhu cầu — cần nhiều thì tăng số lượng. Lọc thẳng khỏi danh sách thì
+           không bấm nhầm được, thay vì cho chọn xong mới báo lỗi.
+
+           GIỮ LẠI mặt hàng chính dòng này đang chọn, kể cả khi nó trùng với
+           dòng khác: phiếu lập trước khi có luật này có thể đã có dòng trùng
+           (HD-000005 đang có 2 dòng PT-0006). Lọc mất thì mở phiếu ra thấy ô
+           trống, lưu một cái là bay luôn dòng đó.
+
+           Ô tìm kiếm phủ bên trên đọc thẳng select.options mỗi lần gõ, nên sửa
+           ở đây là nó tự theo, không phải đụng gì thêm. */
+        function napOption(sel, dangChon){
+            if (dangChon === undefined) dangChon = sel.value;
+
+            var oDongKhac = {};
+            tbody.querySelectorAll('.line-row select.part-sel').forEach(function (s){
+                if (s !== sel && s.value) oDongKhac[s.value] = true;
+            });
+
+            sel.textContent = '';
+            var o0 = document.createElement('option');
+            o0.value = ''; o0.textContent = nhanTrong; sel.appendChild(o0);
+
             DS.forEach(function (op){
+                if (oDongKhac[op.id] && String(op.id) !== String(dangChon)) return;
                 var o = document.createElement('option');
                 o.value = op.id; o.textContent = op.label; o.setAttribute('data-price', op.price);
                 if (op.img) o.setAttribute('data-img', op.img);
-                if (String(op.id) === String(selected)) o.selected = true;
-                s.appendChild(o);
+                if (String(op.id) === String(dangChon)) o.selected = true;
+                sel.appendChild(o);
             });
-            return s;
+        }
+
+        // Đổi/xoá một dòng là danh sách của MỌI dòng khác đều đổi theo
+        function napLaiTatCa(){
+            tbody.querySelectorAll('.line-row select.part-sel').forEach(function (s){ napOption(s); });
+        }
+
+        // Hết hàng để chọn thì thôi đẻ dòng trống, không thì ra một dòng rỗng
+        // mà mở danh sách ra chẳng có gì.
+        function conHangDeChon(){
+            var dung = {};
+            tbody.querySelectorAll('.line-row select.part-sel').forEach(function (s){ if (s.value) dung[s.value] = true; });
+            return DS.some(function (op){ return !dung[op.id]; });
         }
         function td(child, cls){ var t = document.createElement('td'); if (cls) t.className = cls; if (child) t.appendChild(child); return t; }
         function inp(name, cls, val){ var i = document.createElement('input'); i.type = 'text'; i.name = name; i.className = 'form-control form-control-sm ' + cls; i.value = (val === 0 || val) ? val : ''; return i; }
@@ -268,10 +309,12 @@ $tabs = [
                    cũ ra sửa KHÔNG bị ảnh hưởng: dòng cũ dựng thẳng từ dữ liệu
                    đã lưu, không đi qua sự kiện change này. */
                 if (p) price.value = p;
+                // Mặt hàng vừa đổi -> mọi ô chọn khác phải bỏ/thêm nó lại
+                napLaiTatCa();
                 recompute();
                 // Chọn xong ở dòng CUỐI thì tự đẻ dòng trống kế tiếp — xem giải
                 // thích đầy đủ ở quotations/add.php.
-                if (sel.value && tr === tbody.lastElementChild) addRow();
+                if (sel.value && tr === tbody.lastElementChild && conHangDeChon()) addRow();
             });
             tr.appendChild(td(sel));
 
@@ -320,7 +363,7 @@ $tabs = [
         document.getElementById('add-' + ma).addEventListener('click', function (){ addRow(); });
         tbody.addEventListener('click', function (e){
             if (e.target && e.target.classList.contains('rm-row')){
-                var r = e.target.closest('.line-row'); if (r) r.remove(); recompute();
+                var r = e.target.closest('.line-row'); if (r) r.remove(); napLaiTatCa(); recompute();
             }
         });
 
