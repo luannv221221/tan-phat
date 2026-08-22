@@ -1,0 +1,16 @@
+# Tai lieu noi bo — KHONG phuc vu ra web.
+#
+# Thu muc du an nam trong webroot cua Apache nen moi file o day deu co mot URL
+# cong khai. .htaccess goc da chan duoi .md, nhung .html thi khong — da kiem
+# tra: docs/huong-dan-kho.html tra ve 200 truoc khi co file nay.
+#
+# Chan ca thu muc thay vi liet ke tung duoi, de sau nay them file kieu gi
+# (anh chup man hinh, PDF, sơ do) cung khong lo ra ngoai.
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>

@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Hướng dẫn sử dụng phần Kho — Tân Phát</title>
+<meta name="description" content="Hướng dẫn cho thủ kho, kế toán và quản lý gara: mười màn hình trong menu Kho dùng để làm gì và thao tác thế nào."/>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --nen:       #FBFAF8;
+  --the:       #FFFFFF;
+  --nen-phu:   #F2F1ED;
+  --chu:       #1E2422;
+  --chu-mo:    #5B6A66;
+  --vien:      #E0DFD9;
+  --vien-dam:  #C6C9C2;
+  --xanh:      #0F6E5C;
+  --xanh-nen:  #E4F0EC;
+  --hophach:   #A85E14;
+  --hophach-nen:#F8EEE0;
+  --do:        #A6392C;
+  --do-nen:    #F8E9E6;
+  --bong:      0 1px 2px rgba(30,36,34,.05), 0 10px 30px -22px rgba(30,36,34,.5);
+
+  --f-de:  Archivo, "Segoe UI", system-ui, sans-serif;
+  --f-doc: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --f-ma:  "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --nen:       #161A19;
+    --the:       #1D2322;
+    --nen-phu:   #232A28;
+    --chu:       #E6E9E6;
+    --chu-mo:    #9BA8A3;
+    --vien:      #2E3634;
+    --vien-dam:  #43504C;
+    --xanh:      #58C0A5;
+    --xanh-nen:  #12312A;
+    --hophach:   #DFA45E;
+    --hophach-nen:#33260F;
+    --do:        #E08878;
+    --do-nen:    #331F1B;
+    --bong:      0 1px 2px rgba(0,0,0,.45), 0 10px 30px -22px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --nen:       #161A19;
+  --the:       #1D2322;
+  --nen-phu:   #232A28;
+  --chu:       #E6E9E6;
+  --chu-mo:    #9BA8A3;
+  --vien:      #2E3634;
+  --vien-dam:  #43504C;
+  --xanh:      #58C0A5;
+  --xanh-nen:  #12312A;
+  --hophach:   #DFA45E;
+  --hophach-nen:#33260F;
+  --do:        #E08878;
+  --do-nen:    #331F1B;
+  --bong:      0 1px 2px rgba(0,0,0,.45), 0 10px 30px -22px rgba(0,0,0,.9);
+}
+
+*{ box-sizing: border-box; }
+body{
+  margin: 0;
+  background: var(--nen);
+  color: var(--chu);
+  font-family: var(--f-doc);
+  font-size: 16.5px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+html{ scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior: auto; }
+  *{ animation: none !important; transition: none !important; }
+}
+
+.bao{ max-width: 1160px; margin: 0 auto; padding: 0 22px 90px; }
+
+/* ---------- Đầu trang ---------- */
+.dau{
+  padding: 54px 0 34px;
+  border-bottom: 1px solid var(--vien-dam);
+  margin-bottom: 40px;
+}
+.eyebrow{
+  font-family: var(--f-ma);
+  font-size: 11.5px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--xanh);
+  margin: 0 0 12px;
+}
+.dau h1{
+  font-family: var(--f-de);
+  font-weight: 700;
+  font-size: clamp(31px, 5vw, 50px);
+  line-height: 1.08;
+  letter-spacing: -.02em;
+  margin: 0 0 16px;
+  text-wrap: balance;
+}
+.dau .dan{ max-width: 60ch; color: var(--chu-mo); font-size: 17px; margin: 0; }
+
+/* ---------- Ô vàng "quan trọng nhất" ---------- */
+.mo-dau{
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-top: 4px solid var(--hophach);
+  border-radius: 5px;
+  padding: 28px 30px;
+  margin-bottom: 44px;
+  box-shadow: var(--bong);
+}
+.mo-dau h2{
+  font-family: var(--f-de);
+  font-weight: 700;
+  font-size: 22px;
+  margin: 0 0 14px;
+  letter-spacing: -.01em;
+}
+.hai-buoc{
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 18px;
+  align-items: stretch;
+  margin: 22px 0;
+}
+@media (max-width: 620px){
+  .hai-buoc{ grid-template-columns: 1fr; }
+  .hai-buoc .mui-ten{ transform: rotate(90deg); }
+}
+.buoc{
+  background: var(--nen-phu);
+  border-radius: 4px;
+  padding: 16px 18px;
+}
+.buoc b{ display: block; font-family: var(--f-de); font-size: 15.5px; margin-bottom: 4px; }
+.buoc span{ font-size: 14.5px; color: var(--chu-mo); line-height: 1.6; display: block; }
+.mui-ten{
+  align-self: center;
+  font-family: var(--f-ma);
+  color: var(--hophach);
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+/* ---------- Chung ---------- */
+h2.muc{
+  font-family: var(--f-de);
+  font-weight: 700;
+  font-size: clamp(22px, 3vw, 29px);
+  letter-spacing: -.015em;
+  line-height: 1.2;
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+.phu-de{ color: var(--chu-mo); margin: 0 0 24px; max-width: 66ch; }
+h3{
+  font-family: var(--f-de);
+  font-weight: 600;
+  font-size: 16px;
+  margin: 22px 0 8px;
+  letter-spacing: -.005em;
+}
+p{ margin: 0 0 14px; max-width: 66ch; }
+ul{ margin: 0 0 14px; padding-left: 20px; max-width: 66ch; }
+li{ margin-bottom: 5px; }
+strong{ font-weight: 600; }
+em{ color: var(--chu-mo); }
+code{
+  font-family: var(--f-ma);
+  font-size: .87em;
+  background: var(--nen-phu);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+section{ margin-bottom: 52px; scroll-margin-top: 20px; }
+
+/* ---------- Bảng ---------- */
+.cuon{ overflow-x: auto; margin-bottom: 20px; }
+table{ width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td{ text-align: left; padding: 10px 16px 10px 0; border-bottom: 1px solid var(--vien); vertical-align: top; }
+thead th{
+  font-family: var(--f-ma);
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--chu-mo);
+  border-bottom: 1px solid var(--vien-dam);
+}
+tbody tr:last-child td{ border-bottom: 1px solid var(--vien-dam); }
+
+/* ---------- Thẻ màn hình ---------- */
+.luoi-man{ display: grid; gap: 20px; }
+.man{
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-radius: 5px;
+  padding: 24px 26px;
+  box-shadow: var(--bong);
+}
+.man > header{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: baseline;
+  border-bottom: 1px solid var(--vien);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+.man .so{
+  font-family: var(--f-ma);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--xanh);
+  border: 1px solid var(--xanh);
+  border-radius: 2px;
+  padding: 1px 7px;
+}
+.man h2{
+  font-family: var(--f-de);
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0;
+  letter-spacing: -.01em;
+}
+.man .vai-tro{
+  font-family: var(--f-ma);
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--chu-mo);
+  display: block;
+  margin-top: 3px;
+}
+.man p, .man ul, .man ol{ max-width: 68ch; }
+.man > *:last-child{ margin-bottom: 0; }
+
+ol.buoc-lam{
+  counter-reset: b;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  max-width: 68ch;
+}
+ol.buoc-lam li{
+  counter-increment: b;
+  position: relative;
+  padding-left: 34px;
+  margin-bottom: 9px;
+}
+ol.buoc-lam li::before{
+  content: counter(b);
+  position: absolute;
+  left: 0; top: 3px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--xanh-nen);
+  color: var(--xanh);
+  font-family: var(--f-ma);
+  font-size: 11.5px;
+  display: grid;
+  place-items: center;
+  font-weight: 500;
+}
+ol.buoc-lam ul{ margin-top: 6px; }
+
+/* ---------- Ghi chú ---------- */
+.hop{
+  border-left: 3px solid var(--xanh);
+  background: var(--xanh-nen);
+  padding: 13px 17px;
+  border-radius: 0 4px 4px 0;
+  margin: 0 0 16px;
+  font-size: 15px;
+  max-width: 70ch;
+}
+.hop.canh{ border-left-color: var(--hophach); background: var(--hophach-nen); }
+.hop.dung{ border-left-color: var(--do); background: var(--do-nen); }
+.hop p:last-child{ margin-bottom: 0; }
+.hop .nhan{
+  font-family: var(--f-ma);
+  font-size: 10.5px;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+  color: var(--xanh);
+}
+.hop.canh .nhan{ color: var(--hophach); }
+.hop.dung .nhan{ color: var(--do); }
+
+/* ---------- Lỗi thường gặp ---------- */
+.loi{
+  border: 1px solid var(--vien);
+  border-radius: 5px;
+  background: var(--the);
+  padding: 18px 22px;
+  margin-bottom: 14px;
+}
+.loi h3{
+  margin: 0 0 8px;
+  font-family: var(--f-doc);
+  font-weight: 600;
+  font-size: 15.5px;
+  color: var(--do);
+}
+.loi p{ margin-bottom: 0; font-size: 15px; }
+.loi p + p{ margin-top: 8px; }
+
+/* ---------- Lịch việc ---------- */
+.lich{ display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 18px; margin-bottom: 8px; }
+.lich > div{
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-top: 3px solid var(--xanh);
+  border-radius: 5px;
+  padding: 18px 20px;
+}
+.lich h3{ margin: 0 0 8px; font-size: 15px; }
+.lich ul{ margin: 0; padding-left: 18px; font-size: 15px; }
+
+/* ---------- Ba nguyên tắc ---------- */
+.nguyen-tac{ display: grid; gap: 14px; }
+.nguyen-tac > div{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+  background: var(--nen-phu);
+  border-radius: 5px;
+  padding: 18px 22px;
+}
+.nguyen-tac .k{
+  font-family: var(--f-de);
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--xanh);
+  line-height: 1;
+  opacity: .55;
+}
+.nguyen-tac b{ display: block; font-family: var(--f-de); font-size: 16px; margin-bottom: 3px; }
+.nguyen-tac span{ color: var(--chu-mo); font-size: 15px; }
+
+.chan{
+  margin-top: 44px;
+  padding-top: 20px;
+  border-top: 1px solid var(--vien-dam);
+  color: var(--chu-mo);
+  font-size: 14px;
+  max-width: 66ch;
+}
+
+/* ---------- In ra giấy / lưu PDF ----------
+   Tài liệu này để phát cho nhân viên nên phải in được tử tế: nền trắng, chữ đen,
+   không cắt đôi một thẻ màn hình giữa hai trang. */
+@media print{
+  @page{ size: A4 portrait; margin: 14mm 13mm; }
+  html{ scroll-behavior: auto; }
+  body{
+    background: #fff; color: #000;
+    font-size: 10.5pt; line-height: 1.5;
+  }
+  .bao{ max-width: none; padding: 0; }
+
+  .dau{ padding-top: 0; border-bottom: 2px solid #000; }
+  .dau h1{ font-size: 26pt; }
+  .dau .dan, .phu-de, .buoc span, .nguyen-tac span, .chan{ color: #333; }
+  .eyebrow, .man .vai-tro, .hop .nhan{ color: #000; }
+
+  /* Bỏ nền màu và đổ bóng — máy in phun tốn mực mà nhìn lại bẩn */
+  .mo-dau, .man, .loi, .lich > div, .buoc, .nguyen-tac > div, .hop{
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  .mo-dau, .man, .loi, .lich > div{ border: 1px solid #999; }
+  .mo-dau{ border-top: 3px solid #000; }
+  .hop{ border: 1px solid #bbb; border-left: 3px solid #000; }
+  .man .so, ol.buoc-lam li::before{ background: #fff !important; color: #000; border: 1px solid #000; }
+  ol.buoc-lam li::before{ border-radius: 50%; }
+  .nguyen-tac .k{ color: #000; opacity: 1; }
+  code{ background: #f0f0f0; }
+
+  /* Không để một thẻ màn hình bị xé làm đôi qua hai trang */
+  .man, .loi, .lich > div, .nguyen-tac > div, .hop, tr{ break-inside: avoid; page-break-inside: avoid; }
+  section{ break-inside: auto; }
+  h2.muc{ break-after: avoid; page-break-after: avoid; }
+
+  /* Bảng dài thì lặp lại tiêu đề cột ở trang sau */
+  thead{ display: table-header-group; }
+  th, td{ border-bottom: 1px solid #ccc; }
+
+  .cuon{ overflow: visible; }
+  a{ color: #000; text-decoration: none; }
+}
+</style>
+
+<div class="bao">
+
+  <header class="dau">
+    <p class="eyebrow">Hướng dẫn sử dụng · Hệ thống gara Tân Phát</p>
+    <h1>Phần Kho</h1>
+    <p class="dan">Mười màn hình trong menu Kho: cái nào dùng để làm gì, khi nào dùng, làm theo các bước nào. Không cần biết kỹ thuật.</p>
+  </header>
+
+  <!-- Khái niệm quan trọng nhất -->
+  <div class="mo-dau">
+    <h2>Đọc mục này trước</h2>
+    <p>Mỗi phiếu kho đều đi qua <strong>hai giai đoạn</strong>. Hiểu chỗ này thì mọi thứ còn lại rất dễ.</p>
+
+    <div class="hai-buoc">
+      <div class="buoc">
+        <b>1 · Nháp</b>
+        <span>Vừa lập phiếu xong. Phiếu đã lưu nhưng <strong>tồn kho chưa thay đổi gì cả</strong>. Sửa thoải mái, xoá thoải mái.</span>
+      </div>
+      <div class="mui-ten" aria-hidden="true">──▶</div>
+      <div class="buoc">
+        <b>2 · Đã ghi sổ</b>
+        <span>Bấm nút <strong>Ghi sổ</strong>. Lúc này tồn kho mới thực sự tăng hoặc giảm.</span>
+      </div>
+    </div>
+
+    <div class="hop canh">
+      <span class="nhan">Nhầm lẫn phổ biến nhất</span>
+      <p><strong>Lập phiếu xong chưa phải là xong.</strong> Phải bấm <strong>Ghi sổ</strong> thì hàng mới vào kho hoặc ra khỏi kho. Câu hỏi “sao nhập rồi mà tồn không tăng” gần như luôn là vì quên bước này.</p>
+    </div>
+
+    <p>Phiếu đã ghi sổ thì <strong>không sửa, không xoá được</strong>. Muốn sửa phải bấm <strong>Huỷ ghi sổ</strong> trước — hệ thống trả tồn kho về như cũ và phiếu quay lại trạng thái nháp.</p>
+    <p>Riêng màn hình Kiểm kê, hai nút này tên là <strong>Chốt kiểm kê</strong> và <strong>Huỷ chốt</strong>, ý nghĩa giống hệt.</p>
+  </div>
+
+  <!-- Bảng quyết định -->
+  <section id="chon">
+    <h2 class="muc">Tôi cần làm gì? Dùng màn hình nào?</h2>
+    <p class="phu-de">Tra nhanh trước khi mở màn hình.</p>
+    <div class="cuon">
+      <table>
+        <thead><tr><th>Tình huống</th><th>Màn hình dùng</th></tr></thead>
+        <tbody>
+          <tr><td>Mua phụ tùng về nhập kho</td><td><strong>Phiếu nhập kho</strong></td></tr>
+          <tr><td>Hàng hỏng, mất, dùng nội bộ</td><td><strong>Phiếu xuất kho</strong></td></tr>
+          <tr><td>Trả hàng lại cho nhà cung cấp</td><td><strong>Phiếu xuất kho</strong> — loại <em>Xuất trả NCC</em></td></tr>
+          <tr><td>Khách trả hàng đã mua</td><td><strong>Phiếu nhập kho</strong> — loại <em>Nhập trả lại</em></td></tr>
+          <tr><td>Bán hàng cho khách, có thu tiền</td><td><strong>Hoá đơn bán</strong> — menu Bán hàng</td></tr>
+          <tr><td>Chuyển hàng giữa hai kho</td><td><strong>Điều chuyển kho</strong></td></tr>
+          <tr><td>Đếm hàng thực tế, khớp lại với sổ</td><td><strong>Kiểm kê kho</strong></td></tr>
+          <tr><td>Xem còn bao nhiêu hàng</td><td><strong>Tồn kho</strong></td></tr>
+          <tr><td>Xem một mặt hàng đã nhập/xuất những gì</td><td><strong>Thẻ kho</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="hop dung">
+      <span class="nhan">Đừng nhầm hai cái này</span>
+      <p><strong>Bán hàng thì dùng Hoá đơn bán, không dùng Phiếu xuất kho.</strong> Hoá đơn vừa trừ kho vừa ghi nhận doanh thu và công nợ khách, lại in được cho khách. Phiếu xuất kho chỉ trừ kho, không có doanh thu — chỉ dành cho việc nội bộ.</p>
+    </div>
+  </section>
+
+  <!-- Bốn màn hình nhập liệu -->
+  <section id="phieu">
+    <h2 class="muc">Bốn màn hình lập phiếu</h2>
+    <p class="phu-de">Đây là những màn hình làm thay đổi tồn kho. Cả bốn đều theo quy trình Nháp → Ghi sổ.</p>
+
+    <div class="luoi-man">
+
+      <article class="man" id="nhap">
+        <header>
+          <span class="so">01</span>
+          <div>
+            <h2>Phiếu nhập kho</h2>
+            <span class="vai-tro">Đưa hàng vào kho</span>
+          </div>
+        </header>
+        <p>Đây là <strong>cách duy nhất</strong> để hàng mới có mặt trong kho kèm giá vốn.</p>
+
+        <h3>Khi nào dùng</h3>
+        <ul>
+          <li>Mua phụ tùng, thiết bị về nhập kho</li>
+          <li>Khách trả lại hàng đã mua</li>
+          <li>Nhập từ nguồn khác — biếu tặng, chuyển từ đơn vị khác</li>
+        </ul>
+
+        <h3>Các bước</h3>
+        <ol class="buoc-lam">
+          <li>Bấm <strong>Thêm phiếu nhập kho</strong></li>
+          <li>Chọn <strong>Loại phiếu</strong>:
+            <ul>
+              <li><em>Nhập mua (công nợ NCC)</em> — mua từ nhà cung cấp</li>
+              <li><em>Nhập khác</em> — nguồn khác, không phải mua</li>
+              <li><em>Nhập trả lại</em> — khách trả hàng về</li>
+            </ul>
+          </li>
+          <li>Chọn <strong>Ngày</strong> và <strong>Kho nhập</strong></li>
+          <li>Chọn <strong>Nhà cung cấp</strong> nếu là nhập mua</li>
+          <li>Ghi <strong>Diễn giải</strong> cho dễ tra sau này</li>
+          <li>Thêm từng dòng hàng: chọn hàng hoá, nhập <strong>số lượng</strong> và <strong>đơn giá</strong></li>
+          <li>Bấm <strong>Lưu</strong> — phiếu ở trạng thái nháp</li>
+          <li>Kiểm tra lại rồi bấm <strong>Ghi sổ</strong> — tồn kho tăng</li>
+        </ol>
+
+        <div class="hop canh">
+          <span class="nhan">Nhập đúng đơn giá</span>
+          <p>Hệ thống dùng đơn giá này để tính giá vốn bình quân. Nhập sai giá thì mọi lần bán sau đó đều tính sai lãi.</p>
+        </div>
+
+        <p>Mỗi dòng hàng có cột <strong>Vị trí / Ghi chú</strong> để ghi hàng nằm kệ nào. Đây chỉ là thông tin tra cứu cho dễ tìm, không ảnh hưởng tới số lượng tồn.</p>
+
+        <h3>Giá vốn bình quân là gì</h3>
+        <p>Kho đang có 10 cái giá 100.000. Bạn nhập thêm 10 cái giá 140.000. Từ giờ cả 20 cái đều tính giá vốn <strong>120.000</strong> — trung bình của hai lô. Hệ thống không phân biệt cái nào thuộc lô nào.</p>
+      </article>
+
+      <article class="man" id="xuat">
+        <header>
+          <span class="so">02</span>
+          <div>
+            <h2>Phiếu xuất kho</h2>
+            <span class="vai-tro">Đưa hàng ra, không qua bán hàng</span>
+          </div>
+        </header>
+
+        <h3>Khi nào dùng</h3>
+        <ul>
+          <li>Hàng hỏng, vỡ, hết hạn phải huỷ</li>
+          <li>Lấy hàng dùng cho nội bộ gara</li>
+          <li>Trả hàng lại cho nhà cung cấp</li>
+          <li>Mất hàng đã xác định nguyên nhân</li>
+        </ul>
+
+        <div class="hop dung">
+          <span class="nhan">Khi nào KHÔNG dùng</span>
+          <p>Bán cho khách thì dùng <strong>Hoá đơn bán</strong>. Phiếu xuất kho không ghi nhận doanh thu, không ghi công nợ khách, không in hoá đơn cho khách được.</p>
+        </div>
+
+        <h3>Các bước</h3>
+        <ol class="buoc-lam">
+          <li>Bấm <strong>Thêm phiếu xuất kho</strong></li>
+          <li>Chọn <strong>Loại phiếu</strong>: <em>Xuất bán (giá vốn)</em> / <em>Xuất khác</em> / <em>Xuất trả NCC</em></li>
+          <li>Chọn <strong>Ngày</strong> và <strong>Kho xuất</strong></li>
+          <li>Chọn <strong>Đối tượng</strong> nếu xuất trả nhà cung cấp</li>
+          <li>Ghi <strong>Diễn giải</strong> — nên ghi rõ lý do, ví dụ “vỡ khi bốc dỡ”</li>
+          <li>Thêm từng dòng hàng: chọn hàng hoá và <strong>số lượng</strong></li>
+          <li><strong>Lưu</strong> rồi <strong>Ghi sổ</strong></li>
+        </ol>
+
+        <p><strong>Không có ô đơn giá.</strong> Hệ thống tự lấy giá vốn bình quân đang có tại thời điểm ghi sổ.</p>
+        <p><strong>Không xuất quá tồn.</strong> Nếu thiếu, hệ thống báo rõ mặt hàng nào, còn bao nhiêu, cần bao nhiêu.</p>
+      </article>
+
+      <article class="man" id="dieu-chuyen">
+        <header>
+          <span class="so">03</span>
+          <div>
+            <h2>Điều chuyển kho</h2>
+            <span class="vai-tro">Dời hàng giữa hai kho</span>
+          </div>
+        </header>
+        <p>Tổng hàng của gara không đổi, chỉ đổi chỗ.</p>
+
+        <h3>Các bước</h3>
+        <ol class="buoc-lam">
+          <li>Bấm <strong>Thêm điều chuyển kho</strong></li>
+          <li>Chọn <strong>Ngày</strong>, <strong>Từ kho (nguồn)</strong> và <strong>Đến kho (đích)</strong></li>
+          <li>Ghi <strong>Lý do</strong></li>
+          <li>Thêm từng dòng hàng và <strong>số lượng</strong></li>
+          <li><strong>Lưu</strong> rồi <strong>Ghi sổ</strong></li>
+        </ol>
+
+        <p><strong>Giá vốn đi theo hàng.</strong> Hàng sang kho mới vẫn giữ nguyên giá vốn của kho cũ, nên điều chuyển không làm thay đổi giá trị hàng tồn của gara.</p>
+        <p>Một phiếu điều chuyển tạo <strong>hai dấu vết</strong> trên thẻ kho: một dòng xuất ở kho nguồn, một dòng nhập ở kho đích. Kho nguồn phải đủ hàng, nếu không hệ thống chặn.</p>
+      </article>
+
+      <article class="man" id="kiem-ke">
+        <header>
+          <span class="so">04</span>
+          <div>
+            <h2>Kiểm kê kho</h2>
+            <span class="vai-tro">Khớp hàng thực tế với sổ</span>
+          </div>
+        </header>
+        <p>Đếm hàng thực tế trong kho rồi khớp lại với số trên sổ. Nên làm định kỳ — cuối tháng hoặc cuối quý.</p>
+
+        <h3>Các bước</h3>
+        <ol class="buoc-lam">
+          <li>Bấm <strong>Thêm kiểm kê kho</strong></li>
+          <li>Chọn <strong>Ngày</strong> và <strong>Kho kiểm kê</strong></li>
+          <li>Ghi <strong>Lý do</strong>, ví dụ “Kiểm kê cuối tháng 8”</li>
+          <li>Thêm từng mặt hàng, nhập <strong>số lượng thực tế đếm được</strong></li>
+          <li><strong>Lưu</strong> rồi bấm <strong>Chốt kiểm kê</strong></li>
+        </ol>
+
+        <div class="cuon">
+          <table>
+            <thead><tr><th>Kết quả so sánh</th><th>Hệ thống làm gì</th></tr></thead>
+            <tbody>
+              <tr><td>Đếm được <strong>nhiều hơn</strong> sổ</td><td>Nhập thêm phần thừa</td></tr>
+              <tr><td>Đếm được <strong>ít hơn</strong> sổ</td><td>Xuất bớt phần thiếu</td></tr>
+              <tr><td>Bằng nhau</td><td>Không làm gì</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="hop dung">
+          <span class="nhan">Đếm được 0 thì phải nhập số 0</span>
+          <p>Đừng bỏ trống dòng. “Sổ ghi 5 mà thực tế không còn cái nào” là thông tin rất quan trọng — nhập <strong>0</strong> để hệ thống ghi nhận thiếu 5.</p>
+        </div>
+
+        <p><strong>Nhập đúng số đếm được, đừng nhập số chênh lệch.</strong> Hệ thống tự tính chênh lệch giúp bạn.</p>
+
+        <div class="hop canh">
+          <span class="nhan">Hàng thừa mà kho chưa từng có mã đó</span>
+          <p>Hệ thống chưa biết giá vốn, nên sẽ lấy tạm giá ở kho khác. Nếu không kho nào có, nó ghi tạm giá 0 và <strong>báo danh sách mã ra màn hình</strong>. Thấy thông báo đó thì vào màn hình Hàng hoá sửa lại giá, hoặc huỷ chốt rồi làm phiếu nhập kho cho đúng giá.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Bốn báo cáo -->
+  <section id="bao-cao">
+    <h2 class="muc">Bốn màn hình xem báo cáo</h2>
+    <p class="phu-de">Chỉ để xem, không nhập liệu, không làm thay đổi gì.</p>
+
+    <div class="luoi-man">
+
+      <article class="man" id="ton-kho">
+        <header>
+          <span class="so">05</span>
+          <div>
+            <h2>Tồn kho</h2>
+            <span class="vai-tro">Hiện tại còn những gì</span>
+          </div>
+        </header>
+        <p>Xem còn hàng gì, ở kho nào, trị giá bao nhiêu.</p>
+        <p><strong>Bộ lọc:</strong> chọn <strong>Kho</strong>, hoặc gõ tên / mã / mã OEM vào ô <strong>Tìm hàng hoá</strong>.</p>
+        <p>Dùng khi cần trả lời nhanh: “còn hàng này không”, “kho nào còn”.</p>
+      </article>
+
+      <article class="man" id="ton-lau">
+        <header>
+          <span class="so">06</span>
+          <div>
+            <h2>Hàng tồn lâu</h2>
+            <span class="vai-tro">Hàng nằm kho chưa động tới</span>
+          </div>
+        </header>
+        <p><strong>Số ngày tồn</strong> = khoảng cách từ lần nhập/xuất gần nhất tới ngày báo cáo.</p>
+        <p><strong>Bộ lọc:</strong> <strong>Kho</strong>, <strong>Tồn tối thiểu (ngày)</strong> — mặc định 90 ngày — và <strong>Tính đến ngày</strong>.</p>
+        <p>Kết quả gộp theo dải tuổi: 0–30, 31–90, 91–180, 181–365 và trên 365 ngày.</p>
+        <div class="hop">
+          <span class="nhan">Dùng để làm gì</span>
+          <p>Hàng nằm ở dải <strong>trên 365 ngày</strong> là tiền đang chết trong kho — nên xem xét giảm giá hoặc trả lại nhà cung cấp.</p>
+        </div>
+      </article>
+
+      <article class="man" id="bien-dong">
+        <header>
+          <span class="so">07</span>
+          <div>
+            <h2>Biến động tồn</h2>
+            <span class="vai-tro">Xu hướng theo ngày</span>
+          </div>
+        </header>
+        <p>Xem tồn của <strong>một mặt hàng</strong> lên xuống thế nào theo từng ngày, dạng biểu đồ.</p>
+        <p><strong>Bộ lọc:</strong> <strong>Hàng hoá</strong>, <strong>Kho</strong>, <strong>Từ ngày</strong>, <strong>Đến ngày</strong>.</p>
+        <p>Dùng khi cần nhìn xu hướng: hàng này bán nhanh hay chậm, có thời điểm nào hết hàng không.</p>
+      </article>
+
+      <article class="man" id="the-kho">
+        <header>
+          <span class="so">08</span>
+          <div>
+            <h2>Thẻ kho</h2>
+            <span class="vai-tro">Lịch sử đầy đủ của một mặt hàng</span>
+          </div>
+        </header>
+        <p>Tồn đầu kỳ, từng lần nhập, từng lần xuất, và số dư sau mỗi lần.</p>
+        <p><strong>Bộ lọc:</strong> <strong>Hàng hoá</strong>, <strong>Kho</strong>, <strong>Từ ngày</strong>, <strong>Đến ngày</strong>.</p>
+        <p>Đây là màn hình để <strong>truy vết khi thấy số liệu lạ</strong>. Mỗi dòng đều ghi rõ phiếu nào đã gây ra thay đổi đó, nên tra ngược được ngay.</p>
+        <div class="hop canh">
+          <span class="nhan">Nên chọn một kho cụ thể</span>
+          <p>Số dư luỹ kế chỉ đúng khi xem trong phạm vi một kho. Xem gộp nhiều kho thì cột số dư không có ý nghĩa.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Hai danh mục -->
+  <section id="danh-muc">
+    <h2 class="muc">Hai màn hình khai báo</h2>
+    <p class="phu-de">Thường chỉ cài một lần lúc đầu, sau đó ít khi đụng tới.</p>
+
+    <div class="luoi-man">
+
+      <article class="man" id="kho">
+        <header>
+          <span class="so">09</span>
+          <div>
+            <h2>Danh mục kho</h2>
+            <span class="vai-tro">Khai báo các kho của gara</span>
+          </div>
+        </header>
+        <p><strong>Các ô:</strong> Mã kho, Tên kho, Địa chỉ, Điện thoại, Thứ tự, <strong>Đặt làm kho mặc định</strong>, Hoạt động.</p>
+        <div class="hop canh">
+          <span class="nhan">Kho mặc định rất quan trọng</span>
+          <p>Đơn hàng khách đặt ngoài website sẽ trừ vào <strong>kho mặc định</strong>. Nếu chưa đặt kho nào làm mặc định, hệ thống lấy kho đang hoạt động có thứ tự đầu tiên.</p>
+        </div>
+        <p>Kho không dùng nữa thì <strong>tắt Hoạt động</strong>, đừng xoá — xoá đi là mất dấu vết các phiếu cũ.</p>
+      </article>
+
+      <article class="man" id="vi-tri">
+        <header>
+          <span class="so">10</span>
+          <div>
+            <h2>Vị trí trong kho</h2>
+            <span class="vai-tro">Kệ, tầng, ô để dễ tìm hàng</span>
+          </div>
+        </header>
+        <p><strong>Các ô:</strong> Kho, <strong>Vị trí cha</strong> — để trống nếu là cấp gốc — Mã vị trí, Tên vị trí, Thứ tự, Đang hoạt động.</p>
+        <p>Khai được nhiều cấp, ví dụ <em>Khu A</em> → <em>Kệ A1</em> → <em>Tầng 2</em>.</p>
+        <p>Vị trí được chọn khi lập <strong>Phiếu nhập kho</strong>. Đây chỉ là thông tin tra cứu — tồn kho <strong>không</strong> tính theo vị trí, chỉ tính theo kho.</p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- Lỗi thường gặp -->
+  <section id="loi">
+    <h2 class="muc">Gặp thông báo này thì làm gì</h2>
+    <p class="phu-de">Phần lớn không phải lỗi hệ thống, mà là hệ thống đang chặn một thao tác sẽ làm sai số liệu.</p>
+
+    <div class="loi">
+      <h3>“Tồn không đủ để xuất”</h3>
+      <p>Kho đó không đủ hàng. Hệ thống ghi rõ mặt hàng nào, còn bao nhiêu, cần bao nhiêu.</p>
+      <p><strong>Xử lý:</strong> mở <strong>Tồn kho</strong> kiểm tra lại, dùng <strong>Điều chuyển kho</strong> chuyển từ kho khác sang, hoặc nhập thêm hàng.</p>
+    </div>
+
+    <div class="loi">
+      <h3>“Không huỷ được: đã có nhập/xuất sau phiếu này”</h3>
+      <p>Sau phiếu bạn muốn huỷ, mặt hàng đó đã có phiếu khác phát sinh. Huỷ giữa chừng sẽ làm sai giá vốn của tất cả các phiếu sau.</p>
+      <p><strong>Xử lý:</strong> mở <strong>Thẻ kho</strong> của mặt hàng đó xem những phiếu nào phát sinh sau, rồi huỷ ngược từ phiếu mới nhất trở về.</p>
+    </div>
+
+    <div class="loi">
+      <h3>“Phiếu đề ngày cũ hơn phát sinh đã có”</h3>
+      <p>Bạn đang ghi sổ một phiếu đề ngày cũ, trong khi mặt hàng đó đã có phiếu ngày mới hơn được ghi sổ rồi. Làm vậy sẽ khiến báo cáo theo ngày ra số sai.</p>
+      <p><strong>Xử lý:</strong> sửa lại ngày phiếu cho đúng thứ tự thực tế, hoặc huỷ ghi sổ các phiếu sau rồi ghi lại lần lượt theo đúng thứ tự.</p>
+    </div>
+
+    <div class="loi">
+      <h3>“Hoá đơn có hàng hoá nên phải chọn kho xuất”</h3>
+      <p>Hoá đơn đang có dòng hàng hoá nhưng chưa chọn kho — hệ thống không biết trừ ở kho nào.</p>
+      <p><strong>Xử lý:</strong> chọn kho xuất. Nếu hoá đơn <strong>chỉ có dịch vụ</strong> như công thợ, rửa xe, thì để trống kho mới là đúng.</p>
+    </div>
+
+    <div class="loi">
+      <h3>Tồn ngoài website ít hơn tồn trong quản trị</h3>
+      <p>Đúng, không phải lỗi. Ngoài website trừ thêm phần hàng <strong>đang giữ</strong> cho các đơn khách đã đặt nhưng chưa xử lý xong, để hai khách không cùng mua được cái cuối cùng.</p>
+    </div>
+  </section>
+
+  <!-- Lịch việc -->
+  <section id="lich">
+    <h2 class="muc">Việc nên làm định kỳ</h2>
+    <div class="lich">
+      <div>
+        <h3>Hằng ngày</h3>
+        <ul>
+          <li>Ghi sổ hết các phiếu còn nháp trong ngày</li>
+          <li>Xử lý đơn hàng mới từ website</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Hằng tuần</h3>
+        <ul>
+          <li>Xem <strong>Tồn kho</strong>, kiểm tra hàng sắp hết để đặt thêm</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Hằng tháng</h3>
+        <ul>
+          <li><strong>Kiểm kê kho</strong> ít nhất một kho chính</li>
+          <li>Xem <strong>Hàng tồn lâu</strong> từ 90 ngày, lên phương án xả hàng chậm</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ba nguyên tắc -->
+  <section id="nguyen-tac">
+    <h2 class="muc">Ba nguyên tắc nên nhớ</h2>
+    <div class="nguyen-tac">
+      <div>
+        <span class="k">1</span>
+        <div>
+          <b>Lập phiếu xong phải Ghi sổ</b>
+          <span>Chưa ghi sổ thì tồn kho chưa đổi, dù phiếu đã lưu.</span>
+        </div>
+      </div>
+      <div>
+        <span class="k">2</span>
+        <div>
+          <b>Bán hàng dùng Hoá đơn bán</b>
+          <span>Phiếu xuất kho chỉ dành cho việc nội bộ, không có doanh thu.</span>
+        </div>
+      </div>
+      <div>
+        <span class="k">3</span>
+        <div>
+          <b>Sai thì huỷ ghi sổ rồi sửa</b>
+          <span>Đừng lập phiếu ngược để bù — làm vậy sai giá vốn bình quân và rối thẻ kho.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="chan">
+    Hướng dẫn này mô tả đúng các màn hình đang chạy tại thời điểm 19/08/2026.
+    Bản văn bản nằm trong repo ở <code>docs/HUONG-DAN-SU-DUNG-KHO.md</code>.
+    Tài liệu kỹ thuật dành cho người bảo trì là <code>docs/NGHIEP-VU-KHO.md</code>.
+  </p>
+
+</div>
+
+</body>
+</html>
