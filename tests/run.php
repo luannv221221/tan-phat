@@ -34,6 +34,13 @@ $failed   = [];
 $totalP   = 0;
 $totalF   = 0;
 
+/* Khoi test tu bo qua khi thieu dieu kien (Apache chua chay, chua co du lieu...).
+   PHAI dem va bao ra: truoc day bo qua trong im lang nen chay khi Apache tat van
+   ra "tat ca PASS", trong khi 7 khang dinh cua CarFilterTest da khong chay — ke ca
+   "khong lo du lieu ton kho" va "bang parts VAN CON sau khi thu injection".
+   Xanh-co-bo-qua phai nhin khac xanh-chay-du. */
+$skipped  = [];
+
 foreach ($tests as $file => $desc){
     $path = __DIR__ . DIRECTORY_SEPARATOR . $file;
 
@@ -53,14 +60,35 @@ foreach ($tests as $file => $desc){
         $totalF += (int)$m[2];
     }
 
+    if (preg_match_all('/\[SKIP\]\s*(.+)/', $text, $sm)){
+        foreach ($sm[1] as $ly) $skipped[] = $file . ' — ' . trim($ly);
+    }
+
     if ($code !== 0) $failed[] = $file;
 }
 
 echo str_repeat('#', 60) . "\n";
-echo "TONG KET: PASS $totalP | FAIL $totalF\n";
+echo "TONG KET: PASS $totalP | FAIL $totalF";
+if (!empty($skipped)) echo " | BO QUA " . count($skipped) . " khoi";
+echo "
+";
+
+if (!empty($skipped)){
+    echo "
+CAC KHOI BI BO QUA (khong chay, khong tinh la pass):
+";
+    foreach ($skipped as $k) echo "  - $k
+";
+    echo "
+";
+}
 
 if (empty($failed)){
-    echo "Tat ca test PASS.\n";
+    echo empty($skipped)
+        ? "Tat ca test PASS.
+"
+        : "Khong co test nao FAIL, NHUNG co khoi bi bo qua — xem danh sach tren.
+";
 } else {
     echo "Test FAIL: " . implode(', ', $failed) . "\n";
 }
