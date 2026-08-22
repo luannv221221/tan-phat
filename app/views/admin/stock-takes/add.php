@@ -36,7 +36,7 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
                     <input type="text" name="reason" class="form-control" value="{{!empty($old['reason'])?$old['reason']:''}}"/>
                 </div>
             </div>
-            <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Nhập số lượng THỰC TẾ đếm được. Khi chốt, hệ thống so với tồn sổ và tự điều chỉnh + ghi bút toán thừa/thiếu.</p>
+            <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Nhập số lượng THỰC TẾ đếm được. Khi chốt, hệ thống so với tồn trên sổ và tự điều chỉnh: thừa thì nhập thêm, thiếu thì xuất bớt, theo giá vốn bình quân đang có.</p>
         </div>
     </div>
 

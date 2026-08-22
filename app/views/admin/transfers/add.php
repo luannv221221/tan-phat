@@ -50,7 +50,7 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
                 <label>Lý do</label>
                 <input type="text" name="reason" class="form-control" value="{{!empty($old['reason'])?$old['reason']:''}}"/>
             </div>
-            <p class="text-muted small mb-0 mt-2"><i class="fas fa-info-circle mr-1"></i> Ghi sổ sẽ chuyển tồn theo giá vốn bình quân từ kho nguồn sang kho đích (không sinh bút toán).</p>
+            <p class="text-muted small mb-0 mt-2"><i class="fas fa-info-circle mr-1"></i> Ghi sổ sẽ chuyển tồn theo giá vốn bình quân từ kho nguồn sang kho đích. Giá vốn không đổi khi chuyển.</p>
         </div>
     </div>
 

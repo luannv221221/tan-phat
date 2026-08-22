@@ -97,7 +97,7 @@ $tabs = [
                     </select>
                 </div>
             </div>
-            <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Ghi sổ sẽ định khoản <b>Nợ 131/Có 511</b> (doanh thu), <b>Nợ 131/Có 3331</b> (thuế), <b>Nợ 632/Có 156</b> (giá vốn) và trừ tồn kho. Công nợ khách lên qua TK 131.</p>
+            <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Ghi sổ sẽ <b>trừ tồn kho</b> và chốt <b>giá vốn</b> theo bình quân gia quyền tại thời điểm ghi. Ghi sổ rồi thì phải huỷ ghi sổ mới sửa được.</p>
         </div>
     </div>
 

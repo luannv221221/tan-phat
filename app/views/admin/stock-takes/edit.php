@@ -57,7 +57,7 @@ $fmtQ = function($n){ return rtrim(rtrim(number_format((float) $n, 3, ',', '.'),
     </div>
     <div class="card"><div class="card-body">
         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
-        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/unpost/'.$item['id']}}" onclick="return confirm('Huỷ chốt sẽ hoàn tồn kho và xoá bút toán. Tiếp tục?')" class="btn btn-warning"><i class="fas fa-unlock mr-1"></i> Huỷ chốt</a>
+        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/unpost/'.$item['id']}}" onclick="return confirm('Huỷ chốt sẽ hoàn lại tồn kho. Tiếp tục?')" class="btn btn-warning"><i class="fas fa-unlock mr-1"></i> Huỷ chốt</a>
         @endif
         <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-default"><i class="fas fa-arrow-left mr-1"></i> Về danh sách</a>
     </div></div>
