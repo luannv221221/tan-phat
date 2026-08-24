@@ -41,7 +41,7 @@ $doiDong = function($tienTo) use ($old){
 $initHang   = $doiDong('line_');
 $initDichVu = $doiDong('sv_');
 
-$vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '0';
+$vatInit = isset($old['vat_rate']) ? $old['vat_rate'] : '10';
 
 // Cấu hình 2 tab — dùng chung cho cả phần tab lẫn phần bảng bên dưới.
 $tabs = [

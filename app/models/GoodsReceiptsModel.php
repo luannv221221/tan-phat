@@ -15,7 +15,7 @@ class GoodsReceiptsModel extends Model {
     protected $_primary = 'id';
 
     public static $types = [
-        'nhap_mua'  => 'Nhập mua (công nợ NCC)',
+        'nhap_mua'  => 'Nhập mua',
         'nhap_khac' => 'Nhập khác',
         'nhap_tra'  => 'Nhập trả lại',
     ];

@@ -103,7 +103,7 @@ $tabs = [
             </div>
             <div class="form-group col-md-2">
                 <label>Thuế GTGT (%)</label>
-                <input type="number" min="0" max="100" step="any" name="vat_rate" id="vat_rate" class="form-control text-right" value="{{$sel('vat_rate','0')}}"/>
+                <input type="number" min="0" max="100" step="any" name="vat_rate" id="vat_rate" class="form-control text-right" value="{{$sel('vat_rate','10')}}"/>
             </div>
             <div class="form-group col-md-4">
                 <label>Khách hàng</label>
