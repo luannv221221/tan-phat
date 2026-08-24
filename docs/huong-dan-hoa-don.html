@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Hướng dẫn sử dụng Hoá đơn bán — Tân Phát</title>
+<meta name="description" content="Hướng dẫn màn hình Hoá đơn bán kèm sơ đồ giải thích khi nào tăng kho, khi nào giảm kho."/>
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --nen:       #FBFAF8;
+  --the:       #FFFFFF;
+  --nen-phu:   #F2F1ED;
+  --chu:       #1E2422;
+  --chu-mo:    #5B6A66;
+  --vien:      #E0DFD9;
+  --vien-dam:  #C6C9C2;
+  --xanh:      #0F6E5C;
+  --xanh-nen:  #E4F0EC;
+  --hophach:   #A85E14;
+  --hophach-nen:#F8EEE0;
+  --do:        #A6392C;
+  --do-nen:    #F8E9E6;
+  --bong:      0 1px 2px rgba(30,36,34,.05), 0 10px 30px -22px rgba(30,36,34,.5);
+
+  --f-de:  Archivo, "Segoe UI", system-ui, sans-serif;
+  --f-doc: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --f-ma:  "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --nen:#161A19; --the:#1D2322; --nen-phu:#232A28;
+    --chu:#E6E9E6; --chu-mo:#9BA8A3; --vien:#2E3634; --vien-dam:#43504C;
+    --xanh:#58C0A5; --xanh-nen:#12312A;
+    --hophach:#DFA45E; --hophach-nen:#33260F;
+    --do:#E08878; --do-nen:#331F1B;
+    --bong: 0 1px 2px rgba(0,0,0,.45), 0 10px 30px -22px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --nen:#161A19; --the:#1D2322; --nen-phu:#232A28;
+  --chu:#E6E9E6; --chu-mo:#9BA8A3; --vien:#2E3634; --vien-dam:#43504C;
+  --xanh:#58C0A5; --xanh-nen:#12312A;
+  --hophach:#DFA45E; --hophach-nen:#33260F;
+  --do:#E08878; --do-nen:#331F1B;
+  --bong: 0 1px 2px rgba(0,0,0,.45), 0 10px 30px -22px rgba(0,0,0,.9);
+}
+
+*{ box-sizing: border-box; }
+body{
+  margin:0; background: var(--nen); color: var(--chu);
+  font-family: var(--f-doc); font-size:16.5px; line-height:1.75;
+  -webkit-font-smoothing: antialiased;
+}
+html{ scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } *{ animation:none !important; transition:none !important; } }
+
+.bao{ max-width:1060px; margin:0 auto; padding:0 22px 90px; }
+
+.dau{ padding:54px 0 32px; border-bottom:1px solid var(--vien-dam); margin-bottom:40px; }
+.eyebrow{ font-family:var(--f-ma); font-size:11.5px; letter-spacing:.15em; text-transform:uppercase; color:var(--xanh); margin:0 0 12px; }
+.dau h1{ font-family:var(--f-de); font-weight:700; font-size:clamp(31px,5vw,50px); line-height:1.08; letter-spacing:-.02em; margin:0 0 16px; text-wrap:balance; }
+.dau .dan{ max-width:60ch; color:var(--chu-mo); font-size:17px; margin:0; }
+
+h2.muc{ font-family:var(--f-de); font-weight:700; font-size:clamp(22px,3vw,29px); letter-spacing:-.015em; line-height:1.2; margin:0 0 8px; text-wrap:balance; }
+.phu-de{ color:var(--chu-mo); margin:0 0 24px; max-width:66ch; }
+h3{ font-family:var(--f-de); font-weight:600; font-size:16.5px; margin:26px 0 8px; letter-spacing:-.005em; }
+p{ margin:0 0 14px; max-width:66ch; }
+ul{ margin:0 0 14px; padding-left:20px; max-width:66ch; }
+li{ margin-bottom:5px; }
+strong{ font-weight:600; }
+em{ color:var(--chu-mo); }
+code{ font-family:var(--f-ma); font-size:.87em; background:var(--nen-phu); padding:1px 5px; border-radius:3px; }
+section{ margin-bottom:54px; scroll-margin-top:20px; }
+
+.cuon{ overflow-x:auto; margin-bottom:20px; }
+table{ width:100%; border-collapse:collapse; font-size:15px; }
+th,td{ text-align:left; padding:10px 16px 10px 0; border-bottom:1px solid var(--vien); vertical-align:top; }
+thead th{ font-family:var(--f-ma); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; font-weight:500; color:var(--chu-mo); border-bottom:1px solid var(--vien-dam); }
+tbody tr:last-child td{ border-bottom:1px solid var(--vien-dam); }
+
+/* ---------- Hình vẽ ---------- */
+figure{
+  margin:0 0 26px; padding:26px 24px 18px;
+  background:var(--the); border:1px solid var(--vien); border-radius:5px;
+  box-shadow:var(--bong);
+}
+figure svg{ display:block; width:100%; max-width:100%; height:auto; }
+figcaption{
+  margin-top:16px; padding-top:14px; border-top:1px solid var(--vien);
+  color:var(--chu-mo); font-size:14.5px; line-height:1.6; max-width:74ch;
+}
+figcaption b{ color:var(--chu); font-weight:600; }
+
+/* ---------- Ghi chú ---------- */
+.hop{ border-left:3px solid var(--xanh); background:var(--xanh-nen); padding:13px 17px; border-radius:0 4px 4px 0; margin:0 0 16px; font-size:15px; max-width:70ch; }
+.hop.canh{ border-left-color:var(--hophach); background:var(--hophach-nen); }
+.hop.dung{ border-left-color:var(--do); background:var(--do-nen); }
+.hop p:last-child{ margin-bottom:0; }
+.hop .nhan{ font-family:var(--f-ma); font-size:10.5px; letter-spacing:.11em; text-transform:uppercase; display:block; margin-bottom:4px; color:var(--xanh); }
+.hop.canh .nhan{ color:var(--hophach); }
+.hop.dung .nhan{ color:var(--do); }
+
+/* ---------- Các bước ---------- */
+ol.buoc-lam{ counter-reset:b; list-style:none; padding:0; margin:0 0 16px; max-width:68ch; }
+ol.buoc-lam li{ counter-increment:b; position:relative; padding-left:34px; margin-bottom:9px; }
+ol.buoc-lam li::before{
+  content:counter(b); position:absolute; left:0; top:3px;
+  width:22px; height:22px; border-radius:50%;
+  background:var(--xanh-nen); color:var(--xanh);
+  font-family:var(--f-ma); font-size:11.5px; display:grid; place-items:center; font-weight:500;
+}
+
+/* ---------- Lỗi ---------- */
+.loi{ border:1px solid var(--vien); border-radius:5px; background:var(--the); padding:18px 22px; margin-bottom:14px; }
+.loi h3{ margin:0 0 8px; font-family:var(--f-doc); font-weight:600; font-size:15.5px; color:var(--do); }
+.loi p{ margin-bottom:0; font-size:15px; }
+.loi p + p{ margin-top:8px; }
+
+/* ---------- Nguyên tắc ---------- */
+.nguyen-tac{ display:grid; gap:14px; }
+.nguyen-tac > div{ display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start; background:var(--nen-phu); border-radius:5px; padding:18px 22px; }
+.nguyen-tac .k{ font-family:var(--f-de); font-weight:700; font-size:26px; color:var(--xanh); line-height:1; opacity:.55; }
+.nguyen-tac b{ display:block; font-family:var(--f-de); font-size:16px; margin-bottom:3px; }
+.nguyen-tac span{ color:var(--chu-mo); font-size:15px; }
+
+.chan{ margin-top:44px; padding-top:20px; border-top:1px solid var(--vien-dam); color:var(--chu-mo); font-size:14px; max-width:66ch; }
+
+@media print{
+  @page{ size:A4 portrait; margin:14mm 13mm; }
+  body{ background:#fff; color:#000; font-size:10.5pt; line-height:1.5; }
+  .bao{ max-width:none; padding:0; }
+  .dau{ padding-top:0; border-bottom:2px solid #000; }
+  .dau h1{ font-size:26pt; }
+  figure,.loi,.hop,.nguyen-tac > div{ background:#fff !important; box-shadow:none !important; }
+  figure,.loi{ border:1px solid #999; }
+  .hop{ border:1px solid #bbb; border-left:3px solid #000; }
+  ol.buoc-lam li::before{ background:#fff !important; color:#000; border:1px solid #000; }
+  .nguyen-tac .k{ color:#000; opacity:1; }
+  figure,.loi,.nguyen-tac > div,.hop,tr{ break-inside:avoid; page-break-inside:avoid; }
+  h2.muc{ break-after:avoid; page-break-after:avoid; }
+  thead{ display:table-header-group; }
+  .cuon{ overflow:visible; }
+}
+</style>
+
+<div class="bao">
+
+  <header class="dau">
+    <p class="eyebrow">Hướng dẫn sử dụng · Bán hàng</p>
+    <h1>Hoá đơn bán</h1>
+    <p class="dan">Chứng từ vừa bán vừa xuất kho: ghi nhận doanh thu cho khách và trừ hàng khỏi kho trong cùng một lần.</p>
+  </header>
+
+  <!-- ============ SƠ ĐỒ 1 ============ -->
+  <section id="khi-nao">
+    <h2 class="muc">Khi nào kho tăng, khi nào kho giảm</h2>
+    <p class="phu-de">Câu hỏi hay gặp nhất. Trả lời ngắn: tồn kho chỉ đổi đúng hai thời điểm, và chỉ với dòng hàng hoá.</p>
+
+    <figure>
+      <svg viewBox="0 0 900 330" role="img" aria-label="Sơ đồ vòng đời hoá đơn bán: lưu thì kho không đổi, ghi sổ thì dòng hàng hoá làm kho giảm còn dòng dịch vụ không đụng kho, huỷ ghi sổ thì kho tăng lại">
+        <defs>
+          <marker id="mt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="mt-do" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--do)"/>
+          </marker>
+          <marker id="mt-xanh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--xanh)"/>
+          </marker>
+        </defs>
+
+        <!-- Lập hoá đơn -->
+        <rect x="10" y="96" width="132" height="58" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="76" y="121" text-anchor="middle" font-size="13" font-weight="600" fill="currentColor">Lập hoá đơn</text>
+        <text x="76" y="139" text-anchor="middle" font-size="11" fill="var(--chu-mo)">nhập dòng hàng</text>
+
+        <!-- mũi tên Lưu -->
+        <line x1="142" y1="125" x2="196" y2="125" stroke="currentColor" stroke-width="1.5" marker-end="url(#mt)"/>
+        <text x="169" y="117" text-anchor="middle" font-size="11.5" font-weight="600" fill="currentColor">Lưu</text>
+
+        <!-- NHÁP -->
+        <rect x="200" y="90" width="150" height="70" rx="4" fill="var(--nen-phu)" stroke="currentColor" stroke-width="1.5"/>
+        <text x="275" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">NHÁP</text>
+        <text x="275" y="137" text-anchor="middle" font-size="11.5" fill="var(--chu-mo)">kho chưa đổi</text>
+
+        <!-- mũi tên Ghi sổ -->
+        <line x1="350" y1="125" x2="410" y2="125" stroke="currentColor" stroke-width="1.5" marker-end="url(#mt)"/>
+        <text x="380" y="117" text-anchor="middle" font-size="11.5" font-weight="600" fill="currentColor">Ghi sổ</text>
+
+        <!-- ĐÃ GHI SỔ -->
+        <rect x="414" y="90" width="150" height="70" rx="4" fill="var(--nen-phu)" stroke="currentColor" stroke-width="1.5"/>
+        <text x="489" y="116" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">ĐÃ GHI SỔ</text>
+        <text x="489" y="137" text-anchor="middle" font-size="11.5" fill="var(--chu-mo)">tách theo loại dòng</text>
+
+        <!-- nhánh trên: hàng hoá -->
+        <polyline points="564,110 600,110 600,52 646,52" fill="none" stroke="var(--do)" stroke-width="1.8" marker-end="url(#mt-do)"/>
+        <text x="604" y="42" font-size="11.5" font-weight="600" fill="var(--do)">dòng Hàng hoá</text>
+        <rect x="650" y="24" width="240" height="58" rx="4" fill="var(--do-nen)" stroke="var(--do)" stroke-width="1.5"/>
+        <text x="770" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="var(--do)">KHO GIẢM</text>
+        <text x="770" y="67" text-anchor="middle" font-size="11.5" fill="var(--chu-mo)">và chốt giá vốn cho dòng đó</text>
+
+        <!-- nhánh dưới: dịch vụ -->
+        <polyline points="564,140 600,140 600,196 646,196" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#mt)"/>
+        <text x="604" y="186" font-size="11.5" font-weight="600" fill="currentColor">dòng Dịch vụ</text>
+        <rect x="650" y="168" width="240" height="58" rx="4" fill="none" stroke="var(--vien-dam)" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="770" y="192" text-anchor="middle" font-size="13.5" font-weight="600" fill="var(--chu-mo)">kho KHÔNG đổi</text>
+        <text x="770" y="211" text-anchor="middle" font-size="11.5" fill="var(--chu-mo)">giá vốn ghi 0</text>
+
+        <!-- huỷ ghi sổ: vòng về -->
+        <polyline points="489,160 489,276 275,276 275,160" fill="none" stroke="var(--xanh)" stroke-width="1.8" marker-end="url(#mt-xanh)"/>
+        <text x="382" y="296" text-anchor="middle" font-size="12" font-weight="600" fill="var(--xanh)">Huỷ ghi sổ</text>
+        <text x="382" y="269" text-anchor="middle" font-size="12" font-weight="700" fill="var(--xanh)">KHO TĂNG LẠI</text>
+      </svg>
+      <figcaption>
+        <b>Lưu chưa phải là xong.</b> Hoá đơn mới lưu vẫn là nháp, hàng còn nguyên trong kho.
+        Chỉ khi bấm <b>Ghi sổ</b> hàng mới thực sự ra khỏi kho — và chỉ phần dòng hàng hoá.
+        Dòng dịch vụ đi theo nhánh đứt nét: không đụng vào kho lần nào.
+      </figcaption>
+    </figure>
+
+    <div class="cuon">
+      <table>
+        <thead><tr><th>Bạn làm gì</th><th>Tồn kho</th></tr></thead>
+        <tbody>
+          <tr><td>Lập hoá đơn rồi bấm <strong>Lưu</strong></td><td>không đổi — mới chỉ là nháp</td></tr>
+          <tr><td>Bấm <strong>Ghi sổ</strong></td><td><strong>GIẢM</strong> — chỉ phần dòng hàng hoá</td></tr>
+          <tr><td>Bấm <strong>Huỷ ghi sổ</strong></td><td><strong>TĂNG lại</strong> đúng bằng phần đã trừ</td></tr>
+          <tr><td>Sửa hoá đơn còn nháp</td><td>không đổi</td></tr>
+          <tr><td>Xoá hoá đơn nháp</td><td>không đổi</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="hop canh">
+      <span class="nhan">Dịch vụ không bao giờ đụng kho</span>
+      <p>Công thợ, rửa xe, thay dầu là việc làm chứ không phải hàng, nên ghi sổ không trừ gì cả. Vì thế hoá đơn toàn dịch vụ không cần chọn kho xuất.</p>
+    </div>
+  </section>
+
+  <!-- ============ SƠ ĐỒ 2 ============ -->
+  <section id="mot-lan">
+    <h2 class="muc">Một đơn hàng chỉ trừ kho một lần</h2>
+    <p class="phu-de">Đơn khách đặt ngoài website có hai đường để trừ kho. Hệ thống bắt chọn một, không cho cả hai — nếu không thì hàng bị trừ hai lần.</p>
+
+    <figure>
+      <svg viewBox="0 0 900 344" role="img" aria-label="Sơ đồ hai đường trừ kho của đơn hàng web: chuyển đơn sang Hoàn thành thì đơn tự trừ kho, hoặc tạo hoá đơn rồi ghi sổ thì hoá đơn trừ; đi đường này thì đường kia không trừ thêm">
+        <defs>
+          <marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+          <marker id="m2-do" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--do)"/>
+          </marker>
+        </defs>
+
+        <!-- Đơn hàng web -->
+        <rect x="335" y="12" width="230" height="52" rx="4" fill="var(--nen-phu)" stroke="currentColor" stroke-width="1.5"/>
+        <text x="450" y="36" text-anchor="middle" font-size="14" font-weight="700" fill="currentColor">ĐƠN HÀNG TỪ WEBSITE</text>
+        <text x="450" y="54" text-anchor="middle" font-size="11.5" fill="var(--chu-mo)">khách đặt, hàng đang được giữ chỗ</text>
+
+        <!-- chia hai nhánh -->
+        <line x1="450" y1="64" x2="450" y2="86" stroke="currentColor" stroke-width="1.5"/>
+        <polyline points="450,86 200,86 200,112" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#m2)"/>
+        <polyline points="450,86 700,86 700,112" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#m2)"/>
+
+        <!-- Đường A -->
+        <rect x="70" y="116" width="260" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="200" y="134" text-anchor="middle" font-size="11" font-weight="600" fill="var(--chu-mo)">ĐƯỜNG A</text>
+        <text x="200" y="154" text-anchor="middle" font-size="13.5" font-weight="600" fill="currentColor">Chuyển đơn sang</text>
+        <text x="200" y="171" text-anchor="middle" font-size="13.5" font-weight="600" fill="currentColor">“Hoàn thành”</text>
+
+        <!-- Đường B -->
+        <rect x="570" y="116" width="260" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="700" y="134" text-anchor="middle" font-size="11" font-weight="600" fill="var(--chu-mo)">ĐƯỜNG B</text>
+        <text x="700" y="154" text-anchor="middle" font-size="13.5" font-weight="600" fill="currentColor">Tạo Hoá đơn bán</text>
+        <text x="700" y="171" text-anchor="middle" font-size="13.5" font-weight="600" fill="currentColor">rồi bấm Ghi sổ</text>
+
+        <!-- xuống KHO GIẢM -->
+        <line x1="200" y1="178" x2="200" y2="212" stroke="var(--do)" stroke-width="1.8" marker-end="url(#m2-do)"/>
+        <line x1="700" y1="178" x2="700" y2="212" stroke="var(--do)" stroke-width="1.8" marker-end="url(#m2-do)"/>
+
+        <rect x="90" y="216" width="220" height="50" rx="4" fill="var(--do-nen)" stroke="var(--do)" stroke-width="1.5"/>
+        <text x="200" y="238" text-anchor="middle" font-size="13.5" font-weight="700" fill="var(--do)">KHO GIẢM</text>
+        <text x="200" y="256" text-anchor="middle" font-size="11.5" fill="var(--chu-mo)">đơn hàng tự trừ</text>
+
+        <rect x="590" y="216" width="220" height="50" rx="4" fill="var(--do-nen)" stroke="var(--do)" stroke-width="1.5"/>
+        <text x="700" y="238" text-anchor="middle" font-size="13.5" font-weight="700" fill="var(--do)">KHO GIẢM</text>
+        <text x="700" y="256" text-anchor="middle" font-size="11.5" fill="var(--chu-mo)">hoá đơn trừ</text>
+
+        <!-- hệ quả -->
+        <line x1="200" y1="266" x2="200" y2="290" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#m2)"/>
+        <line x1="700" y1="266" x2="700" y2="290" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#m2)"/>
+        <text x="200" y="305" text-anchor="middle" font-size="12" fill="var(--chu-mo)">không tạo hoá đơn kho</text>
+        <text x="200" y="326" text-anchor="middle" font-size="12" fill="var(--chu-mo)">được nữa</text>
+        <text x="700" y="305" text-anchor="middle" font-size="12" fill="var(--chu-mo)">đơn chuyển “Hoàn thành”</text>
+        <text x="700" y="326" text-anchor="middle" font-size="12" fill="var(--chu-mo)">sẽ KHÔNG trừ thêm</text>
+
+        <!-- chốt giữa -->
+        <text x="450" y="238" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">chọn MỘT</text>
+        <text x="450" y="257" text-anchor="middle" font-size="12" fill="var(--chu-mo)">không bao giờ cả hai</text>
+      </svg>
+      <figcaption>
+        Hai đường dẫn tới cùng một kết quả, nhưng <b>chỉ được đi một</b>. Hệ thống tự chặn đường còn lại
+        sau khi bạn đã đi một đường. Lỡ đi đường A mà muốn đổi sang đường B thì phải chuyển đơn sang
+        <b>Hoàn hàng</b> để cộng tồn lại trước.
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ============ Lập hoá đơn ============ -->
+  <section id="lap">
+    <h2 class="muc">Lập hoá đơn</h2>
+
+    <ol class="buoc-lam">
+      <li>Bấm <strong>Thêm hoá đơn bán</strong></li>
+      <li>Chọn <strong>Ngày</strong></li>
+      <li>Chọn <strong>Kho xuất</strong> — xem luật ngay bên dưới</li>
+      <li>Nhập <strong>Thuế GTGT (%)</strong>, mặc định 10</li>
+      <li>Chọn <strong>Khách hàng</strong>, để trống nếu là khách lẻ</li>
+      <li>Nhập dòng hàng ở tab <strong>Hàng hoá</strong> và / hoặc tab <strong>Dịch vụ</strong></li>
+      <li>Bấm <strong>Lưu</strong> — hoá đơn ở trạng thái <em>Nháp</em></li>
+      <li>Kiểm tra lại rồi bấm <strong>Ghi sổ</strong></li>
+    </ol>
+
+    <h3>Hai tab: Hàng hoá và Dịch vụ</h3>
+    <p>Con số bên cạnh tên tab là số dòng đã nhập của tab đó.</p>
+    <div class="cuon">
+      <table>
+        <thead><tr><th></th><th>Tab Hàng hoá</th><th>Tab Dịch vụ</th></tr></thead>
+        <tbody>
+          <tr><td>Nội dung</td><td>Phụ tùng, thiết bị</td><td>Công thợ, rửa xe, thay dầu</td></tr>
+          <tr><td>Trừ kho khi ghi sổ</td><td><strong>Có</strong></td><td>Không</td></tr>
+          <tr><td>Giá vốn</td><td>Bình quân gia quyền</td><td>0</td></tr>
+          <tr><td>Cần chọn kho xuất</td><td><strong>Có</strong></td><td>Không</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Ô chọn hàng của mỗi tab <strong>chỉ liệt kê đúng loại của tab đó</strong>. Mặt hàng đã chọn ở một dòng sẽ không xuất hiện ở dòng khác — cần nhiều thì tăng số lượng.</p>
+    <p>Bảng tổng ở chân hiện tách bạch <strong>Tiền hàng hoá</strong> và <strong>Tiền dịch vụ</strong>, rồi mới tới cộng chưa thuế, thuế và tổng thanh toán.</p>
+
+    <h3>Luật về Kho xuất</h3>
+    <div class="cuon">
+      <table>
+        <thead><tr><th>Hoá đơn có gì</th><th>Kho xuất</th></tr></thead>
+        <tbody>
+          <tr><td>Có ít nhất một dòng hàng hoá</td><td><strong>bắt buộc chọn</strong></td></tr>
+          <tr><td>Chỉ toàn dịch vụ</td><td>để trống — chọn <em>“Không cần”</em></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Chưa chọn kho thì tab Hàng hoá hiện lời nhắc và khoá nút <strong>Thêm dòng hàng hoá</strong>. Lý do đơn giản: ghi sổ phải biết trừ ở kho nào.</p>
+
+    <h3>Đơn giá</h3>
+    <p>Chọn mặt hàng xong, hệ thống <strong>tự điền đơn giá</strong> theo giá niêm yết hoặc giá khuyến mãi của mặt hàng đó. Muốn giá riêng thì gõ đè <strong>sau khi</strong> đã chọn xong hàng.</p>
+    <div class="hop canh">
+      <span class="nhan">Đổi mặt hàng thì giá đổi theo</span>
+      <p>Chọn nhầm rồi đổi sang mặt hàng khác thì đơn giá tự cập nhật theo mặt hàng mới. Đừng để nguyên giá của mặt hàng trước — đó là cách hoá đơn ra sai tiền.</p>
+    </div>
+  </section>
+
+  <!-- ============ Ghi sổ ============ -->
+  <section id="ghi-so">
+    <h2 class="muc">Ghi sổ — điều gì thực sự xảy ra</h2>
+    <ol class="buoc-lam">
+      <li>Tách dòng hàng hoá ra khỏi dòng dịch vụ</li>
+      <li>Kiểm tồn cho phần hàng hoá — thiếu thì <strong>dừng lại</strong>, không ghi gì cả</li>
+      <li>Trừ tồn từng dòng hàng hoá tại kho đã chọn</li>
+      <li><strong>Chốt giá vốn</strong> từng dòng theo bình quân gia quyền tại đúng thời điểm này</li>
+      <li>Ghi vết lên <strong>Thẻ kho</strong> để sau này truy lại được</li>
+      <li>Chuyển hoá đơn sang trạng thái <em>Đã ghi sổ</em></li>
+    </ol>
+
+    <p>Sau khi ghi sổ, màn hình hiện thêm <strong>Giá vốn</strong> và <strong>Lãi gộp</strong>:</p>
+    <div class="hop">
+      <span class="nhan">Công thức</span>
+      <p>Lãi gộp = Doanh thu chưa thuế − Giá vốn</p>
+    </div>
+    <p>Vì dịch vụ có giá vốn 0 nên hoá đơn toàn dịch vụ sẽ có lãi gộp bằng đúng doanh thu. Đó là do chi phí công thợ chưa được theo dõi trong hệ thống, <strong>không phải lãi thật</strong>.</p>
+  </section>
+
+  <!-- ============ Huỷ ghi sổ ============ -->
+  <section id="huy">
+    <h2 class="muc">Huỷ ghi sổ</h2>
+    <p>Bấm <strong>Huỷ ghi sổ</strong> — hệ thống cộng tồn kho trở lại đúng bằng phần đã trừ, xoá vết trên thẻ kho, và hoá đơn quay về <em>Nháp</em> để sửa.</p>
+    <div class="hop dung">
+      <span class="nhan">Không phải lúc nào cũng huỷ được</span>
+      <p>Nếu sau hoá đơn này mặt hàng đó đã có phiếu nhập/xuất khác, hệ thống chặn và nói rõ mặt hàng nào đang vướng. Lý do: giá vốn bình quân trộn theo thứ tự phát sinh, huỷ giữa chừng sẽ làm sai giá vốn của tất cả các phiếu sau.</p>
+      <p><strong>Xử lý:</strong> mở <strong>Kho › Thẻ kho</strong> xem phiếu nào phát sinh sau, huỷ ngược từ mới nhất trở về.</p>
+    </div>
+  </section>
+
+  <!-- ============ In + HĐĐT ============ -->
+  <section id="in">
+    <h2 class="muc">In hoá đơn và hoá đơn điện tử</h2>
+
+    <h3>In / Lưu PDF · Tải Word</h3>
+    <p>Trên màn hình hoá đơn có hai nút. <strong>In / Lưu PDF</strong> mở biểu mẫu A4 kèm logo Tân Phát — bấm In rồi chọn máy in <em>“Lưu thành PDF”</em> nếu muốn ra file PDF. <strong>Tải Word</strong> cho ra file <code>.doc</code> mở bằng Word, sửa được.</p>
+    <p>Biểu mẫu in có logo và thông tin công ty, thông tin khách, bảng hàng tách nhóm hàng hoá / dịch vụ, <strong>số tiền bằng chữ</strong>, thông tin chuyển khoản và hai ô ký tên. In được cả khi hoá đơn còn nháp lẫn khi đã ghi sổ.</p>
+
+    <h3>Hoá đơn điện tử</h3>
+    <p>Chỉ hiện ở hoá đơn <strong>đã ghi sổ</strong>.</p>
+    <ol class="buoc-lam">
+      <li>Nhập <strong>Ký hiệu</strong>, <strong>Mẫu số</strong>, <strong>Số hoá đơn</strong> — hệ thống điền sẵn theo cấu hình</li>
+      <li>Bấm <strong>Phát hành HĐĐT</strong></li>
+      <li>Bấm <strong>Xuất XML</strong> để lấy file nộp lên phần mềm hoá đơn điện tử</li>
+    </ol>
+    <p>Phát hành nhầm thì bấm <strong>Thu hồi</strong>.</p>
+    <div class="hop canh">
+      <span class="nhan">Giới hạn</span>
+      <p>Hệ thống <strong>không nối trực tiếp</strong> với nhà cung cấp hoá đơn điện tử. Nó chỉ gán số và xuất file XML để bạn nộp sang phần mềm HĐĐT.</p>
+    </div>
+
+    <h3>Từ báo giá sang hoá đơn</h3>
+    <p>Ở màn hình <strong>Báo giá</strong> có nút <strong>Chuyển thành hoá đơn</strong> — tạo một hoá đơn <em>nháp</em> với đầy đủ dòng hàng, giá và thuế copy sang. Vẫn phải kiểm lại và bấm <strong>Ghi sổ</strong>.</p>
+  </section>
+
+  <!-- ============ Lỗi ============ -->
+  <section id="loi">
+    <h2 class="muc">Gặp thông báo này thì làm gì</h2>
+    <p class="phu-de">Phần lớn không phải lỗi hệ thống, mà là hệ thống đang chặn một thao tác sẽ làm sai số liệu.</p>
+
+    <div class="loi">
+      <h3>“Hoá đơn có hàng hoá nên phải chọn kho xuất trước khi ghi sổ”</h3>
+      <p>Hoá đơn có dòng hàng hoá nhưng ô Kho xuất đang để trống.</p>
+      <p><strong>Xử lý:</strong> chọn kho xuất. Nếu thực ra hoá đơn chỉ có dịch vụ thì xoá các dòng hàng hoá đi.</p>
+    </div>
+
+    <div class="loi">
+      <h3>“Tồn không đủ”</h3>
+      <p>Kho đã chọn không đủ hàng. Hệ thống ghi rõ mặt hàng nào, còn bao nhiêu, cần bao nhiêu.</p>
+      <p><strong>Xử lý:</strong> kiểm tra ở <strong>Kho › Tồn kho</strong>, điều chuyển từ kho khác sang, nhập thêm hàng, hoặc đổi kho xuất.</p>
+    </div>
+
+    <div class="loi">
+      <h3>“Không huỷ được: đã có nhập/xuất sau hoá đơn này”</h3>
+      <p>Xem mục <strong>Huỷ ghi sổ</strong> ở trên.</p>
+    </div>
+
+    <div class="loi">
+      <h3>“Đơn đã trừ kho theo trạng thái Hoàn thành nên không xuất hoá đơn kho được nữa”</h3>
+      <p>Đơn hàng web đó đã đi đường A trong sơ đồ trên.</p>
+      <p><strong>Xử lý:</strong> muốn đi đường hoá đơn thì chuyển đơn sang <strong>Hoàn hàng</strong> để cộng tồn lại trước.</p>
+    </div>
+
+    <div class="loi">
+      <h3>“Hoá đơn chưa có dòng hàng, không thể ghi sổ”</h3>
+      <p>Hoá đơn trống. Thêm ít nhất một dòng ở tab Hàng hoá hoặc tab Dịch vụ.</p>
+    </div>
+  </section>
+
+  <!-- ============ Nguyên tắc ============ -->
+  <section id="nguyen-tac">
+    <h2 class="muc">Bốn nguyên tắc nên nhớ</h2>
+    <div class="nguyen-tac">
+      <div>
+        <span class="k">1</span>
+        <div><b>Lưu xong phải Ghi sổ</b><span>Chưa ghi sổ thì hàng vẫn còn trong kho, doanh thu chưa được tính.</span></div>
+      </div>
+      <div>
+        <span class="k">2</span>
+        <div><b>Dịch vụ không đụng kho</b><span>Hoá đơn toàn dịch vụ thì để trống ô Kho xuất.</span></div>
+      </div>
+      <div>
+        <span class="k">3</span>
+        <div><b>Sai thì huỷ ghi sổ rồi sửa</b><span>Đừng lập hoá đơn âm hay hoá đơn ngược để bù.</span></div>
+      </div>
+      <div>
+        <span class="k">4</span>
+        <div><b>Một đơn web chỉ trừ kho một lần</b><span>Hoặc qua trạng thái đơn, hoặc qua hoá đơn — không bao giờ cả hai.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="chan">
+    Hướng dẫn này mô tả đúng màn hình đang chạy tại thời điểm 24/08/2026.
+    Bản văn bản nằm trong repo ở <code>docs/HUONG-DAN-SU-DUNG-HOA-DON-BAN.md</code>.
+    Hướng dẫn phần kho là <code>docs/HUONG-DAN-SU-DUNG-KHO.md</code>.
+  </p>
+
+</div>
+
+</body>
+</html>
