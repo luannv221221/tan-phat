@@ -96,9 +96,13 @@ ok(preg_match('/getBoundingClientRect\(\)\.top\s*-\s*header\.getBoundingClientRe
    'Le am = hieu hai getBoundingClientRect, khong viet cung so px',
    'Viet cung la sai ngay khi admin tat dai lien he');
 
-ok(preg_match('/var\s+nav\s*=\s*header\.querySelector\(["\']\.header__primary-menu["\']\)/', $js),
-   'Moc ghim cua header la MENU XANH',
-   'Thanh loc da ra khoi header roi, do theo no la sai');
+ok(preg_match('/var\s+moc\s*=\s*header\.querySelector\(["\']\.top-header["\']\)/', $js),
+   'Moc troi cua header la HANG LOGO',
+   'Chi dai lien he (dang ky / dang nhap / he thong chi nhanh) duoc phep troi '
+   . 'khoi man hinh; hang logo + hotline + gio hang phai o lai');
+
+ok(strpos($js, '.header__primary-menu') !== false,
+   'Co duong lui sang menu khi khong tim thay hang logo');
 
 ok(strpos($js, "addEventListener(\"resize\", datViTri)") !== false,
    'Do lai khi doi kho man hinh');
@@ -113,10 +117,14 @@ section('Thanh loc ghim NGAY DUOI menu xanh');
 ok(preg_match('/thanhLoc\.style\.position\s*=\s*["\']sticky["\']/', $js),
    'Thanh loc cung duoc dat sticky');
 
-ok(preg_match('/thanhLoc\.style\.top\s*=\s*Math\.ceil\(nav\.getBoundingClientRect\(\)\.height\)/', $js),
-   'Moc dinh cua thanh loc = chieu cao menu xanh, lam tron LEN',
-   'Menu cao 50.4px; lam tron xuong 50 thi thanh loc ghim cao hon day menu '
-   . '0.4px va bi menu che mat mot vach');
+ok(preg_match('/var\s+dayHeader\s*=\s*header\.getBoundingClientRect\(\)\.height\s*-\s*lech/', $js),
+   'Moc dinh cua thanh loc = phan dau trang CON NHIN THAY khi da ghim',
+   'Bang chieu cao header tru di phan da troi len tren');
+
+ok(preg_match('/thanhLoc\.style\.top\s*=\s*Math\.ceil\(dayHeader\)/', $js),
+   'Lam tron LEN chu khong lam tron gan nhat',
+   'Cac hang cao le (50.4px); lam tron xuong la thanh loc ghim cao hon day '
+   . 'dau trang vai phan muoi pixel va bi che mat mot vach');
 
 // ---------------------------------------------------------------------------
 section('Thanh loc khong duoc DOI CHIEU CAO khi ghim');
@@ -255,5 +263,48 @@ ok(strpos($partialSrc, 'aria-label="Tìm kiếm"') !== false,
    . 'thanh vo danh');
 ok(preg_match('/@media \(max-width:767\.98px\)\{[^@]*\.car-filter__btn \.chu\{ display:none/s', $css),
    'Chu tren nut an di o kho dien thoai');
+
+// ---------------------------------------------------------------------------
+section('Menu can giua');
+
+ok(preg_match('/@media \(min-width:768px\)\{\s*\.header \.header__primary-menu \.menu\{[^}]*justify-content:center/s', $css),
+   'Menu can giua tu 768px tro len',
+   'Gara co 7 muc, o kho 1440 chung chi chiem hon nua be ngang roi don het ve '
+   . 'trai, chua mot mang trong dai ben phai');
+
+ok(preg_match('/@media \(min-width:768px\)\{\s*\.header \.header__primary-menu \.menu\{[^}]*padding-left:0/s', $css),
+   'Dep padding-left mac dinh cua <ul>',
+   '<ul> co san padding-left 40px cua trinh duyet; khong dep thi can giua xong '
+   . 'van lech sang phai 20px');
+
+// KHONG duoc ap duoi 768px: o kho do .menu doi thanh flex-direction:column cho
+// ngan keo truot ra, justify-content luc ay tinh theo truc DOC — can giua la
+// don het cac muc vao lung chung man hinh.
+$menuKhoi = [];
+$tim = 0;
+while (($tim = strpos($css, '.header .header__primary-menu .menu{', $tim)) !== false){
+    $than = substr($css, $tim, strpos($css, '}', $tim) - $tim);
+    $media = strrpos(substr($css, 0, $tim), '@media');
+    $menuKhoi[] = [
+        'canGiua' => strpos($than, 'justify-content:center') !== false,
+        'media'   => $media === false ? '' : substr($css, $media, 46),
+    ];
+    $tim++;   // khong nhich la strpos tra ve dung cho cu -> lap vo tan
+}
+$saiCho = array_filter($menuKhoi, function($k){
+    return $k['canGiua'] && strpos($k['media'], 'min-width:768px') === false;
+});
+ok(count($menuKhoi) > 0 && empty($saiCho),
+   'Luat can giua chi nam trong @media min-width:768px',
+   'Co ' . count($saiCho) . ' khoi can giua nam ngoai nga may tinh');
+
+// Loi co san tu truoc, khong phai do can giua: da do ca hai trang thai deu ra
+// 75px. Kho 768-991 khung chi rong 720px ma dai menu can 706px nen flex bop
+// cac muc lai, chu rot xuong hang thu hai.
+ok(preg_match('/@media \(min-width:768px\) and \(max-width:991\.98px\)/', $css),
+   'Co nga rieng cho kho may tinh bang');
+ok(preg_match('/@media \(min-width:768px\) and \(max-width:991\.98px\)\{[^@]*white-space:nowrap/s', $css),
+   'Kho may tinh bang: cam chu menu xuong dong',
+   'Xuong dong la dai menu cao 75px thay vi 50px');
 
 exit(summary());

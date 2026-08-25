@@ -173,6 +173,36 @@ a:hover{ color:var(--tp-xanh); }
    6. Menu chính
    -------------------------------------------------------------------------- */
 .header .header__primary-menu{ background:var(--tp-xanh-900); }
+
+/* Căn giữa dải menu.
+   Gara có 7 mục, ở khổ 1440 chúng chỉ chiếm hơn nửa bề ngang rồi dồn hết về
+   trái, chừa một mảng trống dài bên phải nhìn như menu bị thiếu.
+
+   CHỈ áp từ 768px trở lên. Dưới mức đó .menu đổi thành flex-direction:column
+   cho ngăn kéo trượt ra từ cạnh trái; justify-content lúc ấy tính theo trục
+   DỌC, căn giữa là dồn hết các mục vào lưng chừng màn hình. */
+@media (min-width:768px){
+  .header .header__primary-menu .menu{
+    justify-content:center;
+    /* <ul> mặc định có padding-left 40px của trình duyệt. Không dẹp thì dải
+       menu lệch sang phải đúng 20px sau khi căn giữa. */
+    padding-left:0;
+    margin-bottom:0;
+  }
+}
+
+/* Khổ máy tính bảng (768–991px): khung chỉ rộng 720px mà dải menu cần 706px.
+   Sát quá nên flex bóp các mục lại, chữ rớt xuống hàng thứ hai và dải menu
+   cao 75px thay vì 50px. Lỗi này có sẵn từ trước, không phải do căn giữa —
+   đã đo cả hai trạng thái đều ra 75px. Thu bớt padding hai bên là đủ.
+   Gạch cam khi rê chuột cũng phải thu theo cho khớp mép chữ. */
+@media (min-width:768px) and (max-width:991.98px){
+  .header .header__primary-menu .menu > li > a{
+    padding-left:12px; padding-right:12px;
+    white-space:nowrap;
+  }
+  .header .header__primary-menu .menu > li > a::after{ left:12px; right:12px; }
+}
 .header .header__primary-menu .menu > li > a{
   padding:13px 20px; font-weight:500; font-size:.95rem;
   position:relative; color:rgba(255,255,255,.9);

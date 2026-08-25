@@ -130,8 +130,9 @@ if ($(".detail .slider-nav")) {
 /* ------------------------------------------------------------------
    ĐẦU TRANG + THANH LỌC DÍNH KHI CUỘN
 
-   Cuộn xuống thì dải liên hệ và hàng logo trôi đi, còn lại hai thứ ghim
-   chồng lên nhau: MENU XANH trên đỉnh, THANH LỌC XE ngay dưới nó.
+   Cuộn xuống thì CHỈ dải liên hệ trôi đi (mấy link Đăng ký / Đăng nhập
+   / Hệ thống chi nhánh — thứ dùng một lần rồi thôi). Còn lại ghim chồng
+   lên nhau: HÀNG LOGO (logo + hotline + giỏ hàng), MENU XANH, THANH LỌC.
 
    Bản cũ làm bằng sự kiện scroll: qua mốc 74px thì gán position:fixed
    rồi display:none cho .topbar và .top-header. Hậu quả đo được:
@@ -143,18 +144,21 @@ if ($(".detail .slider-nav")) {
 
    Nay để position:sticky lo cả hai, không nghe scroll, cuộn lên là tự
    trả về như cũ:
-     .header     top âm = chiều cao (dải liên hệ + hàng logo) -> trôi hết
-                 phần đó đi, menu xanh ghim ở đỉnh
-     .car-filter top = chiều cao menu xanh -> ghim ngay dưới menu
+     .header     top âm = chiều cao dải liên hệ -> chỉ dải đó trôi đi
+     .car-filter top = phần đầu trang CÒN NHÌN THẤY khi đã ghim
+                       (= chiều cao header trừ đi phần đã trôi)
 
-   Cả hai số đều phải ĐO chứ không viết cứng: dải liên hệ tắt/bật được
+   Mọi số đều phải ĐO chứ không viết cứng: dải liên hệ tắt/bật được
    trong admin > Cấu hình website, tắt đi là mọi con số lệch hết.
    ------------------------------------------------------------------ */
 (function () {
   var header = document.querySelector(".header");
   if (!header) return;
 
-  var nav      = header.querySelector(".header__primary-menu");
+  // Mốc trôi: phần nằm TRÊN hàng logo (tức dải liên hệ) là thứ duy nhất
+  // được phép trôi khỏi màn hình. Không có hàng logo thì lùi về menu.
+  var moc      = header.querySelector(".top-header") ||
+                 header.querySelector(".header__primary-menu");
   var thanhLoc = document.querySelector(".car-filter");
 
   function datViTri() {
@@ -175,20 +179,23 @@ if ($(".detail .slider-nav")) {
 
     header.style.position = "sticky";
 
-    if (!nav) { header.style.top = "0px"; return; }
+    if (!moc) { header.style.top = "0px"; return; }
 
     // Hiệu hai getBoundingClientRect trong cùng một khối là khoảng cách
     // nội bộ của bố cục — sticky có đang đẩy header hay không cũng không
     // ảnh hưởng, nên đo được ở bất kỳ vị trí cuộn nào.
-    var lech = nav.getBoundingClientRect().top - header.getBoundingClientRect().top;
+    var lech = moc.getBoundingClientRect().top - header.getBoundingClientRect().top;
     header.style.top = -Math.round(lech) + "px";
 
     if (!thanhLoc) return;
 
-    // Math.ceil chứ không Math.round: menu cao 50.4px, làm tròn xuống 50 thì
-    // thanh lọc ghim cao hơn đáy menu 0.4px và bị menu che mất một vạch.
+    // Đáy đầu trang lúc đã ghim = chiều cao nó trừ đi phần đã trôi lên trên.
+    // Math.ceil chứ không Math.round: các hàng cao lẻ (50.4px), làm tròn
+    // xuống là thanh lọc ghim cao hơn đáy đầu trang vài phần mười pixel và
+    // bị che mất một vạch.
+    var dayHeader = header.getBoundingClientRect().height - lech;
     thanhLoc.style.position = "sticky";
-    thanhLoc.style.top = Math.ceil(nav.getBoundingClientRect().height) + "px";
+    thanhLoc.style.top = Math.ceil(dayHeader) + "px";
   }
 
   datViTri();
