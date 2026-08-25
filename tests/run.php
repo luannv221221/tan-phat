@@ -28,6 +28,7 @@ $tests = [
     'DichVuTest.php'              => 'NGHIEP VU — man hinh Dich vu + tab bao gia',
     'InAnTest.php'                => 'IN AN — bieu mau bao gia / hoa don + so tien bang chu',
     'DauTrangDinhTest.php'        => 'GIAO DIEN — dau trang dinh khi cuon (storefront)',
+    'SanPhamLienQuanTest.php'     => 'STOREFRONT — goi y san pham lien quan o trang chi tiet',
 ];
 
 $php      = PHP_BINARY;

@@ -199,6 +199,66 @@ $avgRound = (int) round($avg);
         </div>
     </div>
 
+    <?php /* ------------------------------------------------------------------
+       SẢN PHẨM LIÊN QUAN
+
+       Khác với khối "Phụ kiện / sản phẩm đi kèm" ở trên: khối kia do admin
+       tự tay gắn từng món, khối này máy tự chọn (xem PartsModel::lienQuan).
+       Controller đã loại các mã đã hiện ở khối kia nên hai khối không trùng.
+
+       Rỗng thì không in gì cả — một cái tiêu đề "Sản phẩm liên quan" nằm
+       trên khoảng trắng còn xấu hơn là không có mục đó.
+       ------------------------------------------------------------------ */ ?>
+    @if (!empty($lienQuan))
+    <?php /* KHÔNG dùng class .related-products: class đó thuộc về khối
+             owl-carousel cũ của theme, và luật `.related-products h2` trong
+             style.css đè font-size/padding của .section-title. */ ?>
+    <section class="products lien-quan mt-4">
+        <h2 class="section-title">Sản phẩm liên quan</h2>
+        <div class="products__list">
+            <div class="row g-3">
+            @foreach ($lienQuan as $lq)
+            <?php
+            $lqId    = (int) $lq['id'];
+            $lqSale  = !empty($lq['sale_price']);
+            $lqGia   = $lqSale ? (float) $lq['sale_price'] : (float) $lq['price'];
+            $lqGoc   = (float) $lq['price'];
+            $lqGiam  = ($lqSale && $lqGoc > 0) ? (int) round((1 - $lqGia / $lqGoc) * 100) : 0;
+            $lqAnh   = !empty($imgMap[$lqId]) ? ($base . $imgMap[$lqId]) : ($assetImg . 'placeholder.svg');
+            $lqUrl   = _WEB_URL . '/san-pham/' . $lq['slug'];
+            $lqTon   = ($isMember && isset($stockMap[$lqId])) ? (float) $stockMap[$lqId] : 0;
+            $lqHang  = !empty($lq['brand_name']) ? ' · ' . $lq['brand_name'] : '';
+            ?>
+            <div class="col-6 col-md-3">
+                <div class="products--item h-100">
+                    <div class="item__image">
+                        <a href="{{$lqUrl}}"><img src="{{$lqAnh}}" alt="{{$lq['name']}}" loading="lazy"/></a>
+                        <?php if ($lqSale): ?><span class="item--sales">{{$lqGiam > 0 ? '-'.$lqGiam.'%' : 'KM'}}</span><?php endif; ?>
+                    </div>
+                    <div class="item__info">
+                        <h3 class="item--name"><a href="{{$lqUrl}}">{{$lq['name']}}</a></h3>
+                        <div class="small text-muted mb-1">Mã: {{$lq['code']}}{{$lqHang}}</div>
+                        <div class="item--price">
+                            <?php if ($lqSale): ?><del>{{number_format($lqGoc,0,',','.')}} đ</del><?php endif; ?>
+                            <span>{{number_format($lqGia,0,',','.')}} đ</span>
+                        </div>
+                        @if ($isMember)
+                        <div class="mt-1"><span class="badge {{$lqTon>0?'bg-success':'bg-secondary'}}">Tồn: {{rtrim(rtrim(number_format($lqTon,3,',','.'),'0'),',')}}</span></div>
+                        @endif
+                        <form method="post" action="{{_WEB_URL.'/gio-hang/them'}}" class="mt-2">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="part_id" value="{{$lqId}}"/>
+                            <button class="btn btn-primary btn-sm w-100" type="submit"><i class="fa fa-shopping-cart"></i> Thêm vào giỏ</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+            </div>
+        </div>
+    </section>
+    @endif
+
 </div>
 </section>
 </div>

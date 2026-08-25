@@ -195,6 +195,31 @@ class Shop extends Controller {
         $c['reviews']  = $this->__review->getApprovedByPart($pid);
         $c['reviewSummary'] = $this->__review->summary($pid);
         $c['reviewMsg']  = Session::flash('reviewMsg');
+
+        // --- Sản phẩm liên quan ---------------------------------------------
+        // Dùng lại đúng hai thứ vừa nạp ở trên, không truy vấn lại:
+        //   fitments -> id các đời xe, để tìm hàng lắp chung xe
+        //   related  -> "phụ kiện đi kèm" đã hiện ngay phía trên, phải loại ra
+        //               kẻo hai khối cạnh nhau hiện y hệt nhau
+        $doiXeIds = [];
+        foreach ($c['fitments'] ?: [] as $ft){ $doiXeIds[] = (int) $ft['car_year_id']; }
+
+        $diKemIds = [];
+        foreach ($c['related'] ?: [] as $r){ $diKemIds[] = (int) $r['id']; }
+
+        $c['lienQuan'] = $this->__part->lienQuan($part, $doiXeIds, 8, $diKemIds);
+
+        // Ảnh + tồn cho thẻ sản phẩm. Vòng lặp này chỉ chạy tối đa 8 lần nên
+        // để nguyên N+1 ở đây là chấp nhận được — giống trang chủ.
+        $imgMap = $stockMap = [];
+        foreach ($c['lienQuan'] as $lq){
+            $rid = (int) $lq['id'];
+            $imgMap[$rid] = $this->__img->primaryFor($rid);
+            // Giữ quy tắc TASK_79: tồn kho chỉ hiện với thành viên đã đăng nhập.
+            if ($c['isMember']) $stockMap[$rid] = $this->__stock->sellableByPart($rid);
+        }
+        $c['imgMap']   = $imgMap;
+        $c['stockMap'] = $stockMap;
         $descParts = array_filter([$part['name'], $part['brand_name'] ?? '', $part['category_name'] ?? '']);
         $c['seo'] = [
             'description' => !empty($part['description']) ? mb_substr(strip_tags($part['description']), 0, 300) : ('Mua ' . implode(' - ', $descParts) . ' chính hãng tại Tân Phát.'),

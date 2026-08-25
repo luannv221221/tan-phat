@@ -192,6 +192,111 @@ class PartsModel extends Model {
         return (int) ($r['total'] ?? 0);
     }
 
+    /**
+     * ⭐ STOREFRONT — "Sản phẩm liên quan" ở cuối trang chi tiết.
+     *
+     * Với phụ tùng ô tô, quan hệ mạnh nhất là LẮP VỪA CÙNG MỘT CHIẾC XE.
+     * Khách đang xem lọc dầu cho Vios 2020 thì thứ đáng gợi ý là hàng cũng
+     * lắp cho Vios 2020 — không phải một cái lọc dầu bất kỳ của xe khác.
+     *
+     * Nên xếp 3 mức, lấy dần cho đủ $limit rồi dừng:
+     *   1. Cùng danh mục VÀ lắp chung ít nhất một đời xe   <- gần nhất
+     *   2. Cùng danh mục
+     *   3. Cùng thương hiệu
+     *
+     * Mức 3 là để cứu hai trường hợp có thật trong dữ liệu hiện tại: hàng
+     * chưa khai fitment, và hàng nằm một mình trong danh mục của nó. Không
+     * có mức này thì khối gợi ý trống trơn — trống còn tệ hơn là gợi ý hơi
+     * xa. Vẫn có thể ra rỗng (shop mới, đúng một mặt hàng) nên phía view
+     * BẮT BUỘC phải chịu được mảng rỗng.
+     *
+     * @param array $part    dòng phụ tùng đang xem (cần id, category_id, brand_id)
+     * @param array $doiXe   id các đời xe mà phụ tùng này lắp vừa (car_year_id)
+     * @param int   $limit   số thẻ tối đa
+     * @param array $loaiTru id cần bỏ — thường là khối "phụ kiện đi kèm" ngay
+     *                       phía trên, để hai khối không hiện trùng nhau
+     */
+    public function lienQuan(array $part, array $doiXe = [], $limit = 8, array $loaiTru = []){
+        $limit = (int) $limit;
+        $id    = (int) ($part['id'] ?? 0);
+        if ($limit < 1 || $id < 1) return [];
+
+        // Chính nó luôn bị loại — không thì trang chi tiết gợi ý ngược lại
+        // đúng cái đang mở.
+        $bo = [$id];
+        foreach ($loaiTru as $x){ if ((int) $x > 0) $bo[] = (int) $x; }
+
+        $catId = (int) ($part['category_id'] ?? 0);
+        $brId  = (int) ($part['brand_id']    ?? 0);
+        $doiXe = array_values(array_filter(array_map('intval', $doiXe)));
+
+        $ids = [];
+        if ($catId > 0 && !empty($doiXe)){
+            $this->gomIdLienQuan($ids, $bo, $limit, $this->idLienQuan($bo, $limit, $catId, 0, $doiXe));
+        }
+        if (count($ids) < $limit && $catId > 0){
+            $this->gomIdLienQuan($ids, $bo, $limit, $this->idLienQuan($bo, $limit, $catId, 0, []));
+        }
+        if (count($ids) < $limit && $brId > 0){
+            $this->gomIdLienQuan($ids, $bo, $limit, $this->idLienQuan($bo, $limit, 0, $brId, []));
+        }
+
+        return $this->theoDanhSachId($ids);
+    }
+
+    /** Nối id mới vào $ids, cắt ở $limit, và ghi luôn vào $bo để mức sau không lấy lại */
+    private function gomIdLienQuan(array &$ids, array &$bo, $limit, array $moi){
+        foreach ($moi as $i){
+            if (count($ids) >= $limit) return;
+            $ids[] = $i;
+            $bo[]  = $i;
+        }
+    }
+
+    /**
+     * Id phụ tùng cho MỘT mức liên quan. Chỉ lấy id, chưa lấy dữ liệu thẻ —
+     * mức 1 phải join part_fitments nên một phụ tùng lắp cho nhiều đời xe sẽ
+     * ra nhiều dòng; DISTINCT trên một cột id thì gọn, chứ DISTINCT trên cả
+     * `parts`.* kèm 4 bảng join thì vừa nặng vừa không chắc gom đúng.
+     */
+    private function idLienQuan(array $bo, $limit, $catId, $brId, array $doiXe){
+        $q = $this->chiHangLenWeb(
+            $this->table($this->_table)->select('DISTINCT `parts`.`id`')
+        );
+
+        if (!empty($doiXe)){
+            $q = $q->joinOn('part_fitments', 'parts.id', 'part_fitments.part_id')
+                   ->whereIn('part_fitments.car_year_id', $doiXe);
+        }
+        if ((int) $catId > 0) $q = $q->where('parts.category_id', '=', (int) $catId);
+        if ((int) $brId  > 0) $q = $q->where('parts.brand_id',    '=', (int) $brId);
+
+        $rows = $q->whereNotIn('parts.id', $bo)
+                  ->orderBy('parts.id', 'DESC')   // hàng mới lên trước
+                  ->limit((int) $limit)
+                  ->get();
+
+        return array_map(function($r){ return (int) $r['id']; }, $rows ?: []);
+    }
+
+    /** Lấy đủ dữ liệu thẻ cho một danh sách id, GIỮ NGUYÊN thứ tự của $ids */
+    private function theoDanhSachId(array $ids){
+        if (empty($ids)) return [];
+
+        $rows = $this->chiHangLenWeb($this->selectWithJoins())
+                     ->whereIn('parts.id', $ids)->get();
+
+        // whereIn trả về theo thứ tự MySQL thấy tiện, không theo thứ tự mình
+        // truyền vào — mà thứ tự ở đây CHÍNH LÀ mức độ liên quan, đảo là hỏng
+        // hết ý nghĩa xếp hạng ở trên.
+        $theoId = [];
+        foreach ($rows ?: [] as $r){ $theoId[(int) $r['id']] = $r; }
+
+        $ket = [];
+        foreach ($ids as $i){ if (isset($theoId[$i])) $ket[] = $theoId[$i]; }
+        return $ket;
+    }
+
     private function applyStorefront($q, $filters){
         $q = $this->chiHangLenWeb($q);
 
