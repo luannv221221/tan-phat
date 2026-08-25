@@ -97,11 +97,25 @@ a:hover{ color:var(--tp-xanh); }
 .header{
   background:var(--tp-the);
   border-bottom:0;
-  box-shadow:0 1px 0 var(--tp-vien);
-  /* Dính khi cuộn: trang bán hàng dài, khách luôn với tới được ô tìm kiếm,
-     menu và giỏ hàng mà không phải cuộn ngược lên đầu. */
+  /* Bóng đổ nhẹ: khi cuộn, đầu trang nằm ĐÈ lên nội dung nên cần một vạch
+     tách, không thì chữ trong trang trôi lên chạm đáy menu trông như dính. */
+  box-shadow:0 1px 0 var(--tp-vien), 0 6px 16px rgba(15,23,42,.06);
+  z-index:1030;              /* trên thẻ sản phẩm, dưới modal của Bootstrap */
+
+  /* Dính khi cuộn. Lề âm do script.js đo và gán (bằng chiều cao dải liên hệ
+     + hàng logo) để hai phần đó trôi đi, chỉ ghim lại thanh lọc + menu.
+     top:0 ở đây là mức dự phòng khi JS chưa chạy — dính cả cụm, xấu hơn
+     nhưng không vỡ. */
   position:sticky;
   top:0;
+}
+
+/* Chừa một khoảng thở phía trên thanh lọc. Lúc bị ghim, mép trên của khung
+   lọc chính là mép trên màn hình — không có khoảng này nhìn như bị cắt cụt.
+   Bù lại thì bớt padding đáy của hàng logo cho lúc chưa cuộn khỏi hở quá. */
+@media (min-width:768px){
+  .header .top-header{ padding-bottom:6px !important; }
+  .car-filter{ padding-top:10px; }
 }
 
 .header .topbar{

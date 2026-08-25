@@ -127,25 +127,62 @@ if ($(".detail .slider-nav")) {
     });
   });
 }
-const topHeader = document.querySelector(".top-header");
-const topBar = document.querySelector(".topbar");
-const header = document.querySelector(".header");
-window.addEventListener("scroll", () => {
-  if (window.scrollY >= topHeader.clientHeight) {
-    header.style.position = "fixed";
-    header.style.left = 0;
-    header.style.top = 0;
-    header.style.right = 0;
-    topHeader.style.display = "none";
-    topBar.style.display = "none";
+/* ------------------------------------------------------------------
+   ĐẦU TRANG DÍNH KHI CUỘN
+
+   Ý đồ vẫn như cũ: cuộn xuống thì dải liên hệ + hàng logo trôi đi, chỉ
+   giữ lại THANH LỌC XE + MENU ghim trên đỉnh (114px) — trang phụ tùng
+   thì thứ khách dùng đi dùng lại là ô lọc, không phải cái logo.
+
+   Bản cũ làm bằng sự kiện scroll: qua mốc 74px thì gán position:fixed
+   rồi display:none cho .topbar và .top-header. Hậu quả đo được:
+     - Vượt mốc, nội dung nhảy vọt 226px trong đúng một nấc lăn chuột
+       (tiêu đề "Sản phẩm" từ y=261 nhảy lên y=35).
+     - Cuộn ngược lên KHÔNG bao giờ gỡ fixed, phải vá bằng cách nhét
+       padding-top 225px cho .content -> giật thêm lần nữa và trang nằm
+       ở trạng thái khác hẳn lúc mới tải.
+
+   Nay để position:sticky lo, với lề âm bằng đúng chiều cao phần nằm
+   trên thanh lọc. Trình duyệt tự trượt phần đó ra khỏi màn hình rồi
+   ghim lại — mượt, không nghe scroll, cuộn lên là tự trả về như cũ.
+
+   Lề âm phải ĐO chứ không viết cứng: dải liên hệ có thể bị tắt trong
+   admin > Cấu hình website, lúc đó phần trên chỉ còn hàng logo.
+   ------------------------------------------------------------------ */
+(function () {
+  var header = document.querySelector(".header");
+  if (!header) return;
+
+  function datLeAm() {
+    // Dưới 768px KHÔNG ghim: đầu trang ở khổ điện thoại cao 307px, bằng
+    // 38% màn hình, ghim vào là mất gần nửa chỗ đọc. Menu ở khổ này lại
+    // là ngăn kéo position:fixed nên đo cũng ra số vô nghĩa. Muốn về đầu
+    // trang đã có sẵn nút mũi tên góc phải dưới.
+    if (window.innerWidth < 768) {
+      header.style.position = "static";
+      header.style.top = "";
+      return;
+    }
+
+    header.style.position = "sticky";
+
+    // Mốc ghim là thanh lọc; admin tắt thanh lọc thì ghim từ menu.
+    var moc = header.querySelector(".car-filter") ||
+              header.querySelector(".header__primary-menu");
+    if (!moc) { header.style.top = "0px"; return; }
+
+    // Hiệu hai getBoundingClientRect trong cùng một khối là khoảng cách
+    // nội bộ của bố cục — sticky có đang đẩy header hay không cũng không
+    // ảnh hưởng, nên đo được ở bất kỳ vị trí cuộn nào.
+    var lech = moc.getBoundingClientRect().top - header.getBoundingClientRect().top;
+    header.style.top = -Math.round(lech) + "px";
   }
-  if (scrollY == 0) {
-    topBar.style.display = "block";
-    topHeader.style.display = "block";
-    const content = document.querySelector(".content");
-    content.style.paddingTop = header.clientHeight + "px";
-  }
-});
+
+  datLeAm();
+  window.addEventListener("resize", datLeAm);
+  // Ảnh logo tải xong mới biết hàng trên cao đúng bao nhiêu.
+  window.addEventListener("load", datLeAm);
+})();
 var btn = $("#button");
 $(window).scroll(function () {
   if ($(window).scrollTop() > 300) {
