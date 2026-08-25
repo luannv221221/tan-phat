@@ -164,6 +164,17 @@
     /* Ô bên phải của mỗi hàng đã có viền ngoài của form rồi */
     .car-filter__select:nth-child(2n) { border-right: 0; }
 
+    /* Ô danh mục là ô thứ NĂM — lẻ ra so với lưới 2 cột. Để nguyên thì nó
+       chiếm nửa hàng và chừa hẳn một ô trống bên phải, nhìn như thiếu mất
+       một ô. Cho nó ăn trọn hàng.
+       Nó là con lẻ (thứ 5) nên luật nth-child(2n) ở trên không bỏ viền phải
+       hộ — mà viền phải lúc này nằm đúng mép form, chồng lên viền ngoài. */
+    .car-filter__select--cat {
+        flex: 1 0 100%;
+        max-width: 100%;
+        border-right: 0;
+    }
+
     /* Phần co giãn nằm ở div bọc, không phải ở input nữa */
     .car-filter__search { flex: 1 1 auto; }
 }

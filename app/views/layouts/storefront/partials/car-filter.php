@@ -19,6 +19,15 @@ $cfBodies = $this->model('CarBodyTypesModel')->getLists(true);
 $cfModels = $this->model('CarModelsModel')->getLists(['car_models.status' => 1]);
 $cfYears  = $this->model('CarYearsModel')->getLists(['car_years.status' => 1]);
 
+/* Danh mục hàng hoá.
+   Bốn ô bên trái tả CHIẾC XE, ô này tả MÓN HÀNG — nên nó không tham gia
+   dây chuyền lọc xe ở phần JS bên dưới, chỉ đi thẳng vào URL.
+
+   Chọn danh mục cha vẫn ra hàng của danh mục con: Shop::index() đã gọi
+   expandWithDescendants() trước khi truy vấn. Nếu không, chọn "Phụ tùng"
+   sẽ ra rỗng vì hàng hoá chỉ gắn vào danh mục lá. */
+$cfCats = $this->model('PartCategoriesModel')->getTree();
+
 // Lựa chọn hiện tại, để khách ở /san-pham thấy đúng bộ lọc đang áp dụng
 $cfSel = [
     'brand' => isset($_GET['car_brand']) ? (int) $_GET['car_brand'] : 0,
@@ -26,6 +35,15 @@ $cfSel = [
     'model' => isset($_GET['car_model']) ? (int) $_GET['car_model'] : 0,
     'year'  => isset($_GET['car_year'])  ? (int) $_GET['car_year']  : 0,
 ];
+
+/* Sidebar ở /san-pham cho tick NHIỀU danh mục (category[]), ô này chỉ chọn
+   được một. Đang tick nhiều thì hiện cái đầu tiên — và bấm tìm ở thanh này
+   là thay hẳn bằng đúng cái vừa chọn, coi như một lượt tìm mới. */
+$cfCatSel = 0;
+if (isset($_GET['category'])){
+    $raw = is_array($_GET['category']) ? reset($_GET['category']) : $_GET['category'];
+    $cfCatSel = (int) $raw;
+}
 
 // id ép về chuỗi vì bên JS đem so với select.value — vốn luôn là chuỗi.
 $cfData = [
@@ -77,6 +95,31 @@ $cfOptions = function ($rows, $selected){
             <select class="car-filter__select" name="car_year" data-cf="year" aria-label="Năm sản xuất">
                 <option value="">Năm sản xuất</option>
                 <?php $cfOptions($cfYears, $cfSel['year']); ?>
+            </select>
+
+            <?php /* name="category[]" (có ngoặc vuông) để khớp với ô tick ở
+                     sidebar /san-pham — nhờ vậy chọn ở đây thì sang bên kia
+                     thấy tick sẵn đúng danh mục đó, và ngược lại.
+
+                     KHÔNG đặt data-cf: dây chuyền lọc xe chỉ dựng lại các ô
+                     brand/body/model/year, thêm ô này vào đó là bị xoá sạch
+                     danh sách mỗi lần đổi hãng xe. */ ?>
+            <select class="car-filter__select car-filter__select--cat" name="category[]" aria-label="Danh mục hàng hoá">
+                <option value="">Danh mục</option>
+                <?php
+                foreach ($cfCats as $c){
+                    // Chặn ở depth 2 cho khớp đúng những gì sidebar dựng được:
+                    // chọn ở đây một danh mục mà sidebar không vẽ ô tick thì
+                    // khách bỏ lọc bằng sidebar không nổi.
+                    if ((int) $c['depth'] > 2) continue;
+                    if ((int) $c['status'] !== 1) continue;
+
+                    $sel = ((int) $c['id'] === $cfCatSel) ? ' selected' : '';
+                    echo '<option value="' . (int) $c['id'] . '"' . $sel . '>'
+                       . str_repeat('— ', (int) $c['depth']) . e($c['name'])
+                       . '</option>';
+                }
+                ?>
             </select>
 
             <div class="car-filter__search">

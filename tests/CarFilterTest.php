@@ -24,7 +24,7 @@ try {
 
 foreach (['LookupModel','CarBrandsModel','CarBodyTypesModel','CarModelsModel','CarYearsModel',
           'ProductBrandsModel','ProductOriginsModel','ProductUnitsModel',
-          'PartsModel','PartFitmentsModel'] as $m){
+          'PartsModel','PartFitmentsModel','PartCategoriesModel'] as $m){
     require_once __DIR__ . '/../app/models/' . $m . '.php';
 }
 
@@ -35,6 +35,10 @@ $pdo->exec("DELETE FROM parts WHERE code LIKE 'CF-TEST-%'");
 $pdo->exec("DELETE FROM car_models WHERE slug LIKE 'cf-test-%'");
 $pdo->exec("DELETE FROM car_brands WHERE slug LIKE 'cf-test-%'");
 $pdo->exec("DELETE FROM car_body_types WHERE slug LIKE 'cf-test-%'");
+// Xoa CON truoc: part_categories.parent_id tro vao chinh bang nay va FK
+// khong co ON DELETE, xoa cha khi con con song la bi chan (loi 1451).
+$pdo->exec("DELETE FROM part_categories WHERE slug LIKE 'cf-test-%' AND parent_id IS NOT NULL");
+$pdo->exec("DELETE FROM part_categories WHERE slug LIKE 'cf-test-%'");
 
 // ================================================================
 // Kich ban:
@@ -206,6 +210,70 @@ foreach (['car_brand', 'car_body', 'car_model', 'car_year'] as $n){
 }
 
 // ================================================================
+section('O DANH MUC tren thanh loc');
+
+ok(strpos($src, 'name="category[]"') !== false,
+   'Form co o danh muc');
+ok(strpos($src, 'name="category"') === false,
+   'Ten o phai co ngoac vuong',
+   'Khong co [] thi khong khop voi o tick category[] o sidebar /san-pham, '
+   . 'hai cho se khong nhin thay lua chon cua nhau');
+
+// Day chuyen loc xe dung ba lai tung o theo data-cf. O danh muc lot vao do la
+// bi xoa sach danh sach moi lan doi hang xe.
+if (preg_match('/<select[^>]*car-filter__select--cat[^>]*>/', $src, $m)){
+    ok(strpos($m[0], 'data-cf') === false,
+       'O danh muc KHONG mang data-cf (day chuyen loc xe khong dung toi)',
+       $m[0]);
+} else {
+    ok(false, 'Tim thay the <select> cua o danh muc');
+}
+ok(preg_match("/\\['brand',\\s*'body',\\s*'model',\\s*'year'\\]/", $src) === 1,
+   'JSON day chuyen chi dung lai dung 4 o xe');
+
+$cfCss = file_get_contents(__DIR__ . '/../public/assets/storefront/css/car-filter.css');
+ok(strpos($cfCss, '.car-filter__select--cat') !== false,
+   'CSS co luat rieng cho o danh muc',
+   'O thu 5 la o LE cua luoi 2 cot o kho dien thoai — khong cho an tron hang '
+   . 'thi no nam nua hang, chua han mot o trong ben phai');
+
+$shopCtrl = file_get_contents(__DIR__ . '/../app/controllers/Shop.php');
+ok(strpos($shopCtrl, "\$g['category']") !== false,
+   'Shop::index() doc tham so category tren URL');
+
+// ---- Loc that tren MySQL ----
+// Hang hoa gan vao danh muc LA. Chon danh muc cha ma khong mo rong ca nhanh
+// thi luon ra rong — day la cho de hong nhat cua o nay.
+$cfCatCha = (new PartCategoriesModel())->add(['name' => 'CF Cha', 'slug' => 'cf-test-cha', 'status' => 1]);
+$cfCatCon = (new PartCategoriesModel())->add(['name' => 'CF Con', 'slug' => 'cf-test-con', 'parent_id' => $cfCatCha, 'status' => 1]);
+$cfCatKhac = (new PartCategoriesModel())->add(['name' => 'CF Khac', 'slug' => 'cf-test-khac', 'status' => 1]);
+
+(new PartsModel())->edit(['category_id' => $cfCatCon],  $p1);   // Loc gio Vios
+(new PartsModel())->edit(['category_id' => $cfCatKhac], $p3);   // Loc gio Fortuner
+
+ok($codes(['categoryIds' => [$cfCatCon]]) === ['CF-TEST-001'],
+   'Chon danh muc la -> ra dung hang cua no',
+   implode(',', $codes(['categoryIds' => [$cfCatCon]])));
+
+$mo = (new PartCategoriesModel())->expandWithDescendants([$cfCatCha]);
+ok(in_array((int) $cfCatCon, array_map('intval', $mo), true),
+   'expandWithDescendants() keo theo danh muc con');
+ok($codes(['categoryIds' => $mo]) === ['CF-TEST-001'],
+   'Chon danh muc CHA van ra hang cua danh muc con',
+   'Khong co buoc mo rong thi chon "Phu tung" o thanh loc luon ra rong');
+
+// Xe VA danh muc phai AND voi nhau, khong phai OR.
+ok($codes(['carBrandId' => $brandA]) === ['CF-TEST-001', 'CF-TEST-002', 'CF-TEST-003'],
+   'Chi loc xe: ra 3 hang');
+ok($codes(['carBrandId' => $brandA, 'categoryIds' => [$cfCatCon]]) === ['CF-TEST-001'],
+   'Loc xe + danh muc cung luc -> AND, chi con hang thoa CA HAI',
+   implode(',', $codes(['carBrandId' => $brandA, 'categoryIds' => [$cfCatCon]])));
+
+// Tra lai nhu cu de cac phan test sau khong bi anh huong
+(new PartsModel())->edit(['category_id' => null], $p1);
+(new PartsModel())->edit(['category_id' => null], $p3);
+
+// ================================================================
 section('Sidebar /san-pham khong lam mat lua chon xe');
 
 // Form facet o sidebar la form GET rieng: no chi gui cac o gan form="facetForm".
@@ -360,5 +428,9 @@ $pdo->exec("DELETE FROM parts WHERE code LIKE 'CF-TEST-%'");
 $pdo->exec("DELETE FROM car_models WHERE slug LIKE 'cf-test-%'");
 $pdo->exec("DELETE FROM car_brands WHERE slug LIKE 'cf-test-%'");
 $pdo->exec("DELETE FROM car_body_types WHERE slug LIKE 'cf-test-%'");
+// Xoa CON truoc: part_categories.parent_id tro vao chinh bang nay va FK
+// khong co ON DELETE, xoa cha khi con con song la bi chan (loi 1451).
+$pdo->exec("DELETE FROM part_categories WHERE slug LIKE 'cf-test-%' AND parent_id IS NOT NULL");
+$pdo->exec("DELETE FROM part_categories WHERE slug LIKE 'cf-test-%'");
 
 exit(summary());
