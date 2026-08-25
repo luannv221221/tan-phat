@@ -1,0 +1,412 @@
+/* ==========================================================================
+   TÂN PHÁT — Lớp thiết kế cho trang bán hàng
+   ==========================================================================
+
+   Nạp SAU style.css. Cố tình để riêng một file thay vì sửa thẳng style.css:
+
+   - style.css là theme mua sẵn, 1078 dòng, MỌI trang storefront đang dùng.
+     Sửa thẳng vào đó là rủi ro lan sang trang mình chưa mở ra xem.
+   - Để riêng thì gỡ ra chỉ cần bỏ một thẻ <link>, và toàn bộ phần thiết kế
+     mới nằm gọn một chỗ để soát.
+
+   Giữ nguyên màu xanh #2957a4 của logo TÂN PHÁT ETEK làm màu chủ đạo, chỉ
+   dựng thêm dải đậm/nhạt quanh nó — trước đây cả trang chỉ có đúng một sắc
+   xanh phẳng dùng cho mọi thứ.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Font — khai báo lại cho ĐÚNG trọng lượng
+
+   style.css khai báo 5 file Roboto nhưng KHÔNG file nào ghi font-weight, nên
+   trình duyệt hiểu cả 5 đều là weight 400 và chỉ dùng file cuối cùng. Chữ đậm
+   trên trang không phải Roboto Bold mà là chữ thường bị trình duyệt bôi đậm
+   giả — nét bệt và mờ. Khai báo lại kèm font-weight để mỗi độ đậm lấy đúng file.
+   -------------------------------------------------------------------------- */
+@font-face{ font-family:"Roboto TP"; src:url("../fonts/Roboto-Light.ttf") format("truetype");   font-weight:300; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Roboto TP"; src:url("../fonts/Roboto-Regular.ttf") format("truetype"); font-weight:400; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Roboto TP"; src:url("../fonts/Roboto-Medium.ttf") format("truetype");  font-weight:500; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Roboto TP"; src:url("../fonts/Roboto-Bold.ttf") format("truetype");    font-weight:700; font-style:normal; font-display:swap; }
+@font-face{ font-family:"Roboto TP"; src:url("../fonts/Roboto-Italic.ttf") format("truetype");  font-weight:400; font-style:italic;  font-display:swap; }
+
+/* --------------------------------------------------------------------------
+   2. Bảng màu
+   -------------------------------------------------------------------------- */
+:root{
+  --tp-xanh-900:#132c55;   /* menu chính, chân trang */
+  --tp-xanh-800:#1b3d75;
+  --tp-xanh-700:#1d418d;   /* hover của nút */
+  --tp-xanh:#2957a4;       /* MÀU LOGO — nút, link, nhấn */
+  --tp-xanh-300:#8aa6d4;
+  --tp-xanh-100:#dde7f6;
+  --tp-xanh-50:#eff4fb;    /* nền nhạt */
+
+  --tp-do:#d93025;         /* giá bán và nhãn khuyến mãi */
+  --tp-do-nhat:#fdecea;
+  --tp-cam:#f26b21;        /* nút tìm kiếm ở thanh lọc xe */
+
+  /* Xám lệch nhẹ về xanh cho ăn với màu thương hiệu, không dùng xám trung tính */
+  --tp-nen:#f4f7fb;
+  --tp-the:#ffffff;
+  --tp-chu:#1b2430;
+  --tp-chu-mo:#64748b;
+  --tp-vien:#e2e8f2;
+
+  --tp-bong:0 1px 2px rgba(19,44,85,.04), 0 4px 14px -8px rgba(19,44,85,.18);
+  --tp-bong-noi:0 4px 10px rgba(19,44,85,.08), 0 18px 32px -20px rgba(19,44,85,.4);
+  --tp-bo:10px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Nền tảng
+   -------------------------------------------------------------------------- */
+body{
+  font-family:"Roboto TP", Roboto, "Segoe UI", system-ui, sans-serif;
+  /* Theme để 1.2 — quá chật cho đoạn văn, chữ dính vào nhau khi xuống dòng */
+  line-height:1.6;
+  color:var(--tp-chu);
+  background:var(--tp-nen);
+}
+.content{ background:var(--tp-nen); }
+
+h1,h2,h3,h4,h5{ line-height:1.28; color:var(--tp-chu); }
+a{ color:var(--tp-chu); transition:color .15s ease; }
+a:hover{ color:var(--tp-xanh); }
+
+:focus-visible{ outline:2px solid var(--tp-xanh); outline-offset:2px; border-radius:3px; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation:none !important; transition:none !important; }
+}
+
+/* --------------------------------------------------------------------------
+   4. Nút
+   -------------------------------------------------------------------------- */
+.btn{ border-radius:8px; font-weight:500; padding:9px 20px; transition:all .16s ease; }
+.btn-primary{ background:var(--tp-xanh); border-color:var(--tp-xanh); }
+.btn-primary:hover,.btn-primary:focus{
+  background:var(--tp-xanh-700); border-color:var(--tp-xanh-700);
+  transform:translateY(-1px); box-shadow:0 6px 16px -8px rgba(41,87,164,.7);
+}
+.btn-outline-primary{ color:var(--tp-xanh); border-color:var(--tp-xanh-300); background:#fff; }
+.btn-outline-primary:hover{ background:var(--tp-xanh); border-color:var(--tp-xanh); color:#fff; }
+.btn-sm{ padding:6px 14px; font-size:.875rem; }
+
+/* --------------------------------------------------------------------------
+   5. Đầu trang
+   -------------------------------------------------------------------------- */
+.header{
+  background:var(--tp-the);
+  border-bottom:0;
+  box-shadow:0 1px 0 var(--tp-vien);
+  /* Dính khi cuộn: trang bán hàng dài, khách luôn với tới được ô tìm kiếm,
+     menu và giỏ hàng mà không phải cuộn ngược lên đầu. */
+  position:sticky;
+  top:0;
+}
+
+.header .topbar{
+  background:var(--tp-xanh-900);
+  padding:7px 0;
+  font-size:.875rem;
+}
+.header .topbar__left li a,
+.header .topbar__right a{
+  font-size:.875rem;
+  color:rgba(255,255,255,.82);
+  transition:color .15s ease;
+}
+.header .topbar__left li a:hover,
+.header .topbar__right a:hover{ color:#fff; }
+.header .topbar__right a{ margin-left:18px; }
+
+.header .top-header{ padding-top:14px !important; padding-bottom:14px !important; }
+
+/* Logo — theme đặt class .text-md-left của Bootstrap 4, mà bản đang dùng là
+   Bootstrap 5 (tên mới là .text-md-start). Class không tồn tại nên .text-center
+   thắng và logo bị đẩy vào giữa cột, cách mép trái container tới 127px.
+   Đã sửa tên class trong master.php; dòng dưới chốt lại cho chắc. */
+@media (min-width:768px){
+  .header .header__logo{ text-align:left; }
+}
+.header .header__logo img{ max-height:46px; width:auto; }
+
+/* Hotline + giỏ hàng gom về bên phải thành một cụm.
+   Trước đây hotline nằm chỏng chơ ở giữa, cách giỏ hàng 616px toàn khoảng trống. */
+.header .header__hotline a{
+  display:inline-flex; align-items:center; gap:9px;
+  color:var(--tp-chu); font-weight:500; white-space:nowrap;
+}
+.header .header__hotline .fa{
+  width:34px; height:34px; border-radius:50%;
+  background:var(--tp-xanh-50); color:var(--tp-xanh);
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:1.05rem;
+}
+.header .header__hotline .nhan{
+  display:block; font-size:.72rem; font-weight:400;
+  color:var(--tp-chu-mo); text-transform:uppercase; letter-spacing:.06em;
+}
+.header .header__hotline .so{ display:block; font-size:1.02rem; font-weight:700; color:var(--tp-xanh); }
+
+.header .header__cart a{
+  gap:10px; color:var(--tp-chu); font-weight:500;
+  padding:7px 14px; border-radius:9px; border:1px solid var(--tp-vien);
+  transition:all .16s ease;
+}
+.header .header__cart a:hover{ border-color:var(--tp-xanh-300); background:var(--tp-xanh-50); }
+.header .header__cart a .header__cart--item .fa{ font-size:1.3rem; color:var(--tp-xanh); }
+/* Số trên giỏ: bản cũ 13px, hai chữ số là tràn ra ngoài vòng tròn */
+.header .header__cart a .header__cart--item span.count{
+  right:-9px; top:-7px;
+  min-width:18px; height:18px; width:auto; padding:0 5px;
+  background:var(--tp-do); border:2px solid #fff;
+  border-radius:9px; font-size:.7rem; font-weight:700; line-height:15px;
+}
+
+/* --------------------------------------------------------------------------
+   6. Menu chính
+   -------------------------------------------------------------------------- */
+.header .header__primary-menu{ background:var(--tp-xanh-900); }
+.header .header__primary-menu .menu > li > a{
+  padding:13px 20px; font-weight:500; font-size:.95rem;
+  position:relative; color:rgba(255,255,255,.9);
+}
+/* Hover cũ là xám #9c9b9b — đục và chẳng liên quan gì tới màu thương hiệu */
+.header .header__primary-menu .menu > li:hover > a,
+.header .header__primary-menu .menu > li > a:focus-visible{
+  background:rgba(255,255,255,.08); color:#fff;
+}
+.header .header__primary-menu .menu > li > a::after{
+  content:""; position:absolute; left:20px; right:20px; bottom:0;
+  height:3px; background:var(--tp-cam);
+  transform:scaleX(0); transform-origin:center; transition:transform .18s ease;
+}
+.header .header__primary-menu .menu > li:hover > a::after{ transform:scaleX(1); }
+
+.header .header__primary-menu .menu li ul{
+  background:#fff; min-width:250px; border-radius:0 0 var(--tp-bo) var(--tp-bo);
+  box-shadow:var(--tp-bong-noi); padding:6px 0; overflow:hidden;
+}
+.header .header__primary-menu .menu li ul li a{
+  color:var(--tp-chu); border-bottom:0; padding:9px 18px; font-size:.925rem;
+}
+.header .header__primary-menu .menu li ul li a:hover{ background:var(--tp-xanh-50); color:var(--tp-xanh); }
+.header .header__primary-menu .menu li ul li i{ color:var(--tp-chu-mo); }
+
+/* --------------------------------------------------------------------------
+   6b. Thanh lọc xe
+
+   Giữ nguyên bố cục và mọi hành vi trong car-filter.css, chỉ chỉnh phần nhìn
+   cho ăn với ngôn ngữ bo góc 10px của các thẻ bên dưới. Bản cũ bo 2px nên
+   trông như một hộp vuông dán vào giữa hai dải màu.
+   -------------------------------------------------------------------------- */
+.car-filter{ background:var(--tp-the); padding-bottom:16px; }
+.car-filter__form{
+  border:1px solid var(--tp-vien);
+  border-radius:var(--tp-bo);
+  box-shadow:var(--tp-bong);
+  overflow:visible;              /* khung gợi ý đổ xuống dưới, cắt là mất sạch */
+}
+.car-filter__select,
+.car-filter__input{
+  height:46px; border-right-color:var(--tp-vien); color:var(--tp-chu); font-size:.94rem;
+}
+.car-filter__select:focus,
+.car-filter__input:focus{ background:var(--tp-xanh-50); }
+.car-filter__select:first-child{ border-radius:var(--tp-bo) 0 0 var(--tp-bo); }
+
+.car-filter__btn{
+  flex:0 0 58px;
+  background:var(--tp-cam);
+  border-radius:0 var(--tp-bo) var(--tp-bo) 0;
+}
+.car-filter__btn:hover,.car-filter__btn:focus{ background:#d9551a; }
+
+.car-filter__suggest{
+  border-color:var(--tp-vien);
+  border-radius:0 0 var(--tp-bo) var(--tp-bo);
+  box-shadow:var(--tp-bong-noi);
+  overflow:hidden auto;
+}
+.cf-sug{ border-bottom-color:var(--tp-vien); }
+.cf-sug.is-on{ background:var(--tp-xanh-50); }
+
+@media (max-width:767.98px){
+  /* Xếp 2x2 rồi thì góc bo phải tính lại theo từng ô ở bốn góc */
+  .car-filter__select:first-child{ border-radius:var(--tp-bo) 0 0 0; }
+  .car-filter__btn{ border-radius:0 0 var(--tp-bo) 0; }
+}
+
+/* --------------------------------------------------------------------------
+   7. Tiêu đề khối
+
+   Bản cũ: gạch ĐỎ 4px nằm dưới, đặt bottom:-5px nên đè lên nội dung phía dưới.
+   Đỏ ở đây không mang nghĩa gì, lại đá với xanh thương hiệu — đỏ chỉ nên dành
+   cho giá và nhãn khuyến mãi.
+   -------------------------------------------------------------------------- */
+.section-title{
+  font-size:1.6rem; font-weight:700; letter-spacing:-.015em;
+  margin-bottom:26px; padding-bottom:14px; color:var(--tp-chu);
+}
+.section-title::after{
+  width:56px; height:3px; border-radius:2px;
+  background:var(--tp-cam); bottom:0;
+}
+
+/* --------------------------------------------------------------------------
+   8. Thẻ sản phẩm
+   -------------------------------------------------------------------------- */
+.products .products--item{
+  border:1px solid var(--tp-vien);
+  border-radius:var(--tp-bo);
+  background:var(--tp-the);
+  box-shadow:var(--tp-bong);
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  display:flex; flex-direction:column;
+}
+.products .products--item:hover{
+  transform:translateY(-3px);
+  box-shadow:var(--tp-bong-noi);
+  border-color:var(--tp-xanh-100);
+}
+.products .products--item .item__image{ background:#fff; border-radius:var(--tp-bo) var(--tp-bo) 0 0; }
+.products .products--item .item__image img{
+  width:100%; height:200px; object-fit:contain; padding:12px;
+}
+.products .products--item .item__info{ padding:14px 16px 16px; display:flex; flex-direction:column; flex:1; }
+
+/* Tên hàng: cắt đúng 2 dòng để mọi thẻ trong hàng cao bằng nhau.
+   Bản cũ 1.3rem không giới hạn dòng nên tên dài đẩy thẻ cao lệch hẳn. */
+.products .products--item .item__info .item--name{
+  font-size:.975rem; font-weight:500; line-height:1.45; margin-bottom:10px;
+  min-height:2.9em;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.products .products--item .item__info .item--name a{ color:var(--tp-chu); }
+.products .products--item .item__info .item--name a:hover{ color:var(--tp-xanh); }
+.products .products--item .item__info h3 a:hover{ color:var(--tp-xanh); }
+
+/* Giá: bản cũ dùng justify-content:space-between nên giá cũ và giá mới bị
+   đẩy về hai mép thẻ, nhìn như hai thông tin rời nhau. */
+.products .products--item .item__info .item--price{
+  justify-content:flex-start; align-items:baseline; gap:9px;
+  margin-top:auto; font-size:1rem;
+}
+.products .products--item .item__info .item--price span{
+  color:var(--tp-do); font-weight:700; font-size:1.12rem;
+}
+.products .products--item .item__info .item--price del{ color:var(--tp-chu-mo); font-size:.875rem; font-weight:400; }
+
+.products .products--item .item--sales{
+  top:10px; right:10px;
+  background:var(--tp-do); border-radius:6px;
+  padding:3px 9px; font-size:.78rem; font-weight:700;
+  box-shadow:0 2px 6px rgba(217,48,37,.35);
+}
+
+/* --------------------------------------------------------------------------
+   9. Ô danh mục
+
+   Bản cũ khai position:absolute rồi ngay dòng sau ghi đè position:relative cho
+   cùng một phần tử — lớp phủ đen tính sai, tên danh mục không nằm trên ảnh như
+   ý đồ ban đầu. Dựng lại cho đúng.
+   -------------------------------------------------------------------------- */
+.categories .categories__item{
+  border-radius:var(--tp-bo); overflow:hidden;
+  box-shadow:var(--tp-bong); background:var(--tp-the);
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.categories .categories__item:hover{ transform:translateY(-3px); box-shadow:var(--tp-bong-noi); }
+.categories .categories__item > a:first-child{ display:block; overflow:hidden; }
+.categories .categories__item img{
+  width:100%; height:170px; object-fit:cover;
+  transition:transform .4s ease;
+}
+.categories .categories__item:hover img{ transform:scale(1.06); }
+.categories .categories__item h2{
+  position:static; background:transparent; color:var(--tp-chu);
+  font-size:1rem; font-weight:600; text-align:center;
+  padding:13px 12px; margin:0;
+  border-top:1px solid var(--tp-vien);
+}
+.categories .categories__item:hover h2{ color:var(--tp-xanh); }
+/* Lớp phủ đen của theme không còn dùng tới */
+.categories .categories__item::after{ display:none; }
+
+/* --------------------------------------------------------------------------
+   10. Thẻ tin tức
+   -------------------------------------------------------------------------- */
+.posts .posts__list .post--item{
+  background:var(--tp-the); border:1px solid var(--tp-vien);
+  border-radius:var(--tp-bo); overflow:hidden; height:100%;
+  box-shadow:var(--tp-bong);
+  transition:transform .18s ease, box-shadow .18s ease;
+  display:flex; flex-direction:column;
+}
+.posts .posts__list .post--item:hover{ transform:translateY(-3px); box-shadow:var(--tp-bong-noi); }
+.posts .posts__list .post--item h3{
+  font-size:1rem; font-weight:600; line-height:1.45;
+  margin:14px 16px 8px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.posts .posts__list .post--item h3 a:hover{ color:var(--tp-xanh); }
+.posts .posts__list .post--item time{
+  color:var(--tp-chu-mo); font-size:.82rem; margin:0 16px 8px;
+  display:flex; align-items:center; gap:6px;
+}
+.posts .posts__list .post--item p{
+  color:var(--tp-chu-mo); font-size:.9rem; margin:0 16px 16px;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+}
+
+/* --------------------------------------------------------------------------
+   11. Khoảng cách giữa các khối
+   -------------------------------------------------------------------------- */
+.categories, .products, .posts, .content > section{ padding-top:38px; padding-bottom:8px; }
+.posts.pb-5{ padding-bottom:44px !important; }
+.slider{ padding-top:0; }
+.slider img{ width:100%; object-fit:cover; }
+
+/* --------------------------------------------------------------------------
+   12. Chân trang
+
+   Bản cũ nền #838c9b — xám bùn, không dính dáng gì tới màu thương hiệu.
+   -------------------------------------------------------------------------- */
+.footer{ background:var(--tp-xanh-900); color:rgba(255,255,255,.78); }
+.footer a{ color:rgba(255,255,255,.78); }
+.footer a:hover{ color:#fff; }
+.footer .footer__logo h2{ font-size:1.15rem; font-weight:600; color:#fff; margin-top:10px; }
+.footer hr{ border-color:rgba(255,255,255,.14); opacity:1; }
+.footer .footer__address .footer__address--item h4{
+  color:#fff; font-size:.92rem; font-weight:600;
+  text-transform:uppercase; letter-spacing:.05em; margin-bottom:12px;
+}
+.footer .footer__address .footer__address--item h4 .fa{ color:var(--tp-cam); margin-right:6px; }
+.footer .footer__address .footer__address--item p{ font-size:.92rem; line-height:1.7; }
+.footer .footer__inner .footer__inner--menu ul li a{
+  border-bottom:1px solid rgba(255,255,255,.1);
+  padding:8px 0; font-size:.92rem;
+}
+.footer .footer__inner .footer__inner--menu ul li a:hover{ padding-left:5px; }
+
+/* --------------------------------------------------------------------------
+   13. Nút lên đầu trang
+   -------------------------------------------------------------------------- */
+#button{ background-color:var(--tp-xanh) !important; border-radius:9px; }
+#button:hover{ background-color:var(--tp-xanh-700) !important; }
+
+/* --------------------------------------------------------------------------
+   14. Màn hình nhỏ
+   -------------------------------------------------------------------------- */
+@media (max-width:767px){
+  /* Bỏ dính trên điện thoại: header cao chiếm mất phần lớn màn hình */
+  .header{ position:static; }
+  .section-title{ font-size:1.3rem; margin-bottom:20px; }
+  .products .products--item .item__image img{ height:150px; }
+  .products .products--item .item__info{ padding:11px 12px 13px; }
+  .products .products--item .item__info .item--name{ font-size:.9rem; }
+  .products .products--item .item__info .item--price span{ font-size:1rem; }
+  .categories .categories__item img{ height:120px; }
+  .categories .categories__item h2{ font-size:.9rem; padding:10px 8px; }
+  .categories, .products, .posts, .content > section{ padding-top:26px; }
+}

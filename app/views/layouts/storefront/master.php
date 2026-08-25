@@ -97,6 +97,10 @@ $renderMenu = function ($items) use (&$renderMenu){
 <link rel="stylesheet" href="<?php echo e($asset); ?>/css/own-carousel.min.css"/>
 <link rel="stylesheet" href="<?php echo asset("public/assets/storefront/css/style.css"); ?>"/>
 <link rel="stylesheet" href="<?php echo asset("public/assets/storefront/css/car-filter.css"); ?>"/>
+<?php /* Lớp thiết kế — PHẢI nạp sau style.css để ghi đè được theme mua sẵn.
+         Toàn bộ phần làm lại giao diện nằm gọn trong file này, gỡ ra chỉ cần
+         bỏ đúng dòng dưới. */ ?>
+<link rel="stylesheet" href="<?php echo asset("public/assets/storefront/css/theme.css"); ?>"/>
 <style>
 /* ---- Bổ sung nhỏ cho storefront (không có trong theme) ---- */
 :root{--sf-accent:#2957a4;--sf-accent-d:#1d418d}
@@ -176,14 +180,26 @@ $renderMenu = function ($items) use (&$renderMenu){
                     <button type="button" class="menu-toggle"><i class="fa fa-bars"></i></button>
                 </div>
                 <div class="col-7 col-md-4">
-                    <div class="header__logo text-center text-md-left">
+                    <?php /* text-md-start chứ không phải text-md-left: bản đang dùng là
+                             Bootstrap 5, tên .text-md-left của bản 4 không còn tồn tại nên
+                             .text-center thắng và logo bị đẩy vào giữa cột. */ ?>
+                    <div class="header__logo text-center text-md-start">
                         <a href="<?php echo _WEB_URL; ?>/"><img src="<?php echo e($logoUrl); ?>" alt="<?php echo e($siteName); ?>"/></a>
                     </div>
                 </div>
                 <div class="col-md-8 d-none d-md-block">
-                    <div class="d-flex align-items-center justify-content-between">
+                    <?php /* Gom hotline + tài khoản + giỏ hàng thành MỘT cụm bên phải.
+                             Trước đây hotline bị justify-content-between đẩy ra giữa, cách
+                             giỏ hàng hơn 600px toàn khoảng trống. */ ?>
+                    <div class="d-flex align-items-center justify-content-end" style="gap:26px">
                         <div class="header__hotline">
-                            <a href="tel:<?php echo e($hotlineTel); ?>"><i class="fa fa-mobile" aria-hidden="true"></i> Hotline: <?php echo e($hotline); ?></a>
+                            <a href="tel:<?php echo e($hotlineTel); ?>">
+                                <i class="fa fa-phone" aria-hidden="true"></i>
+                                <span>
+                                    <span class="nhan">Hotline tư vấn</span>
+                                    <span class="so"><?php echo e($hotline); ?></span>
+                                </span>
+                            </a>
                         </div>
                         <div class="d-flex align-items-center" style="gap:22px">
                             <?php if (!$showTopbar): ?>
