@@ -144,8 +144,12 @@ $cfOptions = function ($rows, $selected){
                 <div class="car-filter__suggest" id="cfSuggest" role="listbox" hidden></div>
             </div>
 
+            <?php /* Chữ "Tìm kiếm" ẩn đi ở khổ điện thoại (CSS .chu), chỉ còn
+                     kính lúp. aria-label vẫn giữ nguyên để trình đọc màn hình
+                     lúc nào cũng đọc được tên nút. */ ?>
             <button class="car-filter__btn" type="submit" aria-label="Tìm kiếm">
                 <i class="fa fa-search" aria-hidden="true"></i>
+                <span class="chu">Tìm kiếm</span>
             </button>
         </form>
     </div>

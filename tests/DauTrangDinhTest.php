@@ -209,4 +209,51 @@ ok(preg_match('/\.car-filter\{[^}]*z-index:1020/s', $css),
    'Thanh loc o duoi header (1030) va tren noi dung',
    'Cao hon header thi luc dang truot no de len ca menu');
 
+// ---------------------------------------------------------------------------
+section('Dai tra cuu phai NOI len');
+
+// Ban truoc dai nay dung nen #eff4fb (--tp-xanh-50), gan nhu trung voi nen
+// trang #f4f7fb — nhin ra chi thay mot khoang trang, khong doc thanh "mot dai"
+// gi ca. Day la ly do phai lam lai.
+ok(preg_match('/\.car-filter-nhan,\s*\.car-filter\{\s*background:var\(--tp-xanh-800\)/s', $css),
+   'Dai dung nen xanh DAM cua thuong hieu',
+   'Quay ve --tp-xanh-50 la lai chim vao nen trang');
+
+ok(preg_match('/\.car-filter-nhan,\s*\.car-filter\{/s', $css),
+   'Nhan va thanh loc dung CHUNG mot khai bao nen',
+   'Tach ra hai mau la lo vach ngang cho giap nhau');
+
+// Gradient da thu roi va bo: hai the tach roi muon chay chung mot dai chuyen
+// mau thi phai can background-size theo tong chieu cao ca hai, ma chieu cao do
+// doi theo co chu / theo viec nhan co xuong dong hay khong.
+ok(strpos($css, 'linear-gradient(180deg, var(--tp-xanh-800)') === false,
+   'Khong dung gradient cho dai nay');
+
+// ---------------------------------------------------------------------------
+section('Tung o la mot THE ROI');
+
+ok(preg_match('/\.car-filter__form\{[^}]*border:0/s', $css),
+   'Khung lien ngay xua da go, form chi con la khay xep the');
+ok(preg_match('/\.car-filter__form\{[^}]*gap:10px/s', $css),
+   'Cac the cach nhau bang gap');
+ok(preg_match('/\.car-filter__select,\s*\.car-filter__input\{[^}]*border-radius:10px/s', $css),
+   'The co bo goc rieng',
+   'Mo o chon ra, Chrome tu ve vien quanh dung o do. Khung lien thi vien ay '
+   . 'cat ngang mach nhin nhu vo; the roi thi vien trung khit mep the');
+ok(preg_match('/\.car-filter__select:focus,\s*\.car-filter__input:focus\{[^}]*box-shadow:0 0 0 3px rgba\(255,255,255/s', $css),
+   'Dang chon thi co quang sang TRANG quanh the');
+
+// ---------------------------------------------------------------------------
+section('Nut tim kiem');
+
+$partialSrc = file_get_contents(__DIR__ . '/../app/views/layouts/storefront/partials/car-filter.php');
+ok(strpos($partialSrc, '<span class="chu">Tìm kiếm</span>') !== false,
+   'Nut co chu "Tim kiem", khong chi moi cai kinh lup');
+ok(strpos($partialSrc, 'aria-label="Tìm kiếm"') !== false,
+   'Van giu aria-label cho trinh doc man hinh',
+   'Kho dien thoai chu bi an di, chi con icon — khong co aria-label thi nut '
+   . 'thanh vo danh');
+ok(preg_match('/@media \(max-width:767\.98px\)\{[^@]*\.car-filter__btn \.chu\{ display:none/s', $css),
+   'Chu tren nut an di o kho dien thoai');
+
 exit(summary());

@@ -200,72 +200,124 @@ a:hover{ color:var(--tp-xanh); }
 .header .header__primary-menu .menu li ul li i{ color:var(--tp-chu-mo); }
 
 /* --------------------------------------------------------------------------
-   6b. Thanh lọc xe
+   6b. Thanh lọc xe — dải tra cứu
 
-   Giữ nguyên bố cục và mọi hành vi trong car-filter.css, chỉ chỉnh phần nhìn
-   cho ăn với ngôn ngữ bo góc 10px của các thẻ bên dưới. Bản cũ bo 2px nên
-   trông như một hộp vuông dán vào giữa hai dải màu.
+   Bản trước dùng nền xanh #eff4fb, gần như trùng với nền trang #f4f7fb, nên
+   nhìn ra chẳng khác gì một khoảng trắng: không đọc thành "một dải" gì cả.
+   Nay đổi hẳn sang nền xanh đậm của thương hiệu, các ô là thẻ trắng nổi lên
+   trên. Tương phản trắng-trên-xanh-đậm là thứ mạnh nhất có thể làm mà vẫn
+   nằm trong bảng màu sẵn có, không phải bịa thêm màu mới.
+
+   Đậm hơn menu nhưng KHÔNG bằng menu: menu là #132c55 (gần như đen), dải này
+   chạy #1d418d -> #2957a4. Hai sắc khác hẳn nhau nên xếp chồng vẫn thấy rõ
+   đâu là menu, đâu là thanh lọc.
+
+   Từng ô là một THẺ RỜI có bo góc riêng, không phải một khung liền như trước.
+   Lý do rất thực tế: mở ô chọn ra, Chrome tự vẽ viền xanh quanh đúng ô đó —
+   khung liền thì viền ấy cắt ngang mạch, nhìn như bị vỡ. Thẻ rời thì viền của
+   trình duyệt trùng luôn với hình dáng cái thẻ, thành ra tự nhiên.
    -------------------------------------------------------------------------- */
-/* Dải nền riêng cho thanh lọc.
-   Nó không còn nằm trong đầu trang nữa mà đứng một mình giữa băng-rôn và nội
-   dung, nên phải tự tách mình ra khỏi hai khối đó — nền trắng trơn là chìm
-   nghỉm. Nền xanh rất nhạt cho cả nhãn lẫn thanh: hai khối liền nhau, cùng
-   một nền nên mắt đọc thành MỘT dải, dù thật ra là hai thẻ tách rời.
 
-   Nhãn KHÔNG dính, thanh lọc thì có. Cuộn xuống là nhãn trôi lên khuất sau
-   menu, còn thanh ở lại — đúng thứ khách cần khi đang xem hàng. */
+/* Nhãn KHÔNG dính, thanh lọc thì có. Cuộn xuống là nhãn trôi lên khuất sau
+   menu, còn thanh ở lại — đúng thứ khách cần khi đang xem hàng.
+   Hai khối dùng CHUNG một nền để mắt đọc thành một dải liền. */
+/* Màu PHẲNG, cố ý không dùng gradient. Nhãn và thanh lọc là hai thẻ tách rời
+   nên muốn chạy chung một dải chuyển màu thì phải căn background-size theo
+   tổng chiều cao của cả hai — mà chiều cao ấy đổi theo cỡ chữ, theo việc nhãn
+   có xuống dòng hay không. Lệch một chút là lòi ra vạch đậm ngay chỗ giáp
+   nhau. Một màu phẳng thì không bao giờ sai. */
+.car-filter-nhan,
+.car-filter{ background:var(--tp-xanh-800); }
+
 .car-filter-nhan{
-  background:var(--tp-xanh-50);
   border-top:3px solid var(--tp-cam);
-  padding:13px 0 3px;
+  padding:14px 0 0;
 }
 .car-filter-nhan .container{
-  display:flex; align-items:center; gap:9px;
-  font-size:.95rem; font-weight:600; color:var(--tp-xanh-900);
+  display:flex; align-items:center; gap:10px;
+  font-size:1rem; font-weight:600; color:#fff;
+  letter-spacing:.005em;
 }
 .car-filter-nhan .fa{
-  width:26px; height:26px; border-radius:50%; flex:0 0 26px;
-  background:var(--tp-xanh); color:#fff;
+  width:28px; height:28px; border-radius:50%; flex:0 0 28px;
+  background:rgba(255,255,255,.16); color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
   display:inline-flex; align-items:center; justify-content:center;
-  font-size:.8rem;
+  font-size:.85rem;
 }
 
 .car-filter{
   position:sticky;               /* top do script.js đo (= chiều cao menu xanh) */
   z-index:1020;                  /* trên nội dung, dưới đầu trang (1030) */
-  background:var(--tp-xanh-50);
-  border-bottom:1px solid var(--tp-vien);
+  border-bottom:0;
   /* Chiều cao KHÔNG ĐỔI dù ghim hay không. Đổi chiều cao của một thẻ dính là
      kéo tụt cả trang phía dưới ngay giữa lúc cuộn. */
-  padding:11px 0 14px;
-  box-shadow:0 4px 10px rgba(15,23,42,.05);
+  padding:12px 0 16px;
+  box-shadow:0 10px 24px -12px rgba(19,44,85,.55);
 }
 
+/* Khung liền ngày trước giờ chỉ còn là cái khay xếp các thẻ. */
 .car-filter__form{
-  border:1px solid var(--tp-vien);
-  border-radius:var(--tp-bo);
-  background:#fff;
-  box-shadow:0 2px 10px rgba(15,23,42,.08);
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  border-radius:0;
+  gap:10px;
+  align-items:center;
   overflow:visible;              /* khung gợi ý đổ xuống dưới, cắt là mất sạch */
 }
+
 .car-filter__select,
 .car-filter__input{
-  height:46px; border-right-color:var(--tp-vien); color:var(--tp-chu); font-size:.94rem;
+  height:50px;
+  border:1px solid transparent;
+  border-radius:10px;
+  background-color:#fff;
+  color:var(--tp-chu);
+  font-size:.94rem;
+  box-shadow:0 1px 2px rgba(19,44,85,.18);
+  transition:box-shadow .15s ease, border-color .15s ease;
 }
+.car-filter__select{
+  /* Mũi tên vẽ lại theo màu thương hiệu; bản gốc là xám #666, trên thẻ trắng
+     nổi trên nền xanh thì xám nhìn bẩn. */
+  background-image:url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%232957a4' stroke-width='1.6' d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
+}
+.car-filter__select:hover,
+.car-filter__input:hover{ box-shadow:0 2px 6px rgba(19,44,85,.28); }
+
+/* Quầng sáng trắng thay cho việc đổi nền. Chrome vẫn tự vẽ viền của nó khi ô
+   chọn đang mở, nhưng viền ấy nằm trùng khít mép thẻ nên không phá gì. */
 .car-filter__select:focus,
-.car-filter__input:focus{ background:var(--tp-xanh-50); }
-.car-filter__select:first-child{ border-radius:var(--tp-bo) 0 0 var(--tp-bo); }
+.car-filter__input:focus{
+  background-color:#fff;
+  border-color:#fff;
+  box-shadow:0 0 0 3px rgba(255,255,255,.55), 0 2px 8px rgba(19,44,85,.3);
+}
 
 .car-filter__btn{
-  flex:0 0 58px;
+  flex:0 0 auto;
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  height:50px; padding:0 22px;
   background:var(--tp-cam);
-  border-radius:0 var(--tp-bo) var(--tp-bo) 0;
+  border-radius:10px;
+  font-size:.95rem; font-weight:600;
+  box-shadow:0 2px 8px rgba(242,107,33,.45);
+  transition:background .15s ease, box-shadow .15s ease, transform .1s ease;
 }
-.car-filter__btn:hover,.car-filter__btn:focus{ background:#d9551a; }
+.car-filter__btn:hover,.car-filter__btn:focus{
+  background:#d9551a;
+  box-shadow:0 4px 14px rgba(242,107,33,.55);
+}
+.car-filter__btn:active{ transform:translateY(1px); }
 
+/* Khung gợi ý nay là một tấm RỜI thả xuống dưới ô tìm, không còn dính liền
+   vào đáy khung như hồi cả hàng là một khối. */
 .car-filter__suggest{
-  border-color:var(--tp-vien);
-  border-radius:0 0 var(--tp-bo) var(--tp-bo);
+  top:calc(100% + 6px);
+  left:0; right:0;
+  border:1px solid var(--tp-vien);
+  border-radius:10px;
   box-shadow:var(--tp-bong-noi);
   overflow:hidden auto;
 }
@@ -273,9 +325,19 @@ a:hover{ color:var(--tp-xanh); }
 .cf-sug.is-on{ background:var(--tp-xanh-50); }
 
 @media (max-width:767.98px){
-  /* Xếp 2x2 rồi thì góc bo phải tính lại theo từng ô ở bốn góc */
-  .car-filter__select:first-child{ border-radius:var(--tp-bo) 0 0 0; }
-  .car-filter__btn{ border-radius:0 0 var(--tp-bo) 0; }
+  /* Có gap rồi thì 50% là tràn. Trừ đi nửa khoảng cách cho vừa đúng hai cột. */
+  .car-filter__select{
+    flex:1 0 calc(50% - 5px);
+    max-width:calc(50% - 5px);
+    border-radius:10px;          /* thẻ rời nên bốn góc như nhau, không phải
+                                    tính lại góc theo vị trí trong lưới nữa */
+    border-bottom:1px solid transparent;
+    border-right:1px solid transparent;
+  }
+  .car-filter__select--cat{ flex:1 0 100%; max-width:100%; }
+  /* Chật chỗ thì nút chỉ còn kính lúp, bỏ chữ */
+  .car-filter__btn{ padding:0 18px; }
+  .car-filter__btn .chu{ display:none; }
 }
 
 /* --------------------------------------------------------------------------
