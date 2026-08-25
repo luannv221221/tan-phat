@@ -51,3 +51,14 @@ public/assets/uploads/banners/*
 !public/assets/uploads/banners/.gitkeep
 public/assets/uploads/categories/*
 !public/assets/uploads/categories/.gitkeep
+
+# NGOAI LE cho anh minh hoa tai bang tools/tai-anh-commons.php.
+#
+# Luat o tren chan uploads la dung: do khach tu tai len thi khong thuoc ve ma
+# nguon. Nhung mAY anh danh muc + bang-ron nay la DU LIEU MAU cua do an, sinh
+# ra mot lan roi CSDL tro thang vao duong dan do. Khong cho di theo repo thi
+# clone ve may khac (hoac luc bao ve) la ca trang tro anh vo, ma chay lai
+# script cung khong ra dung may tam cu — ket qua tim kiem cua Commons doi
+# theo tung luot goi.
+!public/assets/uploads/categories/*.jpg
+!public/assets/uploads/banners/bn-*.jpg
