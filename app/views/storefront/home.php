@@ -77,6 +77,14 @@ $rootCats = array_slice($rootCats, 0, 8);
         </div>
     </section>
 
+    <?php /* Thanh lọc xe. Master dựng sẵn chuỗi HTML rồi truyền xuống đây —
+             view con chạy qua eval trong Template::run() nên $this ở đây là
+             đối tượng Template, không gọi được $this->render(). Xem khối
+             chú thích ở master.php.
+             Các trang khác để master in ngay dưới menu; riêng trang chủ có
+             băng-rôn nên phải in SAU nó. */ ?>
+    {!! $thanhLoc !!}
+
     <!-- Danh mục sản phẩm -->
     @if (!empty($rootCats))
     <section class="categories pt-4">

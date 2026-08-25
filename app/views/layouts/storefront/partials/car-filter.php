@@ -74,6 +74,20 @@ $cfOptions = function ($rows, $selected){
     }
 };
 ?>
+<?php /* Nhãn nằm ở khối RIÊNG, không phải bên trong .car-filter.
+         Lý do: .car-filter là phần bị ghim khi cuộn. Nhét nhãn vào trong rồi
+         thu nó lại lúc ghim thì ô của nó trong dòng chảy cũng co theo, và
+         toàn bộ nội dung phía dưới bị kéo lên — đo được là NHẢY 49px đúng
+         vào khoảnh khắc ghim.
+         Tách ra thì nhãn cứ trôi đi như nội dung thường, thanh lọc giữ nguyên
+         chiều cao mãi mãi. Không cần JS, không nhảy. */ ?>
+<div class="car-filter-nhan">
+    <div class="container">
+        <i class="fa fa-search" aria-hidden="true"></i>
+        <span>Tra phụ tùng theo xe của bạn</span>
+    </div>
+</div>
+
 <div class="car-filter">
     <div class="container">
         <form class="car-filter__form" id="carFilterForm" action="<?php echo _WEB_URL; ?>/san-pham" method="get">

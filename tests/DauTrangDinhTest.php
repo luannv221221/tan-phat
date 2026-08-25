@@ -86,30 +86,94 @@ ok(!preg_match('/addEventListener\(\s*["\']scroll["\']\s*,\s*\(\)\s*=>/', $js),
 // ---------------------------------------------------------------------------
 section('Cach moi: sticky + le am do duoc');
 
-ok(strpos($js, 'datLeAm') !== false,
-   'Co ham dat le am cho header');
+ok(strpos($js, 'datViTri') !== false,
+   'Co ham dat vi tri dinh');
 
 ok(preg_match('/header\.style\.top\s*=\s*-Math\.round\(/', $js),
-   'Le am duoc gan bang so AM (dau tru truoc Math.round)');
-
-ok(strpos($js, "querySelector(\".car-filter\")") !== false,
-   'Do le am tu thanh loc xe');
-
-ok(strpos($js, '.header__primary-menu') !== false,
-   'Co duong lui sang menu khi admin tat thanh loc',
-   'Thanh loc bat/tat duoc o admin > Cau hinh website — tat di ma van do theo '
-   . 'no thi le am ra 0');
+   'Le am cua header duoc gan bang so AM (dau tru truoc Math.round)');
 
 ok(preg_match('/getBoundingClientRect\(\)\.top\s*-\s*header\.getBoundingClientRect\(\)\.top/', $js),
    'Le am = hieu hai getBoundingClientRect, khong viet cung so px',
    'Viet cung la sai ngay khi admin tat dai lien he');
 
-ok(strpos($js, "addEventListener(\"resize\", datLeAm)") !== false,
+ok(preg_match('/var\s+nav\s*=\s*header\.querySelector\(["\']\.header__primary-menu["\']\)/', $js),
+   'Moc ghim cua header la MENU XANH',
+   'Thanh loc da ra khoi header roi, do theo no la sai');
+
+ok(strpos($js, "addEventListener(\"resize\", datViTri)") !== false,
    'Do lai khi doi kho man hinh');
 
-ok(strpos($js, "addEventListener(\"load\", datLeAm)") !== false,
+ok(strpos($js, "addEventListener(\"load\", datViTri)") !== false,
    'Do lai sau khi anh logo tai xong',
    'Truoc load, hang logo chua co chieu cao that -> le am thieu');
+
+// ---------------------------------------------------------------------------
+section('Thanh loc ghim NGAY DUOI menu xanh');
+
+ok(preg_match('/thanhLoc\.style\.position\s*=\s*["\']sticky["\']/', $js),
+   'Thanh loc cung duoc dat sticky');
+
+ok(preg_match('/thanhLoc\.style\.top\s*=\s*Math\.ceil\(nav\.getBoundingClientRect\(\)\.height\)/', $js),
+   'Moc dinh cua thanh loc = chieu cao menu xanh, lam tron LEN',
+   'Menu cao 50.4px; lam tron xuong 50 thi thanh loc ghim cao hon day menu '
+   . '0.4px va bi menu che mat mot vach');
+
+// ---------------------------------------------------------------------------
+section('Thanh loc khong duoc DOI CHIEU CAO khi ghim');
+
+// Da tung lam: nhan nam trong .car-filter va thu lai luc ghim. Do duoc tren
+// trinh duyet: o cua no trong dong chay cung co theo -> toan bo noi dung phia
+// duoi bi keo len 49px dung vao khoanh khac ghim. Dung y het loi cua ban cu.
+ok(strpos($js, 'dang-ghim') === false,
+   'Khong con class dang-ghim trong JS');
+ok(strpos($css, 'dang-ghim') === false,
+   'Khong con luat CSS cho dang-ghim');
+ok(strpos($js, 'IntersectionObserver') === false,
+   'Khong con theo doi trang thai ghim');
+
+ok(strpos($css, '.car-filter-nhan') !== false,
+   'Nhan nam o khoi RIENG (.car-filter-nhan), ngoai phan bi ghim',
+   'Nho vay nhan cu troi di nhu noi dung thuong, con thanh loc giu nguyen '
+   . 'chieu cao mai mai');
+
+$partial = file_get_contents(__DIR__ . '/../app/views/layouts/storefront/partials/car-filter.php');
+ok(strpos($partial, '<div class="car-filter-nhan">') !== false,
+   'Partial dung nhan thanh the anh em, khong long vao trong');
+ok(preg_match('/car-filter-nhan.*?<div class="car-filter">/s', $partial) === 1,
+   'Nhan dung TRUOC thanh loc');
+
+// ---------------------------------------------------------------------------
+section('Thanh loc da ra khoi <header>');
+
+$master = file_get_contents(__DIR__ . '/../app/views/layouts/storefront/master.php');
+$vtHeaderDong = strpos($master, '</header>');
+$vtGoiPartial = strpos($master, "partials/car-filter");
+ok($vtHeaderDong !== false && $vtGoiPartial !== false && $vtGoiPartial > $vtHeaderDong,
+   'master.php goi thanh loc SAU khi dong </header>',
+   'Nam trong header thi mo o chon ra la danh sach do xuong de len chinh '
+   . 'dai menu, va dau trang phinh len 225px');
+
+ok(strpos($master, 'ob_start()') !== false && strpos($master, "\$content['thanhLoc']") !== false,
+   'Master dung san chuoi HTML roi truyen xuong view con',
+   'View con chay qua eval trong Template::run(), $this o do la Template chu '
+   . 'khong phai Controller -> tu no khong goi duoc $this->render()');
+
+$home = file_get_contents(__DIR__ . '/../app/views/storefront/home.php');
+ok(strpos($home, '{!! $thanhLoc !!}') !== false,
+   'Trang chu tu in thanh loc');
+
+$vtSlider = strpos($home, '<section class="slider">');
+$vtLoc    = strpos($home, '{!! $thanhLoc !!}');
+$vtCat    = strpos($home, '<section class="categories');
+ok($vtSlider !== false && $vtLoc > $vtSlider,
+   'Trang chu: thanh loc nam DUOI bang-ron');
+ok($vtCat !== false && $vtLoc < $vtCat,
+   'Trang chu: thanh loc nam TREN khoi danh muc');
+
+// Chi duoc in DUNG MOT LAN: master in cho moi trang tru trang chu, trang chu
+// tu in. In ca hai la ra hai thanh loc chong nhau.
+ok(preg_match('/if\s*\(!\$laTrangChu\)\s*echo\s+\$thanhLoc/', $master) === 1,
+   'Master bo qua trang chu de khong in hai lan');
 
 // ---------------------------------------------------------------------------
 section('Kho dien thoai khong ghim');
@@ -118,16 +182,18 @@ ok(preg_match('/window\.innerWidth\s*<\s*768/', $js),
    'Co nga re rieng cho duoi 768px');
 
 ok(preg_match('/innerWidth\s*<\s*768\s*\)\s*\{\s*header\.style\.position\s*=\s*["\']static["\']/s', $js),
-   'Duoi 768px thi tra header ve static (khong ghim)',
-   'Dau trang o kho dien thoai cao 307px = 38% man hinh, ghim vao la mat gan '
-   . 'nua cho doc');
+   'Duoi 768px thi tra header ve static (khong ghim)');
+
+ok(preg_match('/innerWidth\s*<\s*768.*?thanhLoc\.style\.position\s*=\s*["\']static["\']/s', $js),
+   'Duoi 768px thi thanh loc cung ve static',
+   'Thanh loc o kho dien thoai cao 212px, ghim vao la mat 1/4 man hinh');
 
 ok(strpos($jsThua, '$("#button")') !== false,
    'Van con nut mui ten ve dau trang',
    'Kho dien thoai khong ghim nua nen nut nay la duong ve duy nhat');
 
 // ---------------------------------------------------------------------------
-section('CSS du phong + khoang tho');
+section('CSS');
 
 ok(preg_match('/\.header\{[^}]*position:sticky/s', $css),
    'theme.css van dat .header position:sticky',
@@ -136,18 +202,11 @@ ok(preg_match('/\.header\{[^}]*position:sticky/s', $css),
 ok(preg_match('/\.header\{[^}]*z-index:1030/s', $css),
    'Header co z-index de khong bi the san pham de len');
 
-$viTriTho = strpos($css, '.car-filter{ padding-top:10px');
-ok($viTriTho !== false,
-   'Chua khoang tho 10px tren thanh loc',
-   'Luc bi ghim, mep tren khung loc chinh la mep tren man hinh');
+ok(preg_match('/\.car-filter\{[^}]*position:sticky/s', $css),
+   'theme.css dat .car-filter position:sticky');
 
-// Phai nam trong @media min-width — kho dien thoai xep thanh loc 2x2, cong
-// them padding la day dau trang len 38%+ man hinh.
-$mediaGanNhat = $viTriTho === false
-    ? false
-    : strrpos(substr($css, 0, $viTriTho), '@media');
-ok($mediaGanNhat !== false
-   && strpos(substr($css, $mediaGanNhat, 40), 'min-width:768px') !== false,
-   'Khoang tho chi ap tu 768px tro len');
+ok(preg_match('/\.car-filter\{[^}]*z-index:1020/s', $css),
+   'Thanh loc o duoi header (1030) va tren noi dung',
+   'Cao hon header thi luc dang truot no de len ca menu');
 
 exit(summary());

@@ -128,11 +128,10 @@ if ($(".detail .slider-nav")) {
   });
 }
 /* ------------------------------------------------------------------
-   ĐẦU TRANG DÍNH KHI CUỘN
+   ĐẦU TRANG + THANH LỌC DÍNH KHI CUỘN
 
-   Ý đồ vẫn như cũ: cuộn xuống thì dải liên hệ + hàng logo trôi đi, chỉ
-   giữ lại THANH LỌC XE + MENU ghim trên đỉnh (114px) — trang phụ tùng
-   thì thứ khách dùng đi dùng lại là ô lọc, không phải cái logo.
+   Cuộn xuống thì dải liên hệ và hàng logo trôi đi, còn lại hai thứ ghim
+   chồng lên nhau: MENU XANH trên đỉnh, THANH LỌC XE ngay dưới nó.
 
    Bản cũ làm bằng sự kiện scroll: qua mốc 74px thì gán position:fixed
    rồi display:none cho .topbar và .top-header. Hậu quả đo được:
@@ -142,46 +141,60 @@ if ($(".detail .slider-nav")) {
        padding-top 225px cho .content -> giật thêm lần nữa và trang nằm
        ở trạng thái khác hẳn lúc mới tải.
 
-   Nay để position:sticky lo, với lề âm bằng đúng chiều cao phần nằm
-   trên thanh lọc. Trình duyệt tự trượt phần đó ra khỏi màn hình rồi
-   ghim lại — mượt, không nghe scroll, cuộn lên là tự trả về như cũ.
+   Nay để position:sticky lo cả hai, không nghe scroll, cuộn lên là tự
+   trả về như cũ:
+     .header     top âm = chiều cao (dải liên hệ + hàng logo) -> trôi hết
+                 phần đó đi, menu xanh ghim ở đỉnh
+     .car-filter top = chiều cao menu xanh -> ghim ngay dưới menu
 
-   Lề âm phải ĐO chứ không viết cứng: dải liên hệ có thể bị tắt trong
-   admin > Cấu hình website, lúc đó phần trên chỉ còn hàng logo.
+   Cả hai số đều phải ĐO chứ không viết cứng: dải liên hệ tắt/bật được
+   trong admin > Cấu hình website, tắt đi là mọi con số lệch hết.
    ------------------------------------------------------------------ */
 (function () {
   var header = document.querySelector(".header");
   if (!header) return;
 
-  function datLeAm() {
-    // Dưới 768px KHÔNG ghim: đầu trang ở khổ điện thoại cao 307px, bằng
-    // 38% màn hình, ghim vào là mất gần nửa chỗ đọc. Menu ở khổ này lại
-    // là ngăn kéo position:fixed nên đo cũng ra số vô nghĩa. Muốn về đầu
-    // trang đã có sẵn nút mũi tên góc phải dưới.
+  var nav      = header.querySelector(".header__primary-menu");
+  var thanhLoc = document.querySelector(".car-filter");
+
+  function datViTri() {
+    // Dưới 768px KHÔNG ghim gì cả: đầu trang ở khổ điện thoại đã cao
+    // 38% màn hình, cộng thêm thanh lọc xếp 2x2 nữa thì không còn chỗ
+    // đọc. Menu ở khổ này lại là ngăn kéo position:fixed nên đo chiều
+    // cao nó cũng ra số vô nghĩa. Muốn về đầu trang đã có sẵn nút mũi
+    // tên góc phải dưới.
     if (window.innerWidth < 768) {
       header.style.position = "static";
       header.style.top = "";
+      if (thanhLoc) {
+        thanhLoc.style.position = "static";
+        thanhLoc.style.top = "";
+      }
       return;
     }
 
     header.style.position = "sticky";
 
-    // Mốc ghim là thanh lọc; admin tắt thanh lọc thì ghim từ menu.
-    var moc = header.querySelector(".car-filter") ||
-              header.querySelector(".header__primary-menu");
-    if (!moc) { header.style.top = "0px"; return; }
+    if (!nav) { header.style.top = "0px"; return; }
 
     // Hiệu hai getBoundingClientRect trong cùng một khối là khoảng cách
     // nội bộ của bố cục — sticky có đang đẩy header hay không cũng không
     // ảnh hưởng, nên đo được ở bất kỳ vị trí cuộn nào.
-    var lech = moc.getBoundingClientRect().top - header.getBoundingClientRect().top;
+    var lech = nav.getBoundingClientRect().top - header.getBoundingClientRect().top;
     header.style.top = -Math.round(lech) + "px";
+
+    if (!thanhLoc) return;
+
+    // Math.ceil chứ không Math.round: menu cao 50.4px, làm tròn xuống 50 thì
+    // thanh lọc ghim cao hơn đáy menu 0.4px và bị menu che mất một vạch.
+    thanhLoc.style.position = "sticky";
+    thanhLoc.style.top = Math.ceil(nav.getBoundingClientRect().height) + "px";
   }
 
-  datLeAm();
-  window.addEventListener("resize", datLeAm);
+  datViTri();
+  window.addEventListener("resize", datViTri);
   // Ảnh logo tải xong mới biết hàng trên cao đúng bao nhiêu.
-  window.addEventListener("load", datLeAm);
+  window.addEventListener("load", datViTri);
 })();
 var btn = $("#button");
 $(window).scroll(function () {

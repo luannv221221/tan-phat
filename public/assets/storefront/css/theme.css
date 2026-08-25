@@ -110,14 +110,6 @@ a:hover{ color:var(--tp-xanh); }
   top:0;
 }
 
-/* Chừa một khoảng thở phía trên thanh lọc. Lúc bị ghim, mép trên của khung
-   lọc chính là mép trên màn hình — không có khoảng này nhìn như bị cắt cụt.
-   Bù lại thì bớt padding đáy của hàng logo cho lúc chưa cuộn khỏi hở quá. */
-@media (min-width:768px){
-  .header .top-header{ padding-bottom:6px !important; }
-  .car-filter{ padding-top:10px; }
-}
-
 .header .topbar{
   background:var(--tp-xanh-900);
   padding:7px 0;
@@ -214,11 +206,46 @@ a:hover{ color:var(--tp-xanh); }
    cho ăn với ngôn ngữ bo góc 10px của các thẻ bên dưới. Bản cũ bo 2px nên
    trông như một hộp vuông dán vào giữa hai dải màu.
    -------------------------------------------------------------------------- */
-.car-filter{ background:var(--tp-the); padding-bottom:16px; }
+/* Dải nền riêng cho thanh lọc.
+   Nó không còn nằm trong đầu trang nữa mà đứng một mình giữa băng-rôn và nội
+   dung, nên phải tự tách mình ra khỏi hai khối đó — nền trắng trơn là chìm
+   nghỉm. Nền xanh rất nhạt cho cả nhãn lẫn thanh: hai khối liền nhau, cùng
+   một nền nên mắt đọc thành MỘT dải, dù thật ra là hai thẻ tách rời.
+
+   Nhãn KHÔNG dính, thanh lọc thì có. Cuộn xuống là nhãn trôi lên khuất sau
+   menu, còn thanh ở lại — đúng thứ khách cần khi đang xem hàng. */
+.car-filter-nhan{
+  background:var(--tp-xanh-50);
+  border-top:3px solid var(--tp-cam);
+  padding:13px 0 3px;
+}
+.car-filter-nhan .container{
+  display:flex; align-items:center; gap:9px;
+  font-size:.95rem; font-weight:600; color:var(--tp-xanh-900);
+}
+.car-filter-nhan .fa{
+  width:26px; height:26px; border-radius:50%; flex:0 0 26px;
+  background:var(--tp-xanh); color:#fff;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:.8rem;
+}
+
+.car-filter{
+  position:sticky;               /* top do script.js đo (= chiều cao menu xanh) */
+  z-index:1020;                  /* trên nội dung, dưới đầu trang (1030) */
+  background:var(--tp-xanh-50);
+  border-bottom:1px solid var(--tp-vien);
+  /* Chiều cao KHÔNG ĐỔI dù ghim hay không. Đổi chiều cao của một thẻ dính là
+     kéo tụt cả trang phía dưới ngay giữa lúc cuộn. */
+  padding:11px 0 14px;
+  box-shadow:0 4px 10px rgba(15,23,42,.05);
+}
+
 .car-filter__form{
   border:1px solid var(--tp-vien);
   border-radius:var(--tp-bo);
-  box-shadow:var(--tp-bong);
+  background:#fff;
+  box-shadow:0 2px 10px rgba(15,23,42,.08);
   overflow:visible;              /* khung gợi ý đổ xuống dưới, cắt là mất sạch */
 }
 .car-filter__select,

@@ -239,16 +239,6 @@ $renderMenu = function ($items) use (&$renderMenu){
         </div>
     </div>
 
-    <?php
-    // Bộ lọc xe — thay cho ô tìm kiếm cũ ở hàng trên.
-    // Bật/tắt tại admin > Cấu hình website. So với '0' chứ không so với '1':
-    // chỉ ẩn khi khách CHỦ ĐỘNG tắt, còn thiếu khoá (chưa chạy migration 000050)
-    // thì vẫn hiện — đẩy code lên trước migration không làm mất thanh lọc.
-    if (($settings['show_car_filter'] ?? '1') !== '0'){
-        $this->render('layouts/storefront/partials/car-filter');
-    }
-    ?>
-
     <nav class="header__primary-menu">
         <div class="d-md-none py-2 px-3 text-center">
             <a href="<?php echo _WEB_URL; ?>/"><img src="<?php echo e($logoUrl); ?>" alt=""/></a>
@@ -269,7 +259,41 @@ $renderMenu = function ($items) use (&$renderMenu){
 </header>
 <!--End .header-->
 
-<?php $this->render($sub_content, $content); ?>
+<?php
+/* ---------------------------------------------------------------------------
+   THANH LỌC XE — nay nằm NGOÀI <header>, ngay dưới dải menu xanh.
+
+   Trước đây nó kẹp giữa hàng logo và menu. Hai cái phiền:
+     - Mở ô chọn ra là danh sách đổ xuống đè lên chính dải menu.
+     - Đầu trang phình lên 225px, ghim khi cuộn thì mất 1/4 màn hình.
+
+   Chỗ đặt: đầu vùng nội dung. Trang chủ có băng-rôn nên thứ tự thành
+   menu -> băng-rôn -> thanh lọc; các trang khác không có băng-rôn nên
+   thành menu -> thanh lọc -> nội dung. Một luật duy nhất.
+
+   Vì sao phải dựng vào biến rồi mới in: view con (home.php...) chạy qua
+   Template::run() bằng eval, ở trong đó $this là đối tượng Template chứ
+   KHÔNG phải Controller — nên tự nó không gọi được $this->render(). Master
+   dựng sẵn chuỗi HTML rồi truyền xuống, view con chỉ việc in ra.
+
+   Bật/tắt tại admin > Cấu hình website. So với '0' chứ không so với '1':
+   chỉ ẩn khi khách CHỦ ĐỘNG tắt, còn thiếu khoá (chưa chạy migration 000050)
+   thì vẫn hiện — đẩy code lên trước migration không làm mất thanh lọc.
+   --------------------------------------------------------------------------- */
+$thanhLoc = '';
+if (($settings['show_car_filter'] ?? '1') !== '0'){
+    ob_start();
+    $this->render('layouts/storefront/partials/car-filter');
+    $thanhLoc = ob_get_clean();
+}
+
+// Trang chủ tự in sau băng-rôn; các trang còn lại để master in ngay đây.
+$laTrangChu = (isset($sub_content) && $sub_content === 'storefront/home');
+if (!$laTrangChu) echo $thanhLoc;
+
+$content['thanhLoc'] = $laTrangChu ? $thanhLoc : '';
+$this->render($sub_content, $content);
+?>
 
 <footer class="footer py-4">
     <div class="container">
