@@ -333,6 +333,21 @@ a:hover{ color:var(--tp-xanh); }
 /* Lớp phủ đen của theme không còn dùng tới */
 .categories .categories__item::after{ display:none; }
 
+/* Căn giữa hàng danh mục.
+
+   Lưới chia 4 cột mà gara chỉ có 3 nhóm (Phụ tùng / Thiết bị / Dịch vụ) nên ba
+   ô bị dồn về trái, chừa hẳn một ô trống bên phải — nhìn như thiếu mất một cái.
+
+   Chỉ áp cho khối danh mục, KHÔNG áp cho lưới sản phẩm: danh sách sản phẩm có
+   phân trang, hàng cuối thường lẻ, căn giữa hàng lẻ đó là lưới gãy nhịp so với
+   các hàng trên. Danh mục là một dãy trưng bày cố định nên căn giữa mới đúng. */
+.categories .row{ justify-content:center; }
+
+/* Dải tin tức cũng là khối trưng bày số lượng cố định (lấy 4 tin mới nhất), nên
+   áp cùng luật. Hiện đủ 4 tin nên chưa thấy tác dụng gì — nhưng lúc chỉ đăng 3
+   tin thì nó lệch y hệt khối danh mục. */
+.posts .posts__list .row{ justify-content:center; }
+
 /* --------------------------------------------------------------------------
    10. Thẻ tin tức
    -------------------------------------------------------------------------- */
