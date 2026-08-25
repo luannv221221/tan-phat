@@ -25,7 +25,9 @@ require_once __DIR__ . '/../config.php';
 
 $THU = in_array('--thu', $argv, true);
 const UA = 'TanPhatStorefront/1.0 (do an sinh vien; lien he: rikkeiedu.ai@gmail.com)';
-const MOI_MAT_HANG = 2;   // số ảnh muốn có cho mỗi mặt hàng
+// Ha tu 2 xuong 1: sau khi cam het anh mon/gi/ban/sai-loai-xe thi kho anh
+// sach cua Commons khong con du 2 tam cho moi mat hang.
+const MOI_MAT_HANG = 1;
 
 $goc = dirname(__DIR__);
 
@@ -49,12 +51,14 @@ $TRA = [
                     ['intitle:"cam belt"',         'drawing|bent|broken']],
     'ac-quy'    => [['intitle:"car battery"',      'charger|tester'],
                     ['intitle:"automotive battery"','charger|tester']],
-    'den-xe'    => [['intitle:headlamps',          'drawing|museum|geograph|parkend|wilbert|locomotive|rail|steam'],
-                    ['intitle:headlight car',      'drawing|museum|locomotive|rail|steam']],
+    'den-xe'    => [['intitle:headlamp car',       'drawing|museum|geograph|parkend|wilbert|locomotive|rail|steam|great northern|no\. '],
+                    ['intitle:headlight automotive','drawing|museum|locomotive|rail|steam|great northern'],
+                    ['intitle:"led headlight"',     'drawing|locomotive|rail|bulb only']],
     'may-phat'  => [['intitle:alternator car',     'tester|regulator|controller|transmission|barrage|diesel'],
                     ['intitle:"automotive alternator"', 'tester|regulator']],
-    'giam-xoc'  => [['intitle:"shock absorber"',   'bicycle|train|museu|steelpr|taipei|tower|damper|building'],
-                    ['intitle:"shock absorbers"',  'bicycle|train|taipei|tower|damper|building']],
+    'giam-xoc'  => [['intitle:"shock absorber"',   'bicycle|train|museu|steelpr|taipei|tower|damper|building|hartford|morges|andre'],
+                    ['intitle:"shock absorbers"',  'bicycle|train|taipei|tower|damper|building|hartford'],
+                    ['intitle:"strut assembly"',   'bicycle|train|bridge']],
     'lo-xo'     => [['intitle:"coil spring" suspension', 'diagram|mattress|lagerstroemia|flower|tree|plant|coach|icf|peckham|tram|railway|rail|truck|bogie|locomotive'],
                     ['intitle:"suspension strut"',      'diagram|bridge|coach|tram|railway|rail|bogie']],
 ];
@@ -69,8 +73,25 @@ $TRA_THEO_MA = [
                   ['intitle:"shock absorber" spring',  'bicycle|train|taipei|tower|damper|coach|tram|rail']],
 ];
 
+/* Tu cam dung chung.
+ *
+ * Nhom thu hai (hong|mon|sai xe) la BAT BUOC voi anh BAN HANG. Commons la
+ * kho tu lieu: no chup phu tung de MO TA, nen day ap "ma phanh da mon",
+ * "dia phanh gi set", "loc gio ban", anh cat doi de xem ben trong, va phu
+ * tung cua xe dap / xe may / xe buyt / tau hoa. Dat len trang ban hang thi
+ * khach nhin vao tuong minh ban do phe lieu. */
 const CAM_CHUNG = 'advertis|poster|stamp|patent|diagram|schematic|blueprint|magazine|'
-                . 'cover|logo|map |coat of arms|1900|191|192|193|194|195|DPLA|NARA';
+                . 'cover|logo|map |coat of arms|DPLA|NARA|'
+                // hong / mon / ban / cat doi -> khong ban duoc
+                . 'worn|wornout|rust|dirty|consumed|broken|bent|damag|cutaway|'
+                . 'gasket|adapter|scrap|junk|failure|leak|'
+                // sai loai xe
+                . 'bicycle|bike|v-brake|motorcycle|ducati|panigale|scooter|'
+                . 'bus|truck|tram|train|railway|locomotive|aircraft|tractor|'
+                // xe co / bao tang / trien lam -> khong phai hang dang ban
+                . 'antique|vintage|veteran|museum|motorshow|motor show|oldtimer|classic|'
+                // anh dung hinh / CAD chu khong phai anh chup
+                . 'cad model|3d model|render|mockup|illustration';
 
 function goiApi($url){
     $ch = curl_init($url);
@@ -111,6 +132,9 @@ function timTheoCau(array $cau, array $daDung){
 
         $ten = mb_substr($p['title'], 5);
         if (preg_match('~(' . $cam . ')~i', $ten)) continue;
+        // Bat MOI nam san xuat 4 chu so tu 1900-1999: ten file kieu "Pontiac
+        // Bonneville 1965" la anh xe co, khong phai hang dang ban.
+        if (preg_match('~\b(18|19)\d{2}\b~', $ten)) continue;
         if ($i['width'] / max(1, $i['height']) < 1.15) continue;   // thẻ là khung ngang
 
         $ra[] = ['ten' => $ten, 'thumb' => $i['thumburl'], 'trang' => $i['descriptionurl'] ?? '',

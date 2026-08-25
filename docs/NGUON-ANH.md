@@ -113,3 +113,24 @@ Tải bằng `tools/tai-anh-san-pham.php`. Cùng nguồn Wikimedia Commons.
 | PT-0015 — Bugi NGK Laser Kia | `bugi-ngk-laser-kia-pt-0015-c0c099f0.jpg` | Alf van Beem | Public domain | [Commons](https://commons.wikimedia.org/wiki/File:Auto-Lite_spark_plug.JPG) |
 | PT-0016 — Má phanh trước Ford Ranger | `ma-phanh-truoc-ford-ranger-pt-0016-aa9e24be.jpg` | Troy Sankey | CC BY-SA 4.0 | [Commons](https://commons.wikimedia.org/wiki/File:Worn_metallic_disc_brake_pads.jpg) |
 | PT-0016 — Má phanh trước Ford Ranger | `ma-phanh-truoc-ford-ranger-pt-0016-77168c6f.jpg` | Nemo bis | CC BY-SA 3.0 | [Commons](https://commons.wikimedia.org/wiki/File:Consumed_V-BRAKE_pads_side.JPG) |
+
+## Ảnh sản phẩm
+
+Tải bằng `tools/tai-anh-san-pham.php`. Cùng nguồn Wikimedia Commons.
+
+| Mặt hàng | File | Tác giả | Giấy phép | Trang gốc |
+|---|---|---|---|---|
+| PT-0001 — Má phanh trước Toyota Vios | `ma-phanh-truoc-toyota-vios-pt-0001-7490922b.jpg` | Tokumeigakarinoaoshima | CC0 | [Commons](https://commons.wikimedia.org/wiki/File:The_tire_wheel_and_the_brake_pad_of_Mercedes-Benz_E63_AMG_S_(W212).jpg) |
+| PT-0002 — Má phanh sau Toyota Camry | `ma-phanh-sau-toyota-camry-pt-0002-47d1c128.jpg` | A7N8X | CC BY-SA 3.0 | [Commons](https://commons.wikimedia.org/wiki/File:Brake_pad.jpg) |
+| PT-0003 — Đĩa phanh trước Vios | `dia-phanh-truoc-vios-pt-0003-217fd1f5.jpg` | Atharv Chandel | CC BY 4.0 | [Commons](https://commons.wikimedia.org/wiki/File:Ventilated_Plain_(Smooth)_Brake_Rotor_Parts.jpg) |
+| PT-0004 — Lọc dầu động cơ Toyota | `loc-dau-dong-co-toyota-pt-0004-58487a46.jpg` | Alf van Beem | CC0 | [Commons](https://commons.wikimedia.org/wiki/File:ACE_oil_filter_pic2.JPG) |
+| PT-0005 — Lọc gió động cơ Vios | `loc-gio-dong-co-vios-pt-0005-e49d1df7.jpg` | Donar Reiskoffer | CC BY 3.0 | [Commons](https://commons.wikimedia.org/wiki/File:Air_filter,_opel_astra(1).JPG) |
+| PT-0006 — Bugi Iridium NGK | `bugi-iridium-ngk-pt-0006-c0c099f0.jpg` | Alf van Beem | Public domain | [Commons](https://commons.wikimedia.org/wiki/File:Auto-Lite_spark_plug.JPG) |
+| PT-0007 — Dây curoa cam Toyota | `day-curoa-cam-toyota-pt-0007-afd40dd7.jpg` | Terabass | CC BY-SA 3.0 | [Commons](https://commons.wikimedia.org/wiki/File:2001_honda_accord_timing_belt-terabass.jpg) |
+| PT-0009 — Đèn pha Toyota Vios LED | `den-pha-toyota-vios-led-pt-0009-4792f9ae.jpg` | Clément Bucco-Lechat | CC BY-SA 3.0 it | [Commons](https://commons.wikimedia.org/wiki/File:%22_13_-_italian_sport_car_-_Alfa-Romeo_4C_front_views_Xenon_gas_discharge_headlamp.jpg) |
+| PT-0010 — Máy phát điện Honda City | `may-phat-dien-honda-city-pt-0010-55227b3a.jpg` | Zinnsoldat | CC BY-SA 3.0 | [Commons](https://commons.wikimedia.org/wiki/File:Automotive_alternator._Terminals.jpg) |
+| PT-0011 — Giảm xóc trước Mazda CX-5 | `giam-xoc-truoc-mazda-cx-5-pt-0011-39e8cebc.jpg` | DL24 | CC0 | [Commons](https://commons.wikimedia.org/wiki/File:GAZ_M-21_hydraulic_lever_arm_shock_absorber.jpg) |
+| PT-0013 — Lọc dầu Honda CR-V | `loc-dau-honda-cr-v-pt-0013-a10f68e9.jpg` | Alf van Beem | CC0 | [Commons](https://commons.wikimedia.org/wiki/File:ACE_oil_filter.JPG) |
+| PT-0014 — Lọc gió Honda City | `loc-gio-honda-city-pt-0014-48b1e98a.jpg` | Donar Reiskoffer | CC BY 3.0 | [Commons](https://commons.wikimedia.org/wiki/File:Air_filter,_opel_astra(2).JPG) |
+| PT-0015 — Bugi NGK Laser Kia | `bugi-ngk-laser-kia-pt-0015-a53bd8bb.jpg` | Cristellaria | CC BY-SA 3.0 | [Commons](https://commons.wikimedia.org/wiki/File:Champion_Spark_Plug_5.jpg) |
+| PT-0016 — Má phanh trước Ford Ranger | `ma-phanh-truoc-ford-ranger-pt-0016-1a7aa360.jpg` | PetarM | CC BY-SA 3.0 | [Commons](https://commons.wikimedia.org/wiki/File:Disc_brake_pads.JPG) |
