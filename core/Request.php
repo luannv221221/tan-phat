@@ -24,45 +24,47 @@ class Request{
         return $method;
     }
 
-    public function getFields(){
-        $method =  $this->getMethod();
-
-        $result = []; //Lưu lại các giá  trị của $_GET, $_POST sau khi đã xử lý
-
-        //Xử lý lấy dữ liệu với phương thức GET
-        if ($method=='get'){
-
-            if (!empty($_GET)){
-                foreach ($_GET as $key=>$value){
-                    if ($key!=='module'){
-                        if (is_array($value)){
-                            $result[$key] = filter_input(INPUT_GET, $key, FILTER_SANITIZE_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
-                        }else{
-                            $result[$key] = filter_input(INPUT_GET, $key, FILTER_SANITIZE_SPECIAL_CHARS);
-                        }
-
-                    }
-                }
-            }
-
+    /**
+     * Làm sạch một giá trị gửi lên — KHÔNG mã hoá HTML.
+     *
+     * VÌ SAO BỎ FILTER_SANITIZE_SPECIAL_CHARS (bản cũ dùng nó cho mọi ô):
+     *
+     * Nó đổi `&` thành `&#38;` NGAY LÚC LƯU. Nhưng lúc in ra, view lại escape
+     * thêm lần nữa ({{ }} gọi htmlentities, hoặc e()). Thành ra `&` hiện lên
+     * trang dưới dạng `&#38;`. Tệ hơn: MỖI LẦN bấm Lưu lại chồng thêm một lớp,
+     * nên khẩu hiệu của công ty đã thành `Phụ tùng &#38;#38; thiết bị...`.
+     *
+     * Nó còn phá nát trình soạn thảo có định dạng: thẻ `<p>` của bài viết bị
+     * lưu thành `&#60;p&#62;`, và bài tin hiện ra nguyên đống thẻ dạng chữ.
+     *
+     * Cách đúng là: LƯU nguyên văn, ESCAPE LÚC IN. Phần escape lúc in đã có
+     * sẵn và có test canh (SecurityTest bắt mọi `<?php echo $bien` chưa escape
+     * trong thư mục view; Template compile `{{ }}` thành htmlentities).
+     *
+     * Chống SQL injection KHÔNG dựa vào hàm này — QueryBuilder luôn dùng
+     * tham số placeholder, bỏ bộ lọc ở đây không đụng gì tới chuyện đó.
+     *
+     * Còn giữ lại: bỏ ký tự NUL (làm hỏng chuỗi ở tầng C) và cắt khoảng trắng
+     * hai đầu.
+     */
+    private function locGiaTri($value){
+        if (is_array($value)){
+            $ra = [];
+            foreach ($value as $k => $v){ $ra[$k] = $this->locGiaTri($v); }
+            return $ra;
         }
+        if (!is_scalar($value)) return '';
+        return trim(str_replace("\0", '', (string) $value));
+    }
 
-        //Xử lý lấy dữ liệu với phương thức POST
-        if ($method=='post'){
+    public function getFields(){
+        $method = $this->getMethod();
+        $nguon  = ($method == 'post') ? $_POST : (($method == 'get') ? $_GET : []);
 
-            if (!empty($_POST)){
-                foreach ($_POST as $key=>$value){
-                    if ($key!=='module'){
-                        if (is_array($value)){
-                            $result[$key] = filter_input(INPUT_POST, $key, FILTER_SANITIZE_SPECIAL_CHARS, FILTER_FORCE_ARRAY);
-                        }else{
-                            $result[$key] = filter_input(INPUT_POST, $key, FILTER_SANITIZE_SPECIAL_CHARS);
-                        }
-
-                    }
-                }
-            }
-
+        $result = [];
+        foreach ($nguon as $key => $value){
+            if ($key === 'module') continue;   // tham số định tuyến, không phải dữ liệu
+            $result[$key] = $this->locGiaTri($value);
         }
 
         return $result;

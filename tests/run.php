@@ -29,6 +29,7 @@ $tests = [
     'InAnTest.php'                => 'IN AN — bieu mau bao gia / hoa don + so tien bang chu',
     'DauTrangDinhTest.php'        => 'GIAO DIEN — dau trang dinh khi cuon (storefront)',
     'SanPhamLienQuanTest.php'     => 'STOREFRONT — goi y san pham lien quan o trang chi tiet',
+    'MaHoaHtmlTest.php'           => 'DU LIEU — luu nguyen van, escape luc in (loi &#38;#38;)',
 ];
 
 $php      = PHP_BINARY;
