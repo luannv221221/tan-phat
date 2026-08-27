@@ -185,6 +185,32 @@ ok(strpos($vList, 'Nhóm') !== false && strpos($vList, 'Phân quyền') !== fals
    'Danh sach chi duong sang buoc tiep theo (Nhom > Phan quyen)');
 
 // ---------------------------------------------------------------------------
+section('Co duong vao tu menu trai');
+
+// Lan dau lam man hinh nay tui QUEN buoc nay: controller, view, route,
+// migration deu xong va /admin/modules vao duoc — nhung menu trai khong co
+// muc nao tro toi, nen thuc te khong ai tim ra. Lam xong mot man hinh ma
+// khong noi vao menu thi coi nhu chua lam.
+$sb = file_get_contents($goc . 'app/views/layouts/admin/sidebar.php');
+
+ok(preg_match("~'Hệ thống'\s*=>\s*\[[^\]]*'modules'~s", $sb) === 1,
+   'sidebar.php co "modules" trong nhom He thong',
+   'Menu trai dung tu \$menuGroups; link nao khong nam trong do thi khong bao '
+   . 'gio hien ra');
+
+// Đứng ngay sau groups: hai màn hình này đi liền một mạch (đăng ký module ->
+// phân quyền cho nhóm). Tách xa nhau thì người dùng không thấy được mạch đó.
+if (preg_match("~'Hệ thống'\s*=>\s*\[([^\]]*)\]~s", $sb, $m)){
+    $ds = array_map(function($x){ return trim($x, " '\"\t\r\n"); }, explode(',', $m[1]));
+    $ds = array_values(array_filter($ds));
+    $vg = array_search('groups', $ds, true);
+    $vm = array_search('modules', $ds, true);
+    ok($vg !== false && $vm !== false && $vm === $vg + 1,
+       'Muc "modules" dung NGAY SAU "groups"',
+       'thu tu thuc te: ' . implode(', ', $ds));
+}
+
+// ---------------------------------------------------------------------------
 section('Migration');
 
 $mg = glob($goc . 'database/migrations/*_them_module_quan_ly_module.php');

@@ -44,7 +44,10 @@ $menuGroups = [
     'Quản lý website'    => ['news', 'news-categories', 'du-an', 'galleries', 'banners', 'menus'],
 
     // --- Khu 3: quản trị ---
-    'Hệ thống'           => ['users', 'groups', 'settings', 'thong-ke'],
+    // `modules` đứng NGAY SAU `groups`: hai màn hình này đi liền một mạch —
+    // đăng ký màn hình ở Quản lý module rồi mới cấp quyền cho nhóm ở Nhóm >
+    // Phân quyền. Tách xa nhau thì người dùng không thấy được mạch đó.
+    'Hệ thống'           => ['users', 'groups', 'modules', 'settings', 'thong-ke'],
 ];
 
 $groupIcons = [
