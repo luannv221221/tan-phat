@@ -36,6 +36,16 @@ Route::group('admin', function(){
 
    Route::post('groups/permission/(\d+)', 'admin/groups/postPermission/$1');
 
+   /* Quản lý module — đăng ký màn hình admin để phân quyền được.
+      Đặt cạnh groups vì hai màn hình này đi liền một mạch: đăng ký module ở
+      đây rồi mới cấp quyền cho từng nhóm ở groups/permission. */
+   Route::get('modules',                 'admin/modules');
+   Route::get('modules/add',             'admin/modules/add');
+   Route::post('modules/add',            'admin/modules/postAdd');
+   Route::get('modules/edit/(\d+)',      'admin/modules/edit/$1');
+   Route::post('modules/edit/(\d+)',     'admin/modules/postEdit/$1');
+   Route::get('modules/delete/(\d+)',    'admin/modules/delete/$1');
+
    //Route users
 
    // Khách hàng (bảng `members` — khách đăng ký ngoài website).
