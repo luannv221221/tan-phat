@@ -46,6 +46,36 @@ $don();
 $m = new ModulesModel();
 
 // ---------------------------------------------------------------------------
+section('Bo test KHONG duoc lam mat module that');
+
+// Trong lan lam man hinh nay, mot dong module co that (`ton-kho-lau` — "Hang
+// ton lau") da bien mat khoi CSDL luc nao khong hay. Khong co quyen mo coi nao
+// con lai, nghia la thu xoa no co cascade — dung dang ham remove() moi viet.
+// Do lai thi bo test khong phai thu pham, nhung mat mot module la mat luon
+// hang rao quyen cua man hinh do, va no bien mat KHONG TIENG DONG.
+// Nen chot lai: chay test xong, tap module that phai y nguyen.
+$truocTest = [];
+foreach ((new ModulesModel())->getLists() as $x){
+    if (strpos((string) $x['link'], 'md-test-') === 0) continue;
+    $truocTest[] = $x['link'];
+}
+sort($truocTest);
+
+register_shutdown_function(function() use ($truocTest){
+    $sau = [];
+    foreach ((new ModulesModel())->getLists() as $x){
+        if (strpos((string) $x['link'], 'md-test-') === 0) continue;
+        $sau[] = $x['link'];
+    }
+    sort($sau);
+    $mat = array_diff($truocTest, $sau);
+    if (!empty($mat)){
+        echo "\n  [!!!] BO TEST DA LAM MAT MODULE THAT: " . implode(', ', $mat) . "\n";
+        echo "        Khoi phuc bang cach chay lai migration tuong ung.\n";
+    }
+});
+
+// ---------------------------------------------------------------------------
 section('Man hinh + route + view co du');
 
 ok(is_file($goc . 'app/controllers/admin/Modules.php'), 'Co controller admin/Modules.php');
