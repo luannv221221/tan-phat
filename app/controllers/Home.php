@@ -9,7 +9,7 @@ use App\core\Session;
 class Home extends Controller {
 
     private $__data = [];
-    private $__part, $__cat, $__brand, $__news, $__img, $__banner, $__stock;
+    private $__part, $__cat, $__brand, $__news, $__img, $__banner, $__stock, $__video;
 
     function __construct(){
         $this->__part   = $this->model('PartsModel');
@@ -19,6 +19,7 @@ class Home extends Controller {
         $this->__img    = $this->model('PartImagesModel');
         $this->__banner = $this->model('BannersModel');
         $this->__stock  = $this->model('StocksModel');
+        $this->__video  = $this->model('GalleryItemsModel');
     }
 
     public function index(){
@@ -54,6 +55,10 @@ class Home extends Controller {
         $this->__data['content']['brands']  = $this->__brand->getLists();
         $this->__data['content']['news']    = $this->__news->getPublished(0, 4);
         $this->__data['content']['banners'] = $this->__banner->getActive();
+
+        // Khoi "Video" — lay tu thu vien anh/video (album da dang).
+        // 1 video lam khung lon + toi da 4 cai xep ben canh.
+        $this->__data['content']['videos']  = $this->__video->getVideosPublished(5);
 
         $this->render('layouts/storefront/master', $this->__data);
     }

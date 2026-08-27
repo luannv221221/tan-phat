@@ -31,6 +31,7 @@ $tests = [
     'SanPhamLienQuanTest.php'     => 'STOREFRONT — goi y san pham lien quan o trang chi tiet',
     'MaHoaHtmlTest.php'           => 'DU LIEU — luu nguyen van, escape luc in (loi &#38;#38;)',
     'QuanLyModuleTest.php'        => 'PHAN QUYEN — man hinh dang ky module',
+    'VideoTrangChuTest.php'       => 'STOREFRONT — khoi Video o trang chu',
 ];
 
 $php      = PHP_BINARY;

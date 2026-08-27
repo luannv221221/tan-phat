@@ -156,6 +156,99 @@ $rootCats = array_slice($rootCats, 0, 8);
     </section>
     @endif
 
+    <?php /* ------------------------------------------------------------------
+       VIDEO
+
+       Nguồn là thư viện ảnh/video có sẵn (gallery_items, media_type='video'),
+       chỉ lấy video của album ĐÃ ĐĂNG — xem GalleryItemsModel::getVideosPublished().
+       Không đẻ thêm bảng mới: đăng video vẫn làm ở admin > Thư viện như cũ.
+
+       Video đầu tiên vào khung lớn, các video còn lại xếp thành danh sách bên
+       phải. Bấm vào một dòng thì ĐỔI KHUNG ngay tại chỗ, không tải lại trang.
+       ------------------------------------------------------------------ */ ?>
+    @if (!empty($videos))
+    <?php
+    // Bỏ các dòng không rút được mã YouTube — còn lại mới dựng khối.
+    $dsVideo = [];
+    foreach ($videos as $v){
+        $ma = youtube_id($v['video_url']);
+        if ($ma === '') continue;
+        $dsVideo[] = [
+            'ma'    => $ma,
+            // caption là ô không bắt buộc; trống thì lùi về tên album
+            'ten'   => !empty($v['caption']) ? $v['caption'] : $v['gallery_name'],
+            'album' => $v['gallery_slug'],
+        ];
+    }
+    ?>
+    @if (!empty($dsVideo))
+    <section class="videos pb-5">
+        <div class="container">
+            <h2 class="text-center section-title">Video</h2>
+            <div class="row g-4">
+                <div class="col-12 col-lg-7">
+                    <div class="videos__khung">
+                        <?php /* Không autoplay lúc tải trang: video tự chạy khi mới vào
+                                 là kiểu làm phiền, mà trên 3G còn ngốn dữ liệu của khách.
+                                 Chỉ bật autoplay khi khách CHỦ ĐỘNG bấm sang video khác. */ ?>
+                        <iframe id="videoChinh"
+                                src="https://www.youtube-nocookie.com/embed/{{$dsVideo[0]['ma']}}"
+                                title="{{$dsVideo[0]['ten']}}"
+                                loading="lazy" allowfullscreen
+                                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                referrerpolicy="strict-origin-when-cross-origin"></iframe>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-5">
+                    <ul class="videos__ds" id="dsVideo">
+                        @foreach ($dsVideo as $i => $v)
+                        <li>
+                            <button type="button" class="videos__muc {{$i===0?'dang-xem':''}}"
+                                    data-ma="{{$v['ma']}}" data-ten="{{$v['ten']}}">
+                                <span class="videos__anh">
+                                    <?php /* Ảnh đại diện lấy thẳng từ YouTube — khỏi phải
+                                             bắt người đăng tải thêm một tấm nữa cho mỗi video. */ ?>
+                                    <img src="https://i.ytimg.com/vi/{{$v['ma']}}/mqdefault.jpg"
+                                         alt="{{$v['ten']}}" loading="lazy"/>
+                                    <i class="fa fa-play" aria-hidden="true"></i>
+                                </span>
+                                <span class="videos__ten">{{$v['ten']}}</span>
+                            </button>
+                        </li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+    // Đổi video trong khung lớn, không tải lại trang.
+    (function(){
+        var khung = document.getElementById('videoChinh');
+        var ds    = document.getElementById('dsVideo');
+        if (!khung || !ds) return;
+
+        ds.addEventListener('click', function(e){
+            var nut = e.target.closest('.videos__muc');
+            if (!nut) return;
+
+            var ma = nut.getAttribute('data-ma');
+            if (!ma) return;
+
+            // autoplay=1 ở đây là hợp lệ vì đi ngay sau cú bấm của khách.
+            khung.src   = 'https://www.youtube-nocookie.com/embed/' + ma + '?autoplay=1';
+            khung.title = nut.getAttribute('data-ten') || '';
+
+            ds.querySelectorAll('.videos__muc').forEach(function(x){ x.classList.remove('dang-xem'); });
+            nut.classList.add('dang-xem');
+        });
+    })();
+    </script>
+    @endif
+    @endif
+
     <!-- Tin tức -->
     @if (!empty($news))
     <section class="posts pb-5">

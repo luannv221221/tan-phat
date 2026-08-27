@@ -140,11 +140,24 @@ function media_url($path){
     return _WEB_URL . '/' . ltrim($path, '/');
 }
 
-/** Trích YouTube video ID từ URL (youtube.com/watch?v= | youtu.be/ | /embed/). Rỗng nếu không phải YouTube. */
+/**
+ * Trích YouTube video ID từ URL (youtube.com/watch?v= | youtu.be/ | /embed/).
+ * Rỗng nếu không phải YouTube.
+ *
+ * Nhận luôn MÃ TRẦN 11 ký tự: dữ liệu trong `gallery_items.video_url` có sẵn
+ * mấy dòng chỉ lưu đúng mã (không kèm tên miền). Không nhận thì mấy video đó
+ * hiện ra khung trống — mà nhìn vào CSDL vẫn thấy có dữ liệu, rất khó lần.
+ */
 function youtube_id($url){
     if (empty($url)) return '';
+    $url = trim($url);
+
     if (preg_match('~(?:youtube\.com/(?:watch\?(?:.*&)?v=|embed/)|youtu\.be/)([A-Za-z0-9_-]{11})~i', $url, $m)){
         return $m[1];
+    }
+    // Mã trần: đúng 11 ký tự hợp lệ và không chứa gì khác
+    if (preg_match('~^[A-Za-z0-9_-]{11}$~', $url)){
+        return $url;
     }
     return '';
 }
