@@ -33,6 +33,36 @@ class QuotationsModel extends Model {
 
     public function getDetail($id){ return $this->getFirst($id); }
 
+    /**
+     * ⭐ Danh sách báo giá cũ cho nút "Chép từ báo giá cũ".
+     *
+     * Kèm số dòng hàng để người chọn biết đơn nào đáng chép — một báo giá 0
+     * dòng thì chép về cũng chẳng được gì.
+     *
+     * Báo giá CỦA CHÍNH KHÁCH đang chọn được đẩy lên đầu (cột `uu_tien`): gara
+     * hay lặp lại đơn của chính mình, để lẫn vào danh sách chung thì phải dò.
+     * Vẫn giữ đơn của khách khác phía dưới vì nhiều khi chép chéo — chi nhánh
+     * mới mở thường đặt y hệt chi nhánh cũ.
+     *
+     * @param int $customerId 0 = không ưu tiên ai
+     */
+    public function danhSachDeChep($customerId = 0, $limit = 50){
+        $customerId = (int) $customerId;
+
+        return $this->table($this->_table)
+            ->select('`quotations`.`id`, `quotations`.`quote_no`, `quotations`.`quote_date`, '
+                   . '`quotations`.`total_amount`, `quotations`.`status`, '
+                   . 'COALESCE(`partners`.`name`, `quotations`.`customer_name`, \'\') AS khach, '
+                   . '(SELECT COUNT(*) FROM `quotation_items` qi WHERE qi.`quotation_id` = `quotations`.`id`) AS so_dong, '
+                   . 'CASE WHEN `quotations`.`customer_id` = ' . $customerId . ' THEN 0 ELSE 1 END AS uu_tien')
+            ->leftJoinOn('partners', 'quotations.customer_id', 'partners.id')
+            ->orderBy('uu_tien', 'ASC')
+            ->orderBy('quotations.quote_date', 'DESC')
+            ->orderBy('quotations.id', 'DESC')
+            ->limit((int) $limit)
+            ->get();
+    }
+
     public function nextNo(){
         $row = $this->table($this->_table)->select('`quote_no`')->orderBy('id', 'DESC')->first();
         $n = 0;

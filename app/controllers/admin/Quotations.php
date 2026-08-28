@@ -42,6 +42,94 @@ class Quotations extends Controller {
         $this->__data['content']['partnerDiscounts'] = $this->__partner->groupDiscountMap();
     }
 
+    /* ==================================================================
+     * CHÉP TỪ BÁO GIÁ CŨ
+     *
+     * Gara hay lặp lại đúng một đơn: chi nhánh mới mở đặt y hệt chi nhánh cũ,
+     * hoặc khách cũ đặt lại combo bảo dưỡng. Gõ lại từng dòng là việc thừa.
+     *
+     * Hai endpoint trả JSON, form gọi bằng fetch nên không phải tải lại trang
+     * và không mất những gì đang gõ dở ở phần đầu phiếu.
+     * ================================================================== */
+
+    /** Danh sách báo giá để chọn. ?customer_id= để đẩy đơn của khách đó lên đầu. */
+    public function copyList(){
+        if (!route('admin/' . $this->routeBase . '/add')){ $this->jsonLoi('Không có quyền', 403); return; }
+
+        $f   = $this->__request->getFields();
+        $kh  = !empty($f['customer_id']) ? (int) $f['customer_id'] : 0;
+        $ds  = $this->__model->danhSachDeChep($kh, 50);
+
+        $ra = [];
+        foreach ($ds ?: [] as $q){
+            $ra[] = [
+                'id'       => (int) $q['id'],
+                'quote_no' => $q['quote_no'],
+                'ngay'     => !empty($q['quote_date']) ? date('d/m/Y', strtotime($q['quote_date'])) : '',
+                'khach'    => $q['khach'] !== '' ? $q['khach'] : '—',
+                'so_dong'  => (int) $q['so_dong'],
+                'tong'     => (float) $q['total_amount'],
+                'cua_khach_nay' => ((int) $q['uu_tien'] === 0 && $kh > 0),
+            ];
+        }
+        $this->json(['items' => $ra]);
+    }
+
+    /** Dòng hàng của một báo giá, đã tách sẵn theo tab Hàng hoá / Dịch vụ. */
+    public function copyLines($id){
+        if (!route('admin/' . $this->routeBase . '/add')){ $this->jsonLoi('Không có quyền', 403); return; }
+
+        $bg = $this->__model->getDetail($id);
+        if (empty($bg)){ $this->jsonLoi('Không tìm thấy báo giá', 404); return; }
+
+        $dong    = $this->__itemModel->dongDeChep($id);
+        $tongGoc = $this->__itemModel->demDong($id);
+
+        $hang = $dichvu = [];
+        $boQuaNgungBan = 0;
+
+        foreach ($dong ?: [] as $d){
+            // Mặt hàng đã ngừng kinh doanh: bỏ ngay ở đây thay vì để tới lúc
+            // lưu mới báo lỗi.
+            if ((int) $d['con_ban'] !== 1){ $boQuaNgungBan++; continue; }
+
+            $row = [
+                'part_id'  => (int) $d['part_id'],
+                'qty'      => rtrim(rtrim(number_format((float) $d['quantity'], 3, '.', ''), '0'), '.'),
+                'gia_cu'   => (int) $d['unit_price'],
+                'gia_moi'  => (int) $d['gia_bay_gio'],
+                'disc'     => (float) $d['discount_percent'],
+                'note'     => (string) $d['note'],
+                'ten'      => $d['part_code'] . ' - ' . $d['part_name'],
+            ];
+
+            if ($d['item_type'] === PartsModel::LOAI_DICH_VU) $dichvu[] = $row;
+            else                                              $hang[]   = $row;
+        }
+
+        // Chênh lệch = số dòng có mặt hàng đã bị XOÁ hẳn khỏi bảng `parts`
+        $daXoa = max(0, $tongGoc - count($dong ?: []));
+
+        $this->json([
+            'quote_no'    => $bg['quote_no'],
+            'customer_id' => (int) $bg['customer_id'],
+            'vat_rate'    => (float) $bg['vat_rate'],
+            'hang'        => $hang,
+            'dichvu'      => $dichvu,
+            'bo_qua'      => ['da_xoa' => $daXoa, 'ngung_ban' => $boQuaNgungBan],
+        ]);
+    }
+
+    private function json(array $data, $code = 200){
+        http_response_code($code);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    }
+
+    private function jsonLoi($msg, $code){
+        $this->json(['error' => $msg], $code);
+    }
+
     public function index(){
         $this->__data['sub_content'] = $this->viewDir . '/lists';
         $this->__data['page_title']  = $this->labelMany;

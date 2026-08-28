@@ -266,6 +266,11 @@ Route::group('admin', function(){
        Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
        Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
    }
+   /* Chép từ báo giá cũ — hai endpoint JSON cho form Lập báo giá.
+      Dùng chung quyền `add` của module quotations (kiểm trong controller). */
+   Route::get('quotations/copy-list',       'admin/quotations/copyList');
+   Route::get('quotations/copy-lines/(\d+)', 'admin/quotations/copyLines/$1');
+
    // Báo giá: đổi trạng thái + chuyển thành hoá đơn
    Route::get('quotations/set-status/(\d+)', 'admin/quotations/setStatus/$1');
    Route::get('quotations/convert/(\d+)',    'admin/quotations/convert/$1');
