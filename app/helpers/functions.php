@@ -604,3 +604,50 @@ function header_word($tenFile){
     header('Content-Disposition: attachment; filename="' . preg_replace('/[^A-Za-z0-9._-]/', '', $tenFile) . '.doc"');
     header('Cache-Control: max-age=0');
 }
+
+/**
+ * Gara đang làm việc — [id, code, name, ...] hoặc null nếu chưa khai gara nào.
+ *
+ * Thứ tự ưu tiên:
+ *   1. Gara người này vừa chọn ở ô đổi gara (session)
+ *   2. Gara ghi trên tài khoản (`users.garage_id`)
+ *   3. Gara tổng
+ *
+ * VÌ SAO PHẢI KIỂM TRA LẠI GIÁ TRỊ TRONG SESSION
+ * Gara chọn hôm qua có thể đã bị xoá hoặc tắt hoạt động. Tin session mà không
+ * đối chiếu lại thì người dùng lập chứng từ cho một gara không còn tồn tại,
+ * và khoá ngoại sẽ từ chối lúc lưu — báo lỗi ở chỗ chẳng liên quan gì.
+ *
+ * Kết quả nhớ trong biến static: một request hỏi nhiều lần (header, controller,
+ * view) mà chỉ truy vấn một lần.
+ */
+function gara_hien_tai(){
+    static $cache = false;
+    if ($cache !== false) return $cache;
+
+    $model = \App\core\Load::model('GaragesModel');
+
+    $id = (int) \App\core\Session::get('garage_id');
+    if ($id > 0){
+        $g = $model->getDetail($id);
+        if (!empty($g) && (int) $g['status'] === 1) return $cache = $g;
+    }
+
+    $userId = \App\core\Session::get('dataUser');
+    if (!empty($userId)){
+        $u = \App\core\Load::model('UsersModel')->getDetail($userId);
+        if (!empty($u['garage_id'])){
+            $g = $model->getDetail((int) $u['garage_id']);
+            if (!empty($g) && (int) $g['status'] === 1) return $cache = $g;
+        }
+    }
+
+    $master = $model->getMaster();
+    return $cache = (!empty($master) ? $master : null);
+}
+
+/** Id của gara đang làm việc, hoặc null — dùng khi lưu chứng từ */
+function gara_hien_tai_id(){
+    $g = gara_hien_tai();
+    return !empty($g['id']) ? (int) $g['id'] : null;
+}

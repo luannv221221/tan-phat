@@ -51,6 +51,21 @@
             </select>
             {!! !empty($errors['group_id'])?'<span style="color:red">'.$errors['group_id'].'</span>':false !!}
         </div>
+        <div class="form-group">
+            <label for="">Gara</label>
+            <select name="garage_id" class="form-control">
+                <option value="">— Chưa gán gara —</option>
+                @if (!empty($listGarage))
+                @foreach ($listGarage as $g)
+                <option value="{{$g['id']}}" {{!empty($old['garage_id']) && $old['garage_id']==$g['id']?'selected':false}}>{{$g['name']}}</option>
+                @endforeach
+                @endif
+            </select>
+            <small class="form-text text-muted">
+                Gara nơi nhân viên này làm việc — quyết định lúc lập báo giá lấy danh mục và giá nào.
+                Bỏ trống thì tính là gara tổng.
+            </small>
+        </div>
 
         <button type="submit" class="btn btn-primary">Thêm mới</button>
     </form>

@@ -73,6 +73,8 @@ class Users extends Controller{
         $this->__data['content']['page_name'] = 'Thêm người dùng';
 
         $this->__data['content']['listGroup'] = $this->__groupModel->getLists();
+        // Gara của nhân viên: quyết định lúc lập báo giá lấy danh mục nào
+        $this->__data['content']['listGarage'] = $this->model('GaragesModel')->getActive();
 
 
         //Lấy dữ liệu từ flash data
@@ -116,6 +118,7 @@ class Users extends Controller{
                 'password' => $passwordHash,
                 'group_id' => $this->__request->getFields()['group_id'],
                 'status' => $this->__request->getFields()['status'],
+                'garage_id' => $this->garaTuForm(),
                 'create_at' => date('Y-m-d H:i:s')
             ];
             $addStatus = $this->__userModel->add($dataInsert);
@@ -153,6 +156,8 @@ class Users extends Controller{
         $this->__data['content']['page_name'] = 'Cập nhât người dùng';
 
         $this->__data['content']['listGroup'] = $this->__groupModel->getLists();
+        // Gara của nhân viên: quyết định lúc lập báo giá lấy danh mục nào
+        $this->__data['content']['listGarage'] = $this->model('GaragesModel')->getActive();
 
         //Lấy dữ liệu từ flash data
         $this->__data['content']['msg'] = Session::flash('msg');
@@ -213,6 +218,7 @@ class Users extends Controller{
                // 'password' => $passwordHash,
                 'group_id' => $this->__request->getFields()['group_id'],
                 'status' => $this->__request->getFields()['status'],
+                'garage_id' => $this->garaTuForm(),
                 'update_at' => date('Y-m-d H:i:s')
             ];
 
@@ -261,5 +267,15 @@ class Users extends Controller{
             Session::flash('msg', 'Xoá người dùng thành công');
             $this->__response->redirect('admin/users');
         }
+    }
+    /**
+     * Gara chọn trên form, hoặc null nếu để trống.
+     *
+     * Để trống KHÔNG phải lỗi: nhân viên chưa gán gara thì gara_hien_tai()
+     * rơi về gara tổng. Ép buộc ở đây sẽ chặn việc sửa mọi tài khoản cũ.
+     */
+    private function garaTuForm(){
+        $f = $this->__request->getFields();
+        return !empty($f['garage_id']) ? (int) $f['garage_id'] : null;
     }
 }

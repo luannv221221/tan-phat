@@ -50,6 +50,8 @@ class Warehouses extends Controller {
         $this->baseData();
         $this->__data['content']['page_name'] = 'Thêm ' . $this->labelOne;
         $this->__data['content']['item']      = null;
+        // Kho thuộc gara nào — gara là đơn vị, một gara có thể có nhiều kho.
+        $this->__data['content']['listGarage'] = $this->model('GaragesModel')->getActive();
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['errors']    = Session::flash('errors');
         $this->__data['content']['old']       = Session::flash('old');
@@ -92,6 +94,7 @@ class Warehouses extends Controller {
         $this->baseData();
         $this->__data['content']['page_name'] = 'Sửa ' . $this->labelOne;
         $this->__data['content']['item']      = $item;
+        $this->__data['content']['listGarage'] = $this->model('GaragesModel')->getActive();
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['errors']    = Session::flash('errors');
         $this->__data['content']['old']       = Session::flash('old');
@@ -169,6 +172,9 @@ class Warehouses extends Controller {
             'is_default' => !empty($f['is_default']) ? 1 : 0,
             'sort_order' => isset($f['sort_order']) ? (int) $f['sort_order'] : 0,
             'status'     => !empty($f['status']) ? 1 : 0,
+            /* Để trống được: kho cũ chưa gán gara vẫn phải sửa được. Migration
+               đã gán hết về gara tổng nên thực tế hiếm khi rỗng. */
+            'garage_id'  => !empty($f['garage_id']) ? (int) $f['garage_id'] : null,
         ];
     }
 

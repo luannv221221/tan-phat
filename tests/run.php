@@ -34,6 +34,7 @@ $tests = [
     'VideoTrangChuTest.php'       => 'STOREFRONT — khoi Video o trang chu',
     'ChepBaoGiaTest.php'          => 'BAN HANG — chep dong hang tu bao gia cu',
     'XeCuaKhachTest.php'          => 'CSKH — xe cua khach (bien so, so km) + tra theo bien so',
+    'NhieuGaraTest.php'           => 'HE THONG — nhieu gara (tang 1: khai niem gara)',
 ];
 
 $php      = PHP_BINARY;

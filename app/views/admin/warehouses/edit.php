@@ -34,6 +34,19 @@ $isActive  = isset($old['status'])     ? !empty($old['status'])     : ((int) $it
                     </div>
 
                     <div class="form-group">
+                        <label>Gara</label>
+                        <select name="garage_id" class="form-control">
+                            <option value="">— Chưa gán gara —</option>
+                            @if (!empty($listGarage))
+                            @foreach ($listGarage as $g)
+                            <option value="{{$g['id']}}" {{$v('garage_id')==$g['id']?'selected':false}}>{{$g['name']}}</option>
+                            @endforeach
+                            @endif
+                        </select>
+                        <small class="form-text text-muted">Đơn vị sở hữu kho này. Một gara có thể có nhiều kho.</small>
+                    </div>
+
+                    <div class="form-group">
                         <label>Địa chỉ</label>
                         <input type="text" class="form-control" name="address" value="{{$v('address')}}"/>
                     </div>

@@ -14,28 +14,15 @@
 
                     <div class="form-row">
                         <div class="form-group col-md-4">
-                            <label>Mã kho <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="code" placeholder="VD: KHO01" value="{{!empty($old['code'])?$old['code']:''}}"/>
+                            <label>Mã gara <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="code" placeholder="VD: TP02" value="{{!empty($old['code'])?$old['code']:''}}"/>
                             {!! !empty($errors['code'])?'<small class="text-danger">'.e($errors['code']).'</small>':false !!}
                         </div>
                         <div class="form-group col-md-8">
-                            <label>Tên kho <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="name" placeholder="VD: Kho tổng" value="{{!empty($old['name'])?$old['name']:''}}"/>
+                            <label>Tên gara <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" placeholder="VD: Tân Phát Sài Gòn" value="{{!empty($old['name'])?$old['name']:''}}"/>
                             {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Gara</label>
-                        <select name="garage_id" class="form-control">
-                            <option value="">— Chưa gán gara —</option>
-                            @if (!empty($listGarage))
-                            @foreach ($listGarage as $g)
-                            <option value="{{$g['id']}}" {{!empty($old['garage_id']) && $old['garage_id']==$g['id']?'selected':false}}>{{$g['name']}}</option>
-                            @endforeach
-                            @endif
-                        </select>
-                        <small class="form-text text-muted">Đơn vị sở hữu kho này. Một gara có thể có nhiều kho.</small>
                     </div>
 
                     <div class="form-group">
@@ -56,9 +43,13 @@
 
                     <div class="form-group">
                         <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" name="is_default" id="is_default" value="1"/>
-                            <label class="custom-control-label" for="is_default">Đặt làm kho mặc định</label>
+                            <input type="checkbox" class="custom-control-input" name="is_master" id="is_master" value="1"/>
+                            <label class="custom-control-label" for="is_master">Đây là gara tổng</label>
                         </div>
+                        <small class="form-text text-muted">
+                            Gara tổng là nơi sở hữu danh mục hàng hoá dùng chung. Chỉ có một gara tổng —
+                            bật ở đây thì gara đang giữ vai trò đó sẽ tự nhường lại.
+                        </small>
                     </div>
 
                     <div class="form-group mb-0">

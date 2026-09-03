@@ -35,6 +35,12 @@ class AppServiceProvider extends ServiceProvider {
             //truy vấn tới bảng modules
             $dataShare['content']['listModules'] = $moduleModel->getLists();
 
+            /* Gara đang làm việc + danh sách gara để đổi, cho thanh đầu trang.
+               Chia sẻ ở đây thay vì để từng controller tự nạp: thiếu ở một
+               controller là ô đổi gara biến mất đúng ở màn hình đó. */
+            $dataShare['content']['garaHienTai'] = gara_hien_tai();
+            $dataShare['content']['dsGara']      = Load::model('GaragesModel')->getActive();
+
 
             View::share($dataShare);
         }

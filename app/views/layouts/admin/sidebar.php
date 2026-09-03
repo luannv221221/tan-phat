@@ -47,7 +47,9 @@ $menuGroups = [
     // `modules` đứng NGAY SAU `groups`: hai màn hình này đi liền một mạch —
     // đăng ký màn hình ở Quản lý module rồi mới cấp quyền cho nhóm ở Nhóm >
     // Phân quyền. Tách xa nhau thì người dùng không thấy được mạch đó.
-    'Hệ thống'           => ['users', 'groups', 'modules', 'settings', 'thong-ke'],
+    // `garages` đứng TRƯỚC `users`: gara là đơn vị, nhân viên được gán vào gara
+    // ở màn Người dùng — nên phải khai gara xong mới có gì mà chọn.
+    'Hệ thống'           => ['garages', 'users', 'groups', 'modules', 'settings', 'thong-ke'],
 ];
 
 $groupIcons = [
