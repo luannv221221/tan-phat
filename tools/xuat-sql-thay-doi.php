@@ -9,8 +9,9 @@
  *   000059  gỡ mã hoá HTML bị chồng lớp  (lỗi &#38;#38;)
  *   000060  gán ảnh minh hoạ vào CSDL
  *   000061  đăng ký module "Quản lý module"
+ *   000062  bảng xe của khách (biển số, số km)
  *
- * KHÔNG có lệnh CREATE/ALTER/DROP nào — cả ba chỉ sửa và thêm DỮ LIỆU.
+ * Ba cái đầu chỉ sửa/thêm DỮ LIỆU; riêng 000062 có CREATE TABLE.
  *
  * Câu lệnh sinh ra đều CHẠY LẠI ĐƯỢC NHIỀU LẦN:
  *   - UPDATE có mệnh đề WHERE đủ hẹp
@@ -39,11 +40,12 @@ function q($v){
 $now = date('Y-m-d H:i:s');
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 / 000060 / 000061\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000062\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
-echo "-- KHÔNG có CREATE/ALTER/DROP — chỉ sửa và thêm dữ liệu.\n";
-echo "-- Chạy lại nhiều lần không sinh dòng trùng.\n";
+echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
+echo "-- Phần 4 có MỘT lệnh CREATE TABLE (bảng `member_vehicles` — xe của khách).\n";
+echo "-- Không có ALTER hay DROP nào; chạy lại nhiều lần không sinh dòng trùng.\n";
 echo "--\n";
 echo "-- Cách dùng: phpMyAdmin > chọn CSDL > tab SQL > dán toàn bộ > Thực hiện.\n";
 echo "-- =====================================================================\n\n";
@@ -178,13 +180,47 @@ foreach (['view', 'add', 'edit', 'delete'] as $role){
 }
 
 /* ------------------------------------------------------------------ *
+ * 4. Bảng xe của khách (biển số + số km)                    — 000062
+ *
+ * Khác ba phần trên: đây là thay đổi CẤU TRÚC, không phải dữ liệu.
+ * Sinh nguyên văn từ migration chứ không đọc CSDL, vì không có dữ liệu
+ * nào để chép lại — mới chỉ là cái bảng rỗng.
+ * ------------------------------------------------------------------ */
+echo "\n-- ---------------------------------------------------------------------\n";
+echo "-- 4. Bảng `member_vehicles` — xe của khách (biển số, số km).\n";
+echo "--\n";
+echo "-- Một khách nhiều xe nên phải là bảng riêng, không phải hai cột thêm\n";
+echo "-- vào `members`. CREATE TABLE IF NOT EXISTS nên chạy lại vô hại.\n";
+echo "-- ---------------------------------------------------------------------\n\n";
+
+echo "CREATE TABLE IF NOT EXISTS `member_vehicles` (\n"
+   . "    `id`            INT AUTO_INCREMENT PRIMARY KEY,\n"
+   . "    `member_id`     INT NOT NULL,\n"
+   . "    `bien_so`       VARCHAR(20)  NOT NULL,\n"
+   . "    `bien_so_chuan` VARCHAR(20)  NOT NULL,\n"
+   . "    `hang_xe`       VARCHAR(60)  DEFAULT NULL,\n"
+   . "    `model_xe`      VARCHAR(60)  DEFAULT NULL,\n"
+   . "    `nam_sx`        SMALLINT     DEFAULT NULL,\n"
+   . "    `mau_xe`        VARCHAR(40)  DEFAULT NULL,\n"
+   . "    `so_km`         INT          DEFAULT NULL,\n"
+   . "    `ghi_chu`       VARCHAR(255) DEFAULT NULL,\n"
+   . "    `create_at`     DATETIME     DEFAULT NULL,\n"
+   . "    `update_at`     DATETIME     DEFAULT NULL,\n"
+   . "    KEY `idx_mv_member` (`member_id`),\n"
+   . "    KEY `idx_mv_bien_so` (`bien_so_chuan`),\n"
+   . "    CONSTRAINT `fk_mv_member`\n"
+   . "        FOREIGN KEY (`member_id`) REFERENCES `members` (`id`)\n"
+   . "        ON DELETE CASCADE ON UPDATE CASCADE\n"
+   . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n";
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
 echo "-- Đánh dấu ba migration là ĐÃ CHẠY.\n";
 echo "--\n";
 echo "-- Cần thiết: chạy SQL bằng tay thì bảng `migrations` không biết, nên nếu\n";
-echo "-- sau này có ai gọi `php migrate.php` nó sẽ chạy lại ba cái này. Cả ba đều\n";
+echo "-- sau này có ai gọi `php migrate.php` nó sẽ chạy lại. Cả bốn đều\n";
 echo "-- vô hại khi chạy lại, nhưng ghi nhận cho đúng vẫn hơn.\n";
 echo "-- ---------------------------------------------------------------------\n";
 
@@ -193,11 +229,16 @@ foreach ([
     '2026_08_26_000059_go_ma_hoa_html_bi_chong_lop',
     '2026_08_26_000060_gan_anh_minh_hoa_vao_csdl',
     '2026_08_26_000061_them_module_quan_ly_module',
+    '2026_08_27_000062_them_bang_xe_cua_khach',
 ] as $mg){
-    printf("INSERT INTO `migrations` (`migration`,`batch`)\n"
-         . "  SELECT %s, %d FROM DUAL\n"
+    /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
+       MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên
+       INSERT không chạy và lỗi không bao giờ lộ ra — đúng máy production (chưa
+       có dòng nào) mới sập. */
+    printf("INSERT INTO `migrations` (`migration`,`batch`,`ran_at`)\n"
+         . "  SELECT %s, %d, %s FROM DUAL\n"
          . "  WHERE NOT EXISTS (SELECT 1 FROM `migrations` x WHERE x.`migration` = %s);\n",
-        q($mg), $batch, q($mg));
+        q($mg), $batch, q($now), q($mg));
 }
 
 echo "\n-- Hết.\n";

@@ -55,6 +55,12 @@ Route::group('admin', function(){
    Route::get('customers/edit/(\d+)', 'admin/customers/edit/$1');
    Route::post('customers/edit/(\d+)', 'admin/customers/postEdit/$1');
    Route::get('customers/toggle/(\d+)', 'admin/customers/toggle/$1');
+   /* Xe cua khach — quan ly ngay trong man Sua khach hang.
+      Xe khong ton tai doc lap voi chu cua no nen khong lam module rieng;
+      dung chung quyen `edit` cua customers (kiem trong controller). */
+   Route::post('customers/xe-them/(\d+)', 'admin/customers/xeThem/$1');
+   Route::post('customers/xe-sua/(\d+)',  'admin/customers/xeSua/$1');
+   Route::get('customers/xe-xoa/(\d+)',   'admin/customers/xeXoa/$1');
 
    Route::get('users', 'admin/users');
 

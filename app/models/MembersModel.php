@@ -69,9 +69,27 @@ class MembersModel extends Model {
         $bind = [];
 
         if ($keyword !== ''){
-            $cond[] = '(`name` LIKE ? OR `email` LIKE ? OR `phone` LIKE ?)';
+            /* Tìm thêm theo BIỂN SỐ XE.
+               CSKH nhận điện thoại thường chỉ có mỗi biển số ("xe 30A-12345 hẹn
+               sáng mai"), chưa biết tên chủ. Bắt họ tra tên trước rồi mới ra xe
+               là làm ngược quy trình thật.
+
+               Một khách có nhiều xe nên phải dùng EXISTS chứ không JOIN: JOIN sẽ
+               nhân dòng, khách 3 xe hiện ra 3 lần trong danh sách.
+
+               So theo cột bien_so_chuan (chỉ chữ + số, viết hoa) nên gõ
+               "30a 123 45" hay "30A-123.45" đều ra. */
+            $cond[] = '(`name` LIKE ? OR `email` LIKE ? OR `phone` LIKE ?'
+                    . ' OR EXISTS (SELECT 1 FROM `member_vehicles` mv'
+                    . '             WHERE mv.`member_id` = `members`.`id`'
+                    . '               AND mv.`bien_so_chuan` LIKE ?))';
             $like   = '%' . $keyword . '%';
             $bind[] = $like; $bind[] = $like; $bind[] = $like;
+
+            $chuan  = preg_replace('/[^A-Za-z0-9]/', '', $keyword);
+            // Từ khoá không còn chữ/số nào (vd gõ mỗi "---") thì cho khớp rỗng,
+            // đừng để '%%' biến thành "khớp mọi biển số".
+            $bind[] = $chuan === '' ? "\x00" : '%' . strtoupper($chuan) . '%';
         }
         if ($status === '0' || $status === '1'){
             $cond[] = '`status` = ?';

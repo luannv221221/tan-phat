@@ -33,6 +33,7 @@ $tests = [
     'QuanLyModuleTest.php'        => 'PHAN QUYEN — man hinh dang ky module',
     'VideoTrangChuTest.php'       => 'STOREFRONT — khoi Video o trang chu',
     'ChepBaoGiaTest.php'          => 'BAN HANG — chep dong hang tu bao gia cu',
+    'XeCuaKhachTest.php'          => 'CSKH — xe cua khach (bien so, so km) + tra theo bien so',
 ];
 
 $php      = PHP_BINARY;

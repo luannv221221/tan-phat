@@ -19,7 +19,7 @@
 
     <div class="card-body">
         <form method="get" action="{{_WEB_URL.'/admin/'.$routeBase}}" class="adm-searchbar">
-            <input type="text" name="keyword" class="form-control" placeholder="Tìm theo tên, email hoặc số điện thoại" value="{{$keyword}}"/>
+            <input type="text" name="keyword" class="form-control" placeholder="Tìm theo tên, email, SĐT hoặc BIỂN SỐ XE" value="{{$keyword}}"/>
             <select name="status" class="form-control" style="max-width:180px" onchange="this.form.submit()">
                 <option value="">Mọi trạng thái</option>
                 <option value="1" {{$filterSt==='1'?'selected':''}}>Đang hoạt động</option>
@@ -36,7 +36,8 @@
                     <th style="width:60px" class="text-center">STT</th>
                     <th>Họ tên</th>
                     <th style="width:22%">Email</th>
-                    <th style="width:14%">Điện thoại</th>
+                    <th style="width:12%">Điện thoại</th>
+                    <th style="width:16%">Xe</th>
                     <th style="width:90px" class="text-center">Số đơn</th>
                     <th style="width:110px" class="text-center">Trạng thái</th>
                     <th style="width:160px">Ngày đăng ký</th>
@@ -51,6 +52,22 @@
                     <td class="font-weight-bold">{{$item['name']}}</td>
                     <td>{{$item['email']}}</td>
                     <td>{!! !empty($item['phone']) ? e($item['phone']) : '<span class="text-muted">—</span>' !!}</td>
+                    <?php
+                    /* Xe cua khach. Mot khach co the co nhieu xe nen liet ke
+                       het duoi dang nhan; khong co xe thi de gach ngang cho
+                       khoi trong hoac. */
+                    $xe = isset($xeTheoKhach[(int) $item['id']]) ? $xeTheoKhach[(int) $item['id']] : [];
+                    ?>
+                    <td>
+                        @if (!empty($xe))
+                            @foreach ($xe as $x)
+                            <span class="badge badge-light border mr-1" style="font-size:.8rem"
+                                  title="{{trim($x['hang_xe'].' '.$x['model_xe'])}}{{!empty($x['so_km']) ? ' — '.number_format($x['so_km']).' km' : ''}}">{{$x['bien_so']}}</span>
+                            @endforeach
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
+                    </td>
                     <td class="text-center">{{(int)$item['order_count']}}</td>
                     <td class="text-center">
                         {!! (int)$item['status'] === 1
@@ -77,7 +94,7 @@
                 @endforeach
             @else
                 <tr>
-                    <td colspan="8" class="text-center text-muted py-4">
+                    <td colspan="9" class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có khách hàng nào
                     </td>
                 </tr>

@@ -26,10 +26,11 @@ class Customers extends Controller {
     private $perPage   = 20;
 
     private $__data = [];
-    private $__model, $__request, $__response;
+    private $__model, $__xe, $__request, $__response;
 
     function __construct(){
         $this->__model    = $this->model('MembersModel');
+        $this->__xe       = $this->model('MemberVehiclesModel');
         $this->__request  = new Request();
         $this->__response = new Response();
     }
@@ -61,6 +62,12 @@ class Customers extends Controller {
         $c = &$this->__data['content'];
         $c['page_name']  = $this->labelMany;
         $c['dataList']   = $this->__model->adminList($keyword, $status, $limit, ($page - 1) * $perPage);
+
+        /* Xe cua tung khach — lay MOT lan cho ca trang thay vi hoi lai theo
+           tung dong. Danh sach 20 khach ma hoi 20 lan la 20 truy van thua. */
+        $c['xeTheoKhach'] = $this->__xe->theoNhieuKhach(
+            array_map(function($x){ return $x['id']; }, $c['dataList'] ?: [])
+        );
         $c['keyword']    = $keyword;
         $c['filterSt']   = $status;
         $c['page']       = $page;
@@ -86,6 +93,7 @@ class Customers extends Controller {
         $c = &$this->__data['content'];
         $c['page_name'] = 'Sửa khách hàng';
         $c['item']      = $item;
+        $c['dsXe']      = $this->__xe->getByMember((int) $id);
         $c['errors']    = Session::flash('errors');
         $c['old']       = Session::flash('old');
         $c['msg']       = Session::flash('msg');
@@ -141,6 +149,111 @@ class Customers extends Controller {
         }
 
         $this->__response->redirect('admin/' . $this->routeBase);
+    }
+
+    /* ==================================================================
+     * XE CỦA KHÁCH
+     *
+     * Một khách nhiều xe, nên quản lý ngay trong màn Sửa khách hàng thay vì
+     * làm một màn hình riêng: xe không tồn tại độc lập với chủ của nó.
+     * Dùng chung quyền `edit` của module customers.
+     * ================================================================== */
+
+    /** Thêm một xe cho khách */
+    public function xeThem($memberId = 0){
+        $kh = $this->__model->getDetail((int) $memberId);
+        if (empty($kh)){
+            Session::flash('msgError', 'Không tìm thấy khách hàng.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (!route('admin/' . $this->routeBase . '/edit/' . (int) $memberId)){
+            $this->__response->redirect('admin/khong-co-quyen'); return;
+        }
+
+        $f  = $this->__request->getFields();
+        $bs = isset($f['bien_so']) ? trim($f['bien_so']) : '';
+
+        if (MemberVehiclesModel::chuanHoaBienSo($bs) === ''){
+            Session::flash('msgError', 'Biển số xe không được để trống.');
+            $this->quayLaiSua($memberId); return;
+        }
+
+        $this->__xe->add([
+            'member_id' => (int) $memberId,
+            'bien_so'   => $bs,
+            'hang_xe'   => $this->hoacNull($f, 'hang_xe'),
+            'model_xe'  => $this->hoacNull($f, 'model_xe'),
+            'nam_sx'    => !empty($f['nam_sx']) ? (int) $f['nam_sx'] : null,
+            'mau_xe'    => $this->hoacNull($f, 'mau_xe'),
+            'so_km'     => $this->soKm($f),
+            'ghi_chu'   => $this->hoacNull($f, 'ghi_chu'),
+        ]);
+
+        Session::flash('msg', 'Đã thêm xe ' . $bs);
+        $this->quayLaiSua($memberId);
+    }
+
+    /** Sửa một xe (chủ yếu để cập nhật số km mỗi lần xe vào gara) */
+    public function xeSua($xeId = 0){
+        $xe = $this->__xe->getDetail((int) $xeId);
+        if (empty($xe)){
+            Session::flash('msgError', 'Không tìm thấy xe.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (!route('admin/' . $this->routeBase . '/edit/' . (int) $xe['member_id'])){
+            $this->__response->redirect('admin/khong-co-quyen'); return;
+        }
+
+        $f  = $this->__request->getFields();
+        $bs = isset($f['bien_so']) ? trim($f['bien_so']) : '';
+
+        if (MemberVehiclesModel::chuanHoaBienSo($bs) === ''){
+            Session::flash('msgError', 'Biển số xe không được để trống.');
+            $this->quayLaiSua($xe['member_id']); return;
+        }
+
+        $this->__xe->edit([
+            'bien_so'  => $bs,
+            'hang_xe'  => $this->hoacNull($f, 'hang_xe'),
+            'model_xe' => $this->hoacNull($f, 'model_xe'),
+            'nam_sx'   => !empty($f['nam_sx']) ? (int) $f['nam_sx'] : null,
+            'mau_xe'   => $this->hoacNull($f, 'mau_xe'),
+            'so_km'    => $this->soKm($f),
+            'ghi_chu'  => $this->hoacNull($f, 'ghi_chu'),
+        ], (int) $xeId);
+
+        Session::flash('msg', 'Đã cập nhật xe ' . $bs);
+        $this->quayLaiSua($xe['member_id']);
+    }
+
+    public function xeXoa($xeId = 0){
+        $xe = $this->__xe->getDetail((int) $xeId);
+        if (empty($xe)){
+            Session::flash('msgError', 'Không tìm thấy xe.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (!route('admin/' . $this->routeBase . '/edit/' . (int) $xe['member_id'])){
+            $this->__response->redirect('admin/khong-co-quyen'); return;
+        }
+
+        $this->__xe->remove((int) $xeId);
+        Session::flash('msg', 'Đã xoá xe ' . $xe['bien_so']);
+        $this->quayLaiSua($xe['member_id']);
+    }
+
+    private function quayLaiSua($memberId){
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $memberId);
+    }
+
+    private function hoacNull(array $f, $ten){
+        return (isset($f[$ten]) && trim($f[$ten]) !== '') ? trim($f[$ten]) : null;
+    }
+
+    /** Số km: bỏ dấu phân cách nghìn người dùng hay gõ ("120.000", "120,000") */
+    private function soKm(array $f){
+        if (!isset($f['so_km'])) return null;
+        $v = preg_replace('/[^\d]/', '', (string) $f['so_km']);
+        return $v === '' ? null : (int) $v;
     }
 
     /** Khoá / mở khoá nhanh từ danh sách */
