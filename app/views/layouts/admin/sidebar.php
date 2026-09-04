@@ -36,7 +36,9 @@ $menuGroups = [
     // --- Khu 1: việc hằng ngày ở quầy ---
     'Bán hàng'           => ['quotations', 'sales-invoices', 'orders', 'partners', 'bao-cao-ban-hang'],
     'Kho'                => ['goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
-    'Hàng hoá'           => ['products', 'services', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
+    // `garage-catalog` đứng ngay sau `services`: nó là danh mục hàng hoá nhìn
+    // từ phía một gara, nên thuộc nhóm Hàng hoá chứ không phải nhóm Hệ thống.
+    'Hàng hoá'           => ['products', 'services', 'garage-catalog', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
     'CSKH'               => ['customers', 'customer-groups', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'chat', 'contact-messages', 'reviews', 'newsletter', 'bao-cao-cskh'],
 

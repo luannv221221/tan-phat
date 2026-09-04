@@ -41,12 +41,13 @@ function q($v){
 $now = date('Y-m-d H:i:s');
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000063\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000065\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
-echo "-- Phần 4-5 đổi CẤU TRÚC: 2 bảng mới (`member_vehicles`, `garages`) và\n";
-echo "-- cột `garage_id` thêm vào 4 bảng đang có.\n";
+echo "-- Phần 4-7 đổi CẤU TRÚC: 3 bảng mới (`member_vehicles`, `garages`,\n";
+echo "-- `garage_part_prices`), cột `garage_id` thêm vào 5 bảng cũ, và nới\n";
+echo "-- `members`.`email` cho phép để trống.\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
 echo "-- báo lỗi trùng cột — các lệnh ALTER đều có kiểm tra trước.\n";
 echo "--\n";
@@ -338,6 +339,109 @@ foreach (['view', 'add', 'edit', 'delete'] as $role){
 }
 
 /* ------------------------------------------------------------------ *
+ * 6. Khách vãng lai không cần email                         — 000064
+ * ------------------------------------------------------------------ */
+echo "\n-- ---------------------------------------------------------------------\n";
+echo "-- 6. Khách vãng lai: `members`.`email` để trống được.\n";
+echo "--\n";
+echo "-- Khách lái xe tới gara đa số không có tài khoản đăng nhập. Bắt nhập\n";
+echo "-- email nghĩa là bắt nhân viên bịa ra email giả.\n";
+echo "--\n";
+echo "-- Khoá UNIQUE giữ nguyên: MySQL cho NHIỀU dòng NULL, nên trăm khách bỏ\n";
+echo "-- trống vẫn vào được, mà hai khách cùng một email thật thì vẫn bị chặn.\n";
+echo "-- ---------------------------------------------------------------------\n\n";
+
+ddlNeuThieu(
+    'email_null',
+    "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+  . " AND TABLE_NAME = 'members' AND COLUMN_NAME = 'email' AND IS_NULLABLE = 'YES'",
+    "ALTER TABLE `members` MODIFY `email` VARCHAR(150) NULL DEFAULT NULL"
+);
+
+echo "-- Quyền `add` cho module customers. Thiếu dòng này thì nút \"Thêm khách\n";
+echo "-- hàng\" không hiện VÀ RoleMiddleware chặn thẳng URL — code đủ cả mà\n";
+echo "-- bấm không vào được.\n";
+printf("INSERT INTO `permissions` (`module_id`,`group_id`,`role`)\n"
+     . "  SELECT m.`id`, g.`id`, %s\n"
+     . "    FROM `modules` m JOIN `groups` g\n"
+     . "   WHERE m.`link` = %s AND g.`name` = %s\n"
+     . "     AND NOT EXISTS (SELECT 1 FROM (SELECT * FROM `permissions`) p\n"
+     . "                      WHERE p.`module_id` = m.`id` AND p.`group_id` = g.`id` AND p.`role` = %s);\n",
+    q('add'), q('customers'), q('Admin'), q('add'));
+
+/* ------------------------------------------------------------------ *
+ * 7. Danh mục riêng của gara                                — 000065
+ * ------------------------------------------------------------------ */
+echo "\n-- ---------------------------------------------------------------------\n";
+echo "-- 7. Danh mục riêng của gara: `parts`.`garage_id` + `garage_part_prices`.\n";
+echo "--\n";
+echo "-- `parts`.`garage_id` NULL = hàng của danh mục tổng (mọi gara đều thấy);\n";
+echo "-- có giá trị = hàng chỉ gara đó có. 18 mặt hàng đang có giữ nguyên NULL.\n";
+echo "--\n";
+echo "-- Một dòng trong `garage_part_prices` mang hai nghĩa: \"gara này có làm\n";
+echo "-- mặt hàng đó\" và \"với giá này\". Giá NULL = lấy theo giá tổng.\n";
+echo "--\n";
+echo "-- CHÚ Ý ba cách xoá khác nhau, cố ý chứ không phải quên:\n";
+echo "--   parts.garage_id            RESTRICT  (SET NULL sẽ đẩy hàng riêng của\n";
+echo "--                                        một gara vào danh mục tổng)\n";
+echo "--   garage_part_prices.*       CASCADE   (bảng giá vô nghĩa khi gara hoặc\n";
+echo "--                                        mặt hàng không còn)\n";
+echo "-- ---------------------------------------------------------------------\n\n";
+
+ddlNeuThieu(
+    'c_parts_garage',
+    "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+  . " AND TABLE_NAME = 'parts' AND COLUMN_NAME = 'garage_id'",
+    "ALTER TABLE `parts` ADD COLUMN `garage_id` INT DEFAULT NULL"
+);
+ddlNeuThieu(
+    'i_parts_garage',
+    "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE()"
+  . " AND TABLE_NAME = 'parts' AND INDEX_NAME = 'idx_parts_garage'",
+    "ALTER TABLE `parts` ADD KEY `idx_parts_garage` (`garage_id`)"
+);
+ddlNeuThieu(
+    'k_parts_garage',
+    "SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE()"
+  . " AND TABLE_NAME = 'parts' AND CONSTRAINT_NAME = 'fk_part_garage'",
+    "ALTER TABLE `parts` ADD CONSTRAINT `fk_part_garage` FOREIGN KEY (`garage_id`)"
+  . " REFERENCES `garages` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE"
+);
+
+echo "CREATE TABLE IF NOT EXISTS `garage_part_prices` (\n"
+   . "    `id`         INT AUTO_INCREMENT PRIMARY KEY,\n"
+   . "    `garage_id`  INT NOT NULL,\n"
+   . "    `part_id`    INT NOT NULL,\n"
+   . "    `price`      DECIMAL(15,2) DEFAULT NULL,\n"
+   . "    `sale_price` DECIMAL(15,2) DEFAULT NULL,\n"
+   . "    `status`     TINYINT(1) NOT NULL DEFAULT 1,\n"
+   . "    `create_at`  DATETIME DEFAULT NULL,\n"
+   . "    `update_at`  DATETIME DEFAULT NULL,\n"
+   . "    UNIQUE KEY `uq_gpp` (`garage_id`, `part_id`),\n"
+   . "    KEY `idx_gpp_part` (`part_id`),\n"
+   . "    CONSTRAINT `fk_gpp_garage` FOREIGN KEY (`garage_id`)\n"
+   . "        REFERENCES `garages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,\n"
+   . "    CONSTRAINT `fk_gpp_part` FOREIGN KEY (`part_id`)\n"
+   . "        REFERENCES `parts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE\n"
+   . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n";
+
+echo "-- Đăng ký màn hình \"Danh mục của gara\" + quyền cho nhóm Admin.\n";
+printf("INSERT INTO `modules` (`name`,`link`,`create_at`)\n"
+     . "  SELECT %s, %s, %s FROM DUAL\n"
+     . "  WHERE NOT EXISTS (SELECT 1 FROM (SELECT * FROM `modules`) m WHERE m.`link` = %s);\n\n",
+    q('Danh mục của gara'), q('garage-catalog'), q($now), q('garage-catalog'));
+
+foreach (['view', 'add', 'edit', 'delete'] as $role){
+    printf("INSERT INTO `permissions` (`module_id`,`group_id`,`role`)\n"
+         . "  SELECT m.`id`, g.`id`, %s\n"
+         . "    FROM `modules` m JOIN `groups` g\n"
+         . "   WHERE m.`link` = %s AND g.`name` = %s\n"
+         . "     AND NOT EXISTS (SELECT 1 FROM (SELECT * FROM `permissions`) p\n"
+         . "                      WHERE p.`module_id` = m.`id` AND p.`group_id` = g.`id` AND p.`role` = %s);\n",
+        q($role), q('garage-catalog'), q('Admin'), q($role));
+}
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
@@ -355,6 +459,8 @@ foreach ([
     '2026_08_26_000061_them_module_quan_ly_module',
     '2026_08_27_000062_them_bang_xe_cua_khach',
     '2026_09_03_000063_them_bang_gara',
+    '2026_09_03_000064_khach_vang_lai_khong_can_email',
+    '2026_09_03_000065_danh_muc_rieng_cua_gara',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên

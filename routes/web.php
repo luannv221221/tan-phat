@@ -67,12 +67,25 @@ Route::group('admin', function(){
       tức là thành một cửa không ai gác. */
    Route::get('garages/doi/(\d+)',       'admin/garages/doi/$1');
 
+   /* Danh mục của gara — tầng 2 của "danh mục tổng".
+      Không có /add, /edit/{id} kiểu CRUD: toàn bộ việc chọn hàng + đặt giá làm
+      trên một trang, vì người dùng cần nhìn cả danh mục tổng lẫn phần mình đã
+      chọn cùng lúc mới quyết được. */
+   Route::get('garage-catalog',              'admin/garagecatalog');
+   Route::post('garage-catalog/chon',        'admin/garagecatalog/postChon');
+   Route::post('garage-catalog/them-rieng',  'admin/garagecatalog/postThemRieng');
+   Route::get('garage-catalog/xoa-rieng/(\d+)', 'admin/garagecatalog/xoaRieng/$1');
+
    //Route users
 
    // Khách hàng (bảng `members` — khách đăng ký ngoài website).
    // Khác hẳn `users` phía dưới: `users` là tài khoản nhân viên có phân quyền.
    // Không có route xoá — khách có thể đã phát sinh đơn hàng, chỉ khoá/mở.
    Route::get('customers', 'admin/customers');
+   /* CÓ thêm mới (nhưng vẫn không có xoá): khách vãng lai lái xe tới gara phải
+      tạo được hồ sơ, nếu không thì khai biển số vào đâu. */
+   Route::get('customers/add', 'admin/customers/add');
+   Route::post('customers/add', 'admin/customers/postAdd');
    Route::get('customers/edit/(\d+)', 'admin/customers/edit/$1');
    Route::post('customers/edit/(\d+)', 'admin/customers/postEdit/$1');
    Route::get('customers/toggle/(\d+)', 'admin/customers/toggle/$1');

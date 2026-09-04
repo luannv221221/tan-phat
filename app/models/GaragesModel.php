@@ -85,6 +85,10 @@ class GaragesModel extends Model {
             'users'          => 'người dùng',
             'quotations'     => 'báo giá',
             'sales_invoices' => 'hoá đơn',
+            /* `parts` phải có mặt ở đây. Khoá ngoại của nó là RESTRICT nên
+               MySQL sẽ từ chối lệnh xoá — nhưng người dùng chỉ thấy một lỗi
+               CSDL khó hiểu. Đếm ở đây để nói thẳng: "gara này còn N hàng riêng". */
+            'parts'          => 'hàng riêng',
         ] as $bang => $nhan){
             $row = $this->table($bang)->select('COUNT(*) AS c')
                         ->where('garage_id', '=', $id)->first();

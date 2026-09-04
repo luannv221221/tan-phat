@@ -26,6 +26,47 @@ class MembersModel extends Model {
         return $this->lastId();
     }
 
+    /**
+     * Nhân viên tạo hồ sơ khách ngay tại gara (khác register(): khách tự đăng ký).
+     *
+     * Email và mật khẩu ĐỀU có thể bỏ trống — khách vãng lai không cần tài
+     * khoản đăng nhập. Hai chốt quan trọng:
+     *
+     *   1. Email trống lưu NULL chứ KHÔNG phải chuỗi rỗng. Cột có khoá UNIQUE;
+     *      MySQL cho nhiều dòng NULL nhưng chuỗi rỗng thì bằng chính nó, nên
+     *      khách vãng lai thứ hai sẽ bị báo trùng email.
+     *
+     *   2. Không có mật khẩu thì gán một chuỗi băm NGẪU NHIÊN, không để trống.
+     *      Ô rỗng hoặc chuỗi rỗng có thể khiến password_verify() khớp ngoài ý
+     *      muốn; băm của 32 byte ngẫu nhiên thì không ai gõ trúng.
+     *
+     * @return int id
+     */
+    public function adminAdd($data){
+        $matKhau = isset($data['password']) ? (string) $data['password'] : '';
+        if ($matKhau === '') $matKhau = bin2hex(random_bytes(32));
+
+        $email = isset($data['email']) ? trim((string) $data['email']) : '';
+
+        $this->addNew([
+            'email'     => $email !== '' ? $email : null,
+            'password'  => password_hash($matKhau, PASSWORD_BCRYPT),
+            'name'      => isset($data['name']) ? $data['name'] : '',
+            'phone'     => !empty($data['phone']) ? $data['phone'] : null,
+            'address'   => !empty($data['address']) ? $data['address'] : null,
+            'status'    => isset($data['status']) ? (int) $data['status'] : 1,
+            'create_at' => date('Y-m-d H:i:s'),
+        ]);
+        return $this->lastId();
+    }
+
+    /** Khách đã có số điện thoại này chưa — tránh tạo trùng người ở gara */
+    public function findByPhone($phone){
+        $phone = trim((string) $phone);
+        if ($phone === '') return null;
+        return $this->table($this->_table)->where('phone', '=', $phone)->first();
+    }
+
     /** Xác thực đăng nhập. @return array|null bản ghi thành viên nếu đúng */
     public function checkLogin($email, $password){
         $m = $this->findByEmail($email);

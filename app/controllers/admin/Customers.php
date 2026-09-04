@@ -82,6 +82,84 @@ class Customers extends Controller {
         $this->render('layouts/admin/master_admin', $this->__data);
     }
 
+    /**
+     * Thêm khách ngay tại gara.
+     *
+     * Màn này ban đầu chỉ để XEM và KHOÁ tài khoản khách tự đăng ký trên web,
+     * nên cố tình không có nút Thêm. Nhưng từ khi nó gánh thêm việc quản lý xe
+     * của khách thì thiếu hẳn một nửa: khách vãng lai lái xe tới gara không tạo
+     * được hồ sơ, nên cũng không khai được biển số — đúng tình huống mà tính
+     * năng đó sinh ra để phục vụ.
+     */
+    public function add(){
+        $this->baseData();
+        $c = &$this->__data['content'];
+        $c['page_name'] = 'Thêm khách hàng';
+        $c['errors']    = Session::flash('errors');
+        $c['old']       = Session::flash('old');
+        $c['msg']       = Session::flash('msg');
+
+        $this->__data['sub_content'] = $this->viewDir . '/add';
+        $this->__data['page_title']  = 'Thêm khách hàng';
+        $this->render('layouts/admin/master_admin', $this->__data);
+    }
+
+    public function postAdd(){
+        $f       = $this->__request->getFields();
+        $name    = isset($f['name']) ? trim($f['name']) : '';
+        $email   = isset($f['email']) ? trim($f['email']) : '';
+        $phone   = isset($f['phone']) ? trim($f['phone']) : '';
+        $address = isset($f['address']) ? trim($f['address']) : '';
+        $pass    = isset($f['new_password']) ? $f['new_password'] : '';
+
+        $errors = [];
+        if ($name === '') $errors['name'] = 'Nhập họ tên';
+
+        /* Phải có ÍT NHẤT một cách liên lạc. Không có cả hai thì hồ sơ này về
+           sau không ai tra ra được là của ai — và khách vãng lai ở gara thì
+           số điện thoại mới là thứ nhận ra người, không phải email. */
+        if ($email === '' && $phone === ''){
+            $errors['phone'] = 'Nhập số điện thoại hoặc email — cần ít nhất một cách liên lạc';
+        }
+        if ($phone !== '' && !is_phone($phone)){
+            $errors['phone'] = 'Số điện thoại không hợp lệ (di động 10 số hoặc cố định 11 số)';
+        }
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)){
+            $errors['email'] = 'Email không đúng định dạng';
+        }
+        if ($email !== '' && !empty($this->__model->findByEmail($email))){
+            $errors['email'] = 'Email này đã có khách khác dùng';
+        }
+        /* Trùng số điện thoại chỉ CẢNH BÁO chứ không chặn: hai vợ chồng dùng
+           chung một số là chuyện thường. Nhưng phải nói ra, vì tạo trùng người
+           thì lịch sử xe của khách bị chia đôi. */
+        $trungSdt = $phone !== '' ? $this->__model->findByPhone($phone) : null;
+        if (!empty($trungSdt) && empty($f['xac_nhan_trung'])){
+            $errors['phone'] = 'Số này đã thuộc về khách "' . $trungSdt['name']
+                             . '". Tích vào ô xác nhận bên dưới nếu vẫn muốn tạo hồ sơ mới.';
+        }
+        if ($pass !== '' && strlen($pass) < 6){
+            $errors['new_password'] = 'Mật khẩu tối thiểu 6 ký tự';
+        }
+
+        if (!empty($errors)){
+            Session::flash('errors', $errors);
+            Session::flash('old', ['name' => $name, 'email' => $email,
+                                   'phone' => $phone, 'address' => $address]);
+            $this->__response->redirect('admin/' . $this->routeBase . '/add'); return;
+        }
+
+        $id = $this->__model->adminAdd([
+            'name' => $name, 'email' => $email, 'phone' => $phone,
+            'address' => $address, 'password' => $pass, 'status' => 1,
+        ]);
+
+        /* Đưa thẳng sang màn Sửa: gần như lần nào thêm khách ở gara cũng là để
+           khai luôn chiếc xe họ vừa mang tới, mà khối "Xe của khách" nằm ở đó. */
+        Session::flash('msg', 'Đã thêm khách hàng. Khai biển số xe của khách ngay bên dưới.');
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $id);
+    }
+
     public function edit($id = 0){
         $item = $this->__model->getDetail((int) $id);
         if (empty($item)){

@@ -142,8 +142,14 @@ class PartsModel extends Model {
      * Hàng ngừng đăng web vẫn phải xuất hoá đơn và nhập/xuất kho được.
      */
     private function chiHangLenWeb($q){
+        /* Hàng RIÊNG của một gara không lên website chung.
+           Website là một trang cho cả hệ thống; đăng hàng riêng của gara Sài
+           Gòn lên đó thì khách Hà Nội đặt mua một thứ chi nhánh mình không có.
+           Chốt ở đây chứ không chỉ dựa vào cờ `show_on_web`: cờ đó người dùng
+           bật tắt được, còn điều kiện này thì không được phép quên. */
         return $q->where('parts.status', '=', 1)
-                 ->where('parts.show_on_web', '=', 1);
+                 ->where('parts.show_on_web', '=', 1)
+                 ->whereNull('parts.garage_id');
     }
 
     /** Chi tiết 1 phụ tùng kèm tên danh mục/thương hiệu/xuất xứ/đơn vị — cho storefront */
@@ -374,6 +380,9 @@ class PartsModel extends Model {
             ->select('`parts`.`id`, `parts`.`code`, `parts`.`name`, `parts`.`price`, '
                    . '`parts`.`sale_price`, `parts`.`item_type`, `part_units`.`name` AS unit_name')
             ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
+            /* CHỈ danh mục tổng. Hàng riêng của một gara không được lọt vào ô
+               chọn của gara khác — muốn lấy hàng riêng thì gọi theoNguon(). */
+            ->whereNull('parts.garage_id')
             ->where('parts.status', '=', 1);
 
         if ($chiHangCoKho){
@@ -388,6 +397,105 @@ class PartsModel extends Model {
         }
 
         return $rows;
+    }
+
+    /** Hai nguồn danh mục khi lập báo giá */
+    const NGUON_TONG = 'tong';
+    const NGUON_GARA = 'gara';
+
+    /**
+     * Danh sách hàng hoá theo NGUỒN, dạng dùng được ngay cho ô chọn ở báo giá.
+     *
+     *   NGUON_TONG  Danh mục tổng — mọi mặt hàng chung (`parts.garage_id IS NULL`),
+     *               lấy giá gốc.
+     *
+     *   NGUON_GARA  Danh mục của gara — gồm HAI phần cộng lại:
+     *                 a) hàng riêng của gara đó (`parts.garage_id = X`)
+     *                 b) hàng của danh mục tổng mà gara đã chọn làm
+     *                    (có dòng trong `garage_part_prices`)
+     *               Giá lấy theo bảng giá riêng; bỏ trống ở đó thì rơi về giá gốc.
+     *
+     * VÌ SAO GARA CHƯA CHỌN GÌ THÌ PHẢI RA RỖNG
+     * Cám dỗ ở đây là "gara chưa cấu hình thì cho xem tạm hàng tổng cho tiện".
+     * Làm vậy thì hai nguồn giống hệt nhau, người dùng không hiểu nút mình vừa
+     * bấm có tác dụng gì, và tệ hơn: họ tưởng gara đã có bảng giá riêng.
+     *
+     * Viết bằng SQL thô chứ không qua query builder: builder không dựng được
+     * mệnh đề OR lồng với EXISTS, mà tách thành hai truy vấn rồi gộp trong PHP
+     * thì mất thứ tự sắp xếp chung.
+     *
+     * @param string $nguon    NGUON_TONG | NGUON_GARA
+     * @param int    $garageId Bắt buộc khi $nguon = NGUON_GARA
+     */
+    public function theoNguon($nguon, $garageId = 0, $chiHangCoKho = false){
+        $garageId = (int) $garageId;
+        $bind     = [];
+
+        $loc = $chiHangCoKho
+            ? " AND `parts`.`item_type` <> '" . self::LOAI_DICH_VU . "'"
+            : '';
+
+        if ($nguon === self::NGUON_GARA){
+            if ($garageId <= 0) return [];
+
+            $sql = 'SELECT `parts`.`id`, `parts`.`code`, `parts`.`name`, `parts`.`item_type`,
+                           COALESCE(`gpp`.`price`, `parts`.`price`)           AS `price`,
+                           COALESCE(`gpp`.`sale_price`, `parts`.`sale_price`) AS `sale_price`,
+                           `parts`.`price` AS `gia_tong`,
+                           `gpp`.`price`   AS `gia_rieng`,
+                           (`parts`.`garage_id` IS NOT NULL) AS `hang_rieng`,
+                           `part_units`.`name` AS `unit_name`
+                      FROM `parts`
+                      LEFT JOIN `part_units` ON `part_units`.`id` = `parts`.`unit_id`
+                      LEFT JOIN `garage_part_prices` `gpp`
+                             ON `gpp`.`part_id` = `parts`.`id` AND `gpp`.`garage_id` = ?
+                     WHERE `parts`.`status` = 1' . $loc . '
+                       AND (
+                             `parts`.`garage_id` = ?
+                          OR (`parts`.`garage_id` IS NULL AND `gpp`.`id` IS NOT NULL AND `gpp`.`status` = 1)
+                       )
+                     ORDER BY `parts`.`name` ASC';
+            $bind = [$garageId, $garageId];
+
+        } else {
+            $sql = 'SELECT `parts`.`id`, `parts`.`code`, `parts`.`name`, `parts`.`item_type`,
+                           `parts`.`price`, `parts`.`sale_price`,
+                           `parts`.`price` AS `gia_tong`,
+                           NULL AS `gia_rieng`,
+                           0 AS `hang_rieng`,
+                           `part_units`.`name` AS `unit_name`
+                      FROM `parts`
+                      LEFT JOIN `part_units` ON `part_units`.`id` = `parts`.`unit_id`
+                     WHERE `parts`.`status` = 1' . $loc . '
+                       AND `parts`.`garage_id` IS NULL
+                     ORDER BY `parts`.`name` ASC';
+        }
+
+        $rows = $this->getRaw($sql, $bind) ?: [];
+
+        $imgs = $this->primaryImageMap();
+        foreach ($rows as $i => $r){
+            $rows[$i]['image'] = isset($imgs[(int) $r['id']]) ? $imgs[(int) $r['id']] : '';
+        }
+        return $rows;
+    }
+
+    /** Hàng riêng của một gara (không gồm hàng tổng gara đó chọn làm) */
+    public function hangRiengCuaGara($garageId){
+        return $this->table($this->_table)
+                    ->select('`parts`.`id`, `parts`.`code`, `parts`.`name`, `parts`.`item_type`, '
+                           . '`parts`.`price`, `parts`.`status`, `part_units`.`name` AS unit_name')
+                    ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
+                    ->where('parts.garage_id', '=', (int) $garageId)
+                    ->orderBy('parts.name', 'ASC')
+                    ->get();
+    }
+
+    /** Đếm hàng riêng — dùng để chặn xoá gara còn hàng */
+    public function demHangRieng($garageId){
+        $r = $this->table($this->_table)->select('COUNT(*) AS c')
+                  ->where('garage_id', '=', (int) $garageId)->first();
+        return !empty($r['c']) ? (int) $r['c'] : 0;
     }
 
     /**

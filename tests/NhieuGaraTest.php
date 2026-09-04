@@ -162,14 +162,30 @@ foreach (['warehouses', 'users', 'quotations', 'sales_invoices'] as $bang){
 $soMaster = (int) $pdo->query("SELECT COUNT(*) FROM garages WHERE is_master = 1")->fetchColumn();
 ok($soMaster === 1, 'Co dung MOT gara tong', "Dang co $soMaster — getMaster() se phai doan bua");
 
-/* --- 3. Khoá ngoại phải là SET NULL, không phải CASCADE --- */
+/* --- 3. Mỗi khoá ngoại một cách xoá, và cách nào cũng có lý do riêng --- */
 $fk = $pdo->query("SELECT TABLE_NAME, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS
                     WHERE CONSTRAINT_SCHEMA = DATABASE()
                       AND REFERENCED_TABLE_NAME = 'garages'")->fetchAll(PDO::FETCH_ASSOC);
-ok(count($fk) === 4, 'Ca 4 bang deu co khoa ngoai tro ve garages', 'Dang co ' . count($fk));
-$sai = [];
-foreach ($fk as $f) if ($f['DELETE_RULE'] !== 'SET NULL') $sai[] = $f['TABLE_NAME'] . '=' . $f['DELETE_RULE'];
-ok(empty($sai), 'Moi khoa ngoai deu ON DELETE SET NULL', implode(', ', $sai));
+$luat = [];
+foreach ($fk as $f) $luat[$f['TABLE_NAME']] = $f['DELETE_RULE'];
+
+/* Chứng từ và tài nguyên: xoá gara thì chúng MẤT CHỦ, không được biến mất.
+   CASCADE ở đây là xoá lịch sử bán hàng trong im lặng. */
+foreach (['warehouses', 'users', 'quotations', 'sales_invoices'] as $b){
+    ok(isset($luat[$b]) && $luat[$b] === 'SET NULL',
+       "`$b` tro ve garages voi ON DELETE SET NULL",
+       'Dang la ' . (isset($luat[$b]) ? $luat[$b] : 'KHONG CO KHOA NGOAI'));
+}
+
+/* `parts` thì KHÁC hẳn, cố ý: SET NULL sẽ đẩy hàng riêng của một gara vào danh
+   mục tổng cho mọi gara cùng thấy — tệ hơn là mất. Nên chặn hẳn việc xoá. */
+if (isset($luat['parts'])){
+    ok($luat['parts'] === 'RESTRICT',
+       '`parts` tro ve garages voi ON DELETE RESTRICT (khac 4 bang tren, co y)',
+       'Dang la ' . $luat['parts'] . ' — SET NULL se day hang rieng vao danh muc tong');
+} else {
+    echo "  [SKIP] Chua chay migration tang 2 nen `parts` chua tro ve garages.\n";
+}
 
 /* --- 4. Model chạy thật --- */
 require_once $goc . 'app/models/GaragesModel.php';

@@ -14,7 +14,14 @@
 <div class="card">
     <div class="card-header">
         <h3 class="card-title">{{$page_name}}</h3>
-        <div class="card-tools text-muted small">{{(int)$total}} khách hàng</div>
+        <div class="card-tools">
+            <span class="text-muted small mr-2">{{(int)$total}} khách hàng</span>
+            @if (route('admin/'.$routeBase.'/add'))
+            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/add'}}" class="btn btn-primary btn-sm">
+                <i class="fas fa-user-plus mr-1"></i> Thêm khách hàng
+            </a>
+            @endif
+        </div>
     </div>
 
     <div class="card-body">
