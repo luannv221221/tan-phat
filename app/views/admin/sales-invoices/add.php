@@ -101,6 +101,17 @@ $tabs = [
         </div>
     </div>
 
+    <?php /* Nút "Chép từ chứng từ cũ".
+             Khách quay lại làm đúng gói bảo dưỡng tháng trước, hoặc khách đã có
+             báo giá và giờ chốt đơn. Gõ lại từng dòng là việc thừa.
+             Đặt NGAY TRÊN bảng dòng hàng vì nó thay cho việc nhập tay ở chính
+             bảng đó. */ ?>
+    <div class="d-flex justify-content-end mb-2">
+        <button type="button" class="btn btn-outline-info btn-sm" id="btn-chep">
+            <i class="fas fa-copy mr-1"></i> Chép từ chứng từ cũ
+        </button>
+    </div>
+
     <div class="card card-outline card-info">
         <div class="card-header p-0 pt-1 border-bottom-0">
             <ul class="nav nav-tabs" id="line-tabs">
@@ -178,8 +189,57 @@ $tabs = [
     </div></div>
 </form>
 
+<?php /* Hộp thoại chép — tự dựng, KHÔNG dùng modal của Bootstrap.
+         Trang này dùng Bootstrap 4 của theme admin, mà phần JS modal phụ thuộc
+         jQuery nạp ở CUỐI trang — gọi sớm là hụt. Một lớp phủ + một hộp là đủ,
+         không kéo thêm phụ thuộc nào. */ ?>
+<div id="chep-phu" style="display:none;position:fixed;inset:0;z-index:1090;background:rgba(15,23,42,.45)"></div>
+<div id="chep-hop" style="display:none;position:fixed;z-index:1091;top:50%;left:50%;transform:translate(-50%,-50%);
+     width:min(920px,94vw);max-height:86vh;background:#fff;border-radius:10px;box-shadow:0 20px 50px rgba(15,23,42,.35);
+     display:none;flex-direction:column;overflow:hidden">
+
+    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+        <h5 class="mb-0"><i class="fas fa-copy mr-2"></i>Chép từ chứng từ cũ</h5>
+        <button type="button" class="close" id="chep-dong"><span>&times;</span></button>
+    </div>
+
+    <?php /* Hai nguồn: hoá đơn cũ (lặp lại đơn cũ) và báo giá (chốt đơn từ báo
+             giá đã gửi khách). Hoá đơn đứng trước vì đó là việc hay làm hơn. */ ?>
+    <ul class="nav nav-tabs px-3 pt-2" id="chep-tabs">
+        <li class="nav-item">
+            <a class="nav-link active" href="#" data-tu="hoadon"><i class="fas fa-file-invoice mr-1"></i>Hoá đơn cũ</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" data-tu="baogia"><i class="fas fa-file-invoice-dollar mr-1"></i>Báo giá</a>
+        </li>
+    </ul>
+
+    <div class="px-3 py-2 border-bottom bg-light">
+        <div class="d-flex flex-wrap align-items-center" style="gap:12px">
+            <input type="search" id="chep-tim" class="form-control form-control-sm" style="max-width:280px"
+                   placeholder="Lọc theo số chứng từ hoặc tên khách..."/>
+            <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="chep-gia-moi" checked/>
+                <label class="custom-control-label" for="chep-gia-moi">Lấy giá hiện tại</label>
+            </div>
+            <small class="text-muted">Bỏ tick nếu muốn giữ nguyên đơn giá của chứng từ cũ.</small>
+        </div>
+    </div>
+
+    <div id="chep-ds" class="p-0" style="overflow:auto;flex:1;min-height:120px">
+        <div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin mr-1"></i> Đang tải...</div>
+    </div>
+
+    <div class="px-3 py-2 border-top text-muted small">
+        Chép sẽ <b>thay toàn bộ</b> dòng hàng đang có trên phiếu. Phần đầu phiếu (ngày, kho, thuế) giữ nguyên.
+        Mặt hàng <b>thiếu tồn</b> ở kho đang chọn vẫn được chép nhưng sẽ báo rõ.
+    </div>
+</div>
+
 <script>
 (function () {
+    // JS không tự biết đường dẫn gốc của admin — PHP nhét vào đây.
+    var GOC_ADMIN = {!! json_encode(_WEB_URL . '/admin') !!};
     var DU_LIEU = {
         hang:   {!! json_encode($hangJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!},
         dichvu: {!! json_encode($dichVuJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!}
@@ -367,7 +427,14 @@ $tabs = [
             }
         });
 
-        return { addRow: addRow, tong: tong, dem: dem, tbody: tbody };
+        /* xoaHet/napLai lo cho nut "Chep tu chung tu cu": no phai don sach bang
+           roi do dong moi vao. napLai de cac o chon dung lai danh sach sau khi
+           da them mot loat dong — them tung dong thi dong them TRUOC khong biet
+           dong them SAU da giu mat hang nao. */
+        function xoaHet(){ tbody.innerHTML = ''; }
+
+        return { addRow: addRow, tong: tong, dem: dem, tbody: tbody,
+                 xoaHet: xoaHet, napLai: napLaiTatCa };
     }
 
     bang.hang   = taoBang('hang',   'line_', DU_LIEU.hang,   '— Chọn hàng hoá —');
@@ -420,5 +487,197 @@ $tabs = [
     });
     recompute();
     apLuatKho();
+
+    /* ==================================================================
+       CHÉP DÒNG HÀNG TỪ CHỨNG TỪ CŨ
+
+       Khác bản ở màn Báo giá ở hai điểm:
+         1. Chép được từ HAI nguồn — hoá đơn cũ và báo giá
+         2. Có kiểm TỒN KHO: hoá đơn trừ tồn, nên phải nói ngay mặt hàng nào
+            không đủ hàng ở kho đang chọn. Chép xong mới phát hiện lúc ghi sổ
+            là quá muộn — người lập đã in phiếu đưa khách rồi.
+       ================================================================== */
+    (function (){
+        var GOC   = GOC_ADMIN;
+        var nut   = document.getElementById('btn-chep');
+        var phu   = document.getElementById('chep-phu');
+        var hop   = document.getElementById('chep-hop');
+        var dsEl  = document.getElementById('chep-ds');
+        var tim   = document.getElementById('chep-tim');
+        var tabs  = document.getElementById('chep-tabs');
+        var oGiaMoi = document.getElementById('chep-gia-moi');
+        if (!nut || !hop) return;
+
+        var DS = [];
+        var nguon = 'hoadon';
+
+        function esc(s){
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        function tien(n){ return (n || 0).toLocaleString('vi-VN') + ' đ'; }
+        function nhanNguon(){ return nguon === 'baogia' ? 'báo giá' : 'hoá đơn'; }
+
+        function mo(){
+            phu.style.display = 'block';
+            hop.style.display = 'flex';
+            tim.value = '';
+            tai();
+            setTimeout(function (){ tim.focus(); }, 50);
+        }
+        function dong(){ phu.style.display = 'none'; hop.style.display = 'none'; }
+
+        function ve(){
+            var tu  = (tim.value || '').toLowerCase().trim();
+            var loc = DS.filter(function (q){
+                if (!tu) return true;
+                return (q.quote_no + ' ' + q.khach).toLowerCase().indexOf(tu) >= 0;
+            });
+
+            if (!loc.length){
+                dsEl.innerHTML = '<div class="text-center text-muted py-4">'
+                    + '<i class="fas fa-inbox fa-2x d-block mb-2"></i>'
+                    + (DS.length ? 'Không có ' + nhanNguon() + ' nào khớp'
+                                 : 'Chưa có ' + nhanNguon() + ' nào để chép')
+                    + '</div>';
+                return;
+            }
+
+            var h = '<table class="table table-hover table-sm mb-0"><thead><tr>'
+                  + '<th>Số chứng từ</th><th>Ngày</th><th>Khách hàng</th>'
+                  + '<th class="text-center">Số dòng</th><th class="text-right">Tổng tiền</th>'
+                  + '<th style="width:90px"></th></tr></thead><tbody>';
+
+            loc.forEach(function (q){
+                // Chứng từ 0 dòng chép về cũng chẳng được gì -> không cho bấm
+                var trong = q.so_dong === 0;
+                h += '<tr' + (q.cua_khach_nay ? ' class="table-info"' : '') + '>'
+                   + '<td class="font-weight-bold">' + esc(q.quote_no)
+                   + (q.cua_khach_nay ? ' <span class="badge badge-info">khách này</span>' : '')
+                   + '</td>'
+                   + '<td>' + esc(q.ngay) + '</td>'
+                   + '<td>' + esc(q.khach) + '</td>'
+                   + '<td class="text-center">' + q.so_dong + '</td>'
+                   + '<td class="text-right">' + tien(q.tong) + '</td>'
+                   + '<td class="text-right">'
+                   + (trong
+                        ? '<span class="text-muted small">trống</span>'
+                        : '<button type="button" class="btn btn-sm btn-primary js-chon" data-id="' + q.id + '">Chép</button>')
+                   + '</td></tr>';
+            });
+            dsEl.innerHTML = h + '</tbody></table>';
+        }
+
+        function tai(){
+            dsEl.innerHTML = '<div class="text-center text-muted py-4">'
+                           + '<i class="fas fa-spinner fa-spin mr-1"></i> Đang tải...</div>';
+            var kh = custSel ? custSel.value : '';
+            var qs = '?tu=' + encodeURIComponent(nguon)
+                   + (kh ? '&customer_id=' + encodeURIComponent(kh) : '');
+            fetch(GOC + '/sales-invoices/copy-list' + qs, { credentials: 'same-origin' })
+                .then(function (r){ return r.json(); })
+                .then(function (j){ DS = (j && j.items) || []; ve(); })
+                .catch(function (){
+                    dsEl.innerHTML = '<div class="text-center text-danger py-4">'
+                                   + 'Không tải được danh sách</div>';
+                });
+        }
+
+        function chep(id){
+            /* Gửi kèm kho ĐANG CHỌN để máy chủ tra đúng tồn của kho đó. Người
+               dùng có thể đã đổi kho trước khi bấm Chép. */
+            var kho = whEl ? whEl.value : '';
+            var qs  = '?tu=' + encodeURIComponent(nguon)
+                    + (kho ? '&warehouse_id=' + encodeURIComponent(kho) : '');
+
+            fetch(GOC + '/sales-invoices/copy-lines/' + id + qs, { credentials: 'same-origin' })
+                .then(function (r){ return r.json(); })
+                .then(function (j){
+                    if (!j || j.error){ alert(j && j.error ? j.error : 'Không đọc được chứng từ'); return; }
+
+                    var layGiaMoi = oGiaMoi.checked;
+
+                    ['hang', 'dichvu'].forEach(function (ma){
+                        bang[ma].xoaHet();
+                        (j[ma] || []).forEach(function (d){
+                            bang[ma].addRow({
+                                part_id: d.part_id,
+                                qty:     d.qty,
+                                price:   layGiaMoi ? d.gia_moi : d.gia_cu,
+                                disc:    d.disc,
+                                note:    d.note
+                            });
+                        });
+                        // Tab nào không có dòng nào thì vẫn để lại một dòng trống
+                        // để nhập tay, không bỏ bảng rỗng không bấm được gì.
+                        if (!(j[ma] || []).length) bang[ma].addRow();
+                        bang[ma].napLai();
+                    });
+
+                    /* Khách hàng: CHỈ điền khi ô đang bỏ trống. Người lập đã chọn
+                       khách rồi thì đó là chủ ý — chép dòng hàng của đơn khách
+                       khác về là chuyện bình thường, không được nhân đó mà đổi
+                       luôn khách của phiếu. */
+                    if (custSel && !custSel.value && j.customer_id){
+                        custSel.value = String(j.customer_id);
+                        custSel.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+
+                    recompute();
+                    apLuatKho();
+                    dong();
+
+                    /* Báo rõ những gì KHÔNG chép được và những gì thiếu hàng.
+                       Im lặng bỏ bớt dòng là kiểu sai tệ nhất ở đây: người lập
+                       tưởng đã chép đủ, in phiếu đưa khách một hoá đơn thiếu mục. */
+                    var bo = j.bo_qua || {};
+                    var canhBao = [];
+                    if (bo.da_xoa)    canhBao.push(bo.da_xoa + ' dòng có mặt hàng đã bị xoá');
+                    if (bo.ngung_ban) canhBao.push(bo.ngung_ban + ' dòng có mặt hàng đã ngừng kinh doanh');
+
+                    var loi = '';
+                    if (canhBao.length) loi += '\n\nBỏ qua: ' + canhBao.join(', ') + '.';
+                    if (bo.thieu_hang){
+                        loi += '\n\nCẢNH BÁO: ' + bo.thieu_hang
+                             + ' mặt hàng KHÔNG ĐỦ TỒN ở kho đang chọn.'
+                             + '\nVẫn chép về để bạn sửa số lượng, nhưng ghi sổ sẽ bị chặn.';
+                    }
+                    if (loi) alert('Đã chép từ ' + j.quote_no + '.' + loi);
+                })
+                .catch(function (){ alert('Không đọc được chứng từ'); });
+        }
+
+        nut.addEventListener('click', function (){
+            // Chép là THAY SẠCH, nên đang có dòng thì phải hỏi trước
+            var dangCo = bang.hang.dem() + bang.dichvu.dem();
+            if (dangCo > 0 &&
+                !confirm('Phiếu đang có ' + dangCo + ' dòng.\nChép từ chứng từ cũ sẽ THAY TOÀN BỘ. Tiếp tục?')) return;
+            mo();
+        });
+
+        tabs.addEventListener('click', function (e){
+            var a = e.target.closest('a[data-tu]');
+            if (!a) return;
+            e.preventDefault();
+            if (a.getAttribute('data-tu') === nguon) return;
+            nguon = a.getAttribute('data-tu');
+            this.querySelectorAll('a[data-tu]').forEach(function (x){
+                x.classList.toggle('active', x.getAttribute('data-tu') === nguon);
+            });
+            tai();
+        });
+
+        document.getElementById('chep-dong').addEventListener('click', dong);
+        phu.addEventListener('click', dong);
+        tim.addEventListener('input', ve);
+        dsEl.addEventListener('click', function (e){
+            var b = e.target.closest('.js-chon');
+            if (b) chep(b.getAttribute('data-id'));
+        });
+        document.addEventListener('keydown', function (e){
+            if (e.key === 'Escape' && hop.style.display !== 'none') dong();
+        });
+    })();
 })();
 </script>

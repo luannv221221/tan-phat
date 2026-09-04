@@ -33,6 +33,7 @@ $tests = [
     'QuanLyModuleTest.php'        => 'PHAN QUYEN — man hinh dang ky module',
     'VideoTrangChuTest.php'       => 'STOREFRONT — khoi Video o trang chu',
     'ChepBaoGiaTest.php'          => 'BAN HANG — chep dong hang tu bao gia cu',
+    'ChepHoaDonTest.php'          => 'BAN HANG — chep dong hang tu chung tu cu (hoa don ban)',
     'XeCuaKhachTest.php'          => 'CSKH — xe cua khach (bien so, so km) + tra theo bien so',
     'NhieuGaraTest.php'           => 'HE THONG — nhieu gara (tang 1: khai niem gara)',
     'DanhMucGaraTest.php'         => 'HANG HOA — nhieu gara (tang 2: danh muc rieng cua gara)',

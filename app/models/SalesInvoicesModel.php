@@ -49,6 +49,34 @@ class SalesInvoicesModel extends Model {
             ->first();
     }
 
+    /**
+     * Hoá đơn cũ để chép lại dòng hàng.
+     *
+     * Hoá đơn của CHÍNH khách đang chọn được đẩy lên đầu (`uu_tien`): gara hay
+     * gặp khách quay lại làm đúng gói cũ, tìm thủ công giữa hàng trăm số hoá
+     * đơn thì thà gõ tay còn nhanh hơn.
+     *
+     * KHÔNG lọc theo trạng thái: hoá đơn nháp cũng chép được. Người ta hay lập
+     * nháp một cái mẫu rồi nhân bản ra nhiều lần.
+     */
+    public function danhSachDeChep($customerId = 0, $limit = 50){
+        $customerId = (int) $customerId;
+
+        return $this->table($this->_table)
+            ->select('`sales_invoices`.`id`, `sales_invoices`.`invoice_no`, '
+                   . '`sales_invoices`.`invoice_date`, `sales_invoices`.`total_amount`, '
+                   . '`sales_invoices`.`status`, '
+                   . 'COALESCE(`partners`.`name`, `sales_invoices`.`customer_name`, \'\') AS khach, '
+                   . '(SELECT COUNT(*) FROM `sales_invoice_items` si WHERE si.`invoice_id` = `sales_invoices`.`id`) AS so_dong, '
+                   . 'CASE WHEN `sales_invoices`.`customer_id` = ' . $customerId . ' THEN 0 ELSE 1 END AS uu_tien')
+            ->leftJoinOn('partners', 'sales_invoices.customer_id', 'partners.id')
+            ->orderBy('uu_tien', 'ASC')
+            ->orderBy('sales_invoices.invoice_date', 'DESC')
+            ->orderBy('sales_invoices.id', 'DESC')
+            ->limit((int) $limit)
+            ->get();
+    }
+
     public function nextNo(){
         $row = $this->table($this->_table)->select('`invoice_no`')->orderBy('id', 'DESC')->first();
         $n = 0;

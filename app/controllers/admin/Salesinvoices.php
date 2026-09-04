@@ -54,6 +54,137 @@ class Salesinvoices extends Controller {
         $this->__data['content']['partnerDiscounts'] = $this->__partner->groupDiscountMap();
     }
 
+    /* ==================================================================
+     * CHÉP DÒNG HÀNG TỪ CHỨNG TỪ CŨ
+     *
+     * Khách quay lại làm đúng gói bảo dưỡng tháng trước, hoặc khách đã có báo
+     * giá và giờ chốt đơn. Gõ lại từng dòng là việc thừa.
+     *
+     * CHÉP ĐƯỢC TỪ HAI NGUỒN:
+     *   hoadon  — hoá đơn bán cũ (lặp lại đơn cũ)
+     *   baogia  — báo giá (chốt đơn từ báo giá đã gửi khách)
+     *
+     * Khác bản ở màn Báo giá ở MỘT ĐIỂM QUAN TRỌNG: hoá đơn trừ tồn kho, nên
+     * kết quả trả về kèm TỒN HIỆN CÓ của từng mặt hàng ở kho đang chọn. Chép
+     * xong mới phát hiện thiếu hàng lúc ghi sổ là quá muộn.
+     *
+     * Hai endpoint trả JSON, form gọi bằng fetch nên không phải tải lại trang
+     * và không mất những gì đang gõ dở ở phần đầu phiếu.
+     * ================================================================== */
+
+    /** Nguồn hợp lệ -> [nhãn, model chứng từ, model dòng, cột số hiệu] */
+    private function nguonChep($tu){
+        if ($tu === 'baogia'){
+            return ['nhan' => 'báo giá', 'cot_so' => 'quote_no',
+                    'ct' => $this->model('QuotationsModel'),
+                    'dong' => $this->model('QuotationItemsModel')];
+        }
+        return ['nhan' => 'hoá đơn', 'cot_so' => 'invoice_no',
+                'ct' => $this->__model, 'dong' => $this->__itemModel];
+    }
+
+    /** Danh sách chứng từ để chọn. ?tu=hoadon|baogia & ?customer_id= */
+    public function copyList(){
+        if (!route('admin/' . $this->routeBase . '/add')){ $this->jsonLoi('Không có quyền', 403); return; }
+
+        $f  = $this->__request->getFields();
+        $tu = (isset($f['tu']) && $f['tu'] === 'baogia') ? 'baogia' : 'hoadon';
+        $kh = !empty($f['customer_id']) ? (int) $f['customer_id'] : 0;
+        $n  = $this->nguonChep($tu);
+
+        $ra = [];
+        foreach ($n['ct']->danhSachDeChep($kh, 50) ?: [] as $ct){
+            $ngay = $tu === 'baogia' ? $ct['quote_date'] : $ct['invoice_date'];
+            $ra[] = [
+                'id'       => (int) $ct['id'],
+                'quote_no' => $ct[$n['cot_so']],
+                'ngay'     => !empty($ngay) ? date('d/m/Y', strtotime($ngay)) : '',
+                'khach'    => $ct['khach'] !== '' ? $ct['khach'] : '—',
+                'so_dong'  => (int) $ct['so_dong'],
+                'tong'     => (float) $ct['total_amount'],
+                'cua_khach_nay' => ((int) $ct['uu_tien'] === 0 && $kh > 0),
+            ];
+        }
+        $this->json(['tu' => $tu, 'items' => $ra]);
+    }
+
+    /** Dòng hàng của một chứng từ, tách sẵn theo tab Hàng hoá / Dịch vụ. */
+    public function copyLines($id){
+        if (!route('admin/' . $this->routeBase . '/add')){ $this->jsonLoi('Không có quyền', 403); return; }
+
+        $f  = $this->__request->getFields();
+        $tu = (isset($f['tu']) && $f['tu'] === 'baogia') ? 'baogia' : 'hoadon';
+        $n  = $this->nguonChep($tu);
+
+        $ct = $n['ct']->getDetail($id);
+        if (empty($ct)){ $this->jsonLoi('Không tìm thấy ' . $n['nhan'], 404); return; }
+
+        $dong    = $n['dong']->dongDeChep($id);
+        $tongGoc = $n['dong']->demDong($id);
+
+        /* Tồn ở KHO ĐANG CHỌN trên form, không phải kho mặc định: người dùng có
+           thể đã đổi kho trước khi bấm Chép. Không truyền kho thì bỏ qua phần
+           tồn thay vì báo một con số của kho khác — sai còn tệ hơn không có. */
+        $khoId = !empty($f['warehouse_id']) ? (int) $f['warehouse_id'] : 0;
+        $ton   = $khoId > 0
+            ? $this->__stock->tonTheoNhieuHang($khoId, array_map(function($d){ return $d['part_id']; }, $dong ?: []))
+            : [];
+
+        $hang = $dichvu = [];
+        $boQuaNgungBan = 0;
+        $thieuHang     = 0;
+
+        foreach ($dong ?: [] as $d){
+            if ((int) $d['con_ban'] !== 1){ $boQuaNgungBan++; continue; }
+
+            $pid = (int) $d['part_id'];
+            $row = [
+                'part_id'  => $pid,
+                'qty'      => rtrim(rtrim(number_format((float) $d['quantity'], 3, '.', ''), '0'), '.'),
+                'gia_cu'   => (int) $d['unit_price'],
+                'gia_moi'  => (int) $d['gia_bay_gio'],
+                'disc'     => (float) $d['discount_percent'],
+                'note'     => (string) $d['note'],
+                'ten'      => $d['part_code'] . ' - ' . $d['part_name'],
+            ];
+
+            if ($d['item_type'] === PartsModel::LOAI_DICH_VU){
+                // Dịch vụ không trừ kho nên không có khái niệm thiếu hàng.
+                $dichvu[] = $row;
+            } else {
+                if ($khoId > 0){
+                    $co = isset($ton[$pid]) ? $ton[$pid] : 0.0;
+                    $row['ton'] = $co;
+                    $row['thieu'] = $co < (float) $d['quantity'];
+                    if ($row['thieu']) $thieuHang++;
+                }
+                $hang[] = $row;
+            }
+        }
+
+        $daXoa = max(0, $tongGoc - count($dong ?: []));
+
+        $this->json([
+            'tu'          => $tu,
+            'quote_no'    => $ct[$n['cot_so']],
+            'customer_id' => (int) $ct['customer_id'],
+            'vat_rate'    => (float) $ct['vat_rate'],
+            'hang'        => $hang,
+            'dichvu'      => $dichvu,
+            'bo_qua'      => ['da_xoa' => $daXoa, 'ngung_ban' => $boQuaNgungBan, 'thieu_hang' => $thieuHang],
+        ]);
+    }
+
+    private function json(array $data, $code = 200){
+        http_response_code($code);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    }
+
+    private function jsonLoi($msg, $code){
+        $this->json(['error' => $msg], $code);
+    }
+
     public function index(){
         $this->__data['sub_content'] = $this->viewDir . '/lists';
         $this->__data['page_title']  = $this->labelMany;

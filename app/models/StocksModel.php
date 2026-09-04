@@ -48,6 +48,33 @@ class StocksModel extends Model {
         return $r ? (float) $r['quantity'] : 0.0;
     }
 
+    /**
+     * Tồn của NHIỀU mặt hàng trong một kho: [part_id => số lượng].
+     *
+     * Một truy vấn cho cả danh sách thay vì gọi available() từng dòng. Chép một
+     * hoá đơn 15 dòng mà hỏi 15 lần là 15 truy vấn thừa cho một thao tác mà
+     * người dùng đang đứng chờ.
+     *
+     * Mặt hàng chưa có dòng tồn nào thì KHÔNG có mặt trong kết quả — nơi gọi
+     * phải hiểu "không có khoá" là tồn 0, giống available().
+     */
+    public function tonTheoNhieuHang($warehouseId, array $partIds){
+        $ids = array_values(array_unique(array_map('intval', $partIds)));
+        $ids = array_filter($ids, function($v){ return $v > 0; });
+        if (empty($ids)) return [];
+
+        $holes = implode(',', array_fill(0, count($ids), '?'));
+        $rows  = $this->getRaw(
+            'SELECT `part_id`, `quantity` FROM `stocks`
+              WHERE `warehouse_id` = ? AND `part_id` IN (' . $holes . ')',
+            array_merge([(int) $warehouseId], $ids)
+        );
+
+        $map = [];
+        foreach ($rows ?: [] as $r) $map[(int) $r['part_id']] = (float) $r['quantity'];
+        return $map;
+    }
+
     /** Đơn giá bình quân hiện tại */
     public function avgCost($warehouseId, $partId){
         $r = $this->getRow($warehouseId, $partId);

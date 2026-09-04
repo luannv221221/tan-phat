@@ -315,6 +315,13 @@ Route::group('admin', function(){
    Route::get('quotations/set-status/(\d+)', 'admin/quotations/setStatus/$1');
    Route::get('quotations/convert/(\d+)',    'admin/quotations/convert/$1');
    // Hoá đơn: ghi sổ / huỷ ghi sổ (KT-6 + trừ tồn)
+   /* Chép dòng hàng từ chứng từ cũ. ?tu=hoadon|baogia chọn nguồn; endpoint
+      riêng chứ không dùng lại của quotations vì hai lẽ: quyền phải gác theo
+      `sales-invoices/add` (người chỉ được lập hoá đơn vẫn phải chép được), và
+      kết quả ở đây còn kèm tồn kho của kho đang chọn. */
+   Route::get('sales-invoices/copy-list',       'admin/salesinvoices/copyList');
+   Route::get('sales-invoices/copy-lines/(\d+)', 'admin/salesinvoices/copyLines/$1');
+
    Route::get('sales-invoices/post/(\d+)',   'admin/salesinvoices/post/$1');
    Route::get('sales-invoices/unpost/(\d+)', 'admin/salesinvoices/unpost/$1');
    // Hoá đơn điện tử nội bộ (phát hành / thu hồi / xuất XML)

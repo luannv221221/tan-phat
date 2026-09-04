@@ -25,6 +25,37 @@ class SalesInvoiceItemsModel extends Model {
     }
 
     /**
+     * Dòng hàng của một hoá đơn, kèm thông tin để chép sang hoá đơn mới.
+     *
+     * `gia_bay_gio` là giá HIỆN TẠI của mặt hàng, khác `unit_price` là giá đã
+     * chốt trên hoá đơn cũ. Form chép hiện cả hai để người dùng thấy giá nào
+     * đã đổi — chép mù giá cũ thì bán lỗ mà không ai biết.
+     *
+     * `con_ban` để bỏ ngay mặt hàng đã ngừng kinh doanh, thay vì để tới lúc lưu
+     * mới báo lỗi. Dùng JOIN (không LEFT JOIN) nên dòng có mặt hàng đã bị XOÁ
+     * hẳn khỏi `parts` sẽ không ra — demDong() lo việc đếm chênh lệch đó.
+     */
+    public function dongDeChep($invoiceId){
+        return $this->table($this->_table)
+            ->select('`sales_invoice_items`.`part_id`, `sales_invoice_items`.`quantity`, '
+                   . '`sales_invoice_items`.`unit_price`, `sales_invoice_items`.`discount_percent`, '
+                   . '`sales_invoice_items`.`note`, '
+                   . '`parts`.`item_type`, `parts`.`code` AS part_code, `parts`.`name` AS part_name, '
+                   . 'COALESCE(NULLIF(`parts`.`sale_price`, 0), `parts`.`price`) AS gia_bay_gio, '
+                   . '`parts`.`status` AS con_ban')
+            ->joinOn('parts', 'sales_invoice_items.part_id', 'parts.id')
+            ->where('sales_invoice_items.invoice_id', '=', (int) $invoiceId)
+            ->orderBy('sales_invoice_items.id', 'ASC')->get();
+    }
+
+    /** Đếm TỔNG số dòng, kể cả dòng có mặt hàng đã bị xoá (để so với dongDeChep) */
+    public function demDong($invoiceId){
+        $r = $this->table($this->_table)->select('COUNT(*) AS c')
+                  ->where('invoice_id', '=', (int) $invoiceId)->first();
+        return (int) (isset($r['c']) ? $r['c'] : 0);
+    }
+
+    /**
      * Thay toàn bộ dòng (transaction). @param array $lines [part_id, quantity, unit_price, note]
      * @return float tổng tiền chưa thuế
      */
