@@ -10,18 +10,45 @@
  * Tổng cộng = tiền hàng hoá + tiền dịch vụ, rồi mới tính thuế trên tổng đó.
  * --------------------------------------------------------------------------- */
 
-// Chia mặt hàng về đúng tab. Ô chọn của tab Dịch vụ CHỈ có dịch vụ và ngược
-// lại — để trộn lẫn thì người lập báo giá gõ "thay dầu" ở tab Hàng hoá vẫn ra.
-$hangJs = $dichVuJs = [];
+/* Chia mặt hàng về đúng tab. Ô chọn của tab Dịch vụ CHỈ có dịch vụ và ngược
+   lại — để trộn lẫn thì người lập báo giá gõ "thay dầu" ở tab Hàng hoá vẫn ra.
+
+   Làm việc này HAI LẦN, một lần cho mỗi nguồn danh mục:
+     tổng  — hàng chung của Tân Phát, giá gốc
+     gara  — hàng riêng + hàng tổng gara đã chọn, giá đã áp bảng giá riêng
+   Người lập báo giá bấm nút để đổi qua lại; đổi nguồn chỉ đổi DANH SÁCH GỢI Ý,
+   dòng đã chọn giữ nguyên. */
+$chiaTab = function (array $ds){
+    $hang = $dv = [];
+    foreach ($ds as $p){
+        $row = [
+            'id'    => (int) $p['id'],
+            'label' => $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : ''),
+            'price' => (int) (!empty($p['sale_price']) ? $p['sale_price'] : $p['price']),
+        ];
+        if ($p['item_type'] === PartsModel::LOAI_DICH_VU) $dv[]   = $row;
+        else                                              $hang[] = $row;
+    }
+    return ['hang' => $hang, 'dichvu' => $dv];
+};
+
+$nguonTong = $chiaTab($partsTong);
+$nguonGara = $chiaTab($partsGara);
+
+/* Tên MỌI mặt hàng của cả hai nguồn. Cần để giữ lại dòng đã chọn khi người
+   dùng đổi sang nguồn không có mặt hàng đó — nếu không thì ô chọn hoá trống và
+   bấm Lưu là mất dòng, chẳng có lỗi nào báo. */
+$tenHang = [];
 foreach ($parts as $p){
-    $row = [
-        'id'    => (int) $p['id'],
-        'label' => $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : ''),
-        'price' => (int) (!empty($p['sale_price']) ? $p['sale_price'] : $p['price']),
-    ];
-    if ($p['item_type'] === PartsModel::LOAI_DICH_VU) $dichVuJs[] = $row;
-    else                                              $hangJs[]   = $row;
+    $tenHang[(int) $p['id']] = $p['code'] . ' - ' . $p['name'];
 }
+
+// Nguồn mặc định: có danh mục gara thì dùng nó, chưa cấu hình thì về kho tổng.
+$nguonMacDinh = !empty($partsGara) ? 'gara' : 'tong';
+
+// Hai biến dưới giữ nguyên tên cũ để phần còn lại của file không phải sửa.
+$hangJs   = $nguonMacDinh === 'gara' ? $nguonGara['hang']   : $nguonTong['hang'];
+$dichVuJs = $nguonMacDinh === 'gara' ? $nguonGara['dichvu'] : $nguonTong['dichvu'];
 
 // Dòng người dùng vừa nhập (form quay lại vì lỗi) — đọc theo tiền tố của tab.
 $doiDong = function($tienTo) use ($old){
@@ -95,6 +122,39 @@ $tabs = [
             <i class="fas fa-copy mr-1"></i> Chép từ báo giá cũ
         </button>
     </div>
+
+    <?php /* -----------------------------------------------------------------
+       CHỌN NGUỒN DANH MỤC
+
+       Đặt NGAY TRÊN bảng dòng hàng chứ không ở đầu phiếu: nó quyết định ô chọn
+       bên dưới có gì, nên phải nằm cạnh thứ nó ảnh hưởng.
+
+       Ẩn hẳn khi gara chưa dựng danh mục riêng — một nút chọn giữa "kho tổng"
+       và một danh sách rỗng chỉ làm người dùng bối rối.
+       ----------------------------------------------------------------- */ ?>
+    <?php if (!empty($partsGara)): ?>
+    <div class="card card-outline card-secondary mb-2">
+        <div class="card-body py-2 d-flex align-items-center flex-wrap" style="gap:.75rem">
+            <span class="text-muted"><i class="fas fa-list-ul mr-1"></i> Lấy hàng từ:</span>
+
+            <div class="btn-group btn-group-sm" role="group" id="chon-nguon">
+                <button type="button" class="btn btn-outline-primary <?php echo $nguonMacDinh === 'gara' ? 'active' : ''; ?>"
+                        data-nguon="gara">
+                    <i class="fas fa-map-pin mr-1"></i>
+                    <?php echo e(!empty($garaCuaPhieu['name']) ? $garaCuaPhieu['name'] : 'Gara hiện tại'); ?>
+                    <span class="badge badge-light ml-1"><?php echo count($partsGara); ?></span>
+                </button>
+                <button type="button" class="btn btn-outline-primary <?php echo $nguonMacDinh === 'tong' ? 'active' : ''; ?>"
+                        data-nguon="tong">
+                    <i class="fas fa-warehouse mr-1"></i> Kho tổng
+                    <span class="badge badge-light ml-1"><?php echo count($partsTong); ?></span>
+                </button>
+            </div>
+
+            <span class="text-muted small" id="nguon-mo-ta"></span>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <div class="card card-outline card-info">
         <div class="card-header p-0 pt-1 border-bottom-0">
@@ -218,6 +278,14 @@ $tabs = [
         hang:   {!! json_encode($hangJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!},
         dichvu: {!! json_encode($dichVuJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!}
     };
+
+    // Hai nguồn danh mục + tên mọi mặt hàng của cả hai (để giữ dòng lạc nguồn)
+    var NGUON = {
+        gara: {!! json_encode($nguonGara, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!},
+        tong: {!! json_encode($nguonTong, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!}
+    };
+    var TEN_HANG     = {!! json_encode((object) $tenHang, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+    var nguonDangDung = {!! json_encode($nguonMacDinh) !!};
     var BAN_DAU = {
         hang:   {!! json_encode($initHang, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!},
         dichvu: {!! json_encode($initDichVu, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!}
@@ -295,14 +363,28 @@ $tabs = [
             var o0 = document.createElement('option');
             o0.value = ''; o0.textContent = nhanTrong; sel.appendChild(o0);
 
+            var thayDangChon = false;
             DS.forEach(function (op){
                 if (oDongKhac[op.id] && String(op.id) !== String(dangChon)) return;
                 var o = document.createElement('option');
                 o.value = op.id; o.textContent = op.label; o.setAttribute('data-price', op.price);
                 if (op.img) o.setAttribute('data-img', op.img);
-                if (String(op.id) === String(dangChon)) o.selected = true;
+                if (String(op.id) === String(dangChon)){ o.selected = true; thayDangChon = true; }
                 sel.appendChild(o);
             });
+
+            /* Mặt hàng dòng này đang chọn KHÔNG có trong nguồn vừa đổi sang.
+               Vẫn phải giữ lại nó, gắn nhãn cho người dùng biết: bỏ đi thì ô
+               hoá trống, bấm Lưu một cái là mất dòng mà chẳng có lỗi nào báo.
+               Người dùng muốn bỏ thì tự bấm nút xoá dòng — đó là quyết định
+               của họ, không phải hệ quả ngầm của việc đổi nguồn. */
+            if (dangChon && !thayDangChon){
+                var oL = document.createElement('option');
+                oL.value = dangChon;
+                oL.textContent = (TEN_HANG[dangChon] || 'Mặt hàng #' + dangChon) + '  (ngoài nguồn đang chọn)';
+                oL.selected = true;
+                sel.appendChild(oL);
+            }
         }
 
         // Đổi/xoá một dòng là danh sách của MỌI dòng khác đều đổi theo
@@ -413,12 +495,58 @@ $tabs = [
            sau khi da them mot loat dong — them tung dong thi dong them TRUOC
            khong biet dong them SAU da giu mat hang nao. */
         function xoaHet(){ tbody.innerHTML = ''; }
+
+        /* Đổi nguồn danh mục. DS là biến của closure nên gán lại ở đây là mọi
+           ô chọn dùng danh sách mới ngay, không phải dựng lại cả bảng — dựng
+           lại thì mất hết số lượng, chiết khấu, ghi chú người dùng đã gõ. */
+        function doiNguon(dsMoi){ DS = dsMoi || []; napLaiTatCa(); }
+
         return { addRow: addRow, tong: tong, dem: dem, tbody: tbody,
-                 xoaHet: xoaHet, napLai: napLaiTatCa };
+                 xoaHet: xoaHet, napLai: napLaiTatCa, doiNguon: doiNguon };
     }
 
     bang.hang   = taoBang('hang',   'line_', DU_LIEU.hang,   '— Chọn hàng hoá —');
     bang.dichvu = taoBang('dichvu', 'sv_',   DU_LIEU.dichvu, '— Chọn dịch vụ —');
+
+    /* ------------------------------------------------------------------
+       ĐỔI NGUỒN DANH MỤC
+
+       Chỉ đổi DANH SÁCH GỢI Ý. Dòng đã chọn, số lượng, chiết khấu, ghi chú
+       giữ nguyên hết — người dùng đang lập dở một phiếu, bấm nhầm nút mà mất
+       việc đã gõ thì không ai dám bấm nữa.
+
+       Giá cũng KHÔNG tự đổi theo: giá đang nằm trên dòng có thể là giá người
+       dùng tự gõ. Đổi nguồn xong muốn lấy giá mới thì chọn lại mặt hàng ở
+       dòng đó — lúc đó giá mới đi theo, đúng như mọi lần chọn mặt hàng khác.
+       ------------------------------------------------------------------ */
+    var oNguon = document.getElementById('chon-nguon');
+    var moTaEl = document.getElementById('nguon-mo-ta');
+
+    function veMoTa(){
+        if (!moTaEl) return;
+        moTaEl.textContent = nguonDangDung === 'gara'
+            ? 'Hàng riêng của gara và hàng gara đã chọn làm, theo giá riêng của gara.'
+            : 'Toàn bộ danh mục chung, theo giá gốc.';
+    }
+
+    if (oNguon){
+        oNguon.addEventListener('click', function (e){
+            var nut = e.target.closest('button[data-nguon]');
+            if (!nut) return;
+            var moi = nut.getAttribute('data-nguon');
+            if (moi === nguonDangDung) return;
+
+            nguonDangDung = moi;
+            this.querySelectorAll('button[data-nguon]').forEach(function (b){
+                b.classList.toggle('active', b.getAttribute('data-nguon') === moi);
+            });
+
+            bang.hang.doiNguon(NGUON[moi].hang);
+            bang.dichvu.doiNguon(NGUON[moi].dichvu);
+            veMoTa();
+        });
+        veMoTa();
+    }
 
     /* Tab tự xử lý, không nhờ plugin: hai pane đều nằm sẵn trong CÙNG một form
        nên dù đang ẩn vẫn được gửi lên bình thường. Đổi tab chỉ là ẩn/hiện. */

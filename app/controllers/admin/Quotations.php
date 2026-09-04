@@ -12,7 +12,7 @@ use App\core\Session;
 class Quotations extends Controller {
 
     private $__data = [];
-    private $__model, $__itemModel, $__partner, $__part, $__invoice, $__warehouse, $__request, $__response;
+    private $__model, $__itemModel, $__partner, $__part, $__invoice, $__warehouse, $__gara, $__request, $__response;
 
     private $routeBase = 'quotations';
     private $labelOne  = 'báo giá';
@@ -26,6 +26,7 @@ class Quotations extends Controller {
         $this->__part      = $this->model('PartsModel');
         $this->__invoice   = $this->model('SalesInvoicesModel');
         $this->__warehouse = $this->model('WarehousesModel');
+        $this->__gara      = $this->model('GaragesModel');
         $this->__request   = new Request();
         $this->__response  = new Response();
     }
@@ -36,10 +37,48 @@ class Quotations extends Controller {
         $this->__data['content']['statuses']  = QuotationsModel::$statuses;
     }
 
-    private function formData(){
-        $this->__data['content']['partners'] = $this->__partner->getActive();
-        $this->__data['content']['parts']    = $this->__part->getForSelect();
-        $this->__data['content']['partnerDiscounts'] = $this->__partner->groupDiscountMap();
+    /**
+     * Dữ liệu cho form: khách, và mặt hàng theo HAI NGUỒN.
+     *
+     *   partsTong  Danh mục tổng — hàng chung, giá gốc
+     *   partsGara  Danh mục của gara — hàng riêng + hàng tổng gara đã chọn,
+     *              giá đã áp bảng giá riêng
+     *   parts      HỢP của hai cái trên, dùng để tra tên mặt hàng
+     *
+     * VÌ SAO `parts` PHẢI LÀ HỢP CHỨ KHÔNG PHẢI RIÊNG DANH MỤC TỔNG
+     * Màn Sửa báo giá dựng ô chọn từ `parts`. Một phiếu đã có hàng riêng của
+     * gara mà danh sách chỉ có hàng tổng thì mở phiếu ra ô chọn TRỐNG, bấm Lưu
+     * một cái là bay mất dòng đó — không có lỗi nào báo.
+     *
+     * @param int|null $garageId Gara của phiếu (khi sửa) — mặc định gara đang chọn.
+     *                           Sửa phiếu của chi nhánh khác thì phải lấy danh mục
+     *                           của CHI NHÁNH ĐÓ, không phải của người đang mở.
+     */
+    private function formData($garageId = null){
+        if ($garageId === null) $garageId = gara_hien_tai_id();
+        $garageId = (int) $garageId;
+
+        $tong = $this->__part->theoNguon(PartsModel::NGUON_TONG);
+        $gara = $garageId > 0 ? $this->__part->theoNguon(PartsModel::NGUON_GARA, $garageId) : [];
+
+        $c = &$this->__data['content'];
+        $c['partners']         = $this->__partner->getActive();
+        $c['partsTong']        = $tong;
+        $c['partsGara']        = $gara;
+        $c['parts']            = $this->hopNhatHang($tong, $gara);
+        $c['garaCuaPhieu']     = $garageId > 0 ? $this->__gara->getDetail($garageId) : null;
+        $c['partnerDiscounts'] = $this->__partner->groupDiscountMap();
+    }
+
+    /**
+     * Gộp hai danh sách theo id. Bản của GARA thắng khi trùng — nó mang giá đã
+     * áp bảng giá riêng, còn bản tổng mang giá gốc.
+     */
+    private function hopNhatHang(array $tong, array $gara){
+        $map = [];
+        foreach ($tong as $r) $map[(int) $r['id']] = $r;
+        foreach ($gara as $r) $map[(int) $r['id']] = $r;
+        return array_values($map);
     }
 
     /* ==================================================================
@@ -174,10 +213,14 @@ class Quotations extends Controller {
         $f     = $this->__request->getFields();
         $lines = $this->buildLines();
 
+        /* `garage_id` chỉ ghi lúc LẬP, không ghi lúc sửa: phiếu thuộc về chi
+           nhánh đã lập ra nó. Nhét vào headerData() (dùng chung cho cả sửa) thì
+           người chi nhánh khác mở phiếu ra sửa một chữ là phiếu đổi chủ. */
         $id = $this->__model->add(array_merge($this->headerData($f), [
             'quote_no'   => $this->__model->nextNo(),
             'status'     => 'draft',
             'created_by' => Session::get('dataUser'),
+            'garage_id'  => gara_hien_tai_id(),
         ]));
 
         $this->syncTotals($id, $lines, $f);
@@ -197,7 +240,10 @@ class Quotations extends Controller {
         $this->__data['page_title']  = 'Báo giá ' . $item['quote_no'];
 
         $this->baseData();
-        $this->formData();
+        /* Lấy danh mục của gara ĐÃ LẬP phiếu, không phải của người đang mở.
+           Ngược lại thì mở phiếu chi nhánh khác ra, hàng riêng của họ không có
+           trong danh sách nên ô chọn trống — bấm Lưu là bay mất dòng. */
+        $this->formData(!empty($item['garage_id']) ? (int) $item['garage_id'] : null);
         $this->__data['content']['page_name'] = 'Báo giá ' . $item['quote_no'];
         $this->__data['content']['item']      = $item;
         $this->__data['content']['items']     = $this->__itemModel->getByQuotation($id);

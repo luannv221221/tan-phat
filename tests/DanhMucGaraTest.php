@@ -172,6 +172,53 @@ ok($theoId[(int) $p2['id']]['gia_rieng'] === null,
    'Gia rieng bo trong luu NULL chu khong phai 0',
    '0 la mot muc gia that (kiem tra mien phi) — lan hai thu nay la mat hang mien phi nhay ve gia goc');
 
+/* GIÁ KHUYẾN MÃI CỦA KHO TỔNG KHÔNG ĐƯỢC ĐÈ GIÁ RIÊNG CỦA GARA.
+
+   Cả hệ thống dùng quy ước "có sale_price thì lấy sale_price, không thì lấy
+   price". Nếu theoNguon() cứ COALESCE sale_price về danh mục tổng, thì mặt
+   hàng đang khuyến mãi ở kho tổng sẽ giữ nguyên giá khuyến mãi và giá riêng
+   của gara bị bỏ qua TRONG IM LẶNG — form báo giá hiện đúng con số kho tổng.
+   Đã xảy ra thật: gara đặt 555.000 mà form vẫn hiện 1.380.000. */
+$apDung = function($r){ return (int) (!empty($r['sale_price']) ? $r['sale_price'] : $r['price']); };
+
+$idKM = null;
+foreach ($tong as $r){ if (!empty($r['sale_price'])){ $idKM = (int) $r['id']; break; } }
+if ($idKM === null){
+    // Không có mặt hàng nào đang khuyến mãi -> tự dựng một cái để thử
+    $idKM = (int) $p1['id'];
+    $P->edit(['sale_price' => 1380000], $idKM);
+    $datTam = true;
+}
+$G->datGia($gA, $idKM, '555000');
+$dmKM   = $P->theoNguon(PartsModel::NGUON_GARA, $gA);
+$rowKM  = null;
+foreach ($dmKM as $r) if ((int) $r['id'] === $idKM) $rowKM = $r;
+
+ok($rowKM !== null, 'Tim thay mat hang dang khuyen mai trong danh muc gara');
+ok($rowKM !== null && $apDung($rowKM) === 555000,
+   'Gia rieng cua gara THANG gia khuyen mai cua kho tong',
+   'Dang ap dung ' . ($rowKM !== null ? number_format($apDung($rowKM)) : '?')
+   . ' — COALESCE sale_price ve danh muc tong se nuot mat gia rieng');
+
+// Bỏ giá riêng đi thì phải rơi lại về giá khuyến mãi của kho tổng
+$G->datGia($gA, $idKM, '');
+$rowKM2 = null;
+foreach ($P->theoNguon(PartsModel::NGUON_GARA, $gA) as $r) if ((int) $r['id'] === $idKM) $rowKM2 = $r;
+$goc = null;
+foreach ($tong as $r) if ((int) $r['id'] === $idKM) $goc = $r;
+ok($rowKM2 !== null && $goc !== null && $apDung($rowKM2) === $apDung($goc),
+   'Bo gia rieng thi roi lai ve gia (ke ca gia khuyen mai) cua kho tong');
+
+if (!empty($datTam)) $P->edit(['sale_price' => null], $idKM);
+
+/* Trả lại đúng trạng thái trước khối này: p1 có giá riêng, p2 theo giá tổng.
+   $idKM rất có thể CHÍNH LÀ p1 (mặt hàng đầu tiên đang khuyến mãi), nên nếu
+   chỉ boChon() thì các khẳng định bên dưới đếm nhầm số dòng. */
+$G->boChon($gA, $idKM);
+$G->datGia($gA, $p1['id'], '888000');
+$G->datGia($gA, $p2['id'], '');
+ok($G->demTheoGara($gA) === 2, 'Da tra lai dung trang thai truoc khi thu gia khuyen mai');
+
 // 0 đồng phải lưu được, và KHÁC với bỏ trống
 $G->datGia($gA, $p2['id'], '0');
 $row = $G->mot($gA, $p2['id']);

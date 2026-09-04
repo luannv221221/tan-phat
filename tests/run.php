@@ -36,6 +36,7 @@ $tests = [
     'XeCuaKhachTest.php'          => 'CSKH — xe cua khach (bien so, so km) + tra theo bien so',
     'NhieuGaraTest.php'           => 'HE THONG — nhieu gara (tang 1: khai niem gara)',
     'DanhMucGaraTest.php'         => 'HANG HOA — nhieu gara (tang 2: danh muc rieng cua gara)',
+    'NguonBaoGiaTest.php'         => 'BAN HANG — nhieu gara (tang 3: chon nguon danh muc khi lap bao gia)',
     'ThemKhachHangTest.php'       => 'CSKH — them khach vang lai tai gara',
 ];
 

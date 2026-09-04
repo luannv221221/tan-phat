@@ -438,9 +438,24 @@ class PartsModel extends Model {
         if ($nguon === self::NGUON_GARA){
             if ($garageId <= 0) return [];
 
+            /* `sale_price` KHÔNG được COALESCE thẳng về giá khuyến mãi của danh
+               mục tổng.
+
+               Cả hệ thống dùng quy ước "có sale_price thì lấy sale_price, không
+               thì lấy price". Nên nếu gara đặt giá riêng 555.000 mà mặt hàng đó
+               ở danh mục tổng đang khuyến mãi 1.380.000, COALESCE sẽ giữ lại
+               1.380.000 và giá riêng của gara bị bỏ qua trong im lặng — form
+               báo giá hiện đúng con số của kho tổng.
+
+               Đặt giá riêng nghĩa là gara tự định giá mặt hàng đó: giá khuyến
+               mãi của kho tổng không còn liên quan. Chỉ khi gara KHÔNG đặt giá
+               thì mới rơi hết về danh mục tổng, cả giá lẫn khuyến mãi. */
             $sql = 'SELECT `parts`.`id`, `parts`.`code`, `parts`.`name`, `parts`.`item_type`,
-                           COALESCE(`gpp`.`price`, `parts`.`price`)           AS `price`,
-                           COALESCE(`gpp`.`sale_price`, `parts`.`sale_price`) AS `sale_price`,
+                           COALESCE(`gpp`.`price`, `parts`.`price`) AS `price`,
+                           CASE WHEN `gpp`.`price` IS NOT NULL
+                                THEN `gpp`.`sale_price`
+                                ELSE COALESCE(`gpp`.`sale_price`, `parts`.`sale_price`)
+                           END AS `sale_price`,
                            `parts`.`price` AS `gia_tong`,
                            `gpp`.`price`   AS `gia_rieng`,
                            (`parts`.`garage_id` IS NOT NULL) AS `hang_rieng`,
