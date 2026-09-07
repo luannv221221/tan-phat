@@ -129,23 +129,31 @@ $tabs = [
        Đặt NGAY TRÊN bảng dòng hàng chứ không ở đầu phiếu: nó quyết định ô chọn
        bên dưới có gì, nên phải nằm cạnh thứ nó ảnh hưởng.
 
-       Ẩn hẳn khi gara chưa dựng danh mục riêng — một nút chọn giữa "kho tổng"
-       và một danh sách rỗng chỉ làm người dùng bối rối.
+       LUÔN HIỆN khi hệ thống đã khai gara, KỂ CẢ khi gara chưa có danh mục
+       riêng. Bản đầu ẩn đi trong trường hợp đó, với lý do "một nút chọn giữa
+       kho tổng và một danh sách rỗng thì bối rối". Sai: gara vừa mở, chưa nhập
+       gì, chính là lúc người ta cần bấm "kho tổng" nhất — ẩn nút đi thì họ
+       không biết là có đường lấy hàng từ danh mục chung.
+
+       Nút của gara khi rỗng thì mờ và không bấm được, kèm chữ "chưa có" —
+       nói rõ vì sao thay vì biến mất không dấu vết.
        ----------------------------------------------------------------- */ ?>
-    <?php if (!empty($partsGara)): ?>
+    <?php if (!empty($garaCuaPhieu)): ?>
+    <?php $__garaTrong = empty($partsGara); ?>
     <div class="card card-outline card-secondary mb-2">
         <div class="card-body py-2 d-flex align-items-center flex-wrap" style="gap:.75rem">
             <span class="text-muted"><i class="fas fa-list-ul mr-1"></i> Lấy hàng từ:</span>
 
             <div class="btn-group btn-group-sm" role="group" id="chon-nguon">
-                <button type="button" class="btn btn-outline-primary <?php echo $nguonMacDinh === 'gara' ? 'active' : ''; ?>"
-                        data-nguon="gara">
+                <button type="button" data-nguon="gara"
+                        class="btn btn-outline-primary <?php echo $nguonMacDinh === 'gara' ? 'active' : ''; ?>"
+                        <?php echo $__garaTrong ? 'disabled title="Gara này chưa chọn mặt hàng nào — vào Hàng hoá → Danh mục của gara để dựng"' : ''; ?>>
                     <i class="fas fa-map-pin mr-1"></i>
-                    <?php echo e(!empty($garaCuaPhieu['name']) ? $garaCuaPhieu['name'] : 'Gara hiện tại'); ?>
-                    <span class="badge badge-light ml-1"><?php echo count($partsGara); ?></span>
+                    <?php echo e($garaCuaPhieu['name']); ?>
+                    <span class="badge badge-light ml-1"><?php echo $__garaTrong ? 'chưa có' : count($partsGara); ?></span>
                 </button>
-                <button type="button" class="btn btn-outline-primary <?php echo $nguonMacDinh === 'tong' ? 'active' : ''; ?>"
-                        data-nguon="tong">
+                <button type="button" data-nguon="tong"
+                        class="btn btn-outline-primary <?php echo $nguonMacDinh === 'tong' ? 'active' : ''; ?>">
                     <i class="fas fa-warehouse mr-1"></i> Kho tổng
                     <span class="badge badge-light ml-1"><?php echo count($partsTong); ?></span>
                 </button>
@@ -524,9 +532,15 @@ $tabs = [
 
     function veMoTa(){
         if (!moTaEl) return;
-        moTaEl.textContent = nguonDangDung === 'gara'
-            ? 'Hàng riêng của gara và hàng gara đã chọn làm, theo giá riêng của gara.'
-            : 'Toàn bộ danh mục chung, theo giá gốc.';
+        if (nguonDangDung === 'gara'){
+            moTaEl.textContent = 'Hàng riêng của gara và hàng gara đã chọn làm, theo giá riêng của gara.';
+        } else if (!NGUON.gara.hang.length && !NGUON.gara.dichvu.length){
+            // Nói luôn đường đi tiếp, đừng để người dùng đoán vì sao nút kia mờ
+            moTaEl.textContent = 'Toàn bộ danh mục chung, theo giá gốc. '
+                               + 'Gara này chưa có danh mục riêng — dựng ở Hàng hoá → Danh mục của gara.';
+        } else {
+            moTaEl.textContent = 'Toàn bộ danh mục chung, theo giá gốc.';
+        }
     }
 
     if (oNguon){

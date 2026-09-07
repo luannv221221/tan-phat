@@ -71,9 +71,21 @@ $v = file_get_contents($goc . 'app/views/admin/quotations/add.php');
 ok(strpos($v, 'id="chon-nguon"') !== false, 'Co o chon nguon tren form');
 ok(strpos($v, 'data-nguon="gara"') !== false && strpos($v, 'data-nguon="tong"') !== false,
    'Co du hai nut: gara hien tai va kho tong');
-ok(strpos($v, 'if (!empty($partsGara))') !== false,
-   'An o chon nguon khi gara chua dung danh muc rieng',
-   'Mot nut chon giua kho tong va mot danh sach rong chi lam nguoi dung boi roi');
+/* O chon nguon LUON hien khi he thong da khai gara, KE CA khi gara chua co
+   danh muc rieng.
+
+   Ban dau an di trong truong hop do. Sai: gara vua mo, chua nhap gi, chinh la
+   luc nguoi ta can bam "kho tong" nhat — an nut di thi ho khong biet la co
+   duong lay hang tu danh muc chung, va tuong tinh nang chua duoc lam. Da bi
+   hoi dung cau do. */
+ok(strpos($v, 'if (!empty($garaCuaPhieu))') !== false,
+   'O chon nguon hien khi he thong da khai gara (khong phu thuoc danh muc rieng)',
+   'Dieu kien theo $partsGara se an nut dung luc nguoi dung can nhat');
+ok(strpos($v, '$__garaTrong') !== false && strpos($v, 'disabled') !== false,
+   'Nut cua gara khi rong thi MO va khong bam duoc, chu khong bien mat',
+   'Bien mat khong dau vet thi nguoi dung khong biet vi sao');
+ok(strpos($v, 'chưa có') !== false,
+   'Nut gara rong ghi ro "chua co" thay vi so 0');
 ok(strpos($v, 'var NGUON') !== false && strpos($v, 'var TEN_HANG') !== false,
    'JS co du lieu ca hai nguon + ten moi mat hang');
 ok(strpos($v, 'function doiNguon') !== false, 'taoBang() co ham doiNguon()');
