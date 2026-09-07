@@ -284,7 +284,14 @@ $pdo->prepare("DELETE FROM garage_part_prices WHERE garage_id IN (?, ?)")->execu
 $pdo->prepare("DELETE FROM parts WHERE garage_id IN (?, ?)")->execute([$gA, $gB]);
 $GA->remove($gA); $GA->remove($gB);
 ok(empty($GA->getDetail($gA)) && empty($GA->getDetail($gB)), 'Da don sach du lieu test');
-ok((int) $pdo->query("SELECT COUNT(*) FROM parts WHERE garage_id IS NOT NULL")->fetchColumn() === 0,
-   'Khong con hang rieng nao sot lai');
+
+/* Chỉ soi HAI GARA CỦA CHÍNH TEST NÀY, không soi cả bảng.
+   Bản cũ khẳng định "cả hệ thống không còn hàng riêng nào" — đúng khi chạy
+   trên CSDL trống, nhưng gara thật CÓ hàng riêng là chuyện bình thường, nên
+   test sẽ đỏ ngay khi có dữ liệu thật hoặc dữ liệu mẫu. Đỏ vì lý do chẳng liên
+   quan gì tới thứ đang kiểm. */
+$sot = $pdo->prepare("SELECT COUNT(*) FROM parts WHERE garage_id IN (?, ?)");
+$sot->execute([$gA, $gB]);
+ok((int) $sot->fetchColumn() === 0, 'Khong con hang rieng nao CUA HAI GARA TEST sot lai');
 
 exit(summary());

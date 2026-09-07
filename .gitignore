@@ -32,6 +32,8 @@ Thumbs.db
 
 # Ban dump DB va file cau hinh may dich khi deploy (nhay cam — khong commit)
 /deploy/*.sql
+# Nhat ky cua tools/tao-du-lieu-gara.php — chi co nghia tren may da gieo
+/deploy/*.json
 /deploy/*.zip
 
 # Uploads — file nguoi dung tai len (logo hang, anh phu tung). Giu thu muc, bo qua noi dung.
