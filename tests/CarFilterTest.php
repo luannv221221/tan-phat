@@ -410,12 +410,30 @@ if ($hit === false){
     ok(strpos($hit, 'quantity') === false && strpos($hit, 'stock') === false,
        'Khong lo du lieu ton kho');
 
-    // Bo loc xe phai an vao goi y: dung xe ra, sai xe khong ra
-    $dung = json_decode(@file_get_contents($base . '?q=test&car_brand=2', false, $ctx), true);
-    $sai  = json_decode(@file_get_contents($base . '?q=test&car_brand=1', false, $ctx), true);
-    ok(count($dung['items']) > count($sai['items']),
-       'Chon dung xe ra nhieu ket qua hon chon sai xe',
-       'Honda=' . count($dung['items']) . ' Toyota=' . count($sai['items']));
+    /* Bo loc xe phai an vao goi y: hang co nhieu hang hon thi ra nhieu hon.
+       DUNG CHINH DU LIEU MAU CUA TEST NAY, khong mUon du lieu demo trong DB.
+
+       Ban cu hoi '?q=test&car_brand=2' — tuc la dua vao san pham demo ten
+       "Test" va dong part_fitments duy nhat cua no. Khach an san pham rac do
+       di (dung ra la phai an) la test do ngay, ma loi bao ra chang lien quan
+       gi den bo loc xe. Da xay ra that.
+
+       CF Toyota co 2 mat hang khop "CF Loc gio" (Vios + Fortuner),
+       CF Honda co 1 (City). Tien to "CF " lam tu khoa chi trung du lieu mau. */
+    $q     = rawurlencode('CF Lọc gió');
+    $nhieu = json_decode(@file_get_contents($base . '?q=' . $q . '&car_brand=' . $brandA, false, $ctx), true);
+    $it    = json_decode(@file_get_contents($base . '?q=' . $q . '&car_brand=' . $brandB, false, $ctx), true);
+
+    ok(isset($nhieu['items']) && isset($it['items']), 'Goi y co loc xe tra ve JSON hop le');
+    ok(count($nhieu['items']) > count($it['items']),
+       'Chon hang xe co nhieu hang hon thi ra nhieu ket qua hon',
+       'CF Toyota=' . count($nhieu['items']) . ' CF Honda=' . count($it['items']));
+
+    // Va hang xe khong lien quan thi khong ra gi
+    $khong = json_decode(@file_get_contents($base . '?q=' . $q . '&car_brand=999999', false, $ctx), true);
+    ok(isset($khong['items']) && count($khong['items']) === 0,
+       'Hang xe khong ton tai thi khong ra ket qua nao',
+       'Ra ' . (isset($khong['items']) ? count($khong['items']) : '?') . ' dong');
 
     // Tu khoa doc hai khong duoc pha truy van
     @file_get_contents($base . "?q=" . rawurlencode("' OR 1=1 --"), false, $ctx);
