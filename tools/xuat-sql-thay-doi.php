@@ -48,6 +48,12 @@ function q($v){
 
 $now = date('Y-m-d H:i:s');
 
+/* --chi-cau-truc: bỏ phần 1-3 (sửa dữ liệu cũ), chỉ xuất cấu trúc.
+   Phần 1-3 CHÉP nội dung tin tức / cài đặt / danh mục TỪ MÁY NÀY để đè lên
+   máy đích. Trên máy thật thì đó là ghi đè: ai sửa bài viết trên server sẽ
+   mất. Cấu trúc thì ngược lại — chỉ thêm bảng và cột, không đụng dữ liệu. */
+$chiCauTruc = in_array('--chi-cau-truc', $argv, true);
+
 echo "-- =====================================================================\n";
 echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000067\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
@@ -65,9 +71,23 @@ echo "-- Cách dùng: phpMyAdmin > chọn CSDL > tab SQL > dán toàn bộ > Th�
 echo "-- =====================================================================\n\n";
 echo "SET NAMES utf8mb4;\n\n";
 
+if ($chiCauTruc){
+    echo "-- ---------------------------------------------------------------------\n";
+    echo "-- CHE DO CHI CAU TRUC — da BO phan 1-3 (sua du lieu cu).\n";
+    echo "--\n";
+    echo "-- Phan 1-3 chep noi dung tin tuc / cai dat / danh muc TU MAY LOCAL de\n";
+    echo "-- de len may dich. Dung tren may that thi ai sua bai viet o do se bi\n";
+    echo "-- ghi de bang ban local. File nay bo han phan do.\n";
+    echo "--\n";
+    echo "-- Con lai chi la CAU TRUC (bang moi, cot moi) + dang ky man hinh moi\n";
+    echo "-- vao bang `modules`/`permissions`. Khong dong du lieu nghiep vu nao.\n";
+    echo "-- ---------------------------------------------------------------------\n\n";
+}
+
 /* ------------------------------------------------------------------ *
  * 000059 — gỡ mã hoá HTML bị chồng lớp
  * ------------------------------------------------------------------ */
+if (!$chiCauTruc){
 echo "-- ---------------------------------------------------------------------\n";
 echo "-- 000059 — Gỡ lỗi \"&#38;#38;\"\n";
 echo "--\n";
@@ -192,6 +212,8 @@ foreach (['view', 'add', 'edit', 'delete'] as $role){
          . "                      WHERE p.`module_id` = m.`id` AND p.`group_id` = g.`id` AND p.`role` = %s);\n",
         q($role), q('modules'), q('Admin'), q($role));
 }
+
+} // hết khối `if (!$chiCauTruc)` — phần 1-3 sửa dữ liệu
 
 /* ------------------------------------------------------------------ *
  * 4. Bảng xe của khách (biển số + số km)                    — 000062
