@@ -28,12 +28,23 @@ class WarrantyRequestsModel extends Model {
         if ($from !== '') $q = $q->where('warranty_requests.received_date', '>=', $from);
         if ($to !== '')   $q = $q->where('warranty_requests.received_date', '<=', $to);
         if ($keyword !== ''){
-            $q = $q->where(function($sub) use ($keyword){
+            /* Tra thêm được theo BIỂN SỐ — thứ khách quay lại hay đọc nhất.
+               So trên cột đã chuẩn hoá và chuẩn hoá luôn từ khoá, nên gõ
+               "30A-123.45", "30a12345" hay "30A 123 45" đều ra cùng một xe.
+               So thẳng cột gốc thì đúng xe đó mà máy báo không tìm thấy.
+
+               Từ khoá không có chữ/số nào (người dùng gõ "---") thì chuẩn hoá
+               ra chuỗi rỗng, mà LIKE '%%' khớp MỌI dòng — phải chặn, nếu không
+               tìm một dấu gạch ra cả bảng. */
+            $chuan = chuan_hoa_bien_so($keyword);
+            $q = $q->where(function($sub) use ($keyword, $chuan){
                 $like = '%' . $keyword . '%';
                 $sub->whereLike('warranty_requests.request_no', $like);
                 $sub->whereOrLike('warranty_requests.customer_name', $like);
                 $sub->whereOrLike('warranty_requests.phone', $like);
                 $sub->whereOrLike('warranty_requests.serial_no', $like);
+                $sub->whereOrLike('warranty_requests.bien_so_chuan',
+                                  $chuan === '' ? "\x00" : '%' . $chuan . '%');
             });
         }
         return $q->orderBy('warranty_requests.received_date', 'DESC')

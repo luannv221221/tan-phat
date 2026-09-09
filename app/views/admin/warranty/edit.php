@@ -117,6 +117,21 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
             <div class="form-group col-md-4">
                 <label>Số serial</label>
                 <input type="text" name="serial_no" class="form-control" value="{{$v('serial_no')}}"/>
+                <small class="form-text text-muted">Serial của phụ tùng, khác biển số xe bên dưới.</small>
+            </div>
+        </div>
+
+        <?php /* XE MANG PHỤ TÙNG ĐÓ — xem chú thích ở add.php */ ?>
+        <div class="form-row">
+            <div class="form-group col-md-4">
+                <label>Biển số xe</label>
+                <input type="text" name="bien_so" class="form-control text-uppercase"
+                       placeholder="VD: 30A-123.45" value="{{$v('bien_so')}}"/>
+            </div>
+            <div class="form-group col-md-3">
+                <label>Số km</label>
+                <input type="text" name="so_km" class="form-control text-right"
+                       placeholder="VD: 100.000" value="{{$v('so_km')}}"/>
             </div>
         </div>
         <div class="form-row">

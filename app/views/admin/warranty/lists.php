@@ -31,7 +31,7 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
                 </select>
             </div>
             <div class="form-group col-md-3 mb-2">
-                <label class="mb-1 small">Tìm (số phiếu / khách / SĐT / serial)</label>
+                <label class="mb-1 small">Tìm (số phiếu / khách / SĐT / serial / BIỂN SỐ XE)</label>
                 <input type="text" name="q" class="form-control form-control-sm" value="{{$filterKeyword}}"/>
             </div>
             <div class="form-group col-md-2 mb-2">
@@ -57,6 +57,7 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
                     <th style="width:110px">Tiếp nhận</th>
                     <th>Khách hàng</th>
                     <th>Thiết bị / SP</th>
+                    <th style="width:130px">Xe</th>
                     <th style="width:110px">Hẹn trả</th>
                     <th style="width:120px" class="text-center">Trạng thái</th>
                     <th style="width:70px" class="text-center">Xem</th>
@@ -70,6 +71,14 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
                     <td>{{$item['received_date']}}</td>
                     <td>{{!empty($item['partner_full']) ? $item['partner_full'] : (!empty($item['customer_name']) ? $item['customer_name'] : '—')}}<span class="text-muted small d-block">{{$item['phone']}}</span></td>
                     <td>{{!empty($item['product_name']) ? $item['product_name'] : '—'}}<span class="text-muted small">{{!empty($item['serial_no']) ? ' · SN: '.$item['serial_no'] : ''}}</span></td>
+                    <td>
+                        @if (!empty($item['bien_so']))
+                            <span class="font-weight-bold text-uppercase">{{$item['bien_so']}}</span>
+                            {!! !empty($item['so_km']) ? '<span class="text-muted small d-block">'.number_format($item['so_km']).' km</span>' : '' !!}
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
+                    </td>
                     <td>{{!empty($item['appointment_date']) ? $item['appointment_date'] : '—'}}</td>
                     <td class="text-center"><span class="badge badge-{{$badge[$item['status']] ?? 'secondary'}}">{{$statuses[$item['status']] ?? $item['status']}}</span></td>
                     <td class="text-center">
@@ -80,7 +89,7 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
                 </tr>
                 @endforeach
             @else
-                <tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có phiếu bảo hành nào</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có phiếu bảo hành nào</td></tr>
             @endif
             </tbody>
         </table>

@@ -45,6 +45,28 @@
                 <div class="form-group col-md-4">
                     <label>Số serial</label>
                     <input type="text" name="serial_no" class="form-control" value="{{!empty($old['serial_no'])?$old['serial_no']:''}}"/>
+                    <small class="form-text text-muted">Serial của phụ tùng, khác biển số xe bên dưới.</small>
+                </div>
+            </div>
+
+            <?php /* XE MANG PHỤ TÙNG ĐÓ. Bảo hành một cái đĩa phanh mà không
+                     biết nó lắp trên xe nào thì gần như vô nghĩa — và khi khách
+                     quay lại, biển số mới là thứ người ta đọc, không ai nhớ số
+                     serial. Để trống được: bảo hành thiết bị cầm tay thì không
+                     có xe nào. */ ?>
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label>Biển số xe</label>
+                    <input type="text" name="bien_so" class="form-control text-uppercase"
+                           placeholder="VD: 30A-123.45"
+                           value="{{!empty($old['bien_so'])?$old['bien_so']:''}}"/>
+                    <small class="form-text text-muted">Tra được bằng chính biển số này ở danh sách.</small>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Số km</label>
+                    <input type="text" name="so_km" class="form-control text-right"
+                           placeholder="VD: 100.000"
+                           value="{{!empty($old['so_km'])?$old['so_km']:''}}"/>
                 </div>
             </div>
             <div class="form-row">

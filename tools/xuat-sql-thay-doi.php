@@ -1,18 +1,26 @@
 <?php
 /**
- * XUẤT RA SQL cho ba thay đổi CSDL gần đây — dành cho người không muốn chạy
+ * XUẤT RA SQL cho các thay đổi CSDL gần đây — dành cho người không muốn chạy
  * `php migrate.php` mà thích dán thẳng vào phpMyAdmin.
  *
  * Chạy:  C:\xampp\php\php.exe tools\xuat-sql-thay-doi.php > deploy\thay-doi-csdl.sql
  *
- * Tương đương ba migration:
+ * Tương đương các migration:
  *   000059  gỡ mã hoá HTML bị chồng lớp  (lỗi &#38;#38;)
  *   000060  gán ảnh minh hoạ vào CSDL
  *   000061  đăng ký module "Quản lý module"
  *   000062  bảng xe của khách (biển số, số km)
  *   000063  nhiều gara — bảng `garages` + cột `garage_id`
+ *   000064  khách vãng lai không cần email
+ *   000065  danh mục riêng của gara
+ *   000066  biển số xe + số km trên báo giá và hoá đơn
+ *   000067  biển số xe + số km trên phiếu bảo hành
  *
- * Ba cái đầu chỉ sửa/thêm DỮ LIỆU; 000062 và 000063 đổi CẤU TRÚC.
+ * 000059-000061 chỉ sửa/thêm DỮ LIỆU; từ 000062 trở đi đổi CẤU TRÚC.
+ *
+ * THÊM PHẦN MỚI THÌ PHẢI SỬA HAI CHỖ: danh sách trên (chỉ là chú thích) và
+ * mảng tên migration ở mục "Đánh dấu đã chạy" cuối file (mới là thứ chạy
+ * thật). Sửa một chỗ thì người đọc tin vào chú thích rồi bỏ sót migration.
  *
  * Câu lệnh sinh ra đều CHẠY LẠI ĐƯỢC NHIỀU LẦN:
  *   - UPDATE có mệnh đề WHERE đủ hẹp
@@ -41,14 +49,15 @@ function q($v){
 $now = date('Y-m-d H:i:s');
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000066\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000067\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
-echo "-- Phần 4-8 đổi CẤU TRÚC: 3 bảng mới (`member_vehicles`, `garages`,\n";
-echo "-- `garage_part_prices`), cột `garage_id` thêm vào 5 bảng cũ, biển số xe\n";
-echo "-- + số km thêm vào báo giá và hoá đơn, và nới `members`.`email` cho phép\n";
-echo "-- để trống.\n";
+echo "-- Phần 4-9 đổi CẤU TRÚC:\n";
+echo "--   3 bảng mới: `member_vehicles`, `garages`, `garage_part_prices`\n";
+echo "--   `garage_id` thêm vào 5 bảng cũ\n";
+echo "--   biển số xe + số km thêm vào báo giá, hoá đơn và phiếu bảo hành\n";
+echo "--   `members`.`email` nới cho phép để trống\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
 echo "-- báo lỗi trùng cột — các lệnh ALTER đều có kiểm tra trước.\n";
 echo "--\n";
@@ -477,14 +486,47 @@ foreach (['quotations', 'sales_invoices'] as $bang){
 }
 
 /* ------------------------------------------------------------------ *
+ * 9. Biển số xe + số km trên phiếu bảo hành                 — 000067
+ * ------------------------------------------------------------------ */
+echo "\n-- ---------------------------------------------------------------------\n";
+echo "-- 9. Biển số xe + số km trên phiếu bảo hành.\n";
+echo "--\n";
+echo "-- Bảo hành một cái đĩa phanh mà không biết nó lắp trên xe nào thì gần\n";
+echo "-- như vô nghĩa. Khi khách quay lại, BIỂN SỐ mới là thứ người ta đọc —\n";
+echo "-- không ai nhớ số serial của phụ tùng đã thay sáu tháng trước.\n";
+echo "--\n";
+echo "-- `serial_no` đang có KHÔNG thay được: đó là serial của PHỤ TÙNG, không\n";
+echo "-- phải của XE. Đây là ba cột THÊM, cột cũ giữ nguyên.\n";
+echo "-- ---------------------------------------------------------------------\n\n";
+
+foreach ([
+    'bien_so'       => 'VARCHAR(20) DEFAULT NULL',
+    'bien_so_chuan' => 'VARCHAR(20) DEFAULT NULL',
+    'so_km'         => 'INT DEFAULT NULL',
+] as $cot => $kieu){
+    ddlNeuThieu(
+        'c_wr_' . $cot,
+        "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+      . " AND TABLE_NAME = 'warranty_requests' AND COLUMN_NAME = '$cot'",
+        "ALTER TABLE `warranty_requests` ADD COLUMN `$cot` $kieu"
+    );
+}
+ddlNeuThieu(
+    'i_wr_bs',
+    "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE()"
+  . " AND TABLE_NAME = 'warranty_requests' AND INDEX_NAME = 'idx_wr_bien_so'",
+    "ALTER TABLE `warranty_requests` ADD KEY `idx_wr_bien_so` (`bien_so_chuan`)"
+);
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
 echo "-- Đánh dấu các migration là ĐÃ CHẠY.\n";
 echo "--\n";
 echo "-- Cần thiết: chạy SQL bằng tay thì bảng `migrations` không biết, nên nếu\n";
-echo "-- sau này có ai gọi `php migrate.php` nó sẽ chạy lại. Cả bốn đều\n";
-echo "-- vô hại khi chạy lại, nhưng ghi nhận cho đúng vẫn hơn.\n";
+echo "-- sau này có ai gọi `php migrate.php` nó sẽ chạy lại. Chạy lại đều vô\n";
+echo "-- hại, nhưng ghi nhận cho đúng vẫn hơn.\n";
 echo "-- ---------------------------------------------------------------------\n";
 
 $batch = (int) $db->query("SELECT COALESCE(MAX(batch),0) FROM migrations")->fetchColumn();
@@ -497,6 +539,7 @@ foreach ([
     '2026_09_03_000064_khach_vang_lai_khong_can_email',
     '2026_09_03_000065_danh_muc_rieng_cua_gara',
     '2026_09_09_000066_bien_so_so_km_tren_chung_tu',
+    '2026_09_09_000067_bien_so_so_km_tren_bao_hanh',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên

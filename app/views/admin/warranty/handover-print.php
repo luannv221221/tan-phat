@@ -56,6 +56,18 @@
             <tr><td class="k">Điện thoại:</td><td>{{$ctx['phone']!==''?$ctx['phone']:'…………………………'}}</td></tr>
             <tr><td class="k">Thiết bị:</td><td>{{$ctx['product']!==''?$ctx['product']:'…………………………'}}</td></tr>
             <tr><td class="k">Số serial:</td><td>{{!empty($item['serial_no'])?$item['serial_no']:'…………………………'}}</td></tr>
+            <?php /* XE MANG PHỤ TÙNG ĐÓ. Biên bản này khách giữ một bản — thiếu
+                     biển số thì sau sáu tháng không ai đối chiếu được nó của xe
+                     nào. Chỉ vẽ khi có: bảo hành thiết bị cầm tay không có xe. */ ?>
+            @if (!empty($item['bien_so']) || !empty($item['so_km']))
+            <tr>
+                <td class="k">Biển số xe:</td>
+                <td>
+                    {{!empty($item['bien_so'])?$item['bien_so']:'…………………………'}}
+                    {!! !empty($item['so_km']) ? ' &nbsp;—&nbsp; Số km: <b>'.number_format((float)$item['so_km'],0,',','.').'</b>' : '' !!}
+                </td>
+            </tr>
+            @endif
             <tr><td class="k">Bên giao:</td><td>{{!empty($h['deliverer'])?$h['deliverer']:'…………………………'}}</td></tr>
             <tr><td class="k">Bên nhận:</td><td>{{!empty($h['receiver'])?$h['receiver']:'…………………………'}}</td></tr>
         </table>

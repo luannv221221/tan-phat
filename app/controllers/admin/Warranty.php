@@ -313,12 +313,26 @@ class Warranty extends Controller {
             'serial_no'        => !empty($f['serial_no']) ? trim($f['serial_no']) : null,
             'received_date'    => $f['received_date'],
             'appointment_date' => !empty($f['appointment_date']) ? $f['appointment_date'] : null,
+            /* Xe mang phụ tùng đó. Để trống được — bảo hành thiết bị cầm tay
+               thì không có xe nào. Chuẩn hoá biển số NGAY LÚC LƯU, dùng chung
+               đúng một hàm với CSKH và chứng từ bán hàng. */
+            'bien_so'          => !empty($f['bien_so']) ? trim($f['bien_so']) : null,
+            'bien_so_chuan'    => !empty($f['bien_so']) ? chuan_hoa_bien_so($f['bien_so']) : null,
+            'so_km'            => $this->soKm($f),
+
             'issue'            => !empty($f['issue']) ? trim($f['issue']) : null,
             'diagnosis'        => !empty($f['diagnosis']) ? trim($f['diagnosis']) : null,
             'technician'       => !empty($f['technician']) ? trim($f['technician']) : null,
             'fee'              => isset($f['fee']) ? (float) preg_replace('/[^\d]/', '', (string) $f['fee']) : 0,
             'note'             => !empty($f['note']) ? trim($f['note']) : null,
         ];
+    }
+
+    /** Số km: bỏ dấu ngăn nghìn người dùng hay gõ ("100.000", "100,000") */
+    private function soKm($f){
+        if (!isset($f['so_km'])) return null;
+        $v = preg_replace('/[^\d]/', '', (string) $f['so_km']);
+        return $v === '' ? null : (int) $v;
     }
 
     private function flash($errors, $back){
