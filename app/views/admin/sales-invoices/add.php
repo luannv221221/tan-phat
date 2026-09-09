@@ -96,6 +96,21 @@ $tabs = [
                         @endforeach
                     </select>
                 </div>
+
+                <?php /* XE CỦA PHIẾU. Chuyển từ báo giá sang thì hai ô này đã
+                         được điền sẵn — xem Quotations::convert(). */ ?>
+                <div class="form-group col-md-4">
+                    <label>Biển số xe</label>
+                    <input type="text" name="bien_so" class="form-control text-uppercase"
+                           placeholder="VD: 40G-474.89"
+                           value="{{!empty($old['bien_so'])?$old['bien_so']:''}}"/>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Số km vào</label>
+                    <input type="text" name="so_km" class="form-control text-right"
+                           placeholder="VD: 100.000"
+                           value="{{!empty($old['so_km'])?$old['so_km']:''}}"/>
+                </div>
             </div>
             <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> Ghi sổ sẽ <b>trừ tồn kho</b> và chốt <b>giá vốn</b> theo bình quân gia quyền tại thời điểm ghi. Ghi sổ rồi thì phải huỷ ghi sổ mới sửa được.</p>
         </div>

@@ -109,6 +109,25 @@ $tabs = [
                     </select>
                 </div>
             </div>
+
+            <?php /* XE CỦA PHIẾU — gara sửa xe thì chứng từ phải nói rõ nó cho
+                     chiếc xe nào. Để trống được: bán lẻ phụ tùng qua quầy thì
+                     không có xe nào cả. */ ?>
+            <div class="form-row">
+                <div class="form-group col-md-4 mb-0">
+                    <label>Biển số xe</label>
+                    <input type="text" name="bien_so" class="form-control text-uppercase"
+                           placeholder="VD: 40G-474.89"
+                           value="{{!empty($old['bien_so'])?$old['bien_so']:''}}"/>
+                    <small class="form-text text-muted">Gõ kiểu nào cũng được — hệ thống tự chuẩn hoá để tra cứu.</small>
+                </div>
+                <div class="form-group col-md-3 mb-0">
+                    <label>Số km vào</label>
+                    <input type="text" name="so_km" class="form-control text-right"
+                           placeholder="VD: 100.000"
+                           value="{{!empty($old['so_km'])?$old['so_km']:''}}"/>
+                </div>
+            </div>
         </div>
     </div>
 

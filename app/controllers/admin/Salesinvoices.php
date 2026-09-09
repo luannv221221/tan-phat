@@ -606,6 +606,9 @@ class Salesinvoices extends Controller {
             'ngay'         => $item['invoice_date'],
             'hieuLuc'      => null,
             'ghiChu'       => $item['note'],
+            // Xe của phiếu — in ngay dưới số chứng từ
+            'bienSo'       => isset($item['bien_so']) ? $item['bien_so'] : null,
+            'soKm'         => isset($item['so_km']) ? $item['so_km'] : null,
             'subtotal'     => $item['subtotal'],
             'vatRate'      => $item['vat_rate'],
             'tax'          => $item['tax_amount'],
@@ -656,6 +659,9 @@ class Salesinvoices extends Controller {
      * customer_name (xem Orders::invoice) nên chỗ đó không mất tên khách.
      */
     private function headerData($f){
+        $bienSo = isset($f['bien_so']) ? trim($f['bien_so']) : '';
+        $km     = isset($f['so_km']) ? preg_replace('/[^\d]/', '', (string) $f['so_km']) : '';
+
         return [
             'customer_id'   => $this->customerId(),
             // NULL khi hoá đơn toàn dịch vụ — không gán bừa một kho để rồi
@@ -663,6 +669,12 @@ class Salesinvoices extends Controller {
             'warehouse_id'  => !empty($f['warehouse_id']) ? (int) $f['warehouse_id'] : null,
             'invoice_date'  => $f['invoice_date'],
             'vat_rate'      => $this->parseRate(isset($f['vat_rate']) ? $f['vat_rate'] : 0),
+
+            /* Xe của phiếu — để trống được (bán lẻ phụ tùng qua quầy). Chuẩn
+               hoá biển số ngay lúc lưu, dùng chung một hàm với báo giá và CSKH. */
+            'bien_so'       => $bienSo !== '' ? $bienSo : null,
+            'bien_so_chuan' => $bienSo !== '' ? chuan_hoa_bien_so($bienSo) : null,
+            'so_km'         => $km !== '' ? (int) $km : null,
         ];
     }
 

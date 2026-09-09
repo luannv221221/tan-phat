@@ -133,6 +133,20 @@ tr.tong-cuoi td { font-weight: bold; font-size: 13.5pt; }
     <div class="so-ngay">
         Số: <b><?php echo e($ct['so']); ?></b>
         &nbsp;—&nbsp; Ngày <?php echo e($ngayVn($ct['ngay'])); ?>
+        <?php /* XE CỦA PHIẾU. In ngay dưới số chứng từ, trước cả thông tin
+                 khách: gara cầm tờ giấy này lên là phải biết ngay nó của xe
+                 nào. Cả hai để trống được (bán lẻ phụ tùng qua quầy) nên chỉ
+                 vẽ khi thực sự có. */ ?>
+        <?php if (!empty($ct['bienSo']) || !empty($ct['soKm'])): ?>
+        <br/>
+        <?php if (!empty($ct['bienSo'])): ?>
+            Biển số xe: <b><?php echo e($ct['bienSo']); ?></b>
+        <?php endif; ?>
+        <?php if (!empty($ct['bienSo']) && !empty($ct['soKm'])): ?>&nbsp;—&nbsp;<?php endif; ?>
+        <?php if (!empty($ct['soKm'])): ?>
+            Số km: <b><?php echo e(number_format((float) $ct['soKm'], 0, ',', '.')); ?></b>
+        <?php endif; ?>
+        <?php endif; ?>
         <?php if (!empty($ct['hieuLuc'])): ?>
         <br/>Báo giá có hiệu lực đến hết ngày <b><?php echo e($ngayVn($ct['hieuLuc'])); ?></b>
         <?php endif; ?>

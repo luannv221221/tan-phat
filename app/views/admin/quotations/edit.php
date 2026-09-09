@@ -115,6 +115,20 @@ $tabs = [
                 </select>
             </div>
         </div>
+
+        <?php /* XE CỦA PHIẾU — xem chú thích ở add.php */ ?>
+        <div class="form-row">
+            <div class="form-group col-md-4 mb-0">
+                <label>Biển số xe</label>
+                <input type="text" name="bien_so" class="form-control text-uppercase"
+                       placeholder="VD: 40G-474.89" value="{{$sel('bien_so')}}"/>
+            </div>
+            <div class="form-group col-md-3 mb-0">
+                <label>Số km vào</label>
+                <input type="text" name="so_km" class="form-control text-right"
+                       placeholder="VD: 100.000" value="{{$sel('so_km')}}"/>
+            </div>
+        </div>
     </div></div>
 
     <div class="card card-outline card-info">

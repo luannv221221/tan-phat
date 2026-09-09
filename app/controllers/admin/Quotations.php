@@ -329,6 +329,11 @@ class Quotations extends Controller {
             'status'        => 0,
             'note'          => 'Từ báo giá ' . $item['quote_no'],
             'created_by'    => Session::get('dataUser'),
+            /* Xe phải đi theo sang hoá đơn. Không chép thì báo giá ghi rõ xe
+               nào, mà hoá đơn — thứ khách thực sự cầm về — lại trống trơn. */
+            'bien_so'       => isset($item['bien_so']) ? $item['bien_so'] : null,
+            'bien_so_chuan' => isset($item['bien_so_chuan']) ? $item['bien_so_chuan'] : null,
+            'so_km'         => isset($item['so_km']) ? $item['so_km'] : null,
         ]);
         $lines = [];
         foreach ($items as $it){
@@ -369,6 +374,9 @@ class Quotations extends Controller {
             'so'           => $item['quote_no'],
             'ngay'         => $item['quote_date'],
             'hieuLuc'      => $item['valid_until'],
+            // Xe của phiếu — in ngay dưới số chứng từ
+            'bienSo'       => isset($item['bien_so']) ? $item['bien_so'] : null,
+            'soKm'         => isset($item['so_km']) ? $item['so_km'] : null,
             'ghiChu'       => $item['note'],
             'subtotal'     => $item['subtotal'],
             'vatRate'      => $item['vat_rate'],
@@ -416,11 +424,22 @@ class Quotations extends Controller {
      * Cột trong CSDL giữ nguyên — dữ liệu cũ còn đó, màn hình danh sách vẫn đọc.
      */
     private function headerData($f){
+        $bienSo = isset($f['bien_so']) ? trim($f['bien_so']) : '';
+        $km     = isset($f['so_km']) ? preg_replace('/[^\d]/', '', (string) $f['so_km']) : '';
+
         return [
             'customer_id'   => $this->customerId(),
             'quote_date'    => $f['quote_date'],
             'valid_until'   => !empty($f['valid_until']) ? $f['valid_until'] : null,
             'vat_rate'      => $this->parseRate(isset($f['vat_rate']) ? $f['vat_rate'] : 0),
+
+            /* Xe của phiếu. Cả ba để trống được — bán lẻ phụ tùng qua quầy thì
+               không có xe nào cả.
+               `bien_so_chuan` chuẩn hoá NGAY LÚC LƯU, dùng chung đúng một hàm
+               với màn CSKH: hai nơi chuẩn hoá hai kiểu là tra không ra nhau. */
+            'bien_so'       => $bienSo !== '' ? $bienSo : null,
+            'bien_so_chuan' => $bienSo !== '' ? chuan_hoa_bien_so($bienSo) : null,
+            'so_km'         => $km !== '' ? (int) $km : null,
         ];
     }
 

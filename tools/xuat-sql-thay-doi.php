@@ -41,13 +41,14 @@ function q($v){
 $now = date('Y-m-d H:i:s');
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000065\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000066\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
-echo "-- Phần 4-7 đổi CẤU TRÚC: 3 bảng mới (`member_vehicles`, `garages`,\n";
-echo "-- `garage_part_prices`), cột `garage_id` thêm vào 5 bảng cũ, và nới\n";
-echo "-- `members`.`email` cho phép để trống.\n";
+echo "-- Phần 4-8 đổi CẤU TRÚC: 3 bảng mới (`member_vehicles`, `garages`,\n";
+echo "-- `garage_part_prices`), cột `garage_id` thêm vào 5 bảng cũ, biển số xe\n";
+echo "-- + số km thêm vào báo giá và hoá đơn, và nới `members`.`email` cho phép\n";
+echo "-- để trống.\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
 echo "-- báo lỗi trùng cột — các lệnh ALTER đều có kiểm tra trước.\n";
 echo "--\n";
@@ -442,10 +443,44 @@ foreach (['view', 'add', 'edit', 'delete'] as $role){
 }
 
 /* ------------------------------------------------------------------ *
+ * 8. Biển số xe + số km trên chứng từ                       — 000066
+ * ------------------------------------------------------------------ */
+echo "\n-- ---------------------------------------------------------------------\n";
+echo "-- 8. Biển số xe + số km trên báo giá và hoá đơn bán.\n";
+echo "--\n";
+echo "-- Gara sửa xe thì chứng từ phải nói rõ nó cho CHIẾC XE NÀO.\n";
+echo "-- `bien_so` giữ nguyên văn người gõ để in ra; `bien_so_chuan` (chỉ chữ +\n";
+echo "-- số, viết hoa) để tra cứu — chỉ mục đặt trên cột chuẩn hoá này.\n";
+echo "-- Cả ba cột để trống được: bán lẻ phụ tùng qua quầy thì không có xe nào.\n";
+echo "-- ---------------------------------------------------------------------\n\n";
+
+foreach (['quotations', 'sales_invoices'] as $bang){
+    echo "-- $bang\n";
+    foreach ([
+        'bien_so'       => 'VARCHAR(20) DEFAULT NULL',
+        'bien_so_chuan' => 'VARCHAR(20) DEFAULT NULL',
+        'so_km'         => 'INT DEFAULT NULL',
+    ] as $cot => $kieu){
+        ddlNeuThieu(
+            'c_' . $bang . '_' . $cot,
+            "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+          . " AND TABLE_NAME = '$bang' AND COLUMN_NAME = '$cot'",
+            "ALTER TABLE `$bang` ADD COLUMN `$cot` $kieu"
+        );
+    }
+    ddlNeuThieu(
+        'i_' . $bang . '_bs',
+        "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE()"
+      . " AND TABLE_NAME = '$bang' AND INDEX_NAME = 'idx_{$bang}_bien_so'",
+        "ALTER TABLE `$bang` ADD KEY `idx_{$bang}_bien_so` (`bien_so_chuan`)"
+    );
+}
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
-echo "-- Đánh dấu năm migration là ĐÃ CHẠY.\n";
+echo "-- Đánh dấu các migration là ĐÃ CHẠY.\n";
 echo "--\n";
 echo "-- Cần thiết: chạy SQL bằng tay thì bảng `migrations` không biết, nên nếu\n";
 echo "-- sau này có ai gọi `php migrate.php` nó sẽ chạy lại. Cả bốn đều\n";
@@ -461,6 +496,7 @@ foreach ([
     '2026_09_03_000063_them_bang_gara',
     '2026_09_03_000064_khach_vang_lai_khong_can_email',
     '2026_09_03_000065_danh_muc_rieng_cua_gara',
+    '2026_09_09_000066_bien_so_so_km_tren_chung_tu',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên

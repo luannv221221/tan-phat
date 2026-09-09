@@ -651,3 +651,22 @@ function gara_hien_tai_id(){
     $g = gara_hien_tai();
     return !empty($g['id']) ? (int) $g['id'] : null;
 }
+
+/**
+ * Chuẩn hoá biển số xe: bỏ hết dấu, viết hoa.
+ *
+ *   "30A-123.45"  -> "30A12345"
+ *   " 30a 123 45" -> "30A12345"
+ *
+ * Ở ĐÂY chứ không phải trong model, vì giờ có ba nơi dùng: màn Xe của khách,
+ * form Lập báo giá, form Lập hoá đơn. Model chỉ được nạp khi ai đó gọi
+ * $this->model(...), nên controller gọi thẳng static của nó là chết ngay —
+ * mà thêm một dòng nạp model chỉ để dùng một hàm thuần tuý là thừa.
+ *
+ * MỘT bản duy nhất là điều kiện sống còn: lưu chuẩn hoá kiểu này mà tra cứu
+ * chuẩn hoá kiểu khác thì tìm mãi không ra, đúng loại lỗi khó đoán nhất.
+ * MemberVehiclesModel::chuanHoaBienSo() gọi lại đúng hàm này.
+ */
+function chuan_hoa_bien_so($s){
+    return strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $s));
+}

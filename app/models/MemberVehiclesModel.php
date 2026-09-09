@@ -24,7 +24,10 @@ class MemberVehiclesModel extends Model {
      * thì tìm mãi không ra, đúng kiểu lỗi rất khó đoán.
      */
     public static function chuanHoaBienSo($s){
-        return strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $s));
+        /* MỘT bản duy nhất, đặt ở app/helpers/functions.php — controller gọi
+           được mà không phải nạp model. Hai nơi chuẩn hoá hai kiểu là tra
+           không ra nhau. */
+        return chuan_hoa_bien_so($s);
     }
 
     /** Xe của một khách */

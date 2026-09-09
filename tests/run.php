@@ -35,6 +35,7 @@ $tests = [
     'ChepBaoGiaTest.php'          => 'BAN HANG — chep dong hang tu bao gia cu',
     'ChepHoaDonTest.php'          => 'BAN HANG — chep dong hang tu chung tu cu (hoa don ban)',
     'XeCuaKhachTest.php'          => 'CSKH — xe cua khach (bien so, so km) + tra theo bien so',
+    'XeTrenChungTuTest.php'       => 'BAN HANG — bien so xe + so km tren bao gia / hoa don',
     'NhieuGaraTest.php'           => 'HE THONG — nhieu gara (tang 1: khai niem gara)',
     'DanhMucGaraTest.php'         => 'HANG HOA — nhieu gara (tang 2: danh muc rieng cua gara)',
     'NguonBaoGiaTest.php'         => 'BAN HANG — nhieu gara (tang 3: chon nguon danh muc khi lap bao gia)',
