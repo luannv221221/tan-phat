@@ -15,6 +15,7 @@
  *   000065  danh mục riêng của gara
  *   000066  biển số xe + số km trên báo giá và hoá đơn
  *   000067  biển số xe + số km trên phiếu bảo hành
+ *   000068  phân quyền cho nhóm Manager và Staff (+ vá lỗ tự nâng quyền)
  *
  * 000059-000061 chỉ sửa/thêm DỮ LIỆU; từ 000062 trở đi đổi CẤU TRÚC.
  *
@@ -55,7 +56,7 @@ $now = date('Y-m-d H:i:s');
 $chiCauTruc = in_array('--chi-cau-truc', $argv, true);
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000067\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000068\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
@@ -64,6 +65,7 @@ echo "--   3 bảng mới: `member_vehicles`, `garages`, `garage_part_prices`\n"
 echo "--   `garage_id` thêm vào 5 bảng cũ\n";
 echo "--   biển số xe + số km thêm vào báo giá, hoá đơn và phiếu bảo hành\n";
 echo "--   `members`.`email` nới cho phép để trống\n";
+echo "-- Phần 10 cấp quyền cho nhóm Manager / Staff, kèm một bản vá bảo mật.\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
 echo "-- báo lỗi trùng cột — các lệnh ALTER đều có kiểm tra trước.\n";
 echo "--\n";
@@ -541,6 +543,63 @@ ddlNeuThieu(
 );
 
 /* ------------------------------------------------------------------ *
+ * 10. Phân quyền cho nhóm Manager và Staff                  — 000068
+ *
+ * Đọc thẳng trạng thái HIỆN TẠI của hai nhóm trên máy này rồi sinh SQL —
+ * không chép lại bảng cấp quyền trong migration. Nghĩa là chạy công cụ
+ * này SAU khi đã migrate xong thì file luôn khớp với thực tế.
+ * ------------------------------------------------------------------ */
+echo "\n-- ---------------------------------------------------------------------\n";
+echo "-- 10. Phân quyền cho nhóm Manager và Staff.\n";
+echo "--\n";
+echo "-- Trước đó hai nhóm này gần như rỗng: cấp tài khoản Staff cho thợ xong\n";
+echo "-- họ đăng nhập vào không thấy gì.\n";
+echo "--\n";
+echo "-- KÈM MỘT BẢN VÁ BẢO MẬT: gỡ quyền của Manager/Staff trên màn hình Nhóm.\n";
+echo "-- Nhóm Manager có sẵn view/add/edit ở đó từ bản dump gốc, tức là mở được\n";
+echo "-- Phân quyền và TỰ CẤP CHO MÌNH mọi quyền. Ai sửa được bảng phân quyền\n";
+echo "-- thì mọi phân quyền khác chỉ còn là trang trí.\n";
+echo "--\n";
+echo "-- KHÔNG đụng nhóm Admin.\n";
+echo "-- ---------------------------------------------------------------------\n\n";
+
+echo "-- Gỡ quyền nguy hiểm (chạy TRƯỚC phần cấp)\n";
+printf("DELETE p FROM `permissions` p\n"
+     . "  JOIN `groups` g ON g.`id` = p.`group_id`\n"
+     . "  JOIN `modules` m ON m.`id` = p.`module_id`\n"
+     . " WHERE g.`name` IN (%s, %s) AND m.`link` = %s;\n\n",
+    q('Manager'), q('Staff'), q('groups'));
+
+$dsQuyen = $db->query(
+    "SELECT g.`name` AS nhom, m.`link` AS link, p.`role` AS role
+       FROM `permissions` p
+       JOIN `groups` g  ON g.`id` = p.`group_id`
+       JOIN `modules` m ON m.`id` = p.`module_id`
+      WHERE g.`name` IN ('Manager', 'Staff')
+      ORDER BY g.`name`, m.`link`, p.`role`"
+)->fetchAll(PDO::FETCH_ASSOC);
+
+if (empty($dsQuyen)){
+    echo "-- (hai nhom chua co quyen nao tren may nay — bo qua)\n";
+} else {
+    $nhomTruoc = '';
+    foreach ($dsQuyen as $r){
+        if ($r['nhom'] !== $nhomTruoc){
+            printf("\n-- %s\n", $r['nhom']);
+            $nhomTruoc = $r['nhom'];
+        }
+        printf("INSERT INTO `permissions` (`module_id`,`group_id`,`role`)\n"
+             . "  SELECT m.`id`, g.`id`, %s\n"
+             . "    FROM `modules` m JOIN `groups` g\n"
+             . "   WHERE m.`link` = %s AND g.`name` = %s\n"
+             . "     AND NOT EXISTS (SELECT 1 FROM (SELECT * FROM `permissions`) p\n"
+             . "                      WHERE p.`module_id` = m.`id` AND p.`group_id` = g.`id` AND p.`role` = %s);\n",
+            q($r['role']), q($r['link']), q($r['nhom']), q($r['role']));
+    }
+    printf("\n-- (tong %d dong quyen cho hai nhom)\n", count($dsQuyen));
+}
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
@@ -562,6 +621,7 @@ foreach ([
     '2026_09_03_000065_danh_muc_rieng_cua_gara',
     '2026_09_09_000066_bien_so_so_km_tren_chung_tu',
     '2026_09_09_000067_bien_so_so_km_tren_bao_hanh',
+    '2026_09_10_000068_cap_quyen_manager_va_staff',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên
