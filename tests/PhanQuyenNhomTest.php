@@ -87,14 +87,27 @@ foreach (['Manager', 'Staff'] as $n){
        "$n KHONG co quyen nao tren man hinh Nhom (chong tu nang quyen)",
        'Dang co: ' . implode(',', array_keys($quyen($n, 'groups')))
        . ' — sua duoc bang phan quyen thi moi phan quyen khac la trang tri');
-    ok(empty($quyen($n, 'users')),
-       "$n KHONG quan ly duoc nguoi dung",
-       'Tao duoc tai khoan Admin moi la vong qua duoc moi han che');
+    if ($n === 'Staff'){
+        ok(empty($quyen($n, 'users')),
+           "$n KHONG quan ly duoc nguoi dung",
+           'Tao duoc tai khoan Admin moi la vong qua duoc moi han che');
+    }
     ok(empty($quyen($n, 'modules')),
        "$n KHONG vao duoc Quan ly module");
     ok(empty($quyen($n, 'settings')),
        "$n KHONG sua duoc cau hinh website");
 }
+
+/* Manager vao duoc man Nguoi dung tu 000069 — de tu them nhan vien cho gara
+   minh. An toan KHONG nam o bang quyen ma o Users::phamVi(): chi gan duoc
+   nhom thap hon, chi trong gara minh. NhanVienGaraTest thu that qua HTTP. */
+$q = $quyen('Manager', 'users');
+ok(isset($q['view']) && isset($q['add']) && isset($q['edit']),
+   'Manager them/sua duoc nhan vien (000069)',
+   'Dang co: ' . implode(',', array_keys($q)));
+ok(!isset($q['delete']) && !isset($q['permission']),
+   'Manager KHONG xoa duoc tai khoan',
+   'Nhan vien nghi thi khoa tai khoan, khong xoa — chung tu cu con ghi nguoi lap');
 
 /* --- 2. Staff: lam duoc viec hang ngay --- */
 foreach (['quotations' => 'Bao gia', 'sales-invoices' => 'Hoa don ban',

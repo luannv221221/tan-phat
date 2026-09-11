@@ -35,10 +35,13 @@ echo "PHP " . PHP_VERSION . " | model that cua app + sqlite\n";
 $boot = new App\core\Database();
 $pdo  = $boot->pdo();
 $pdo->exec("CREATE TABLE groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)");
+// garage_id + bang garages: them boi migration 000063 (nhieu gara). Tu 000069
+// getLists() LEFT JOIN garages de hien cot Gara — thieu bang la test chet.
 $pdo->exec("CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT,
-    status INTEGER, group_id INTEGER, current_activity TEXT
+    status INTEGER, group_id INTEGER, current_activity TEXT, garage_id INTEGER
 )");
+$pdo->exec("CREATE TABLE garages (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)");
 $pdo->exec("CREATE TABLE permissions (id INTEGER PRIMARY KEY AUTOINCREMENT, module_id INTEGER, group_id INTEGER, role TEXT)");
 // remember / remember_hash: them boi migration 000053 (ghi nho dang nhap admin).
 // Schema gia lap nay phai bam theo migration, khong thi removeExpired() vo.
@@ -72,6 +75,16 @@ $all = $um->getLists();
 ok(count($all) === 3, 'getLists() khong loc tra ve 3 user', 'so dong: '.count($all));
 ok(array_key_exists('group_name', $all[0]), 'getLists() leftJoin lay duoc group_name',
    json_encode($all[0]));
+
+// Cot Gara + loc "chua gan gara". Gia tri null phai thanh IS NULL — `= NULL`
+// trong SQL khong bao gio dung, loc "Chua gan gara" se luon ra rong.
+$pdo->exec("INSERT INTO garages (name) VALUES ('Gara A')");
+$pdo->exec("UPDATE users SET garage_id = 1 WHERE id = 1");
+$coGara = array_values(array_filter((new UsersModel())->getLists(), function($u){ return (int) $u['id'] === 1; }));
+ok(!empty($coGara) && $coGara[0]['garage_name'] === 'Gara A', 'getLists() leftJoin lay duoc garage_name');
+ok(count((new UsersModel())->getLists(['users.garage_id' => null])) === 2,
+   'getLists() loc garage_id = null -> IS NULL (2 user chua gan gara)');
+ok(count((new UsersModel())->getLists(['users.garage_id' => 1])) === 1, 'getLists() loc theo mot gara');
 
 // getLists co filter
 $filtered = $um->getLists(['users.status' => 1]);

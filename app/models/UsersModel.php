@@ -71,14 +71,19 @@ class UsersModel extends Model{
 
         // `groups` la tu khoa danh rieng cua MySQL 8 => moi cho nhac toi deu phai backtick.
         // leftJoinOn() lo phan ON; rieng select() van la chuoi raw nen phai backtick tay.
+        // group_id / garage_id đi kèm để màn danh sách biết dòng nào người đang
+        // đăng nhập được sửa (xem Users::trongPhamVi).
         $data = $this->table($this->_table)
-                ->select('`users`.`id`, `groups`.`name` as group_name, `users`.`name`, `users`.`email`, `users`.`status`, `users`.`current_activity`')
-                ->leftJoinOn('groups', 'users.group_id', 'groups.id');
+                ->select('`users`.`id`, `groups`.`name` as group_name, `users`.`name`, `users`.`email`, `users`.`status`, `users`.`current_activity`, `users`.`group_id`, `users`.`garage_id`, `garages`.`name` as garage_name')
+                ->leftJoinOn('groups', 'users.group_id', 'groups.id')
+                ->leftJoinOn('garages', 'users.garage_id', 'garages.id');
 
         //Xử lý logic lọc
         if (!empty($filters)){
             foreach ($filters as $key => $value){
-                $data = $data->where($key, '=', $value);
+                // null = "chưa gán" (vd. chưa gán gara). `= NULL` trong SQL
+                // không bao giờ đúng, phải là IS NULL.
+                $data = ($value === null) ? $data->whereNull($key) : $data->where($key, '=', $value);
             }
         }
 

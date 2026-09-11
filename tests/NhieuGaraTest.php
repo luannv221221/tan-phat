@@ -108,7 +108,10 @@ ok(strpos($vKho, 'name="garage_id"') !== false, 'Man Kho co o chon gara');
    "garage_id" xuất hiện: hàm đọc giá trị từ form đã nhắc tên cột 2 lần rồi,
    nên đếm suông thì bỏ hẳn một chiều ghi vẫn đủ số và vẫn xanh. */
 $ctlUser = codeOnly($goc . 'app/controllers/admin/Users.php');
-ok(substr_count($ctlUser, "'garage_id' => \$this->garaTuForm()") === 2,
+/* Từ 000069 câu ghi đi qua garaDuocGhi(): Admin lấy gara từ form
+   (garaTuForm), Manager luôn là gara của chính mình — xem NhanVienGaraTest. */
+ok(substr_count($ctlUser, "'garage_id' => \$this->garaDuocGhi(\$pv)") === 2
+   && strpos($ctlUser, "\$this->garaTuForm() : \$pv['gara_id']") !== false,
    'Users controller ghi garage_id ca luc them LAN luc sua',
    'Chi ghi mot chieu thi o chon hien ra nhung bam Luu khong an gi');
 

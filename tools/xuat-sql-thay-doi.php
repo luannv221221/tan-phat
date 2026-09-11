@@ -17,6 +17,16 @@
  *   000067  biển số xe + số km trên phiếu bảo hành
  *   000068  phân quyền cho nhóm Manager và Staff (+ vá lỗ tự nâng quyền)
  *
+ * RIÊNG 000069 (Manager tự thêm nhân viên cho gara mình) nằm ở file KHÁC,
+ * chạy SAU khi đẩy code:
+ *
+ *   C:\xampp\php\php.exe tools\xuat-sql-thay-doi.php --sau-khi-day-code > deploy\sau-khi-day-code.sql
+ *
+ * Ngược với mọi phần khác (dán SQL trước rồi mới đẩy code): 000069 chỉ cấp
+ * quyền vào màn Người dùng, chốt chặn thật nằm trong code mới
+ * (Users::phamVi). Dán quyền trước khi có code đó thì Manager vào màn Người
+ * dùng CŨ — không giới hạn gì — và tạo được tài khoản Admin.
+ *
  * 000059-000061 chỉ sửa/thêm DỮ LIỆU; từ 000062 trở đi đổi CẤU TRÚC.
  *
  * THÊM PHẦN MỚI THÌ PHẢI SỬA HAI CHỖ: danh sách trên (chỉ là chú thích) và
@@ -55,6 +65,57 @@ $now = date('Y-m-d H:i:s');
    mất. Cấu trúc thì ngược lại — chỉ thêm bảng và cột, không đụng dữ liệu. */
 $chiCauTruc = in_array('--chi-cau-truc', $argv, true);
 
+/* --sau-khi-day-code: CHỈ xuất 000069 rồi dừng. Xem giải thích ở đầu file. */
+if (in_array('--sau-khi-day-code', $argv, true)){
+    echo "-- =====================================================================\n";
+    echo "-- TÂN PHÁT — CHẠY SAU KHI ĐÃ ĐẨY CODE (migration 000069)\n";
+    echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php --sau-khi-day-code\n";
+    echo "--\n";
+    echo "-- Cho nhóm Manager tự thêm nhân viên cho gara của mình: quyền xem / thêm /\n";
+    echo "-- sửa trên màn Người dùng. KHÔNG có quyền xoá.\n";
+    echo "--\n";
+    echo "-- !! DÁN FILE NÀY SAU KHI CODE MỚI ĐÃ LÊN SERVER !!\n";
+    echo "-- Code mới mới có chốt chặn: Manager chỉ cấp được nhóm thấp hơn mình, chỉ\n";
+    echo "-- trong gara mình. Dán trước thì Manager vào màn Người dùng CŨ — không\n";
+    echo "-- giới hạn gì — và tạo được tài khoản Admin.\n";
+    echo "--\n";
+    echo "-- Chạy lại nhiều lần không sinh dòng trùng.\n";
+    echo "-- =====================================================================\n\n";
+    echo "SET NAMES utf8mb4;\n\n";
+
+    $ds = $db->query(
+        "SELECT p.`role` FROM `permissions` p
+           JOIN `groups` g  ON g.`id` = p.`group_id`
+           JOIN `modules` m ON m.`id` = p.`module_id`
+          WHERE g.`name` = 'Manager' AND m.`link` = 'users'
+          ORDER BY p.`role`"
+    )->fetchAll(PDO::FETCH_COLUMN);
+
+    if (empty($ds)){
+        echo "-- (may nay chua chay migration 000069 — chua co gi de xuat)\n";
+        exit;
+    }
+    foreach ($ds as $role){
+        printf("INSERT INTO `permissions` (`module_id`,`group_id`,`role`)\n"
+             . "  SELECT m.`id`, g.`id`, %s\n"
+             . "    FROM `modules` m JOIN `groups` g\n"
+             . "   WHERE m.`link` = %s AND g.`name` = %s\n"
+             . "     AND NOT EXISTS (SELECT 1 FROM (SELECT * FROM `permissions`) p\n"
+             . "                      WHERE p.`module_id` = m.`id` AND p.`group_id` = g.`id` AND p.`role` = %s);\n",
+            q($role), q('users'), q('Manager'), q($role));
+    }
+
+    $batch = (int) $db->query("SELECT COALESCE(MAX(batch),0) FROM migrations")->fetchColumn();
+    $mg = '2026_09_11_000069_manager_them_nhan_vien_gara';
+    echo "\n-- Đánh dấu migration đã chạy (PHẢI có `ran_at`: NOT NULL, không mặc định)\n";
+    printf("INSERT INTO `migrations` (`migration`,`batch`,`ran_at`)\n"
+         . "  SELECT %s, %d, %s FROM DUAL\n"
+         . "  WHERE NOT EXISTS (SELECT 1 FROM `migrations` x WHERE x.`migration` = %s);\n",
+        q($mg), $batch, q($now), q($mg));
+    echo "\n-- Hết.\n";
+    exit;
+}
+
 echo "-- =====================================================================\n";
 echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000068\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
@@ -66,6 +127,8 @@ echo "--   `garage_id` thêm vào 5 bảng cũ\n";
 echo "--   biển số xe + số km thêm vào báo giá, hoá đơn và phiếu bảo hành\n";
 echo "--   `members`.`email` nới cho phép để trống\n";
 echo "-- Phần 10 cấp quyền cho nhóm Manager / Staff, kèm một bản vá bảo mật.\n";
+echo "-- Quyền Manager tự thêm nhân viên (000069) KHÔNG nằm ở đây — nó ở file\n";
+echo "-- deploy/sau-khi-day-code.sql, dán SAU khi đẩy code.\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
 echo "-- báo lỗi trùng cột — các lệnh ALTER đều có kiểm tra trước.\n";
 echo "--\n";
@@ -576,6 +639,8 @@ $dsQuyen = $db->query(
        JOIN `groups` g  ON g.`id` = p.`group_id`
        JOIN `modules` m ON m.`id` = p.`module_id`
       WHERE g.`name` IN ('Manager', 'Staff')
+        -- Màn Người dùng đi file riêng, chạy SAU khi đẩy code (000069)
+        AND m.`link` <> 'users'
       ORDER BY g.`name`, m.`link`, p.`role`"
 )->fetchAll(PDO::FETCH_ASSOC);
 

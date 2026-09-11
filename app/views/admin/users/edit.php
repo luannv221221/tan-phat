@@ -50,9 +50,13 @@
                 @endif
             </select>
             {!! !empty($errors['group_id'])?'<span style="color:red">'.$errors['group_id'].'</span>':false !!}
+            @if (!$toanQuyen)
+            <small class="form-text text-muted">Bạn chỉ cấp được nhóm có quyền thấp hơn nhóm của mình.</small>
+            @endif
         </div>
         <div class="form-group">
             <label for="">Gara</label>
+            @if ($toanQuyen)
             <select name="garage_id" class="form-control">
                 <option value="">— Chưa gán gara —</option>
                 @if (!empty($listGarage))
@@ -65,6 +69,10 @@
                 Gara nơi nhân viên này làm việc — quyết định lúc lập báo giá lấy danh mục và giá nào.
                 Bỏ trống thì tính là gara tổng.
             </small>
+            @else
+            <input type="text" class="form-control" value="{{!empty($garaCuaToi['name']) ? $garaCuaToi['name'] : ''}}" disabled/>
+            <small class="form-text text-muted">Chỉ Admin chuyển được nhân viên sang gara khác.</small>
+            @endif
         </div>
 
         <button type="submit" class="btn btn-primary">Cập nhật</button>
