@@ -1,0 +1,1040 @@
+<title>Kho tổng, kho gara — Tân Phát</title>
+<meta name="description" content="Quản lý các gara, cấp tài khoản cho quản lý và nhân viên từng gara, phân biệt kho tổng với kho gara, và các bước mở một gara mới."/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --nen:       #FBFAF8;
+  --the:       #FFFFFF;
+  --nen-phu:   #F2F1ED;
+  --chu:       #1E2422;
+  --chu-mo:    #5B6A66;
+  --vien:      #E0DFD9;
+  --vien-dam:  #C6C9C2;
+  --xanh:      #0F6E5C;
+  --xanh-nen:  #E4F0EC;
+  --hophach:   #A85E14;
+  --hophach-nen:#F8EEE0;
+  --do:        #A6392C;
+  --do-nen:    #F8E9E6;
+  --bong:      0 1px 2px rgba(30,36,34,.05), 0 10px 30px -22px rgba(30,36,34,.5);
+
+  --f-de:  Archivo, "Segoe UI", system-ui, sans-serif;
+  --f-doc: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --f-ma:  "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --nen:       #161A19;
+    --the:       #1D2322;
+    --nen-phu:   #232A28;
+    --chu:       #E6E9E6;
+    --chu-mo:    #9BA8A3;
+    --vien:      #2E3634;
+    --vien-dam:  #43504C;
+    --xanh:      #58C0A5;
+    --xanh-nen:  #12312A;
+    --hophach:   #DFA45E;
+    --hophach-nen:#33260F;
+    --do:        #E08878;
+    --do-nen:    #331F1B;
+    --bong:      0 1px 2px rgba(0,0,0,.45), 0 10px 30px -22px rgba(0,0,0,.9);
+  }
+}
+:root[data-theme="dark"]{
+  --nen:       #161A19;
+  --the:       #1D2322;
+  --nen-phu:   #232A28;
+  --chu:       #E6E9E6;
+  --chu-mo:    #9BA8A3;
+  --vien:      #2E3634;
+  --vien-dam:  #43504C;
+  --xanh:      #58C0A5;
+  --xanh-nen:  #12312A;
+  --hophach:   #DFA45E;
+  --hophach-nen:#33260F;
+  --do:        #E08878;
+  --do-nen:    #331F1B;
+  --bong:      0 1px 2px rgba(0,0,0,.45), 0 10px 30px -22px rgba(0,0,0,.9);
+}
+
+*{ box-sizing: border-box; }
+body{
+  margin: 0;
+  background: var(--nen);
+  color: var(--chu);
+  font-family: var(--f-doc);
+  font-size: 16.5px;
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+}
+html{ scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior: auto; }
+  *{ animation: none !important; transition: none !important; }
+}
+
+.bao{ max-width: 1160px; margin: 0 auto; padding: 0 22px 90px; }
+
+/* ---------- Đầu trang ---------- */
+.dau{
+  padding: 54px 0 30px;
+  border-bottom: 1px solid var(--vien-dam);
+  margin-bottom: 26px;
+}
+.eyebrow{
+  font-family: var(--f-ma);
+  font-size: 11.5px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--xanh);
+  margin: 0 0 12px;
+}
+.dau h1{
+  font-family: var(--f-de);
+  font-weight: 700;
+  font-size: clamp(31px, 5vw, 50px);
+  line-height: 1.08;
+  letter-spacing: -.02em;
+  margin: 0 0 16px;
+  text-wrap: balance;
+}
+.dau .dan{ max-width: 64ch; color: var(--chu-mo); font-size: 17px; margin: 0; }
+
+/* ---------- Mục lục ---------- */
+.muc-luc{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 0 0 36px;
+  padding: 0;
+  list-style: none;
+  font-size: 14.5px;
+}
+.muc-luc a{ color: var(--chu); text-decoration: none; border-bottom: 1px solid var(--vien-dam); }
+.muc-luc a:hover, .muc-luc a:focus-visible{ color: var(--xanh); border-bottom-color: var(--xanh); }
+.muc-luc .so{ font-family: var(--f-ma); font-size: 11.5px; color: var(--xanh); margin-right: 6px; }
+a:focus-visible{ outline: 2px solid var(--xanh); outline-offset: 2px; }
+
+/* ---------- Ô vàng "quan trọng nhất" ---------- */
+.mo-dau{
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-top: 4px solid var(--hophach);
+  border-radius: 5px;
+  padding: 26px 30px;
+  margin-bottom: 50px;
+  box-shadow: var(--bong);
+}
+.mo-dau h2{
+  font-family: var(--f-de);
+  font-weight: 700;
+  font-size: 22px;
+  margin: 0 0 16px;
+  letter-spacing: -.01em;
+}
+.nguyen-tac{ display: grid; gap: 12px; }
+.nguyen-tac > div{
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 16px;
+  align-items: start;
+  background: var(--nen-phu);
+  border-radius: 4px;
+  padding: 15px 20px;
+}
+.nguyen-tac .k{
+  font-family: var(--f-ma);
+  font-size: 11px;
+  letter-spacing: .14em;
+  color: var(--xanh);
+  padding-top: 4px;
+}
+.nguyen-tac b{ display: block; font-family: var(--f-de); font-size: 16px; margin-bottom: 2px; }
+.nguyen-tac span{ color: var(--chu-mo); font-size: 15px; line-height: 1.6; display: block; }
+@media (max-width: 560px){ .nguyen-tac > div{ grid-template-columns: 1fr; gap: 4px; } }
+
+.hai-buoc{
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 18px;
+  align-items: stretch;
+  margin: 0 0 22px;
+}
+@media (max-width: 620px){
+  .hai-buoc{ grid-template-columns: 1fr; }
+  .hai-buoc .mui-ten{ transform: rotate(90deg); justify-self: center; }
+}
+.buoc{
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-radius: 4px;
+  padding: 16px 18px;
+}
+.buoc b{ display: block; font-family: var(--f-de); font-size: 15.5px; margin-bottom: 4px; }
+.buoc span{ font-size: 14.5px; color: var(--chu-mo); line-height: 1.6; display: block; }
+.mui-ten{
+  align-self: center;
+  font-family: var(--f-ma);
+  color: var(--hophach);
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+/* ---------- Chung ---------- */
+.phan{
+  font-family: var(--f-ma);
+  font-size: 11.5px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--xanh);
+  margin: 0 0 6px;
+}
+h2.muc{
+  font-family: var(--f-de);
+  font-weight: 700;
+  font-size: clamp(22px, 3vw, 29px);
+  letter-spacing: -.015em;
+  line-height: 1.2;
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+.phu-de{ color: var(--chu-mo); margin: 0 0 24px; max-width: 68ch; }
+h3{
+  font-family: var(--f-de);
+  font-weight: 600;
+  font-size: 17px;
+  margin: 30px 0 10px;
+  letter-spacing: -.005em;
+}
+p{ margin: 0 0 14px; max-width: 68ch; }
+ul{ margin: 0 0 14px; padding-left: 20px; max-width: 68ch; }
+li{ margin-bottom: 5px; }
+strong{ font-weight: 600; }
+em{ color: var(--chu-mo); }
+code{
+  font-family: var(--f-ma);
+  font-size: .87em;
+  background: var(--nen-phu);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.duong{ font-family: var(--f-ma); font-size: .86em; color: var(--xanh); white-space: nowrap; }
+
+section{ margin-bottom: 60px; scroll-margin-top: 20px; }
+
+ol.buoc-lam{
+  counter-reset: b;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  max-width: 68ch;
+}
+ol.buoc-lam li{
+  counter-increment: b;
+  position: relative;
+  padding-left: 34px;
+  margin-bottom: 9px;
+}
+ol.buoc-lam li::before{
+  content: counter(b);
+  position: absolute;
+  left: 0; top: 3px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--xanh-nen);
+  color: var(--xanh);
+  font-family: var(--f-ma);
+  font-size: 11.5px;
+  display: grid;
+  place-items: center;
+  font-weight: 500;
+}
+
+.hai-cot{ display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+.hai-cot > div{
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-radius: 5px;
+  padding: 20px 24px;
+}
+.hai-cot h3{ margin-top: 0; }
+.hai-cot .ai{ font-family: var(--f-ma); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--chu-mo); display: block; margin: -6px 0 12px; }
+.hai-cot > div > *:last-child{ margin-bottom: 0; }
+
+/* ---------- Bảng ---------- */
+.cuon{ overflow-x: auto; margin-bottom: 20px; }
+table{
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--f-doc);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--chu);
+}
+th, td{ text-align: left; padding: 10px 16px 10px 0; border-bottom: 1px solid var(--vien); vertical-align: top; }
+thead th{
+  font-family: var(--f-ma);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--chu-mo);
+  border-bottom: 1px solid var(--vien-dam);
+}
+tbody tr:last-child td{ border-bottom: 1px solid var(--vien-dam); }
+td.so{ font-variant-numeric: tabular-nums; white-space: nowrap; }
+td b{ font-family: var(--f-de); font-weight: 600; }
+
+.tt{
+  display: inline-block;
+  font-family: var(--f-ma);
+  font-size: 11px;
+  letter-spacing: .04em;
+  padding: 2px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+}
+.tt.tot{ color: var(--xanh); background: var(--xanh-nen); }
+.tt.canh{ color: var(--hophach); background: var(--hophach-nen); }
+.tt.xau{ color: var(--do); background: var(--do-nen); }
+
+/* ---------- Sơ đồ ---------- */
+.hinh{
+  margin: 0 0 22px;
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-radius: 5px;
+  padding: 22px 22px 16px;
+  box-shadow: var(--bong);
+}
+.hinh .ve{ overflow-x: auto; }
+.hinh svg{ display: block; width: 100%; min-width: 760px; height: auto; color: var(--chu-mo); }
+.hinh figcaption{ color: var(--chu-mo); font-size: 14.5px; margin-top: 12px; max-width: 82ch; line-height: 1.65; }
+.hinh text{ fill: var(--chu); font-family: var(--f-doc); font-size: 13px; }
+.hinh .t-de{ font-family: var(--f-de); font-weight: 600; font-size: 14px; }
+.hinh .t-nho{ font-family: var(--f-ma); font-size: 11px; fill: var(--chu-mo); letter-spacing: .02em; }
+.hinh .t-dai{ font-family: var(--f-ma); font-size: 11px; fill: var(--chu-mo); letter-spacing: .12em; }
+.hinh .t-xanh{ fill: var(--xanh); }
+.hinh .t-do{ fill: var(--do); }
+.hinh .t-hp{ fill: var(--hophach); }
+.hinh .o{ fill: var(--the); stroke: var(--vien-dam); stroke-width: 1.2; }
+.hinh .o-bong{ fill: var(--nen-phu); stroke: var(--vien-dam); stroke-width: 1.2; }
+.hinh .o-tong{ fill: var(--xanh-nen); stroke: var(--xanh); stroke-width: 1.2; }
+.hinh .o-do{ fill: var(--do-nen); stroke: var(--do); stroke-width: 1.2; }
+.hinh .o-trong{ fill: none; stroke: var(--vien-dam); stroke-width: 1.2; stroke-dasharray: 5 4; }
+.hinh .lan{ fill: var(--nen-phu); }
+.hinh .nen-chu{ fill: var(--the); }
+.hinh .day{ fill: none; stroke: currentColor; stroke-width: 1.4; }
+.hinh .chan{ fill: none; stroke: var(--do); stroke-width: 1.3; stroke-dasharray: 4 4; }
+.hinh .ke{ fill: none; stroke: var(--vien-dam); stroke-width: 1; stroke-dasharray: 2 5; }
+
+/* ---------- Thẻ bước ---------- */
+.luoi-man{ display: grid; gap: 20px; }
+.man{
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-radius: 5px;
+  padding: 24px 26px;
+  box-shadow: var(--bong);
+}
+.man > header{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: baseline;
+  border-bottom: 1px solid var(--vien);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+.man .so{
+  font-family: var(--f-ma);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--xanh);
+  border: 1px solid var(--xanh);
+  border-radius: 2px;
+  padding: 1px 7px;
+}
+.man h3{
+  font-family: var(--f-de);
+  font-weight: 700;
+  font-size: 19px;
+  margin: 0;
+  letter-spacing: -.01em;
+}
+.man .vai-tro{
+  font-family: var(--f-ma);
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--chu-mo);
+  display: block;
+  margin-top: 3px;
+}
+.man p, .man ul{ max-width: 70ch; }
+.man > *:last-child{ margin-bottom: 0; }
+
+/* ---------- Ghi chú ---------- */
+.hop{
+  border-left: 3px solid var(--xanh);
+  background: var(--xanh-nen);
+  padding: 13px 17px;
+  border-radius: 0 4px 4px 0;
+  margin: 0 0 16px;
+  font-size: 15px;
+  max-width: 72ch;
+}
+.hop.canh{ border-left-color: var(--hophach); background: var(--hophach-nen); }
+.hop.dung{ border-left-color: var(--do); background: var(--do-nen); }
+.hop p:last-child, .hop ul:last-child{ margin-bottom: 0; }
+.hop .nhan{
+  font-family: var(--f-ma);
+  font-size: 10.5px;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+  color: var(--xanh);
+}
+.hop.canh .nhan{ color: var(--hophach); }
+.hop.dung .nhan{ color: var(--do); }
+
+/* ---------- Lỗi thường gặp ---------- */
+.loi{
+  border: 1px solid var(--vien);
+  border-radius: 5px;
+  background: var(--the);
+  padding: 18px 22px;
+  margin-bottom: 14px;
+}
+.loi h3{
+  margin: 0 0 8px;
+  font-family: var(--f-doc);
+  font-weight: 600;
+  font-size: 15.5px;
+  color: var(--do);
+}
+.loi p{ margin-bottom: 0; font-size: 15px; }
+
+/* ---------- Luồng bán hằng ngày ---------- */
+.luong{ display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.luong > div{
+  background: var(--the);
+  border: 1px solid var(--vien);
+  border-top: 3px solid var(--xanh);
+  border-radius: 5px;
+  padding: 16px 18px;
+}
+.luong > div.chu-y{ border-top-color: var(--hophach); }
+.luong .k{ font-family: var(--f-ma); font-size: 11px; letter-spacing: .1em; color: var(--chu-mo); text-transform: uppercase; display: block; }
+.luong b{ display: block; font-family: var(--f-de); font-size: 15.5px; margin: 2px 0 6px; }
+.luong p{ font-size: 14.5px; margin: 0; line-height: 1.6; color: var(--chu-mo); }
+
+.chan-trang{
+  margin-top: 44px;
+  padding-top: 20px;
+  border-top: 1px solid var(--vien-dam);
+  color: var(--chu-mo);
+  font-size: 14px;
+  max-width: 72ch;
+}
+
+@media print{
+  @page{ size: A4 portrait; margin: 14mm 13mm; }
+  html{ scroll-behavior: auto; }
+  body{ background: #fff; color: #000; font-size: 10.5pt; line-height: 1.5; }
+  .bao{ max-width: none; padding: 0; }
+  .dau{ padding-top: 0; border-bottom: 2px solid #000; }
+  .dau h1{ font-size: 26pt; }
+  .muc-luc{ display: none; }
+  .mo-dau, .man, .loi, .luong > div, .buoc, .hop, .hinh, .hai-cot > div, .nguyen-tac > div{ background: #fff !important; box-shadow: none !important; }
+  .mo-dau, .man, .loi, .luong > div, .hinh, .hai-cot > div{ border: 1px solid #999; }
+  .man, .loi, .luong > div, .hop, .hinh, .hai-cot > div, .nguyen-tac > div, tr{ break-inside: avoid; page-break-inside: avoid; }
+  h2.muc{ break-after: avoid; page-break-after: avoid; }
+  thead{ display: table-header-group; }
+  .cuon, .hinh .ve{ overflow: visible; }
+  .hinh svg{ min-width: 0; }
+}
+</style>
+
+<div class="bao">
+
+<header class="dau">
+  <p class="eyebrow">Tân Phát · Hướng dẫn nghiệp vụ nhiều gara</p>
+  <h1>Nhiều gara: quản lý gara, tài khoản và kho</h1>
+  <p class="dan">Cho quản trị viên và quản lý gara. Đọc theo thứ tự: gara là gì và quản lý ở đâu, cấp tài khoản cho quản lý và nhân viên từng gara, kho tổng khác kho gara thế nào, rồi mở một gara mới từ đầu tới lúc bán được hàng.</p>
+</header>
+
+<nav aria-label="Mục lục">
+  <ul class="muc-luc">
+    <li><a href="#gara"><span class="so">1</span>Các gara</a></li>
+    <li><a href="#tai-khoan"><span class="so">2</span>Tài khoản</a></li>
+    <li><a href="#kho"><span class="so">3</span>Kho tổng và kho gara</a></li>
+    <li><a href="#mo-gara"><span class="so">4</span>Mở gara mới</a></li>
+    <li><a href="#hang-ngay"><span class="so">5</span>Bán hàng hằng ngày</a></li>
+    <li><a href="#loi">Chuyện hay gặp</a></li>
+    <li><a href="#gioi-han">Giới hạn hiện tại</a></li>
+  </ul>
+</nav>
+
+<div class="mo-dau">
+  <h2>Ba điều cần nhớ</h2>
+  <div class="nguyen-tac">
+    <div>
+      <span class="k">GARA</span>
+      <p style="margin:0"><b>Gara là đơn vị: người, danh mục và kho đều gắn vào một gara.</b>
+      <span>Tài khoản gán gara nào thì báo giá theo danh mục và giá của gara đó. Kho gán gara nào thì hàng trong đó là của gara đó.</span></p>
+    </div>
+    <div>
+      <span class="k">NGƯỜI</span>
+      <p style="margin:0"><b>Admin mở gara và cấp Manager. Manager tự thêm Staff cho gara mình.</b>
+      <span>Manager chỉ tạo được tài khoản Staff, chỉ trong gara của mình, và không đụng được Admin hay Manager khác.</span></p>
+    </div>
+    <div>
+      <span class="k">HÀNG</span>
+      <p style="margin:0"><b>Danh mục cho phép báo giá. Chỉ kho mới cho phép xuất hàng.</b>
+      <span>Đưa mặt hàng vào danh mục của gara không đưa cái nào vào kho của gara. Phải điều chuyển từ kho tổng sang, hoặc nhập mua.</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<section id="gara">
+  <p class="phan">Phần 1</p>
+  <h2 class="muc">Quản lý các gara</h2>
+  <p class="phu-de">Một hệ thống, một cơ sở dữ liệu, nhiều gara. Gara khai ở <span class="duong">Hệ thống → Quản lý gara</span>: Admin thêm và sửa, Manager chỉ xem.</p>
+
+  <h3>Gara tổng khác gara con ở đâu</h3>
+  <div class="cuon">
+  <table>
+    <thead><tr><th style="width:22%">Điểm</th><th>Gara tổng · TP01</th><th>Gara con · DMSG, DMDN</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Danh mục hàng</b></td>
+        <td>Sở hữu <strong>danh mục tổng</strong> — 18 mặt hàng dùng chung cho cả hệ thống.</td>
+        <td>Chọn từ danh mục tổng, đặt giá riêng nếu muốn, thêm hàng riêng chỉ gara đó có.</td>
+      </tr>
+      <tr>
+        <td><b>Kho</b></td>
+        <td>KHO01 “Kho tổng”, kho mặc định của hệ thống.</td>
+        <td>Kho riêng nếu Admin tạo. Sài Gòn có KHO02, Đà Nẵng chưa có.</td>
+      </tr>
+      <tr>
+        <td><b>Tài khoản chưa gán gara</b></td>
+        <td>Bị tính vào đây.</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><b>Xoá</b></td>
+        <td>Không xoá được. Muốn đổi gara tổng thì đánh dấu gara khác làm gara tổng.</td>
+        <td>Chỉ xoá được khi chưa có kho, tài khoản, chứng từ hay hàng riêng nào. Đã có thì tắt “Hoạt động”.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Thêm và sửa gara</h3>
+  <ul>
+    <li><strong>Mã gara</strong> ngắn và không trùng (ví dụ <code>DMHP</code>), <strong>Tên gara</strong>, địa chỉ, điện thoại, thứ tự hiển thị.</li>
+    <li><strong>Đây là gara tổng</strong>: cả hệ thống chỉ có một. Tick ở gara khác là chuyển vai gara tổng sang gara đó.</li>
+    <li><strong>Hoạt động</strong>: tắt thì gara không còn hiện để chọn khi gán tài khoản, và nhân viên của gara đó bị tính về gara tổng khi lập báo giá. Chứng từ cũ vẫn giữ nguyên.</li>
+  </ul>
+
+  <h3>Ô đổi gara ở đầu trang</h3>
+  <p>Ô có biểu tượng ghim bản đồ và tên gara, bấm vào thấy “Đang làm việc tại”. Chỉ <strong>Admin và Manager</strong> thấy, và chỉ khi hệ thống có từ hai gara trở lên. Staff không có ô này: họ luôn làm việc ở gara ghi trong tài khoản.</p>
+  <p>Đổi gara ở đây quyết định ba thứ: <strong>danh mục và giá khi lập báo giá</strong>, <strong>báo giá ghi thuộc gara nào</strong>, và <strong>màn Danh mục của gara đang sửa gara nào</strong>. Ô này chỉ đổi cho phiên đăng nhập của chính mình. Nó không sửa gara trong tài khoản, không đổi kho xuất trên hoá đơn, và không mở rộng quyền quản lý người dùng.</p>
+
+  <div class="hop canh">
+    <span class="nhan">Gara là dấu ghi, chưa phải hàng rào</span>
+    <p>Nhân viên gara này vẫn xem được khách, báo giá, hoá đơn và tồn kho của gara khác. Hiện chỉ có màn <strong>Người dùng</strong> là giới hạn theo gara.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="tai-khoan">
+  <p class="phan">Phần 2</p>
+  <h2 class="muc">Tài khoản cho gara và nhân viên</h2>
+  <p class="phu-de">Có sẵn ba nhóm. Mỗi người đăng nhập bằng email và mật khẩu ở trang đăng nhập quản trị (<code>…/dang-nhap</code>). Nhóm quyết định làm được việc gì; ô Gara quyết định làm cho gara nào.</p>
+
+  <div class="cuon">
+  <table>
+    <thead><tr><th style="width:12%">Nhóm</th><th style="width:18%">Dành cho</th><th>Làm được</th><th style="width:28%">Không làm được</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><b>Admin</b></td>
+        <td>Chủ hệ thống</td>
+        <td>Mọi thứ: mở gara, tạo kho, cấp tài khoản cho mọi nhóm và mọi gara, sửa phân quyền nhóm.</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><b>Manager</b></td>
+        <td>Quản lý một gara</td>
+        <td>Mọi việc của Staff, cộng: xoá chứng từ, sửa hàng hoá, dựng danh mục của gara, phiếu nhập / xuất / điều chuyển / kiểm kê, xem báo cáo, <strong>thêm và sửa tài khoản Staff của gara mình</strong>.</td>
+        <td>Tạo gara, tạo kho, cấp tài khoản Admin hoặc Manager, xoá tài khoản, sửa phân quyền.</td>
+      </tr>
+      <tr>
+        <td><b>Staff</b></td>
+        <td>Nhân viên bán hàng, cố vấn dịch vụ</td>
+        <td>Báo giá, hoá đơn bán, khách hàng và xe, phiếu bảo hành. Xem hàng hoá và tồn kho.</td>
+        <td>Xoá bất cứ thứ gì, sửa hàng hoá, làm phiếu kho, vào màn Người dùng.</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <figure class="hinh">
+    <div class="ve">
+    <svg viewBox="0 0 900 300" role="img" aria-label="Sơ đồ ai tạo tài khoản cho ai. Admin tạo Manager cho từng gara. Manager Sài Gòn tạo Staff Sài Gòn; Manager Đà Nẵng tạo Staff Đà Nẵng. Manager không cấp được Admin hay Manager, và không với tới người của gara khác.">
+      <defs>
+        <marker id="mt2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <!-- Admin -->
+      <rect class="o-tong" x="20" y="105" width="170" height="74" rx="4"/>
+      <text class="t-de" x="105" y="136" text-anchor="middle">Admin</text>
+      <text x="105" y="158" text-anchor="middle" style="font-size:12px">toàn hệ thống</text>
+      <text class="t-nho" x="105" y="202" text-anchor="middle">mở gara · tạo kho</text>
+      <text class="t-nho" x="105" y="218" text-anchor="middle">cấp tài khoản Manager</text>
+
+      <!-- Làn gara Sài Gòn -->
+      <rect class="lan" x="250" y="14" width="630" height="128" rx="6"/>
+      <text class="t-dai" x="268" y="36">GARA SÀI GÒN · DMSG</text>
+      <rect class="o" x="280" y="50" width="180" height="62" rx="4"/>
+      <text class="t-de" x="370" y="77" text-anchor="middle">Manager</text>
+      <text class="t-nho" x="370" y="98" text-anchor="middle">quản lý gara</text>
+      <text class="t-do" x="370" y="131" text-anchor="middle" style="font-size:11.5px">không cấp được Admin, Manager</text>
+      <rect class="o-bong" x="626" y="44" width="180" height="62" rx="4"/>
+      <rect class="o" x="620" y="50" width="180" height="62" rx="4"/>
+      <text class="t-de" x="710" y="77" text-anchor="middle">Staff</text>
+      <text class="t-nho" x="710" y="98" text-anchor="middle">nhân viên bán hàng</text>
+      <path class="day" d="M460 81 H618" marker-end="url(#mt2)"/>
+      <text class="t-nho" x="539" y="72" text-anchor="middle">tạo, sửa Staff</text>
+
+      <!-- Làn gara Đà Nẵng -->
+      <rect class="lan" x="250" y="158" width="630" height="128" rx="6"/>
+      <text class="t-dai" x="268" y="180">GARA ĐÀ NẴNG · DMDN</text>
+      <rect class="o" x="280" y="194" width="180" height="62" rx="4"/>
+      <text class="t-de" x="370" y="221" text-anchor="middle">Manager</text>
+      <text class="t-nho" x="370" y="242" text-anchor="middle">quản lý gara</text>
+      <rect class="o-bong" x="626" y="188" width="180" height="62" rx="4"/>
+      <rect class="o" x="620" y="194" width="180" height="62" rx="4"/>
+      <text class="t-de" x="710" y="221" text-anchor="middle">Staff</text>
+      <text class="t-nho" x="710" y="242" text-anchor="middle">nhân viên bán hàng</text>
+      <path class="day" d="M460 225 H618" marker-end="url(#mt2)"/>
+      <text class="t-nho" x="539" y="216" text-anchor="middle">tạo, sửa Staff</text>
+
+      <!-- Admin tạo Manager -->
+      <path class="day" d="M190 130 H225 V81 H278" marker-end="url(#mt2)"/>
+      <path class="day" d="M190 154 H225 V225 H278" marker-end="url(#mt2)"/>
+
+      <!-- Không với tới gara khác -->
+      <path class="chan" d="M460 100 L612 205"/>
+      <text class="t-do" x="613" y="211" text-anchor="middle" style="font-size:15px">✕</text>
+      <rect class="nen-chu" x="452" y="143" width="190" height="15"/>
+      <text class="t-do" x="547" y="154" text-anchor="middle" style="font-size:11.5px">không với tới người gara khác</text>
+    </svg>
+    </div>
+    <figcaption>Admin mở gara và tạo tài khoản Manager đầu tiên cho từng gara. Từ đó Manager tự thêm Staff, nhưng chỉ trong gara ghi trong tài khoản của mình, và chỉ cấp được nhóm có ít quyền hơn nhóm mình.</figcaption>
+  </figure>
+
+  <div class="hai-cot">
+    <div>
+      <h3>Admin cấp tài khoản Manager</h3>
+      <span class="ai">Admin · Hệ thống → Quản lý người dùng</span>
+      <ol class="buoc-lam">
+        <li>Bấm <strong>Thêm người dùng</strong>.</li>
+        <li><strong>Tên</strong> (ít nhất 4 ký tự), <strong>Email</strong> (dùng để đăng nhập, không trùng), <strong>Mật khẩu</strong> (ít nhất 6 ký tự) và nhập lại.</li>
+        <li><strong>Trạng thái</strong>: Kích hoạt. <strong>Nhóm</strong>: Manager.</li>
+        <li><strong>Gara</strong>: đúng gara người đó quản lý. Manager chưa gán gara thì không quản lý được nhân viên nào.</li>
+        <li>Bấm <strong>Thêm mới</strong>, rồi gửi email và mật khẩu cho người đó.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Manager thêm Staff cho gara mình</h3>
+      <span class="ai">Manager · Hệ thống → Quản lý người dùng</span>
+      <ol class="buoc-lam">
+        <li>Đầu trang ghi “Bạn đang quản lý nhân viên của …”. Danh sách chỉ có người cùng gara.</li>
+        <li>Bấm <strong>Thêm người dùng</strong>. Ô Nhóm chỉ có <em>Staff</em>; ô Gara đã điền sẵn gara của mình và không đổi được.</li>
+        <li>Điền tên, email, mật khẩu như trên, bấm <strong>Thêm mới</strong>.</li>
+        <li>Gửi thông tin đăng nhập cho nhân viên.</li>
+      </ol>
+      <p>Manager sửa được tên, email, mật khẩu và trạng thái của Staff cùng gara. Với Admin, Manager khác và chính mình thì nút Sửa không hiện.</p>
+    </div>
+  </div>
+
+  <h3>Những việc khác với tài khoản</h3>
+  <div class="cuon">
+  <table>
+    <thead><tr><th style="width:24%">Việc</th><th style="width:18%">Ai làm</th><th>Cách làm</th></tr></thead>
+    <tbody>
+      <tr><td>Nhân viên quên mật khẩu</td><td>Manager của gara, hoặc Admin</td><td>Sửa tài khoản, gõ mật khẩu mới vào hai ô mật khẩu. Để trống hai ô đó thì mật khẩu cũ giữ nguyên.</td></tr>
+      <tr><td>Tự đổi mật khẩu của mình</td><td>—</td><td>Chưa có màn tự đổi. Manager nhờ Admin đặt lại.</td></tr>
+      <tr><td>Chuyển nhân viên sang gara khác</td><td>Admin</td><td>Sửa tài khoản, đổi ô Gara.</td></tr>
+      <tr><td>Nâng Staff lên Manager</td><td>Admin</td><td>Sửa tài khoản, đổi ô Nhóm.</td></tr>
+      <tr><td>Tìm tài khoản chưa gán gara</td><td>Admin</td><td>Ô lọc gara trên danh sách → “Chưa gán gara (tính là gara tổng)”.</td></tr>
+      <tr><td>Nhân viên nghỉ việc</td><td>Manager của gara, hoặc Admin</td><td>Đổi mật khẩu tài khoản đó ngay và đặt Trạng thái “Chưa kích hoạt”. Xem cảnh báo ngay dưới.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="hop dung">
+    <span class="nhan">“Chưa kích hoạt” hiện chưa khoá được tài khoản</span>
+    <p>Phần mềm đang không kiểm tra Trạng thái lúc đăng nhập: đã thử một tài khoản “Chưa kích hoạt” vẫn đăng nhập và mở được màn Báo giá. Trong lúc chờ sửa, <strong>đổi mật khẩu</strong> là cách chặn người đã nghỉ đăng nhập lại. Phiên đang mở trên máy của họ có thể còn dùng được tới khi hết hạn.</p>
+  </div>
+
+  <div class="hop canh">
+    <span class="nhan">Cho Admin: đừng để nhóm mới trống quyền</span>
+    <p>Nhóm chưa được cấp quyền nào lại vào được <strong>mọi</strong> màn hình quản trị. Tạo nhóm mới thì phân quyền cho nhóm ngay, trước khi gán ai vào.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="kho">
+  <p class="phan">Phần 3</p>
+  <h2 class="muc">Kho tổng và kho gara</h2>
+  <p class="phu-de">Chữ “kho tổng” trên phần mềm xuất hiện ở hai chỗ và chỉ hai thứ khác nhau. Nhầm hai thứ này là nguồn gốc của hầu hết thắc mắc “sao có hàng mà không bán được”.</p>
+
+  <div class="hai-buoc">
+    <div class="buoc">
+      <b>Lập báo giá</b>
+      <span>Lấy hàng và giá từ <strong>danh mục</strong>. Không cần kho có hàng — báo giá chưa đụng tới tồn kho.</span>
+    </div>
+    <div class="mui-ten" aria-hidden="true">──▶</div>
+    <div class="buoc">
+      <b>Ghi sổ hoá đơn</b>
+      <span>Trừ hàng khỏi <strong>kho xuất</strong> ghi trên hoá đơn. Kho không đủ thì phần mềm chặn, báo “Tồn không đủ để xuất bán”.</span>
+    </div>
+  </div>
+
+  <div class="cuon">
+  <table>
+    <thead>
+      <tr><th style="width:22%">Tên gọi</th><th style="width:26%">Thấy ở đâu</th><th>Là cái gì</th><th style="width:18%">Hiện có</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Danh mục tổng</b><br><em>nút “Kho tổng” trên báo giá</em></td>
+        <td><span class="duong">Hàng hoá → Quản lý hàng hoá</span></td>
+        <td>Danh sách mọi mặt hàng dùng chung của hệ thống, kèm <strong>giá tổng</strong>. Là một danh sách, không phải một cái kho — không có số lượng.</td>
+        <td class="so">18 mặt hàng</td>
+      </tr>
+      <tr>
+        <td><b>Danh mục của gara</b></td>
+        <td><span class="duong">Hàng hoá → Danh mục của gara</span></td>
+        <td>Phần danh mục tổng mà gara chọn bán, có thể kèm <strong>giá riêng</strong>, cộng <strong>hàng riêng</strong> chỉ gara đó có (công thợ, hàng mua tại chỗ…). Cũng không có số lượng.</td>
+        <td class="so">TP01: 12<br>DMSG: 6 + 3 riêng<br>DMDN: 3 + 2 riêng</td>
+      </tr>
+      <tr>
+        <td><b>Kho KHO01 “Kho tổng”</b></td>
+        <td><span class="duong">Kho → Danh mục kho</span></td>
+        <td>Một kho thật, thuộc gara tổng TP01 và là kho mặc định. Có tồn kho, có thẻ kho. Chỉ tình cờ trùng tên với danh mục tổng.</td>
+        <td class="so">16 mặt hàng còn<br>694 đơn vị</td>
+      </tr>
+      <tr>
+        <td><b>Kho của gara</b></td>
+        <td><span class="duong">Kho → Danh mục kho</span>, cột Gara</td>
+        <td>Kho thật gán cho một gara. Hàng vào bằng phiếu nhập (mua từ nhà cung cấp) hoặc phiếu điều chuyển (chuyển từ kho khác sang).</td>
+        <td class="so">KHO02 (DMSG): 0<br>DMDN: chưa có kho</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <figure class="hinh">
+    <div class="ve">
+    <svg viewBox="0 0 980 430" role="img" aria-label="Sơ đồ hai tầng. Tầng danh mục: danh mục tổng 18 mặt hàng được chọn xuống danh mục của ba gara. Tầng kho: nhà cung cấp nhập vào KHO01, KHO01 điều chuyển sang KHO02 nhưng chưa có phiếu nào, Đà Nẵng chưa có kho. Sài Gòn có 9 mặt hàng trong danh mục nhưng kho bằng 0.">
+      <defs>
+        <marker id="mt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <text class="t-dai" x="20" y="28">DANH MỤC — BÁN GÌ, GIÁ BAO NHIÊU · BÁO GIÁ LẤY TỪ ĐÂY</text>
+
+      <path class="day" d="M110 90 V62 H865"/>
+      <path class="day" d="M385 62 V88" marker-end="url(#mt)"/>
+      <path class="day" d="M625 62 V88" marker-end="url(#mt)"/>
+      <path class="day" d="M865 62 V88" marker-end="url(#mt)"/>
+      <text class="t-nho" x="232" y="54">tick chọn + giá riêng · Hàng hoá → Danh mục của gara</text>
+
+      <rect class="o-tong" x="20" y="90" width="180" height="84" rx="4"/>
+      <text class="t-de" x="110" y="115" text-anchor="middle">Danh mục tổng</text>
+      <text x="110" y="140" text-anchor="middle"><tspan class="t-de" style="font-size:20px">18</tspan> mặt hàng</text>
+      <text class="t-nho" x="110" y="162" text-anchor="middle">nút “Kho tổng”</text>
+
+      <rect class="o" x="290" y="90" width="190" height="84" rx="4"/>
+      <text class="t-de" x="385" y="115" text-anchor="middle">Danh mục · TP01</text>
+      <text x="385" y="140" text-anchor="middle">12 chọn từ tổng</text>
+      <text class="t-nho" x="385" y="162" text-anchor="middle">gara tổng</text>
+
+      <rect class="o" x="530" y="90" width="190" height="84" rx="4"/>
+      <text class="t-de" x="625" y="115" text-anchor="middle">Danh mục · DMSG</text>
+      <text x="625" y="140" text-anchor="middle">6 chọn từ tổng</text>
+      <text class="t-hp" x="625" y="162" text-anchor="middle" style="font-size:12px">+ 3 hàng riêng</text>
+
+      <rect class="o" x="770" y="90" width="190" height="84" rx="4"/>
+      <text class="t-de" x="865" y="115" text-anchor="middle">Danh mục · DMDN</text>
+      <text x="865" y="140" text-anchor="middle">3 chọn từ tổng</text>
+      <text class="t-hp" x="865" y="162" text-anchor="middle" style="font-size:12px">+ 2 hàng riêng</text>
+
+      <path class="ke" d="M385 174 V285"/>
+      <path class="ke" d="M625 174 V285"/>
+      <path class="ke" d="M865 174 V285"/>
+      <rect class="nen-chu" x="310" y="192" width="150" height="40" rx="3"/>
+      <text class="t-xanh" x="385" y="208" text-anchor="middle" style="font-size:12px">báo giá 12 món</text>
+      <text class="t-xanh" x="385" y="225" text-anchor="middle" style="font-size:12px">kho có hàng → bán được</text>
+      <rect class="nen-chu" x="545" y="192" width="160" height="40" rx="3"/>
+      <text class="t-do" x="625" y="208" text-anchor="middle" style="font-size:12px">báo giá 9 món</text>
+      <text class="t-do" x="625" y="225" text-anchor="middle" style="font-size:12px">kho 0 → ghi sổ bị chặn</text>
+      <rect class="nen-chu" x="785" y="192" width="160" height="40" rx="3"/>
+      <text class="t-hp" x="865" y="208" text-anchor="middle" style="font-size:12px">báo giá 5 món</text>
+      <text class="t-hp" x="865" y="225" text-anchor="middle" style="font-size:12px">không kho → chỉ dịch vụ</text>
+
+      <line x1="20" y1="248" x2="960" y2="248" style="stroke:var(--vien-dam);stroke-width:1"/>
+
+      <text class="t-dai" x="20" y="272">KHO — CÒN BAO NHIÊU CÁI, Ở ĐÂU · HOÁ ĐƠN GHI SỔ TRỪ Ở ĐÂY</text>
+
+      <rect class="o-trong" x="20" y="285" width="180" height="80" rx="4"/>
+      <text class="t-de" x="110" y="320" text-anchor="middle">Nhà cung cấp</text>
+      <text class="t-nho" x="110" y="342" text-anchor="middle">ngoài hệ thống</text>
+
+      <path class="day" d="M200 325 H288" marker-end="url(#mt)"/>
+      <text class="t-nho" x="244" y="316" text-anchor="middle">Phiếu nhập</text>
+      <text class="t-nho" x="244" y="342" text-anchor="middle">3 phiếu</text>
+
+      <rect class="o-tong" x="290" y="285" width="190" height="80" rx="4"/>
+      <text class="t-de" x="385" y="310" text-anchor="middle">KHO01 “Kho tổng”</text>
+      <text x="385" y="334" text-anchor="middle">16 mặt hàng · 694 đv</text>
+      <text class="t-nho" x="385" y="354" text-anchor="middle">kho thật của TP01</text>
+
+      <rect class="o-do" x="530" y="285" width="190" height="80" rx="4"/>
+      <text class="t-de" x="625" y="310" text-anchor="middle">KHO02 Chi nhánh MN</text>
+      <text class="t-do" x="625" y="334" text-anchor="middle">0 mặt hàng</text>
+      <text class="t-nho" x="625" y="354" text-anchor="middle">kho thật của DMSG</text>
+
+      <rect class="o-trong" x="770" y="285" width="190" height="80" rx="4"/>
+      <text class="t-de" x="865" y="318" text-anchor="middle">Chưa có kho</text>
+      <text class="t-nho" x="865" y="342" text-anchor="middle">DMDN</text>
+
+      <path class="day" d="M385 365 V396 H625 V367" marker-end="url(#mt)" style="stroke-dasharray:6 4"/>
+      <text class="t-nho" x="505" y="418" text-anchor="middle">Kho → Điều chuyển kho · đã làm: 0 phiếu</text>
+    </svg>
+    </div>
+    <figcaption>Tầng trên quyết định báo giá được gì, tầng dưới quyết định ghi sổ hoá đơn được không. Hai tầng không tự nối với nhau: Sài Gòn có 9 mặt hàng trong danh mục nhưng KHO02 trống, vì mũi tên điều chuyển từ KHO01 sang chưa được đi lần nào.</figcaption>
+  </figure>
+
+  <div class="hop">
+    <span class="nhan">Giá lấy từ đâu</span>
+    <p>Trong danh mục của gara, ô <strong>“Giá riêng của gara”</strong> để trống nghĩa là theo giá tổng — giá tổng đổi thì giá gara đổi theo. Gõ số vào là giá riêng, không đổi theo nữa. Gõ <code>0</code> là bán giá 0 thật, không phải “để trống”.</p>
+  </div>
+
+  <h3>Ba gara trong dữ liệu mẫu đang ở đâu</h3>
+  <div class="cuon">
+  <table>
+    <thead>
+      <tr><th>Gara</th><th>Danh mục</th><th>Kho</th><th>Tồn</th><th>Tài khoản</th><th>Tình trạng</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>TP01 · Tân Phát</b><br><em>gara tổng</em></td>
+        <td class="so">12</td><td>KHO01</td><td class="so">16 mặt hàng</td><td class="so">5</td>
+        <td><span class="tt tot">Bán được</span></td>
+      </tr>
+      <tr>
+        <td><b>DMSG · Sài Gòn</b></td>
+        <td class="so">9</td><td>KHO02</td><td class="so">0</td><td class="so">0</td>
+        <td><span class="tt xau">Thiếu tài khoản và hàng trong kho</span></td>
+      </tr>
+      <tr>
+        <td><b>DMDN · Đà Nẵng</b></td>
+        <td class="so">5</td><td>—</td><td class="so">—</td><td class="so">0</td>
+        <td><span class="tt canh">Chưa có kho, chưa có tài khoản</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="mo-gara">
+  <p class="phan">Phần 4</p>
+  <h2 class="muc">Mở một gara mới: sáu bước</h2>
+  <p class="phu-de">Làm đúng thứ tự: bước sau cần thứ bước trước tạo ra. Mỗi thẻ ghi ai làm được và vào menu nào.</p>
+
+  <div class="luoi-man">
+
+    <article class="man">
+      <header><span class="so">B1</span><div><h3>Khai gara</h3><span class="vai-tro">Admin · Hệ thống → Quản lý gara → Thêm</span></div></header>
+      <ul>
+        <li>Điền Mã gara, Tên gara. <strong>Không</strong> tick “Đây là gara tổng”.</li>
+        <li>Để “Hoạt động” được bật.</li>
+      </ul>
+    </article>
+
+    <article class="man">
+      <header><span class="so">B2</span><div><h3>Tạo kho cho gara</h3><span class="vai-tro">Admin · Kho → Danh mục kho → Thêm</span></div></header>
+      <ul>
+        <li>Đặt mã và tên có tên gara, ví dụ <code>KHO03 – Kho Hải Phòng</code>, và chọn đúng <strong>Gara</strong>.</li>
+        <li>Gara chỉ bán dịch vụ (công thợ, không giữ phụ tùng) thì bỏ qua bước này — hoá đơn chỉ có dịch vụ không cần kho.</li>
+      </ul>
+    </article>
+
+    <article class="man">
+      <header><span class="so">B3</span><div><h3>Cấp tài khoản</h3><span class="vai-tro">Admin, rồi Manager · Hệ thống → Quản lý người dùng</span></div></header>
+      <ul>
+        <li><strong>Admin</strong> tạo tài khoản Manager cho gara: Nhóm Manager, ô Gara là gara mới (xem Phần 2).</li>
+        <li><strong>Manager</strong> đăng nhập và tự thêm Staff. Tài khoản Staff tự thuộc gara của Manager.</li>
+      </ul>
+      <div class="hop canh">
+        <span class="nhan">Đừng để trống ô Gara</span>
+        <p>Để trống thì tài khoản bị tính là gara tổng: nhân viên gara mới sẽ báo giá theo danh mục và giá của TP01 mà không ai để ý.</p>
+      </div>
+    </article>
+
+    <article class="man">
+      <header><span class="so">B4</span><div><h3>Dựng danh mục của gara</h3><span class="vai-tro">Admin, Manager · Hàng hoá → Danh mục của gara</span></div></header>
+      <ul>
+        <li>Màn này làm việc với <strong>gara đang chọn</strong> ở ô đổi gara. Admin phải đổi sang gara mới trước; Manager thì mặc định đã đúng gara của mình.</li>
+        <li>Khung <strong>“Chọn mặt hàng từ kho tổng”</strong>: tick cột <strong>Làm</strong> cho những món gara bán, điền “Giá riêng của gara” nếu khác giá tổng, bấm <strong>Lưu danh mục</strong>.</li>
+        <li>Món chỉ gara này có: thêm ở ô hàng riêng (Tên mặt hàng, Loại, Đơn vị tính, Giá). Hàng riêng không lên web bán hàng, gara khác không có trong danh mục.</li>
+      </ul>
+    </article>
+
+    <article class="man">
+      <header><span class="so">B5</span><div><h3>Đưa hàng vào kho của gara</h3><span class="vai-tro">Admin, Manager · Kho → Điều chuyển kho, hoặc Phiếu nhập kho</span></div></header>
+      <p>Bước hay bị quên nhất, vì làm xong bước 4 là báo giá đã chạy. Chọn một trong hai đường:</p>
+      <ul>
+        <li><strong>Lấy từ kho tổng</strong>: <span class="duong">Kho → Điều chuyển kho</span>, kho xuất <code>KHO01</code>, kho nhận là kho của gara, thêm dòng hàng, lưu, rồi bấm <strong>Ghi sổ</strong>.</li>
+        <li><strong>Gara tự mua</strong>: <span class="duong">Kho → Phiếu nhập kho</span>, chọn nhà cung cấp, kho nhập là kho của gara, rồi Ghi sổ.</li>
+      </ul>
+      <div class="hop canh">
+        <span class="nhan">Phiếu nháp chưa làm gì cả</span>
+        <p>Tồn chỉ thay đổi khi bấm Ghi sổ. Muốn sửa phiếu đã ghi sổ thì Huỷ ghi sổ trước.</p>
+      </div>
+    </article>
+
+    <article class="man">
+      <header><span class="so">B6</span><div><h3>Kiểm tra trước khi giao cho gara</h3><span class="vai-tro">Admin, Manager · Kho → Tồn kho</span></div></header>
+      <ul>
+        <li>Tồn của kho gara phải có những món gara hay bán.</li>
+        <li>Đăng nhập thử bằng một tài khoản Staff của gara, lập một báo giá: nút nguồn của gara phải sáng, đúng số mặt hàng, giá ra đúng giá riêng.</li>
+      </ul>
+    </article>
+
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="hang-ngay">
+  <p class="phan">Phần 5</p>
+  <h2 class="muc">Bán hàng hằng ngày tại gara</h2>
+  <p class="phu-de">Một lượt khách vào xưởng đi qua bốn chỗ. Chỗ viền vàng là chỗ phần mềm hiện chưa tự làm đúng cho gara con.</p>
+
+  <div class="luong">
+    <div>
+      <span class="k">Bán hàng → Báo giá</span>
+      <b>Lập báo giá</b>
+      <p>Nguồn mặc định là danh mục của gara. Khách cần món gara chưa bán thì bấm <strong>Kho tổng</strong> để chọn từ danh mục tổng. Ghi biển số xe và số km.</p>
+    </div>
+    <div>
+      <span class="k">Trên báo giá</span>
+      <b>Chuyển thành hoá đơn</b>
+      <p>Tạo hoá đơn nháp, chép dòng hàng, biển số, số km sang.</p>
+    </div>
+    <div class="chu-y">
+      <span class="k">Bán hàng → Hoá đơn bán</span>
+      <b>Sửa Kho xuất</b>
+      <p>Hoá đơn chuyển từ báo giá luôn điền sẵn <strong>KHO01</strong>, kể cả ở gara con. Đổi sang kho của gara trước khi ghi sổ.</p>
+    </div>
+    <div>
+      <span class="k">Trên hoá đơn</span>
+      <b>Ghi sổ</b>
+      <p>Trừ tồn ở kho xuất. Dòng dịch vụ không trừ kho. Thiếu hàng thì bị chặn — quay lại bước 5.</p>
+    </div>
+  </div>
+
+  <h3>Ai làm được gì</h3>
+  <div class="cuon">
+  <table>
+    <thead>
+      <tr><th>Việc</th><th>Admin</th><th>Manager</th><th>Staff</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Khai gara, tạo kho</td><td>Được</td><td>Chỉ xem</td><td>—</td></tr>
+      <tr><td>Cấp tài khoản, gán gara</td><td>Được, mọi nhóm, mọi gara</td><td>Chỉ tạo và sửa Staff của gara mình</td><td>—</td></tr>
+      <tr><td>Xoá tài khoản</td><td>Được</td><td>—</td><td>—</td></tr>
+      <tr><td>Thấy ô đổi gara ở đầu trang</td><td>Được</td><td>Được</td><td>— luôn ở gara của mình</td></tr>
+      <tr><td>Dựng danh mục của gara</td><td>Được</td><td>Được, cả xoá hàng riêng</td><td>—</td></tr>
+      <tr><td>Phiếu nhập, điều chuyển, kiểm kê</td><td>Được</td><td>Được, không xoá</td><td>Chỉ xem tồn</td></tr>
+      <tr><td>Báo giá, hoá đơn bán</td><td>Được</td><td>Được, cả xoá</td><td>Được, không xoá</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="loi">
+  <h2 class="muc">Chuyện hay gặp</h2>
+  <p class="phu-de">Kèm nguyên nhân và cách gỡ.</p>
+
+  <div class="loi">
+    <h3>Manager vào Quản lý người dùng thấy danh sách trống, báo “chưa được gán gara”</h3>
+    <p>Tài khoản Manager đó để trống ô Gara. Admin sửa tài khoản, chọn đúng gara.</p>
+  </div>
+
+  <div class="loi">
+    <h3>Manager không thấy nút Sửa ở tài khoản Admin, Manager khác, hay của chính mình</h3>
+    <p>Đúng thiết kế: Manager chỉ sửa được Staff cùng gara, để không ai tự nâng mình lên Admin được. Những việc đó nhờ Admin.</p>
+  </div>
+
+  <div class="loi">
+    <h3>Nhân viên gara con báo giá ra giá của gara tổng</h3>
+    <p>Tài khoản để trống ô Gara nên bị tính là gara tổng. Admin lọc “Chưa gán gara” trên danh sách người dùng rồi gán đúng gara.</p>
+  </div>
+
+  <div class="loi">
+    <h3>“Danh mục gara có hàng mà ghi sổ hoá đơn báo Tồn không đủ để xuất bán”</h3>
+    <p>Danh mục không phải tồn kho. Làm bước 5: điều chuyển từ KHO01 sang kho gara (hoặc nhập mua), Ghi sổ, rồi ghi sổ lại hoá đơn.</p>
+  </div>
+
+  <div class="loi">
+    <h3>Hoá đơn của gara con bị trừ hàng ở KHO01</h3>
+    <p>Hoá đơn tạo bằng “Chuyển thành hoá đơn” luôn lấy kho mặc định KHO01. Đã ghi sổ rồi thì Huỷ ghi sổ, đổi Kho xuất, Ghi sổ lại.</p>
+  </div>
+
+  <div class="loi">
+    <h3>Nút nguồn của gara trên báo giá bị mờ, ghi “chưa có”</h3>
+    <p>Gara chưa có mặt hàng nào trong danh mục. Làm bước 4; trong lúc chờ vẫn báo giá được bằng nút Kho tổng.</p>
+  </div>
+
+  <div class="loi">
+    <h3>Chọn nhầm kho của gara khác</h3>
+    <p>Ô chọn kho trên chứng từ đang liệt kê tất cả kho, chưa lọc theo gara. Đặt tên kho có tên gara để khỏi nhầm.</p>
+  </div>
+</section>
+
+<section id="gioi-han">
+  <h2 class="muc">Giới hạn hiện tại</h2>
+  <div class="hop canh">
+    <span class="nhan">Phần mềm chưa làm những việc này</span>
+    <ul>
+      <li><strong>Trạng thái “Chưa kích hoạt” chưa chặn đăng nhập.</strong> Nhân viên nghỉ thì đổi mật khẩu tài khoản của họ.</li>
+      <li><strong>Gara chưa phải ranh giới quyền.</strong> Ngoài màn Người dùng, nhân viên gara này vẫn xem được dữ liệu của gara khác. Manager đổi ô gara sang gara khác thì cũng sửa được danh mục của gara đó.</li>
+      <li><strong>Chuyển báo giá thành hoá đơn luôn chọn KHO01</strong>, và form thêm hoá đơn không tự chọn kho của gara.</li>
+      <li><strong>Danh mục của gara không nhìn tồn.</strong> Tick một món vào danh mục không cho biết kho gara đang có bao nhiêu.</li>
+      <li><strong>Chưa có màn tự đổi mật khẩu</strong> cho tài khoản quản trị.</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="chan-trang">
+  Số liệu lấy từ dữ liệu mẫu trên máy local ngày 11/09/2026 (công cụ <code>tools/tao-du-lieu-gara.php</code>): 3 gara, danh mục tổng 18 mặt hàng, 5 tài khoản đều thuộc TP01, 3 phiếu nhập, 0 phiếu điều chuyển, 6 hoá đơn bán. Dữ liệu trên server có thể khác.
+</footer>
+
+</div>
