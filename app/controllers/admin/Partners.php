@@ -32,8 +32,28 @@ class Partners extends Controller {
         $this->__data['sub_content'] = $this->viewDir . '/lists';
         $this->__data['page_title']  = $this->labelMany;
         $this->baseData();
-        $this->__data['content']['page_name'] = $this->labelMany;
-        $this->__data['content']['dataList']  = $this->__model->getLists();
+
+        /* Bộ lọc đọc từ URL (GET) nên dán link cho người khác là họ thấy đúng
+           danh sách đang xem, và bấm sang trang 2 không mất bộ lọc —
+           phan_trang_qs() giữ mọi tham số trừ page/per_page.
+           Giá trị lạ trên URL rơi về "tất cả" chứ không đưa thẳng vào truy vấn. */
+        $f = $this->__request->getFields();
+        $loc = [
+            'q'      => isset($f['q']) ? trim((string) $f['q']) : '',
+            'type'   => (isset($f['type']) && isset(PartnersModel::$types[$f['type']])) ? $f['type'] : '',
+            'group'  => (isset($f['group']) && ($f['group'] === 'none' || (int) $f['group'] > 0))
+                        ? (string) $f['group'] : '',
+            'status' => (isset($f['status']) && ($f['status'] === '1' || $f['status'] === '0'))
+                        ? $f['status'] : '',
+        ];
+
+        $c = &$this->__data['content'];
+        $c['page_name']    = $this->labelMany;
+        $c['dataList']     = $this->__model->getLists($loc);
+        $c['loc']          = $loc;
+        $c['dangLoc']      = ($loc['q'] !== '' || $loc['type'] !== '' || $loc['group'] !== '' || $loc['status'] !== '');
+        $c['tongTatCa']    = $this->__model->demTatCa();
+        $c['dsNhomKhach']  = $this->model('CustomerGroupsModel')->getActive();
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['msgError']  = Session::flash('msgError');
         $this->render('layouts/admin/master_admin', $this->__data);
