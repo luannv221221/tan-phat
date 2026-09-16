@@ -670,3 +670,82 @@ function gara_hien_tai_id(){
 function chuan_hoa_bien_so($s){
     return strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $s));
 }
+
+/**
+ * Hạn bảo trì kế tiếp của MỘT xe / thiết bị — theo tháng HOẶC km, cái nào tới trước.
+ *
+ *   $lanCuoi  ['ngay' => 'Y-m-d' ngày hoàn tất lần bảo trì cuối, 'km' => int|null]
+ *   $docKm    các lần ghi số km của CÙNG xe trên mọi chứng từ: [['ngay' => ..., 'km' => ...], ...]
+ *   $cfg      ['thang' => 6, 'km' => 5000]   km = 0 là không nhắc theo km
+ *
+ * Phần mềm không biết đồng hồ xe HÔM NAY chỉ bao nhiêu — chỉ biết những lần
+ * khách mang xe tới và ai đó ghi số km lên báo giá / hoá đơn / phiếu. Nên:
+ *   mốc km        = km lúc bảo trì + chu kỳ km
+ *   tốc độ        = (km lần ghi mới nhất - km lần ghi cũ nhất) / số ngày giữa hai lần
+ *   ngày chạm mốc = ngày ghi mới nhất + (mốc - km mới nhất) / tốc độ
+ *   lần ghi mới nhất ĐÃ vượt mốc -> hạn là chính ngày ghi đó (đã quá)
+ * Chỉ có một lần ghi, hoặc km không tăng (gõ nhầm) thì không ước — dùng mốc tháng.
+ *
+ * Trả: theo_thang, moc_km, km_gan_nhat, km_moi_ngay, theo_km, han, ly_do ('thang' | 'km').
+ * Hàm thuần — không đọc CSDL, không đọc đồng hồ — nên test được bằng số cố định.
+ */
+function han_bao_tri(array $lanCuoi, array $docKm, array $cfg){
+    $kq = ['theo_thang' => null, 'moc_km' => null, 'km_gan_nhat' => null,
+           'km_moi_ngay' => null, 'theo_km' => null, 'han' => null, 'ly_do' => null];
+
+    $ngayHopLe = function($s){
+        $s = substr((string) $s, 0, 10);
+        $d = \DateTime::createFromFormat('!Y-m-d', $s);
+        return ($d && $d->format('Y-m-d') === $s) ? $d : null;   // chặn 2026-02-31
+    };
+
+    $d = $ngayHopLe($lanCuoi['ngay'] ?? '');
+    if ($d === null) return $kq;
+    $ngay = $d->format('Y-m-d');
+
+    /* Cộng tháng KẸP VỀ CUỐI THÁNG: 31/08 + 6 tháng là 28/02, không phải 03/03
+       như DateTime::modify('+6 months') tự nhảy sang tháng sau. */
+    $thang = max(1, (int) ($cfg['thang'] ?? 6));
+    $m = (int) $d->format('n') - 1 + $thang;
+    $y = (int) $d->format('Y') + intdiv($m, 12);
+    $m = $m % 12 + 1;
+    $cuoiThang = (int) date('t', mktime(0, 0, 0, $m, 1, $y));
+    $kq['theo_thang'] = sprintf('%04d-%02d-%02d', $y, $m, min((int) $d->format('j'), $cuoiThang));
+    $kq['han']   = $kq['theo_thang'];
+    $kq['ly_do'] = 'thang';
+
+    $chuKy = (int) ($cfg['km'] ?? 0);
+    $kmLan = (isset($lanCuoi['km']) && $lanCuoi['km'] !== '' && $lanCuoi['km'] !== null) ? (int) $lanCuoi['km'] : null;
+    if ($chuKy <= 0 || $kmLan === null) return $kq;
+    $kq['moc_km'] = $kmLan + $chuKy;
+
+    // Mọi lần ghi hợp lệ, KỂ CẢ chính lần bảo trì
+    $ds = [['ngay' => $ngay, 'km' => $kmLan]];
+    foreach ($docKm as $r){
+        $dr = $ngayHopLe($r['ngay'] ?? '');
+        if ($dr === null || !isset($r['km']) || $r['km'] === '' || $r['km'] === null) continue;
+        $ds[] = ['ngay' => $dr->format('Y-m-d'), 'km' => (int) $r['km']];
+    }
+    usort($ds, function($a, $b){ return [$a['ngay'], $a['km']] <=> [$b['ngay'], $b['km']]; });
+    $dau  = $ds[0];
+    $cuoi = $ds[count($ds) - 1];
+    $kq['km_gan_nhat'] = $cuoi;
+
+    if ($cuoi['km'] >= $kq['moc_km']){
+        $kq['theo_km'] = $cuoi['ngay'];
+    } else {
+        $soNgay = (int) $ngayHopLe($dau['ngay'])->diff($ngayHopLe($cuoi['ngay']))->days;
+        $tang   = $cuoi['km'] - $dau['km'];
+        if ($soNgay > 0 && $tang > 0){
+            $kq['km_moi_ngay'] = $tang / $soNgay;
+            $can = (int) ceil(($kq['moc_km'] - $cuoi['km']) / $kq['km_moi_ngay']);
+            $kq['theo_km'] = $ngayHopLe($cuoi['ngay'])->modify('+' . $can . ' days')->format('Y-m-d');
+        }
+    }
+
+    if ($kq['theo_km'] !== null && $kq['theo_km'] < $kq['theo_thang']){
+        $kq['han']   = $kq['theo_km'];
+        $kq['ly_do'] = 'km';
+    }
+    return $kq;
+}

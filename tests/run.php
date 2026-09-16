@@ -44,6 +44,7 @@ $tests = [
     'ThemKhachHangTest.php'       => 'CSKH — them khach vang lai tai gara',
     'PartnersLocTest.php'         => 'BAN HANG — bo loc man Doi tuong (khach / NCC)',
     'NhanVienGaraTest.php'        => 'HE THONG — quan ly gara tu them nhan vien (chong tu nang quyen)',
+    'PhieuBaoTriTest.php'         => 'CSKH — phieu bao tri + lich + nhac bao tri theo thang / km',
 ];
 
 $php      = PHP_BINARY;

@@ -6,7 +6,10 @@ use App\core\Response;
 use App\core\Session;
 
 /**
- * CSKH — Phiếu bảo hành / sửa chữa (CS-01).
+ * CSKH — Phiếu bảo hành / bảo trì (CS-01).
+ *
+ * Một màn cho cả hai loại (xem WarrantyRequestsModel). Loại chọn lúc lập và
+ * KHÔNG đổi được sau đó: số phiếu đã mang tiền tố của loại (BH- / BT-).
  */
 class Warranty extends Controller {
 
@@ -14,8 +17,8 @@ class Warranty extends Controller {
     private $__model, $__partner, $__part, $__handover, $__request, $__response;
 
     private $routeBase = 'warranty';
-    private $labelOne  = 'phiếu bảo hành';
-    private $labelMany = 'Phiếu bảo hành / sửa chữa';
+    private $labelOne  = 'phiếu';
+    private $labelMany = 'Phiếu bảo hành / bảo trì';
     private $viewDir   = 'admin/warranty';
 
     function __construct(){
@@ -27,10 +30,16 @@ class Warranty extends Controller {
         $this->__response = new Response();
     }
 
+    /** "phiếu bảo hành" / "phiếu bảo trì" — cho tiêu đề và câu thông báo */
+    private function tenPhieu($loai){
+        return 'phiếu ' . mb_strtolower(WarrantyRequestsModel::$loais[WarrantyRequestsModel::loaiHopLe($loai)]);
+    }
+
     private function baseData(){
         $this->__data['content']['routeBase'] = $this->routeBase;
         $this->__data['content']['labelOne']  = $this->labelOne;
         $this->__data['content']['statuses']  = WarrantyRequestsModel::$statuses;
+        $this->__data['content']['loais']     = WarrantyRequestsModel::$loais;
     }
 
     private function formData(){
@@ -45,13 +54,15 @@ class Warranty extends Controller {
         $this->baseData();
         $f       = $this->__request->getFields();
         $status  = isset($f['status']) && isset(WarrantyRequestsModel::$statuses[$f['status']]) ? $f['status'] : '';
+        $loai    = isset($f['loai']) ? WarrantyRequestsModel::loaiHopLe($f['loai'], '') : '';
         $from    = isset($f['from']) ? trim($f['from']) : '';
         $to      = isset($f['to'])   ? trim($f['to'])   : '';
         $keyword = isset($f['q'])    ? trim($f['q'])    : '';
 
         $this->__data['content']['page_name']    = $this->labelMany;
-        $this->__data['content']['dataList']     = $this->__model->getLists($status, $from, $to, $keyword);
+        $this->__data['content']['dataList']     = $this->__model->getLists($status, $from, $to, $keyword, $loai);
         $this->__data['content']['filterStatus'] = $status;
+        $this->__data['content']['filterLoai']   = $loai;
         $this->__data['content']['filterFrom']   = $from;
         $this->__data['content']['filterTo']     = $to;
         $this->__data['content']['filterKeyword']= $keyword;
@@ -62,32 +73,64 @@ class Warranty extends Controller {
     }
 
     public function add(){
+        $f    = $this->__request->getFields();
+        $old  = Session::flash('old');
+        $loai = WarrantyRequestsModel::loaiHopLe(!empty($old['loai']) ? $old['loai'] : ($f['loai'] ?? ''));
+
+        /* "Lập lần bảo trì kế tiếp" (từ màn Nhắc bảo trì hoặc từ phiếu đã xong):
+           điền sẵn khách và xe của lần trước — khỏi gõ lại, và vì cùng biển số
+           / serial nên phiếu mới THẾ CHỖ phiếu cũ trong danh sách nhắc. */
+        $tu = null;
+        if (empty($old) && !empty($f['tu'])){
+            $tu = $this->__model->getDetail((int) $f['tu']);
+            if (!empty($tu)){
+                $old = [
+                    'partner_id'    => $tu['partner_id'],
+                    'customer_name' => $tu['customer_name'],
+                    'phone'         => $tu['phone'],
+                    'part_id'       => $tu['part_id'],
+                    'product_name'  => $tu['product_name'],
+                    'serial_no'     => $tu['serial_no'],
+                    'bien_so'       => $tu['bien_so'],
+                    'issue'         => 'Bảo trì định kỳ — lần trước: ' . $tu['request_no']
+                                     . (!empty($tu['completed_date']) ? ' ngày ' . $tu['completed_date'] : ''),
+                ];
+            }
+        }
+
         $this->__data['sub_content'] = $this->viewDir . '/add';
-        $this->__data['page_title']  = 'Lập ' . $this->labelOne;
+        $this->__data['page_title']  = 'Lập ' . $this->tenPhieu($loai);
 
         $this->baseData();
         $this->formData();
-        $this->__data['content']['page_name'] = 'Lập ' . $this->labelOne;
+        $this->__data['content']['page_name'] = 'Lập ' . $this->tenPhieu($loai);
+        $this->__data['content']['loai']      = $loai;
+        $this->__data['content']['tu']        = $tu;
         $this->__data['content']['today']     = date('Y-m-d');
         $this->__data['content']['item']      = null;
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['errors']    = Session::flash('errors');
-        $this->__data['content']['old']       = Session::flash('old');
+        $this->__data['content']['old']       = $old;
 
         $this->render('layouts/admin/master_admin', $this->__data);
     }
 
     public function postAdd(){
-        $errors = $this->validate();
-        if (!empty($errors)){ $this->flash($errors, 'add'); return; }
+        $f    = $this->__request->getFields();
+        $loai = WarrantyRequestsModel::loaiHopLe($f['loai'] ?? '');
 
+        $errors = $this->validate();
+        if (!empty($errors)){ $this->flash($errors, 'add?loai=' . $loai); return; }
+
+        $no = $this->__model->nextNo($loai);
         $id = $this->__model->add(array_merge($this->buildData(), [
-            'request_no' => $this->__model->nextNo(),
+            'request_no' => $no,
+            'loai'       => $loai,
             'status'     => 'received',
             'created_by' => Session::get('dataUser'),
         ]));
 
-        Session::flash('msg', 'Đã lập ' . $this->labelOne);
+        Session::flash('msg', 'Đã lập ' . $this->tenPhieu($loai) . ' ' . $no);
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
 
@@ -105,6 +148,7 @@ class Warranty extends Controller {
         $this->formData();
         $this->__data['content']['page_name'] = 'Phiếu ' . $item['request_no'];
         $this->__data['content']['item']      = $item;
+        $this->__data['content']['loai']      = WarrantyRequestsModel::loaiHopLe($item['loai'] ?? '');
         $this->__data['content']['handovers'] = $this->__handover->getByWarranty($id);
         $this->__data['content']['handoverTypes'] = WarrantyHandoversModel::$types;
         $this->__data['content']['msg']       = Session::flash('msg');
@@ -123,8 +167,9 @@ class Warranty extends Controller {
         $errors = $this->validate();
         if (!empty($errors)){ $this->flash($errors, 'edit/' . $id); return; }
 
+        // buildData() không có `loai` — loại không đổi sau khi lập
         $this->__model->edit($this->buildData(), $id);
-        Session::flash('msg', 'Cập nhật ' . $this->labelOne . ' thành công');
+        Session::flash('msg', 'Cập nhật ' . $this->tenPhieu($item['loai'] ?? '') . ' thành công');
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
 
@@ -256,7 +301,7 @@ class Warranty extends Controller {
         $h = $this->__handover->getDetail($hid);
         if (empty($h)){ echo 'Không tìm thấy biên bản'; return; }
         $item = $this->__model->getDetail($h['warranty_id']);
-        if (empty($item)){ echo 'Không tìm thấy phiếu bảo hành'; return; }
+        if (empty($item)){ echo 'Không tìm thấy phiếu'; return; }
         if (!$this->canManage($h['warranty_id'])){ $this->__response->redirect('admin/khong-co-quyen'); return; }
 
         $settings = $this->model('SettingsModel');
@@ -264,6 +309,7 @@ class Warranty extends Controller {
         $this->render($this->viewDir . '/handover-print', [
             'h'         => $h,
             'item'      => $item,
+            'tenPhieu'  => $this->tenPhieu($item['loai'] ?? ''),
             'typeLabel' => isset(WarrantyHandoversModel::$types[$h['type']]) ? WarrantyHandoversModel::$types[$h['type']] : $h['type'],
             'ctx'       => $this->handoverContext($item),
             'company'   => $settings ? $settings->val('site_name', 'CÔNG TY TÂN PHÁT') : 'CÔNG TY TÂN PHÁT',
@@ -296,7 +342,12 @@ class Warranty extends Controller {
         if ($name === '' && $pid <= 0) $errors['customer_name'] = 'Chọn đối tượng hoặc nhập tên khách';
         $prod = !empty($f['product_name']) ? trim($f['product_name']) : '';
         $partId = !empty($f['part_id']) ? (int) $f['part_id'] : 0;
-        if ($prod === '' && $partId <= 0) $errors['product_name'] = 'Chọn sản phẩm hoặc nhập tên thiết bị';
+        /* Bảo dưỡng xe thì đối tượng là CHÍNH CHIẾC XE — không bắt chọn sản
+           phẩm. Chỉ cần một trong ba: sản phẩm, tên thiết bị, biển số. */
+        $bienSo = !empty($f['bien_so']) ? chuan_hoa_bien_so($f['bien_so']) : '';
+        if ($prod === '' && $partId <= 0 && $bienSo === ''){
+            $errors['product_name'] = 'Chọn sản phẩm, nhập tên thiết bị, hoặc nhập biển số xe';
+        }
         return $errors;
     }
 

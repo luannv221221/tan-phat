@@ -4,6 +4,7 @@ $v = function($field, $default = '') use ($old, $item){
     return isset($item[$field]) && $item[$field] !== null ? $item[$field] : $default;
 };
 $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'success', 'cancelled' => 'danger'];
+$__laBaoTri = ($loai === 'bao_tri');
 ?>
 @if (!empty($msg))
 <div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fas fa-check-circle mr-1"></i> {{$msg}}</div>
@@ -12,9 +13,13 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
 <div class="alert alert-danger alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fas fa-exclamation-circle mr-1"></i> {{$msgError}}</div>
 @endif
 
-<div class="card card-outline card-primary">
+<div class="card card-outline {{$__laBaoTri ? 'card-info' : 'card-primary'}}">
     <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-tools mr-2"></i>Phiếu <code>{{$item['request_no']}}</code></h3>
+        <h3 class="card-title">
+            <i class="fas {{$__laBaoTri ? 'fa-oil-can' : 'fa-tools'}} mr-2"></i>
+            <span class="badge badge-{{$__laBaoTri ? 'info' : 'primary'}} mr-1">{{$loais[$loai]}}</span>
+            Phiếu <code>{{$item['request_no']}}</code>
+        </h3>
         <div class="card-tools"><span class="badge badge-{{$badge[$item['status']] ?? 'secondary'}} p-2">{{$statuses[$item['status']] ?? $item['status']}}</span></div>
     </div>
     <div class="card-body py-2">
@@ -24,6 +29,11 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=processing'}}" class="btn btn-sm btn-outline-warning">Đang xử lý</a>
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=done'}}" class="btn btn-sm btn-outline-success">Hoàn tất</a>
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/set-status/'.$item['id'].'?status=cancelled'}}" class="btn btn-sm btn-outline-danger">Huỷ</a>
+        @endif
+        <?php /* Bảo trì xong thì hẹn luôn lần sau khi khách còn đứng ở quầy —
+                 điền sẵn khách và xe, người trực chỉ chọn ngày hẹn. */ ?>
+        @if ($__laBaoTri && $item['status'] === 'done' && route('admin/'.$routeBase.'/add'))
+        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/add?loai=bao_tri&tu='.$item['id']}}" class="btn btn-sm btn-info ml-2"><i class="fas fa-redo mr-1"></i> Hẹn lần bảo trì kế tiếp</a>
         @endif
         @if (!empty($item['completed_date']))
         <span class="float-right text-muted small">Hoàn tất: {{$item['completed_date']}}</span>
@@ -141,7 +151,7 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
                 {!! !empty($errors['received_date'])?'<small class="text-danger">'.e($errors['received_date']).'</small>':false !!}
             </div>
             <div class="form-group col-md-3">
-                <label>Ngày hẹn trả</label>
+                <label>Ngày hẹn</label>
                 <input type="date" name="appointment_date" class="form-control" value="{{$v('appointment_date')}}"/>
             </div>
             <div class="form-group col-md-3">
@@ -149,16 +159,16 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
                 <input type="text" name="technician" class="form-control" value="{{$v('technician')}}"/>
             </div>
             <div class="form-group col-md-3">
-                <label>Phí sửa (₫)</label>
+                <label>Phí (₫)</label>
                 <input type="number" min="0" step="1" name="fee" class="form-control text-right" value="{{$v('fee','0')}}"/>
             </div>
         </div>
         <div class="form-group">
-            <label>Mô tả lỗi / tình trạng</label>
+            <label>Tình trạng / việc cần làm</label>
             <textarea name="issue" class="form-control" rows="2">{{$v('issue')}}</textarea>
         </div>
         <div class="form-group">
-            <label>Chẩn đoán / xử lý</label>
+            <label>Chẩn đoán / đã làm</label>
             <textarea name="diagnosis" class="form-control" rows="2">{{$v('diagnosis')}}</textarea>
         </div>
         <div class="form-group mb-0">

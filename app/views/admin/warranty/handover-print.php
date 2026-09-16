@@ -32,7 +32,7 @@
 <body>
     <div class="toolbar">
         <button onclick="window.print()">🖨 In biên bản</button>
-        <a href="{{_WEB_URL.'/admin/warranty/edit/'.$item['id']}}">← Về phiếu bảo hành</a>
+        <a href="{{_WEB_URL.'/admin/warranty/edit/'.$item['id']}}">← Về {{$tenPhieu}}</a>
     </div>
 
     <div class="sheet">
@@ -49,7 +49,7 @@
         </div>
 
         <h1>Biên bản giao nhận thiết bị</h1>
-        <div class="sub">({{$typeLabel}} — theo phiếu bảo hành {{$item['request_no']}})</div>
+        <div class="sub">({{$typeLabel}} — theo {{$tenPhieu}} {{$item['request_no']}})</div>
 
         <table class="info">
             <tr><td class="k">Khách hàng:</td><td>{{$ctx['customer']!==''?$ctx['customer']:'…………………………'}}</td></tr>

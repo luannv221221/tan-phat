@@ -16,6 +16,7 @@
  *   000066  biển số xe + số km trên báo giá và hoá đơn
  *   000067  biển số xe + số km trên phiếu bảo hành
  *   000068  phân quyền cho nhóm Manager và Staff (+ vá lỗ tự nâng quyền)
+ *   000070  phiếu bảo trì bên cạnh phiếu bảo hành (cột `loai`, chu kỳ km)
  *
  * RIÊNG 000069 (Manager tự thêm nhân viên cho gara mình) nằm ở file KHÁC,
  * chạy SAU khi đẩy code:
@@ -117,7 +118,7 @@ if (in_array('--sau-khi-day-code', $argv, true)){
 }
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000068\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000070 (trừ 000069)\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
@@ -127,6 +128,7 @@ echo "--   `garage_id` thêm vào 5 bảng cũ\n";
 echo "--   biển số xe + số km thêm vào báo giá, hoá đơn và phiếu bảo hành\n";
 echo "--   `members`.`email` nới cho phép để trống\n";
 echo "-- Phần 10 cấp quyền cho nhóm Manager / Staff, kèm một bản vá bảo mật.\n";
+echo "-- Phần 11 thêm phiếu bảo trì (cột `loai` trên phiếu bảo hành, chu kỳ km).\n";
 echo "-- Quyền Manager tự thêm nhân viên (000069) KHÔNG nằm ở đây — nó ở file\n";
 echo "-- deploy/sau-khi-day-code.sql, dán SAU khi đẩy code.\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
@@ -665,6 +667,36 @@ if (empty($dsQuyen)){
 }
 
 /* ------------------------------------------------------------------ *
+ * 11. Phiếu bảo trì bên cạnh phiếu bảo hành                 — 000070
+ *
+ * Sinh nguyên văn từ migration (không đọc CSDL): cột + chỉ mục có kiểm tra
+ * trước, cài đặt chỉ thêm khi thiếu, tên màn hình ghi đè là vô hại.
+ * ------------------------------------------------------------------ */
+echo "\n-- ---------------------------------------------------------------------\n";
+echo "-- 11. Phiếu bảo trì: `warranty_requests`.`loai` ('bao_hanh' | 'bao_tri').\n";
+echo "--\n";
+echo "-- Mọi phiếu cũ nhận mặc định 'bao_hanh' — giữ đúng nghĩa cũ. Nhắc bảo trì\n";
+echo "-- từ nay tính từ phiếu BẢO TRÌ đã xong, theo tháng hoặc km.\n";
+echo "-- ---------------------------------------------------------------------\n\n";
+ddlNeuThieu('wr_loai',
+    "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+  . " AND TABLE_NAME = 'warranty_requests' AND COLUMN_NAME = 'loai'",
+    "ALTER TABLE `warranty_requests` ADD COLUMN `loai` VARCHAR(10) NOT NULL DEFAULT 'bao_hanh' AFTER `request_no`"
+);
+ddlNeuThieu('wr_loai_idx',
+    "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE()"
+  . " AND TABLE_NAME = 'warranty_requests' AND INDEX_NAME = 'idx_wr_loai_status'",
+    "ALTER TABLE `warranty_requests` ADD KEY `idx_wr_loai_status` (`loai`, `status`)"
+);
+printf("INSERT INTO `site_settings` (`skey`,`svalue`)\n"
+     . "  SELECT %s, %s FROM DUAL\n"
+     . "  WHERE NOT EXISTS (SELECT 1 FROM `site_settings` x WHERE x.`skey` = %s);\n\n",
+    q('maintenance_interval_km'), q('5000'), q('maintenance_interval_km'));
+foreach (['warranty' => 'Phiếu bảo hành / bảo trì', 'lich-bao-hanh' => 'Lịch bảo hành / bảo trì'] as $link => $ten){
+    printf("UPDATE `modules` SET `name` = %s WHERE `link` = %s;\n", q($ten), q($link));
+}
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
@@ -687,6 +719,7 @@ foreach ([
     '2026_09_09_000066_bien_so_so_km_tren_chung_tu',
     '2026_09_09_000067_bien_so_so_km_tren_bao_hanh',
     '2026_09_10_000068_cap_quyen_manager_va_staff',
+    '2026_09_15_000070_phieu_bao_tri',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên
