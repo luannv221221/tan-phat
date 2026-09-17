@@ -331,6 +331,28 @@ Route::group('admin', function(){
    // Báo cáo bán hàng (chỉ xem)
    Route::get('bao-cao-ban-hang', 'admin/salesreport');
 
+   /* Tỉnh / phường cho các ô chọn địa chỉ. Server gọi API ngoài rồi nhớ tạm;
+      không có module `dia-gioi` trong bảng modules nên chỉ cần đăng nhập. */
+   Route::get("dia-gioi/tinh",     "admin/diagioi/tinh");
+   Route::get("dia-gioi/xa/(\d+)", "admin/diagioi/xa/$1");
+
+   /* XE CUA KHACH + PHIEU TIEP NHAN
+      Mot khach nhieu xe, mot xe nhieu phieu tiep nhan; bao gia / hoa don /
+      bao hanh gan vao phieu tiep nhan. */
+   foreach (["vehicles" => "vehicles", "receptions" => "receptions"] as $url => $ctl){
+       Route::get($url,                  "admin/".$ctl);
+       Route::get($url."/add",           "admin/".$ctl."/add");
+       Route::post($url."/add",          "admin/".$ctl."/postAdd");
+       Route::get($url."/edit/(\d+)",    "admin/".$ctl."/edit/$1");
+       Route::post($url."/edit/(\d+)",   "admin/".$ctl."/postEdit/$1");
+       Route::get($url."/delete/(\d+)",  "admin/".$ctl."/delete/$1");
+   }
+   // Danh muc xe cho o chon day chuyen hang -> model -> nam (JSON)
+   Route::get("vehicles/models/(\d+)", "admin/vehicles/models/$1");
+   Route::get("vehicles/years/(\d+)",  "admin/vehicles/years/$1");
+   // Phieu tiep nhan: doi trang thai
+   Route::get("receptions/set-status/(\d+)", "admin/receptions/setStatus/$1");
+
    /* =========================================================
     * CSKH (Chăm sóc khách hàng) — theo CSKH_SPEC
     * ========================================================= */
@@ -394,7 +416,7 @@ Route::group('admin', function(){
    // Thống kê truy cập
    Route::get('thong-ke', 'admin/thongke');
 
-   // Cấu hình website (SEO)
+   // Cấu hình chung (liên hệ, mã số thuế, ngân hàng, giao diện website, SEO)
    Route::get('settings', 'admin/settings');
    Route::post('settings/save', 'admin/settings/save');
 

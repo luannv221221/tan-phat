@@ -104,6 +104,44 @@ class Customers extends Controller {
         $this->render('layouts/admin/master_admin', $this->__data);
     }
 
+    /* ===== Tỉnh / phường (34 tỉnh, 2 cấp sau sáp nhập 2025) =====
+       Để trống cả hai thì thôi; chọn rồi thì phường phải thuộc tỉnh — chỉ
+       server kiểm được, trình duyệt gửi lên mã gì cũng được. */
+
+    /** Tra tỉnh/phường từ form, thêm lỗi vào $errors nếu chọn sai cặp */
+    private function diaGioi(&$errors){
+        $f    = $this->__request->getFields();
+        $tinh = !empty($f['province_code']) ? (int) $f['province_code'] : 0;
+        $xa   = !empty($f['ward_code']) ? (int) $f['ward_code'] : 0;
+        if ($tinh <= 0 && $xa <= 0) return null;
+
+        $dg = dia_gioi_tra($tinh, $xa);
+        if ($dg === null){
+            $errors['province_code'] = 'Chọn lại tỉnh và phường/xã — phường phải thuộc tỉnh đã chọn';
+        }
+        return $dg;
+    }
+
+    /** Bốn cột để lưu — tên lấy từ nguồn dữ liệu, không nhận tên client gửi */
+    private function diaGioiLuu($dg){
+        $f = $this->__request->getFields();
+        return [
+            'province_code' => $dg !== null ? (int) $f['province_code'] : null,
+            'province_name' => $dg !== null ? $dg['province'] : null,
+            'ward_code'     => $dg !== null ? (int) $f['ward_code'] : null,
+            'ward_name'     => $dg !== null ? $dg['ward'] : null,
+        ];
+    }
+
+    /** Giữ lựa chọn khi form quay lại vì lỗi */
+    private function diaGioiOld(){
+        $f = $this->__request->getFields();
+        return [
+            'province_code' => !empty($f['province_code']) ? (int) $f['province_code'] : '',
+            'ward_code'     => !empty($f['ward_code']) ? (int) $f['ward_code'] : '',
+        ];
+    }
+
     public function postAdd(){
         $f       = $this->__request->getFields();
         $name    = isset($f['name']) ? trim($f['name']) : '';
@@ -114,6 +152,7 @@ class Customers extends Controller {
 
         $errors = [];
         if ($name === '') $errors['name'] = 'Nhập họ tên';
+        $dg = $this->diaGioi($errors);
 
         /* Phải có ÍT NHẤT một cách liên lạc. Không có cả hai thì hồ sơ này về
            sau không ai tra ra được là của ai — và khách vãng lai ở gara thì
@@ -144,15 +183,15 @@ class Customers extends Controller {
 
         if (!empty($errors)){
             Session::flash('errors', $errors);
-            Session::flash('old', ['name' => $name, 'email' => $email,
-                                   'phone' => $phone, 'address' => $address]);
+            Session::flash('old', array_merge(['name' => $name, 'email' => $email,
+                                   'phone' => $phone, 'address' => $address], $this->diaGioiOld()));
             $this->__response->redirect('admin/' . $this->routeBase . '/add'); return;
         }
 
-        $id = $this->__model->adminAdd([
+        $id = $this->__model->adminAdd(array_merge([
             'name' => $name, 'email' => $email, 'phone' => $phone,
             'address' => $address, 'password' => $pass, 'status' => 1,
-        ]);
+        ], $this->diaGioiLuu($dg)));
 
         /* Đưa thẳng sang màn Sửa: gần như lần nào thêm khách ở gara cũng là để
            khai luôn chiếc xe họ vừa mang tới, mà khối "Xe của khách" nằm ở đó. */
@@ -197,6 +236,7 @@ class Customers extends Controller {
 
         $errors = [];
         if ($name === '') $errors['name'] = 'Nhập họ tên';
+        $dg = $this->diaGioi($errors);
         if ($phone !== '' && !is_phone($phone)){
             $errors['phone'] = 'Số điện thoại không hợp lệ (di động 10 số hoặc cố định 11 số)';
         }
@@ -208,16 +248,17 @@ class Customers extends Controller {
 
         if (!empty($errors)){
             Session::flash('errors', $errors);
-            Session::flash('old', ['name' => $name, 'phone' => $phone, 'address' => $address, 'status' => $status]);
+            Session::flash('old', array_merge(['name' => $name, 'phone' => $phone,
+                                   'address' => $address, 'status' => $status], $this->diaGioiOld()));
             $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $id); return;
         }
 
-        $this->__model->updateProfile([
+        $this->__model->updateProfile(array_merge([
             'name'    => $name,
             'phone'   => $phone !== '' ? $phone : null,
             'address' => $address !== '' ? $address : null,
             'status'  => $status,
-        ], (int) $id);
+        ], $this->diaGioiLuu($dg)), (int) $id);
 
         if ($newPass !== ''){
             $this->__model->updatePassword($newPass, (int) $id);

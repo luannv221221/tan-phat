@@ -5,7 +5,7 @@ use App\core\Request;
 use App\core\Response;
 use App\core\Session;
 
-/** SEO — Cấu hình website (1 form key-value). */
+/** Cấu hình chung (1 form key-value): liên hệ, mã số thuế, ngân hàng, giao diện website, SEO. */
 class Settings extends Controller {
 
     private $__data = [];
@@ -32,8 +32,8 @@ class Settings extends Controller {
 
     public function index(){
         $this->__data['sub_content'] = 'admin/settings/form';
-        $this->__data['page_title']  = 'Cấu hình website';
-        $this->__data['content']['page_name'] = 'Cấu hình website';
+        $this->__data['page_title']  = 'Cấu hình chung';
+        $this->__data['content']['page_name'] = 'Cấu hình chung';
         $this->__data['content']['settings']  = $this->__model->map();
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->render('layouts/admin/master_admin', $this->__data);
@@ -71,7 +71,7 @@ class Settings extends Controller {
         elseif (isset($f['logo'])) $kv['logo'] = trim($f['logo']);
 
         $this->__model->saveMany($kv);
-        Session::flash('msg', 'Đã lưu cấu hình website');
+        Session::flash('msg', 'Đã lưu cấu hình chung');
         $this->__response->redirect('admin/settings');
     }
 }

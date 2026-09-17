@@ -203,6 +203,23 @@ class Quotations extends Controller {
         $this->__data['content']['errors']    = Session::flash('errors');
         $this->__data['content']['old']       = Session::flash('old');
 
+        /* Lập từ PHIẾU TIẾP NHẬN: điền sẵn khách, biển số, số km của lần vào
+           xưởng đó, và giữ mã phiếu để chứng từ gắn đúng vào phiếu. */
+        $fTN = $this->__request->getFields();
+        $tu  = !empty($fTN['reception_id']) ? phieu_tiep_nhan($fTN['reception_id']) : null;
+        $oldTN = $this->__data['content']['old'];
+        if ($tu !== null && empty($oldTN)){
+            $oldTN = [
+                'reception_id' => (int) $tu['phieu']['id'],
+                'customer_id'  => $tu['phieu']['partner_id'],
+                'bien_so'      => !empty($tu['xe']['bien_so']) ? $tu['xe']['bien_so'] : '',
+                'so_km'        => $tu['phieu']['km_vao'] !== null ? (int) $tu['phieu']['km_vao']
+                                : (!empty($tu['xe']) && $tu['xe']['so_km'] !== null ? (int) $tu['xe']['so_km'] : ''),
+            ];
+        }
+        $this->__data['content']['old']     = $oldTN;
+        $this->__data['content']['tuPhieu'] = $tu;
+
         $this->render('layouts/admin/master_admin', $this->__data);
     }
 
@@ -221,6 +238,9 @@ class Quotations extends Controller {
             'status'     => 'draft',
             'created_by' => Session::get('dataUser'),
             'garage_id'  => gara_hien_tai_id(),
+            /* Gắn vào phiếu tiếp nhận CHỈ khi lập, như `garage_id`: sửa phiếu
+               về sau không được làm chứng từ rơi khỏi lần vào xưởng của nó. */
+            'reception_id' => lien_ket_xe($f)['reception_id'],
         ]));
 
         $this->syncTotals($id, $lines, $f);
@@ -424,8 +444,8 @@ class Quotations extends Controller {
      * Cột trong CSDL giữ nguyên — dữ liệu cũ còn đó, màn hình danh sách vẫn đọc.
      */
     private function headerData($f){
-        $bienSo = isset($f['bien_so']) ? trim($f['bien_so']) : '';
-        $km     = isset($f['so_km']) ? preg_replace('/[^\d]/', '', (string) $f['so_km']) : '';
+        // Xe + biển số + số km: một chỗ duy nhất cho mọi chứng từ (xem lien_ket_xe)
+        $xe = lien_ket_xe($f);
 
         return [
             'customer_id'   => $this->customerId(),
@@ -434,12 +454,12 @@ class Quotations extends Controller {
             'vat_rate'      => $this->parseRate(isset($f['vat_rate']) ? $f['vat_rate'] : 0),
 
             /* Xe của phiếu. Cả ba để trống được — bán lẻ phụ tùng qua quầy thì
-               không có xe nào cả.
-               `bien_so_chuan` chuẩn hoá NGAY LÚC LƯU, dùng chung đúng một hàm
-               với màn CSKH: hai nơi chuẩn hoá hai kiểu là tra không ra nhau. */
-            'bien_so'       => $bienSo !== '' ? $bienSo : null,
-            'bien_so_chuan' => $bienSo !== '' ? chuan_hoa_bien_so($bienSo) : null,
-            'so_km'         => $km !== '' ? (int) $km : null,
+               không có xe nào cả. `vehicle_id` nối vào bản ghi xe để lịch sử
+               của xe không phải ghép bằng chuỗi biển số. */
+            'bien_so'       => $xe['bien_so'],
+            'bien_so_chuan' => $xe['bien_so_chuan'],
+            'so_km'         => $xe['so_km'],
+            'vehicle_id'    => $xe['vehicle_id'],
         ];
     }
 

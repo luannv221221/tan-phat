@@ -55,8 +55,13 @@ if (preg_match('~private function buildData\(\)\s*\{(.*?)\n    \}~s', $ctl, $m))
 ok($than !== '', 'Doc duoc than ham buildData()');
 ok(strpos($than, "'bien_so'") !== false && strpos($than, "'so_km'") !== false,
    'buildData() luu bien so va so km');
-ok(strpos($than, 'chuan_hoa_bien_so') !== false,
-   'Chuan hoa bien so NGAY LUC LUU, dung ham chung');
+/* Chuẩn hoá biển số giờ nằm trong lien_ket_xe() — dùng chung với báo giá và
+   hoá đơn, và nó nối luôn phiếu vào bản ghi xe (XeVaPhieuTest soi kỹ hàm đó). */
+ok(strpos($than, 'lien_ket_xe($f)') !== false || strpos($ctl, 'lien_ket_xe($f)') !== false,
+   'Bien so di qua lien_ket_xe() — mot cho duy nhat chuan hoa va noi vao xe',
+   'Hai noi chuan hoa hai kieu la tra khong ra nhau');
+ok(strpos($than, "'vehicle_id'") !== false,
+   'buildData() luu ca vehicle_id — phieu noi vao ban ghi xe');
 
 /* serial_no PHẢI còn nguyên — biển số là cột THÊM, không phải cột thay */
 ok(strpos($than, "'serial_no'") !== false,

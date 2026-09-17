@@ -2,7 +2,7 @@
 
 use App\core\Model;
 
-/** SEO — Cấu hình website (key-value). */
+/** Cấu hình chung (key-value) — màn admin/settings. */
 class SettingsModel extends Model {
 
     protected $_table   = 'site_settings';

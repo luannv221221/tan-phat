@@ -54,6 +54,11 @@ class MembersModel extends Model {
             'name'      => isset($data['name']) ? $data['name'] : '',
             'phone'     => !empty($data['phone']) ? $data['phone'] : null,
             'address'   => !empty($data['address']) ? $data['address'] : null,
+            // Bốn cột địa giới: adminAdd() LỌC cột, thiếu ở đây là mất dữ liệu âm thầm
+            'province_code' => !empty($data['province_code']) ? (int) $data['province_code'] : null,
+            'province_name' => !empty($data['province_name']) ? $data['province_name'] : null,
+            'ward_code'     => !empty($data['ward_code']) ? (int) $data['ward_code'] : null,
+            'ward_name'     => !empty($data['ward_name']) ? $data['ward_name'] : null,
             'status'    => isset($data['status']) ? (int) $data['status'] : 1,
             'create_at' => date('Y-m-d H:i:s'),
         ]);

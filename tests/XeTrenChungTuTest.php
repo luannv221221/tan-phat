@@ -85,13 +85,31 @@ foreach (['Quotations', 'Salesinvoices'] as $ten){
     ok($than !== '', "$ten: doc duoc headerData()");
     ok(strpos($than, "'bien_so'") !== false && strpos($than, "'so_km'") !== false,
        "$ten: headerData() luu bien so va so km");
-    ok(strpos($than, 'chuan_hoa_bien_so') !== false,
-       "$ten: chuan hoa bien so NGAY LUC LUU",
-       'Chuan hoa luc doc thi tra cuu phai quet ca bang, khong dung duoc chi muc');
-    ok(preg_match("~preg_replace\('/\[\^\\\\d\]/'~", $than) === 1,
-       "$ten: so km bo dau ngan nghin truoc khi ep so",
-       'Ep (int) thang thi "100.000" thanh 100');
+    /* Chuẩn hoá biển số + bỏ dấu ngăn nghìn giờ nằm trong lien_ket_xe():
+       MỘT bản dùng cho báo giá, hoá đơn và phiếu bảo hành, kèm việc nối
+       chứng từ vào bản ghi xe. Thân hàm đó được soi riêng ở dưới. */
+    ok(strpos($than, 'lien_ket_xe($f)') !== false,
+       "$ten: headerData() goi lien_ket_xe() — mot cho duy nhat dung bien so",
+       'Hai noi chuan hoa hai kieu la tra khong ra nhau');
+    ok(strpos($than, "'vehicle_id'") !== false,
+       "$ten: luu ca vehicle_id — chung tu noi vao ban ghi xe",
+       'Chi luu chuoi bien so thi tra lich su xe la ghep chuoi');
 }
+
+/* Thân hàm nối dùng chung: nơi duy nhất chuẩn hoá biển số và đọc số km */
+$hlp   = codeOnly($goc . 'app/helpers/functions.php');
+$thanLK = '';
+if (preg_match('~function lien_ket_xe\(\$f\)\s*\{(.*?)\n\}~s', $hlp, $m)) $thanLK = $m[1];
+ok($thanLK !== '', 'Doc duoc than ham lien_ket_xe()');
+ok(strpos($thanLK, 'chuan_hoa_bien_so') !== false,
+   'lien_ket_xe(): chuan hoa bien so NGAY LUC LUU',
+   'Chuan hoa luc doc thi tra cuu phai quet ca bang, khong dung duoc chi muc');
+ok(preg_match("~preg_replace\('/\[\^\\\\d\]/'~", $thanLK) === 1,
+   'lien_ket_xe(): so km bo dau ngan nghin truoc khi ep so',
+   'Ep (int) thang thi "100.000" thanh 100');
+ok(strpos($thanLK, 'capNhatKm') !== false,
+   'lien_ket_xe(): so km moi hon thi cap nhat cho XE',
+   'Khong cap nhat thi moc nhac bao tri cua xe dung im o so cu');
 
 /* convert() phải chép xe sang hoá đơn */
 $q = codeOnly($goc . 'app/controllers/admin/Quotations.php');

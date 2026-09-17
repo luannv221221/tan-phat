@@ -155,8 +155,11 @@ tr.tong-cuoi td { font-weight: bold; font-size: 13.5pt; }
     <div class="khoi-khach">
         <span class="nhan">Khách hàng:</span>
         <b><?php echo e(!empty($khach['name']) ? $khach['name'] : 'Khách lẻ'); ?></b><br/>
-        <?php if (!empty($khach['address'])): ?>
-        <span class="nhan">Địa chỉ:</span><?php echo e($khach['address']); ?><br/>
+        <?php /* Địa chỉ đầy đủ: số nhà, phường/xã, tỉnh/thành. Khách cũ chưa có
+                 tỉnh/phường thì in đúng `address` như trước, không dấu phẩy thừa. */ ?>
+        <?php $__diaChi = dia_chi_day_du($khach); ?>
+        <?php if ($__diaChi !== ''): ?>
+        <span class="nhan">Địa chỉ:</span><?php echo e($__diaChi); ?><br/>
         <?php endif; ?>
         <?php if (!empty($khach['phone'])): ?>
         <span class="nhan">Điện thoại:</span><?php echo e($khach['phone']); ?><br/>

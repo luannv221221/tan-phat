@@ -17,6 +17,9 @@
  *   000067  biển số xe + số km trên phiếu bảo hành
  *   000068  phân quyền cho nhóm Manager và Staff (+ vá lỗ tự nâng quyền)
  *   000070  phiếu bảo trì bên cạnh phiếu bảo hành (cột `loai`, chu kỳ km)
+ *   000071  tỉnh / phường cho Đối tượng và Khách hàng (4 cột mỗi bảng)
+ *   000072  xe của khách + phiếu tiếp nhận (1 khách nhiều xe, 1 xe nhiều phiếu)
+ *   000073  đổi tên màn "Cấu hình website" thành "Cấu hình chung"
  *
  * RIÊNG 000069 (Manager tự thêm nhân viên cho gara mình) nằm ở file KHÁC,
  * chạy SAU khi đẩy code:
@@ -118,7 +121,7 @@ if (in_array('--sau-khi-day-code', $argv, true)){
 }
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000070 (trừ 000069)\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000073 (trừ 000069)\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
@@ -129,6 +132,9 @@ echo "--   biển số xe + số km thêm vào báo giá, hoá đơn và phiếu
 echo "--   `members`.`email` nới cho phép để trống\n";
 echo "-- Phần 10 cấp quyền cho nhóm Manager / Staff, kèm một bản vá bảo mật.\n";
 echo "-- Phần 11 thêm phiếu bảo trì (cột `loai` trên phiếu bảo hành, chu kỳ km).\n";
+echo "-- Phần 12 thêm tỉnh / phường cho Đối tượng và Khách hàng.\n";
+echo "-- Phần 13 thêm bảng xe của khách + phiếu tiếp nhận, và cột nối từ báo\n";
+echo "--   giá / hoá đơn / phiếu bảo hành về phiếu tiếp nhận và về xe.\n";
 echo "-- Quyền Manager tự thêm nhân viên (000069) KHÔNG nằm ở đây — nó ở file\n";
 echo "-- deploy/sau-khi-day-code.sql, dán SAU khi đẩy code.\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
@@ -697,6 +703,205 @@ foreach (['warranty' => 'Phiếu bảo hành / bảo trì', 'lich-bao-hanh' => '
 }
 
 /* ------------------------------------------------------------------ *
+ * 12. Tỉnh / phường cho Đối tượng và Khách hàng            — 000071
+ *
+ * Sinh nguyên văn từ migration (không đọc CSDL): mỗi cột và mỗi chỉ mục đều
+ * kiểm tra trước khi thêm, nên dán lại nhiều lần không báo lỗi trùng cột.
+ * ------------------------------------------------------------------ */
+echo "\n-- ---------------------------------------------------------------------\n";
+echo "-- 12. Tỉnh / phường cho `partners` (khách + NCC) và `members` (khách CSKH).\n";
+echo "--\n";
+echo "-- Bốn cột mỗi bảng, giống bảng `orders` đã có: mã VÀ tên của tỉnh, phường.\n";
+echo "-- Lưu cả tên vì đơn vị hành chính còn sáp nhập / đổi tên nữa, và vì API\n";
+echo "-- tra cứu bên ngoài có thể chết — địa chỉ đã lưu vẫn phải đọc được.\n";
+echo "-- Địa chỉ cũ giữ nguyên, KHÔNG tự tách ra tỉnh/phường.\n";
+echo "-- ---------------------------------------------------------------------\n\n";
+
+foreach (['partners', 'members'] as $bangDg){
+    foreach ([
+        'province_code' => 'INT DEFAULT NULL',
+        'province_name' => 'VARCHAR(150) DEFAULT NULL',
+        'ward_code'     => 'INT DEFAULT NULL',
+        'ward_name'     => 'VARCHAR(150) DEFAULT NULL',
+    ] as $cotDg => $kieuDg){
+        ddlNeuThieu(
+            'dg_' . $bangDg . '_' . $cotDg,
+            "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+          . " AND TABLE_NAME = '$bangDg' AND COLUMN_NAME = '$cotDg'",
+            "ALTER TABLE `$bangDg` ADD COLUMN `$cotDg` $kieuDg"
+        );
+    }
+    ddlNeuThieu(
+        'dg_' . $bangDg . '_idx',
+        "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE()"
+      . " AND TABLE_NAME = '$bangDg' AND INDEX_NAME = 'idx_{$bangDg}_province'",
+        "ALTER TABLE `$bangDg` ADD KEY `idx_{$bangDg}_province` (`province_code`)"
+    );
+}
+/* ------------------------------------------------------------------ *
+ * 13. Xe của khách + phiếu tiếp nhận                       — 000072
+ *
+ * Phần NẶNG nhất của file: hai bảng mới có khoá ngoại, bốn cột nối thêm vào
+ * ba bảng chứng từ đang có dữ liệu thật, và hai màn hình mới cần đăng ký.
+ * Mọi câu đều kiểm tra trước khi thêm nên dán lại nhiều lần không báo lỗi.
+ *
+ * Dữ liệu cũ: dán xong thì các báo giá / hoá đơn / phiếu bảo hành ĐÃ CÓ biển
+ * số vẫn chưa nối vào xe (cột `vehicle_id` còn trống) — phần dựng xe từ biển
+ * số cũ nằm trong migration PHP, không sinh ra SQL ở đây vì nó phụ thuộc dữ
+ * liệu từng máy. Chạy `php migrate.php` thì có; dán SQL tay thì vào màn
+ * "Xe của khách" khai xe rồi sửa lại chứng từ nếu cần.
+ * ------------------------------------------------------------------ */
+echo "\n-- ---------------------------------------------------------------------\n";
+echo "-- 13. Xe của khách (`vehicles`) + phiếu tiếp nhận (`receptions`).\n";
+echo "--\n";
+echo "-- Mô hình: 1 khách (partners) -> nhiều XE -> mỗi xe nhiều PHIẾU TIẾP NHẬN\n";
+echo "-- -> mỗi phiếu nhiều chứng từ. Trước đây biển số là chữ gõ tay rời rạc\n";
+echo "-- trên từng chứng từ, không có bản ghi xe nào nối chúng lại.\n";
+echo "--\n";
+echo "-- Biển số (đã chuẩn hoá) là DUY NHẤT; số khung để trống được nhưng đã ghi\n";
+echo "-- thì không trùng. Xoá khách thì xe còn lại (SET NULL); xoá xe còn phiếu\n";
+echo "-- thì bị chặn (RESTRICT).\n";
+echo "-- ---------------------------------------------------------------------\n\n";
+
+echo <<<'SQL_VEHICLES'
+CREATE TABLE IF NOT EXISTS `vehicles` (
+  `id`            INT NOT NULL AUTO_INCREMENT,
+  `partner_id`    INT DEFAULT NULL,
+  `bien_so`       VARCHAR(20) NOT NULL,
+  `bien_so_chuan` VARCHAR(20) NOT NULL,
+  `so_khung`      VARCHAR(30) DEFAULT NULL,
+  `so_may`        VARCHAR(30) DEFAULT NULL,
+  `brand_id`      INT DEFAULT NULL,
+  `model_id`      INT DEFAULT NULL,
+  `car_year_id`   INT DEFAULT NULL,
+  `hang_xe`       VARCHAR(60) DEFAULT NULL,
+  `model_xe`      VARCHAR(60) DEFAULT NULL,
+  `nam_sx`        SMALLINT DEFAULT NULL,
+  `phien_ban`     VARCHAR(60) DEFAULT NULL,
+  `mau_xe`        VARCHAR(40) DEFAULT NULL,
+  `so_km`         INT DEFAULT NULL,
+  `ghi_chu`       VARCHAR(255) DEFAULT NULL,
+  `status`        TINYINT(1) NOT NULL DEFAULT 1,
+  `create_at`     DATETIME DEFAULT NULL,
+  `update_at`     DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_vehicles_bien_so` (`bien_so_chuan`),
+  UNIQUE KEY `uq_vehicles_so_khung` (`so_khung`),
+  KEY `idx_vehicles_partner` (`partner_id`),
+  KEY `idx_vehicles_model` (`model_id`),
+  CONSTRAINT `fk_vehicles_partner` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_vehicles_brand`   FOREIGN KEY (`brand_id`) REFERENCES `car_brands` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_vehicles_model`   FOREIGN KEY (`model_id`) REFERENCES `car_models` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_vehicles_year`    FOREIGN KEY (`car_year_id`) REFERENCES `car_years` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `receptions` (
+  `id`            INT NOT NULL AUTO_INCREMENT,
+  `reception_no`  VARCHAR(50) NOT NULL,
+  `vehicle_id`    INT NOT NULL,
+  `partner_id`    INT DEFAULT NULL,
+  `garage_id`     INT DEFAULT NULL,
+  `ngay_vao`      DATE NOT NULL,
+  `ngay_ra`       DATE DEFAULT NULL,
+  `km_vao`        INT DEFAULT NULL,
+  `km_ra`         INT DEFAULT NULL,
+  `tinh_trang_xe` TEXT,
+  `yeu_cau_khach` TEXT,
+  `co_van_id`     INT DEFAULT NULL,
+  `co_van`        VARCHAR(150) DEFAULT NULL,
+  `status`        VARCHAR(20) NOT NULL DEFAULT 'tiep_nhan',
+  `note`          VARCHAR(255) DEFAULT NULL,
+  `created_by`    INT DEFAULT NULL,
+  `create_at`     DATETIME DEFAULT NULL,
+  `update_at`     DATETIME DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_receptions_no` (`reception_no`),
+  KEY `idx_receptions_vehicle` (`vehicle_id`),
+  KEY `idx_receptions_status` (`status`, `ngay_vao`),
+  CONSTRAINT `fk_receptions_vehicle` FOREIGN KEY (`vehicle_id`) REFERENCES `vehicles` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_receptions_partner` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_receptions_garage`  FOREIGN KEY (`garage_id`) REFERENCES `garages` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_receptions_covan`   FOREIGN KEY (`co_van_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+SQL_VEHICLES;
+
+/* Cột nối + khoá ngoại trên ba bảng chứng từ, và members.partner_id */
+$noiCot = [
+    'quotations'        => ['vehicle_id', 'reception_id'],
+    'sales_invoices'    => ['vehicle_id', 'reception_id'],
+    'warranty_requests' => ['vehicle_id', 'reception_id'],
+    'members'           => ['partner_id'],
+];
+$noiFk = [
+    'quotations'        => ['vehicle_id' => 'vehicles', 'reception_id' => 'receptions'],
+    'sales_invoices'    => ['vehicle_id' => 'vehicles', 'reception_id' => 'receptions'],
+    'warranty_requests' => ['vehicle_id' => 'vehicles', 'reception_id' => 'receptions'],
+    'members'           => ['partner_id' => 'partners'],
+];
+foreach ($noiCot as $bangNoi => $cotDs){
+    foreach ($cotDs as $cotNoi){
+        ddlNeuThieu(
+            'xe_' . $bangNoi . '_' . $cotNoi,
+            "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+          . " AND TABLE_NAME = '$bangNoi' AND COLUMN_NAME = '$cotNoi'",
+            "ALTER TABLE `$bangNoi` ADD COLUMN `$cotNoi` INT DEFAULT NULL"
+        );
+        ddlNeuThieu(
+            'xe_' . $bangNoi . '_' . $cotNoi . '_idx',
+            "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE()"
+          . " AND TABLE_NAME = '$bangNoi' AND INDEX_NAME = 'idx_{$bangNoi}_{$cotNoi}'",
+            "ALTER TABLE `$bangNoi` ADD KEY `idx_{$bangNoi}_{$cotNoi}` (`$cotNoi`)"
+        );
+    }
+}
+foreach ($noiFk as $bangNoi => $map){
+    foreach ($map as $cotNoi => $bangDich){
+        $ten = 'fk_' . $bangNoi . '_' . str_replace('_id', '', $cotNoi);
+        ddlNeuThieu(
+            'xe_' . $bangNoi . '_' . $cotNoi . '_fk',
+            "SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE()"
+          . " AND TABLE_NAME = '$bangNoi' AND CONSTRAINT_NAME = '$ten'",
+            "ALTER TABLE `$bangNoi` ADD CONSTRAINT `$ten` FOREIGN KEY (`$cotNoi`)"
+          . " REFERENCES `$bangDich` (`id`) ON DELETE SET NULL"
+        );
+    }
+}
+
+/* Hai màn hình mới + quyền — đọc trạng thái HIỆN TẠI của máy này */
+echo "-- Khai hai man hinh moi va cap quyen (doc tu may nay)\n";
+foreach (['vehicles' => 'Xe của khách', 'receptions' => 'Phiếu tiếp nhận'] as $linkXe => $tenXe){
+    printf("INSERT INTO `modules` (`name`,`link`,`create_at`)\n"
+         . "  SELECT %s, %s, %s FROM DUAL\n"
+         . "  WHERE NOT EXISTS (SELECT 1 FROM `modules` x WHERE x.`link` = %s);\n",
+        q($tenXe), q($linkXe), q($now), q($linkXe));
+}
+$dsQuyenXe = $db->query(
+    "SELECT g.`name` AS nhom, m.`link` AS link, p.`role` AS role
+       FROM `permissions` p
+       JOIN `groups` g  ON g.`id` = p.`group_id`
+       JOIN `modules` m ON m.`id` = p.`module_id`
+      WHERE m.`link` IN ('vehicles', 'receptions')
+      ORDER BY m.`link`, g.`name`, p.`role`"
+)->fetchAll(PDO::FETCH_ASSOC);
+foreach ($dsQuyenXe as $r){
+    printf("INSERT INTO `permissions` (`module_id`,`group_id`,`role`)\n"
+         . "  SELECT m.`id`, g.`id`, %s\n"
+         . "    FROM `modules` m JOIN `groups` g\n"
+         . "   WHERE m.`link` = %s AND g.`name` = %s\n"
+         . "     AND NOT EXISTS (SELECT 1 FROM (SELECT * FROM `permissions`) p\n"
+         . "                      WHERE p.`module_id` = m.`id` AND p.`group_id` = g.`id` AND p.`role` = %s);\n",
+        q($r['role']), q($r['link']), q($r['nhom']), q($r['role']));
+}
+printf("\n-- (tong %d dong quyen cho hai man hinh moi)\n\n", count($dsQuyenXe));
+/* ------------------------------------------------------------------ *
+ * 14. Đổi tên màn "Cấu hình website" -> "Cấu hình chung"   — 000073
+ * ------------------------------------------------------------------ */
+echo "\n-- 14. Màn admin/settings giữ hotline, mã số thuế, ngân hàng... — không riêng\n";
+echo "-- website nữa, nên đổi tên hiển thị. Đường dẫn và quyền giữ nguyên.\n";
+printf("UPDATE `modules` SET `name` = %s WHERE `link` = %s;\n\n", q('Cấu hình chung'), q('settings'));
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
@@ -720,6 +925,9 @@ foreach ([
     '2026_09_09_000067_bien_so_so_km_tren_bao_hanh',
     '2026_09_10_000068_cap_quyen_manager_va_staff',
     '2026_09_15_000070_phieu_bao_tri',
+    '2026_09_16_000071_tinh_phuong_cho_doi_tuong',
+    '2026_09_16_000072_xe_va_phieu_tiep_nhan',
+    '2026_09_17_000073_doi_ten_cau_hinh_chung',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên

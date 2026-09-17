@@ -59,10 +59,33 @@ $val = function ($key) use ($old) {
                         {!! !empty($errors['email'])?'<small class="text-danger">'.e($errors['email']).'</small>':false !!}
                     </div>
 
+                    <?php /* Tỉnh / phường: 34 tỉnh, 2 cấp (sau sáp nhập 2025).
+                             Danh sách lấy qua admin/dia-gioi. Không bắt buộc. */ ?>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Tỉnh / Thành phố</label>
+                            <select name="province_code" class="form-control"
+                                    data-dia-gioi="tinh"
+                                    data-url="{{_WEB_URL.'/admin/dia-gioi'}}"
+                                    data-chon="{{$val('province_code')}}">
+                                <option value="">— Chọn tỉnh / thành phố —</option>
+                            </select>
+                            {!! !empty($errors['province_code'])?'<small class="text-danger">'.e($errors['province_code']).'</small>':false !!}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Phường / Xã</label>
+                            <select name="ward_code" class="form-control"
+                                    data-dia-gioi="xa" data-chon="{{$val('ward_code')}}" disabled>
+                                <option value="">— Chọn tỉnh trước —</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label>Địa chỉ</label>
+                        <label>Địa chỉ <span class="text-muted small">(số nhà, đường)</span></label>
                         <textarea name="address" class="form-control" rows="2">{{$val('address')}}</textarea>
                     </div>
+                    <script src="{{asset('public/assets/js/dia-gioi.js')}}"></script>
 
                     <div class="form-group mb-0">
                         <label>Mật khẩu <span class="text-muted small">(không bắt buộc)</span></label>

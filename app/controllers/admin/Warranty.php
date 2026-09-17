@@ -112,6 +112,20 @@ class Warranty extends Controller {
         $this->__data['content']['errors']    = Session::flash('errors');
         $this->__data['content']['old']       = $old;
 
+        /* Lập từ PHIẾU TIẾP NHẬN (nút trên phiếu): điền sẵn khách, xe, số km */
+        $tuTN = !empty($f['reception_id']) ? phieu_tiep_nhan($f['reception_id']) : null;
+        if ($tuTN !== null && empty($old)){
+            $this->__data['content']['old'] = [
+                'reception_id' => (int) $tuTN['phieu']['id'],
+                'partner_id'   => $tuTN['phieu']['partner_id'],
+                'bien_so'      => !empty($tuTN['xe']['bien_so']) ? $tuTN['xe']['bien_so'] : '',
+                'so_km'        => $tuTN['phieu']['km_vao'] !== null ? (int) $tuTN['phieu']['km_vao']
+                                : (!empty($tuTN['xe']) && $tuTN['xe']['so_km'] !== null ? (int) $tuTN['xe']['so_km'] : ''),
+                'issue'        => !empty($tuTN['phieu']['yeu_cau_khach']) ? $tuTN['phieu']['yeu_cau_khach'] : '',
+            ];
+        }
+        $this->__data['content']['tuPhieu'] = $tuTN;
+
         $this->render('layouts/admin/master_admin', $this->__data);
     }
 
@@ -128,6 +142,8 @@ class Warranty extends Controller {
             'loai'       => $loai,
             'status'     => 'received',
             'created_by' => Session::get('dataUser'),
+            // Gắn vào phiếu tiếp nhận chỉ khi lập
+            'reception_id' => lien_ket_xe($f)['reception_id'],
         ]));
 
         Session::flash('msg', 'Đã lập ' . $this->tenPhieu($loai) . ' ' . $no);
@@ -353,6 +369,7 @@ class Warranty extends Controller {
 
     private function buildData(){
         $f = $this->__request->getFields();
+        $xe = lien_ket_xe($f);   // xe + biển số + số km, dùng chung mọi chứng từ
         $pid  = !empty($f['partner_id']) ? (int) $f['partner_id'] : 0;
         $partId = !empty($f['part_id']) ? (int) $f['part_id'] : 0;
         return [
@@ -365,11 +382,12 @@ class Warranty extends Controller {
             'received_date'    => $f['received_date'],
             'appointment_date' => !empty($f['appointment_date']) ? $f['appointment_date'] : null,
             /* Xe mang phụ tùng đó. Để trống được — bảo hành thiết bị cầm tay
-               thì không có xe nào. Chuẩn hoá biển số NGAY LÚC LƯU, dùng chung
-               đúng một hàm với CSKH và chứng từ bán hàng. */
-            'bien_so'          => !empty($f['bien_so']) ? trim($f['bien_so']) : null,
-            'bien_so_chuan'    => !empty($f['bien_so']) ? chuan_hoa_bien_so($f['bien_so']) : null,
-            'so_km'            => $this->soKm($f),
+               thì không có xe nào. Cả bốn cột do lien_ket_xe() dựng: nó chuẩn
+               hoá biển số, nối vào bản ghi xe, và cập nhật số km cho xe. */
+            'bien_so'          => $xe['bien_so'],
+            'bien_so_chuan'    => $xe['bien_so_chuan'],
+            'so_km'            => $xe['so_km'],
+            'vehicle_id'       => $xe['vehicle_id'],
 
             'issue'            => !empty($f['issue']) ? trim($f['issue']) : null,
             'diagnosis'        => !empty($f['diagnosis']) ? trim($f['diagnosis']) : null,

@@ -35,7 +35,7 @@ $hotline = !empty($settings['hotline']) ? $settings['hotline'] : '1900 0000';
 $hotlineTel = preg_replace('/[^0-9+]/', '', $hotline);
 $slogan = !empty($settings['site_slogan']) ? $settings['site_slogan'] : 'Phụ tùng & thiết bị gara ô tô';
 
-// Thanh xanh trên cùng bật/tắt ở admin > Cấu hình website. So với '0' chứ không
+// Thanh xanh trên cùng bật/tắt ở admin > Cấu hình chung. So với '0' chứ không
 // so với '1' vì lý do giống bộ lọc xe bên dưới: thiếu khoá thì vẫn hiện.
 $showTopbar = ($settings['show_topbar'] ?? '1') !== '0';
 
@@ -276,7 +276,7 @@ $renderMenu = function ($items) use (&$renderMenu){
    KHÔNG phải Controller — nên tự nó không gọi được $this->render(). Master
    dựng sẵn chuỗi HTML rồi truyền xuống, view con chỉ việc in ra.
 
-   Bật/tắt tại admin > Cấu hình website. So với '0' chứ không so với '1':
+   Bật/tắt tại admin > Cấu hình chung. So với '0' chứ không so với '1':
    chỉ ẩn khi khách CHỦ ĐỘNG tắt, còn thiếu khoá (chưa chạy migration 000050)
    thì vẫn hiện — đẩy code lên trước migration không làm mất thanh lọc.
    --------------------------------------------------------------------------- */

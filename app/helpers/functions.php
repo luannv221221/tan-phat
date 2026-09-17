@@ -478,7 +478,7 @@ function phan_trang_html(array $pg, $baseUrl = null, $nhan = 'dòng'){
  * <img src="http://localhost:88/..."> chỉ ra ô ảnh vỡ. Nhúng base64 thì logo
  * đi theo file, in ở đâu cũng có. Logo hiện 7KB nên không đáng ngại.
  *
- * Ưu tiên logo đã cấu hình trong Cấu hình website, chưa đặt thì lấy logo
+ * Ưu tiên logo đã cấu hình trong Cấu hình chung, chưa đặt thì lấy logo
  * mặc định của giao diện — đúng cái đang hiện ở đầu trang bán hàng.
  */
 function logo_in_an(array $settings = []){
@@ -575,7 +575,7 @@ function doc_so_tien($so){
  * @param array  $ct       thông tin chứng từ (loai, so, ngay, nhanKy...)
  * @param mixed  $khach    dòng partners hoặc ['name' => 'Khách vãng lai']
  * @param array  $dong     dòng hàng, mỗi dòng cần có item_type + amount
- * @param array  $settings cấu hình website (tên công ty, địa chỉ, logo...)
+ * @param array  $settings cấu hình chung (tên công ty, địa chỉ, logo...)
  * @param string $urlWord  link tải bản Word
  * @param bool   $laWord   true = đang xuất Word (ẩn thanh công cụ)
  */
@@ -748,4 +748,245 @@ function han_bao_tri(array $lanCuoi, array $docKm, array $cfg){
         $kq['ly_do'] = 'km';
     }
     return $kq;
+}
+
+/* ===========================================================================
+ * ĐƠN VỊ HÀNH CHÍNH cho các ô chọn địa chỉ — GỌI API NGOÀI, có nhớ tạm.
+ *
+ * Thứ tự lấy dữ liệu, hỏng chỗ nào thì xuống chỗ dưới:
+ *   1. API ngoài (provinces.open-api.vn v2 — 34 tỉnh, 2 cấp sau sáp nhập 2025)
+ *   2. bản nhớ tạm đã tải trước đó, kể cả quá hạn — cũ vẫn hơn không có gì
+ *   3. file tĩnh public/assets/data/vn-administrative.json (xem vn_admin_units)
+ * Mã của API TRÙNG mã trong file tĩnh (Hà Nội = 1, Ba Đình = 4), nên rơi
+ * xuống bước 3 không làm lệch dữ liệu đã lưu.
+ *
+ * Vì sao vẫn nhớ tạm dù "gọi API mỗi lần": mở form nào cũng chờ mạng thì nhập
+ * liệu rất nặng, mà danh sách này mấy năm mới đổi một lần.
+ * ========================================================================= */
+
+/** Gốc API — đổi được trong test qua $GLOBALS['dia_gioi_api'] */
+function dia_gioi_api_goc(){
+    return isset($GLOBALS['dia_gioi_api'])
+        ? (string) $GLOBALS['dia_gioi_api']
+        : 'https://provinces.open-api.vn/api/v2';
+}
+
+/** Thư mục nhớ tạm (ngoài webroot) */
+function dia_gioi_thu_muc_nho(){
+    return __DIR__ . '/../../storage/cache/dia-gioi';
+}
+
+/** Xoá nhớ tạm — dùng khi đổi API hoặc trong test */
+function dia_gioi_xoa_nho(){
+    $n = 0;
+    foreach ((array) glob(dia_gioi_thu_muc_nho() . '/*.json') as $f){ if (@unlink($f)) $n++; }
+    return $n;
+}
+
+/**
+ * Gọi một đường dẫn của API, nhớ kết quả ra file.
+ *
+ * @return array|null Mảng đã giải mã, hoặc null nếu không lấy được ở đâu cả.
+ */
+function dia_gioi_goi($duong, $ten){
+    $thuMuc = dia_gioi_thu_muc_nho();
+    $file   = $thuMuc . '/' . $ten . '.json';
+    $ttl    = isset($GLOBALS['dia_gioi_ttl']) ? (int) $GLOBALS['dia_gioi_ttl'] : 86400;
+
+    $docNho = function() use ($file){
+        if (!is_file($file)) return null;
+        $d = json_decode((string) file_get_contents($file), true);
+        return (is_array($d) && !empty($d)) ? $d : null;
+    };
+
+    // 1. Nhớ tạm còn hạn
+    if (is_file($file) && (time() - (int) filemtime($file)) < $ttl){
+        $d = $docNho();
+        if ($d !== null) return $d;
+    }
+
+    // 2. Gọi API
+    $body = '';
+    if (function_exists('curl_init')){
+        $ch = curl_init(rtrim(dia_gioi_api_goc(), '/') . $duong);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 8,
+            CURLOPT_CONNECTTIMEOUT => 4,
+            CURLOPT_HTTPHEADER     => ['Accept: application/json'],
+        ]);
+        $body = (string) curl_exec($ch);
+        if ((int) curl_getinfo($ch, CURLINFO_HTTP_CODE) !== 200) $body = '';
+        curl_close($ch);
+    }
+    $d = $body !== '' ? json_decode($body, true) : null;
+    if (is_array($d) && !empty($d)){
+        if (!is_dir($thuMuc)) @mkdir($thuMuc, 0775, true);
+        @file_put_contents($file, json_encode($d, JSON_UNESCAPED_UNICODE));
+        return $d;
+    }
+
+    // 3. Nhớ tạm quá hạn còn hơn không có gì
+    return $docNho();
+}
+
+/** Danh sách tỉnh / thành: [['c' => 1, 'n' => 'Thành phố Hà Nội'], ...] */
+function dia_gioi_tinh(){
+    $d = dia_gioi_goi('/', 'tinh');
+    if (is_array($d)){
+        $ds = [];
+        foreach ($d as $p){
+            if (!isset($p['code'], $p['name'])) continue;
+            $ds[] = ['c' => (int) $p['code'], 'n' => (string) $p['name']];
+        }
+        if (!empty($ds)) return $ds;
+    }
+    $ds = [];
+    foreach (vn_admin_units() as $p) $ds[] = ['c' => (int) $p['c'], 'n' => (string) $p['n']];
+    return $ds;
+}
+
+/** Phường / xã của một tỉnh */
+function dia_gioi_xa($tinhCode){
+    $tinhCode = (int) $tinhCode;
+    if ($tinhCode <= 0) return [];
+
+    $d = dia_gioi_goi('/p/' . $tinhCode . '?depth=2', 'xa-' . $tinhCode);
+    if (is_array($d) && !empty($d['wards']) && is_array($d['wards'])){
+        $ds = [];
+        foreach ($d['wards'] as $w){
+            if (!isset($w['code'], $w['name'])) continue;
+            $ds[] = ['c' => (int) $w['code'], 'n' => (string) $w['name']];
+        }
+        if (!empty($ds)) return $ds;
+    }
+    foreach (vn_admin_units() as $p){
+        if ((int) $p['c'] !== $tinhCode) continue;
+        $ds = [];
+        foreach ($p['w'] as $w) $ds[] = ['c' => (int) $w['c'], 'n' => (string) $w['n']];
+        return $ds;
+    }
+    return [];
+}
+
+/**
+ * Tra tên tỉnh + phường từ mã, ĐỒNG THỜI kiểm tra phường có thuộc tỉnh đó không.
+ *
+ * Bắt buộc kiểm ở server: trình duyệt gửi lên mã gì cũng được, không thể tin
+ * danh sách đã lọc ở client.
+ *
+ * @return array|null ['province' => ..., 'ward' => ...] hoặc null nếu không hợp lệ
+ */
+function dia_gioi_tra($tinhCode, $xaCode){
+    $tinhCode = (int) $tinhCode;
+    $xaCode   = (int) $xaCode;
+    if ($tinhCode <= 0 || $xaCode <= 0) return null;
+
+    $tenTinh = null;
+    foreach (dia_gioi_tinh() as $p){
+        if ($p['c'] === $tinhCode){ $tenTinh = $p['n']; break; }
+    }
+    if ($tenTinh === null) return null;
+
+    foreach (dia_gioi_xa($tinhCode) as $w){
+        if ($w['c'] === $xaCode) return ['province' => $tenTinh, 'ward' => $w['n']];
+    }
+    return null;   // đúng tỉnh nhưng phường không thuộc tỉnh này
+}
+
+/**
+ * Ghép địa chỉ đầy đủ: "số nhà, phường/xã, tỉnh/thành".
+ * Dùng cho mọi dòng có bốn cột address / ward_name / province_name.
+ * Dòng cũ chưa có tỉnh/phường thì chỉ ra `address`, không thừa dấu phẩy.
+ */
+function dia_chi_day_du($row){
+    if (!is_array($row)) return '';   // khách lẻ: bản in truyền null
+    $parts = [];
+    foreach (['address', 'ward_name', 'province_name'] as $k){
+        if (!empty($row[$k])) $parts[] = $row[$k];
+    }
+    return implode(', ', $parts);
+}
+
+/* ===========================================================================
+ * NỐI CHỨNG TỪ VÀO XE VÀ PHIẾU TIẾP NHẬN
+ *
+ * Mô hình: một khách nhiều XE, một xe nhiều PHIẾU TIẾP NHẬN, mỗi phiếu nhiều
+ * chứng từ (báo giá / hoá đơn / phiếu bảo hành). Trước đây biển số là chữ gõ
+ * tay rời rạc trên từng chứng từ, không có gì nối chúng lại: tra lịch sử một
+ * xe là ghép chuỗi, gõ hai kiểu là thành hai xe.
+ * ========================================================================= */
+
+/**
+ * Phiếu tiếp nhận + xe của nó.
+ * @return array|null ['phieu' => ..., 'xe' => ...] hoặc null nếu không có
+ */
+function phieu_tiep_nhan($id){
+    $id = (int) $id;
+    if ($id <= 0) return null;
+    $p = \App\core\Load::model('ReceptionsModel')->getDetail($id);
+    if (empty($p)) return null;
+    $xe = \App\core\Load::model('VehiclesModel')->getDetail((int) $p['vehicle_id']);
+    return ['phieu' => $p, 'xe' => !empty($xe) ? $xe : null];
+}
+
+/** Xe theo biển số — nhận mọi cách gõ (xem chuan_hoa_bien_so) */
+function xe_theo_bien_so($bienSo){
+    if (chuan_hoa_bien_so($bienSo) === '') return null;
+    $xe = \App\core\Load::model('VehiclesModel')->theoBienSo($bienSo);
+    return !empty($xe) ? $xe : null;
+}
+
+/**
+ * Các cột xe của một chứng từ, lấy từ dữ liệu form.
+ *
+ *   - Lập TỪ PHIẾU TIẾP NHẬN: lấy xe và số km của phiếu. Không tin biển số gõ
+ *     tay trên form, vì phiếu mới là thứ quyết định xe nào.
+ *   - Lập TAY: biển số gõ vào mà trùng một xe đã có thì vẫn nối vào xe đó —
+ *     nhờ vậy lịch sử xe không bị đứt chỉ vì người lập không đi qua phiếu.
+ *   - Biển số lạ: vẫn lưu bản chụp `bien_so`, `vehicle_id` để trống (bán lẻ
+ *     phụ tùng qua quầy thì không có xe nào cả).
+ *   - Số km lớn hơn số đã ghi nhận của xe thì cập nhật cho xe; nhỏ hơn thì bỏ
+ *     qua (đồng hồ không quay lui — xem VehiclesModel::capNhatKm).
+ *
+ * `bien_so` giữ NGUYÊN VĂN và `bien_so_chuan` chuẩn hoá ngay lúc lưu: chứng từ
+ * là bản chụp lúc lập, xe sau này đổi biển thì giấy đã giao khách vẫn đúng.
+ *
+ * @return array [reception_id, vehicle_id, bien_so, bien_so_chuan, so_km]
+ */
+function lien_ket_xe($f){
+    $ra = ['reception_id' => null, 'vehicle_id' => null,
+           'bien_so' => null, 'bien_so_chuan' => null, 'so_km' => null];
+
+    $bienSo = isset($f['bien_so']) ? trim((string) $f['bien_so']) : '';
+    $km     = isset($f['so_km']) ? (int) preg_replace('/[^\d]/', '', (string) $f['so_km']) : 0;
+
+    $tu = !empty($f['reception_id']) ? phieu_tiep_nhan($f['reception_id']) : null;
+    if ($tu !== null){
+        $ra['reception_id'] = (int) $tu['phieu']['id'];
+        $ra['vehicle_id']   = (int) $tu['phieu']['vehicle_id'];
+        if (!empty($tu['xe']['bien_so'])) $bienSo = $tu['xe']['bien_so'];
+        if ($km <= 0){
+            if ($tu['phieu']['km_vao'] !== null)              $km = (int) $tu['phieu']['km_vao'];
+            elseif (!empty($tu['xe']) && $tu['xe']['so_km'] !== null) $km = (int) $tu['xe']['so_km'];
+        }
+    } elseif ($bienSo !== ''){
+        $xe = xe_theo_bien_so($bienSo);
+        if ($xe !== null){
+            $ra['vehicle_id'] = (int) $xe['id'];
+            $bienSo = $xe['bien_so'];   // lấy đúng cách viết đã lưu của xe
+        }
+    }
+
+    if ($bienSo !== ''){
+        $ra['bien_so']       = $bienSo;
+        $ra['bien_so_chuan'] = chuan_hoa_bien_so($bienSo);
+    }
+    if ($km > 0){
+        $ra['so_km'] = $km;
+        if ($ra['vehicle_id'] !== null){
+            \App\core\Load::model('VehiclesModel')->capNhatKm($ra['vehicle_id'], $km);
+        }
+    }
+    return $ra;
 }

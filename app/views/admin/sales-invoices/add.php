@@ -53,6 +53,18 @@ $tabs = [
 ?>
 <form action="" method="post">
     <?php echo csrf_field(); ?>
+    <?php /* Lập từ phiếu tiếp nhận: giữ mã phiếu để chứng từ gắn vào đúng
+             lần vào xưởng, và nói rõ cho người lập biết. */ ?>
+    @if (!empty($old['reception_id']))
+    <input type="hidden" name="reception_id" value="{{$old['reception_id']}}"/>
+    @endif
+    @if (!empty($tuPhieu))
+    <div class="alert alert-info"><i class="fas fa-clipboard-check mr-1"></i>
+        Lập từ phiếu tiếp nhận <b>{{$tuPhieu['phieu']['reception_no']}}</b>
+        — xe <b class="text-uppercase">{{$tuPhieu['xe']['bien_so']}}</b>.
+        Chứng từ này sẽ gắn vào lần vào xưởng đó.
+    </div>
+    @endif
     @if (!empty($msg))
     <div class="alert alert-danger"><i class="fas fa-exclamation-circle mr-1"></i> {{$msg}}</div>
     @endif

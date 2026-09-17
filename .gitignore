@@ -67,3 +67,7 @@ public/assets/uploads/categories/*
 !public/assets/uploads/categories/*.jpg
 !public/assets/uploads/banners/bn-*.jpg
 !public/assets/uploads/parts/*.jpg
+
+# Nho tam danh sach tinh / phuong tai tu API ngoai (dia_gioi_*)
+storage/cache/*
+!storage/cache/.gitkeep
