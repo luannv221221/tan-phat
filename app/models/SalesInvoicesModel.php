@@ -4,15 +4,17 @@ use App\core\Model;
 
 /**
  * BÁN HÀNG — Hoá đơn bán. Ghi sổ -> doanh thu + thuế + giá vốn + trừ tồn (KT-6).
+ * RIÊNG từng gara; số hoá đơn và số HĐĐT đánh riêng trong mỗi gara.
  */
 class SalesInvoicesModel extends Model {
 
     protected $_table   = 'sales_invoices';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_theoGara = true;
 
     public function getLists($status = '', $from = '', $to = ''){
-        $q = $this->table($this->_table)
+        $q = $this->bangGara()
             ->select('`sales_invoices`.*, `partners`.`name` AS customer_full, '
                    . '`warehouses`.`name` AS warehouse_name')
             ->leftJoinOn('partners', 'sales_invoices.customer_id', 'partners.id')
@@ -40,7 +42,7 @@ class SalesInvoicesModel extends Model {
      * "Không tìm thấy hoá đơn" — sai còn nặng hơn.
      */
     public function getDetail($id){
-        return $this->table($this->_table)
+        return $this->bangGara()
             ->select('`sales_invoices`.*, `partners`.`name` AS customer_full, '
                    . '`warehouses`.`name` AS warehouse_name')
             ->leftJoinOn('partners', 'sales_invoices.customer_id', 'partners.id')
@@ -62,7 +64,7 @@ class SalesInvoicesModel extends Model {
     public function danhSachDeChep($customerId = 0, $limit = 50){
         $customerId = (int) $customerId;
 
-        return $this->table($this->_table)
+        return $this->bangGara()
             ->select('`sales_invoices`.`id`, `sales_invoices`.`invoice_no`, '
                    . '`sales_invoices`.`invoice_date`, `sales_invoices`.`total_amount`, '
                    . '`sales_invoices`.`status`, '
@@ -78,7 +80,7 @@ class SalesInvoicesModel extends Model {
     }
 
     public function nextNo(){
-        $row = $this->table($this->_table)->select('`invoice_no`')->orderBy('id', 'DESC')->first();
+        $row = $this->bangGara()->select('`invoice_no`')->orderBy('id', 'DESC')->first();
         $n = 0;
         if (!empty($row) && preg_match('/(\d+)$/', $row['invoice_no'], $m)){ $n = (int) $m[1]; }
         return 'HD-' . str_pad($n + 1, 6, '0', STR_PAD_LEFT);
@@ -86,7 +88,7 @@ class SalesInvoicesModel extends Model {
 
     /** Số HĐĐT kế tiếp (max số đã phát hành + 1, đệm 8 chữ số theo TT78) */
     public function nextEinvoiceNo(){
-        $row = $this->table($this->_table)
+        $row = $this->bangGara()
             ->select('`einvoice_no`')
             ->whereNotNull('einvoice_no')
             ->orderBy('id', 'DESC')->first();
@@ -113,7 +115,7 @@ class SalesInvoicesModel extends Model {
      * Controller tự gộp theo khách / nhân viên.
      */
     public function getPostedForReport($from = '', $to = ''){
-        $q = $this->table($this->_table)
+        $q = $this->bangGara()
             ->select('`sales_invoices`.*, `partners`.`name` AS customer_full, `users`.`name` AS staff_name')
             ->leftJoinOn('partners', 'sales_invoices.customer_id', 'partners.id')
             ->leftJoinOn('users', 'sales_invoices.created_by', 'users.id')

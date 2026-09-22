@@ -14,7 +14,7 @@
    lại — để trộn lẫn thì người lập báo giá gõ "thay dầu" ở tab Hàng hoá vẫn ra.
 
    Làm việc này HAI LẦN, một lần cho mỗi nguồn danh mục:
-     tổng  — hàng chung của Tân Phát, giá gốc
+     tổng  — kho tổng của Tân Phát, giá tham khảo (giá bán lẻ), gara sửa được
      gara  — hàng riêng + hàng tổng gara đã chọn, giá đã áp bảng giá riêng
    Người lập báo giá bấm nút để đổi qua lại; đổi nguồn chỉ đổi DANH SÁCH GỢI Ý,
    dòng đã chọn giữ nguyên. */
@@ -567,10 +567,10 @@ $tabs = [
             moTaEl.textContent = 'Hàng riêng của gara và hàng gara đã chọn làm, theo giá riêng của gara.';
         } else if (!NGUON.gara.hang.length && !NGUON.gara.dichvu.length){
             // Nói luôn đường đi tiếp, đừng để người dùng đoán vì sao nút kia mờ
-            moTaEl.textContent = 'Toàn bộ danh mục chung, theo giá gốc. '
+            moTaEl.textContent = 'Kho tổng của Tân Phát, giá tham khảo (sửa được trên từng dòng). '
                                + 'Gara này chưa có danh mục riêng — dựng ở Hàng hoá → Danh mục của gara.';
         } else {
-            moTaEl.textContent = 'Toàn bộ danh mục chung, theo giá gốc.';
+            moTaEl.textContent = 'Kho tổng của Tân Phát, giá tham khảo (sửa được trên từng dòng).';
         }
     }
 

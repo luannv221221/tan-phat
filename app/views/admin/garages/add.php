@@ -5,7 +5,7 @@
                 <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>{{$page_name}}</h3>
             </div>
 
-            <form action="" method="post">
+            <form action="" method="post" enctype="multipart/form-data">
                 <?php echo csrf_field(); ?>
                 <div class="card-body">
                     @if (!empty($msg))
@@ -41,9 +41,24 @@
                         </div>
                     </div>
 
+                    <?php /* In lên đầu báo giá / hoá đơn / biên bản của gara này. Gara
+                             độc lập là một doanh nghiệp riêng: phiếu phải mang tên, MST,
+                             logo của chính gara, không phải của Tân Phát. */ ?>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>Mã số thuế</label>
+                            <input type="text" class="form-control" name="tax_code" value="{{!empty($old['tax_code'])?$old['tax_code']:''}}"/>
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label>Email</label>
+                            <input type="email" class="form-control" name="email" value="{{!empty($old['email'])?$old['email']:''}}"/>
+                        </div>
+                    </div>
                     <div class="form-group">
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" name="is_master" id="is_master" value="1"/>
+                        <label>Logo <span class="text-muted small">(in lên đầu phiếu — bỏ trống thì phiếu không có logo)</span></label>
+                        <input type="file" class="form-control-file" name="logo_file" accept="image/*"/>
+                    </div>
+
                             <label class="custom-control-label" for="is_master">Đây là gara tổng</label>
                         </div>
                         <small class="form-text text-muted">

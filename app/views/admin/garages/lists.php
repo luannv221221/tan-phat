@@ -69,7 +69,17 @@
                         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-warning btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
                         @endif
-                        @if (route('admin/'.$routeBase.'/delete/'.$item['id']) && $item['is_master']!=1)
+                        <?php /* Gara đã có dữ liệu thì chỉ KHOÁ được, không xoá: xoá đi là
+                                 khách, xe, chứng từ của gara đó không còn ai thấy. Khoá là
+                                 nhân viên gara không đăng nhập được nữa, dữ liệu còn nguyên. */ ?>
+                        @if ($item['is_master']!=1 && !empty($__d) && route('admin/'.$routeBase.'/edit/'.$item['id']))
+                            @if ($item['status']==1)
+                            <a onclick="return confirm('Khoá gara {{$item['name']}}? Nhân viên gara sẽ không đăng nhập được nữa, dữ liệu vẫn giữ nguyên.')" href="{{_WEB_URL.'/admin/'.$routeBase.'/toggle/'.$item['id']}}" class="btn btn-secondary btn-sm" title="Khoá gara"><i class="fas fa-lock"></i></a>
+                            @else
+                            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/toggle/'.$item['id']}}" class="btn btn-success btn-sm" title="Mở khoá gara"><i class="fas fa-lock-open"></i></a>
+                            @endif
+                        @endif
+                        @if (route('admin/'.$routeBase.'/delete/'.$item['id']) && $item['is_master']!=1 && empty($__d))
                         <a onclick="return confirm('Bạn có chắc chắn muốn xoá gara {{$item['name']}}?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
                         @endif
                     </td>

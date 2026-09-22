@@ -25,6 +25,7 @@
  *   000076  gara độc lập — nền: garage_id cho 9 bảng, màn chỉ Tân Phát, thông tin gara
  *   000077  gara độc lập — khách và xe: email đối tượng, cấu hình riêng gara, màn
  *           Tài khoản website, chuyển khách / xe cũ, "không trùng" theo gara
+ *   000078  gara độc lập — bán hàng: số báo giá / hoá đơn / mã hàng không trùng theo gara
  *
  * RIÊNG 000069 (Manager tự thêm nhân viên cho gara mình) nằm ở file KHÁC,
  * chạy SAU khi đẩy code:
@@ -126,7 +127,7 @@ if (in_array('--sau-khi-day-code', $argv, true)){
 }
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000077 (trừ 000069)\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000078 (trừ 000069)\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
@@ -144,6 +145,7 @@ echo "-- Phần 17 gara độc lập (nền): garage_id cho 9 bảng, gán dữ 
 echo "--   đánh dấu màn chỉ Tân Phát, cột thông tin gara. Cột mới để NULL được.\n";
 echo "-- Phần 18 khách và xe theo gara: màn Tài khoản website, chuyển khách / xe cũ\n";
 echo "--   sang đối tượng / xe, số phiếu - biển số không trùng TRONG TỪNG GARA.\n";
+echo "-- Phần 19 bán hàng theo gara: số báo giá, số hoá đơn, mã hàng không trùng theo gara.\n";
 echo "-- Quyền Manager tự thêm nhân viên (000069) KHÔNG nằm ở đây — nó ở file\n";
 echo "-- deploy/sau-khi-day-code.sql, dán SAU khi đẩy code.\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
@@ -1096,6 +1098,30 @@ foreach ([
 }
 
 /* ------------------------------------------------------------------ *
+ * 19. Gara độc lập — bán hàng                                — 000078
+ *
+ * Số báo giá / số hoá đơn / mã hàng không trùng TRONG TỪNG GARA. Mã hàng kho
+ * tổng (garage_id NULL) chỉ kiểm được bằng PHP — xem PartsModel::findByCode.
+ * ------------------------------------------------------------------ */
+echo "\n-- 19. Gara doc lap — ban hang (000078): khong trung theo gara\n\n";
+foreach ([
+    ['quotations',     'uq_quote_no',   'uq_quote_gara_no',   '`garage_id`, `quote_no`'],
+    ['sales_invoices', 'uq_invoice_no', 'uq_invoice_gara_no', '`garage_id`, `invoice_no`'],
+    ['parts',          'uq_parts_code', 'uq_parts_gara_code', '`garage_id`, `code`'],
+] as $d){
+    list($bang, $cu, $moi, $cotMoi) = $d;
+    $coIdx = function($ten) use ($bang){
+        return "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE()"
+             . " AND TABLE_NAME = '$bang' AND INDEX_NAME = '$ten'";
+    };
+    ddlNeuThieu('g19_' . $moi, $coIdx($moi), "ALTER TABLE `$bang` ADD UNIQUE KEY `$moi` ($cotMoi)");
+    printf("SET @%s = (SELECT IF((%s) = 0, 'SELECT 1', %s));\n"
+         . "PREPARE st_%s FROM @%s; EXECUTE st_%s; DEALLOCATE PREPARE st_%s;\n\n",
+        'g19x_' . $cu, $coIdx($cu), q("ALTER TABLE `$bang` DROP INDEX `$cu`"),
+        'g19x_' . $cu, 'g19x_' . $cu, 'g19x_' . $cu, 'g19x_' . $cu);
+}
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
@@ -1126,6 +1152,7 @@ foreach ([
     '2026_09_17_000075_collation_mac_dinh_csdl',
     '2026_09_22_000076_nen_gara_doc_lap',
     '2026_09_22_000077_khach_va_xe_theo_gara',
+    '2026_09_22_000078_ban_hang_theo_gara',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên

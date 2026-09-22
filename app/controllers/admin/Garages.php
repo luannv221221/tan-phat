@@ -88,6 +88,10 @@ class Garages extends Controller {
             $this->flashOne('code', 'Mã gara này đã tồn tại', 'add');
             return;
         }
+        $loi = '';
+        $logo = $this->logoTaiLen($loi);
+        if ($logo === null){ $this->flashOne('logo_file', $loi, 'add'); return; }
+        if ($logo !== '') $data['logo'] = $logo;
 
         $id = $this->__model->add($data);
         if (!empty($data['is_master'])) $this->__model->clearMasterExcept($id);
@@ -140,6 +144,11 @@ class Garages extends Controller {
             $this->flashOne('code', 'Mã gara này đã thuộc về gara khác', 'edit/' . $id);
             return;
         }
+        // Chỉ ghi đè logo khi THỰC SỰ có ảnh mới — sửa tên mà xoá mất logo là sai
+        $loi = '';
+        $logo = $this->logoTaiLen($loi);
+        if ($logo === null){ $this->flashOne('logo_file', $loi, 'edit/' . $id); return; }
+        if ($logo !== '') $data['logo'] = $logo;
 
         /* Không cho gỡ cờ gara tổng khi nó là gara tổng DUY NHẤT: mất cờ này
            thì không còn ai sở hữu danh mục tổng, và getMaster() phải đoán bừa
@@ -193,6 +202,44 @@ class Garages extends Controller {
         $this->__response->redirect('admin/' . $this->routeBase);
     }
 
+    /**
+     * Khoá / mở khoá gara. Gara đã có dữ liệu thì chỉ khoá được, không xoá:
+     * khoá là nhân viên gara đó không đăng nhập được nữa (AuthMiddleware), khách
+     * / xe / chứng từ còn nguyên. Không khoá được gara tổng — khoá là Tân Phát tự
+     * khoá mình ra ngoài.
+     */
+    public function toggle($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (!route('admin/' . $this->routeBase . '/edit/' . (int) $id)){
+            $this->__response->redirect('admin/khong-co-quyen'); return;
+        }
+        if ((int) $item['is_master'] === 1){
+            Session::flash('msgError', 'Không khoá được gara tổng.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        $moi = (int) $item['status'] === 1 ? 0 : 1;
+        $this->__model->edit(['status' => $moi], (int) $id);
+        Session::flash('msg', $moi === 1 ? 'Đã mở khoá gara ' . $item['name']
+                                         : 'Đã khoá gara ' . $item['name'] . ' — nhân viên gara không đăng nhập được nữa.');
+        $this->__response->redirect('admin/' . $this->routeBase);
+    }
+
+    /**
+     * Logo tải lên (nếu có). Trả đường dẫn, '' khi không chọn ảnh, hoặc null khi
+     * ảnh lỗi (đã báo lỗi vào $loi).
+     */
+    private function logoTaiLen(&$loi){
+        if (empty($_FILES['logo_file']) || (int) $_FILES['logo_file']['error'] === UPLOAD_ERR_NO_FILE) return '';
+        $up = upload_image('logo_file', 'garages', 'logo');
+        if ($up['status'] === 'ok') return $up['path'];
+        $loi = 'Ảnh logo lỗi: ' . $up['message'];
+        return null;
+    }
+
     // ===== Helper =====
 
     private function applyRules(){
@@ -215,6 +262,9 @@ class Garages extends Controller {
             'name'       => trim($f['name']),
             'address'    => !empty($f['address']) ? trim($f['address']) : null,
             'phone'      => !empty($f['phone']) ? trim($f['phone']) : null,
+            // In lên đầu phiếu của gara (cau_hinh_in_an)
+            'tax_code'   => !empty($f['tax_code']) ? trim($f['tax_code']) : null,
+            'email'      => !empty($f['email']) ? trim($f['email']) : null,
             'is_master'  => !empty($f['is_master']) ? 1 : 0,
             'sort_order' => isset($f['sort_order']) ? (int) $f['sort_order'] : 0,
             'status'     => !empty($f['status']) ? 1 : 0,

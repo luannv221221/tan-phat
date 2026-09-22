@@ -54,6 +54,8 @@ Route::group('admin', function(){
    Route::get('garages/edit/(\d+)',      'admin/garages/edit/$1');
    Route::post('garages/edit/(\d+)',     'admin/garages/postEdit/$1');
    Route::get('garages/delete/(\d+)',    'admin/garages/delete/$1');
+   // Gara đã có dữ liệu thì chỉ khoá / mở được, không xoá
+   Route::get('garages/toggle/(\d+)',    'admin/garages/toggle/$1');
    /* Không còn route đổi gara (22/09/2026): các gara độc lập, gara làm việc
       luôn là gara của tài khoản — xem gara_hien_tai(). */
 

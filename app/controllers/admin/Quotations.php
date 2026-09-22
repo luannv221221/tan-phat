@@ -354,6 +354,9 @@ class Quotations extends Controller {
             'bien_so'       => isset($item['bien_so']) ? $item['bien_so'] : null,
             'bien_so_chuan' => isset($item['bien_so_chuan']) ? $item['bien_so_chuan'] : null,
             'so_km'         => isset($item['so_km']) ? $item['so_km'] : null,
+            // Hoá đơn cùng xe, cùng lần vào xưởng với báo giá (1 xe nhiều phiếu)
+            'vehicle_id'    => !empty($item['vehicle_id']) ? (int) $item['vehicle_id'] : null,
+            'reception_id'  => !empty($item['reception_id']) ? (int) $item['reception_id'] : null,
         ]);
         $lines = [];
         foreach ($items as $it){
@@ -414,8 +417,9 @@ class Quotations extends Controller {
 
         if ($laWord) header_word($item['quote_no']);
 
+        // Đầu phiếu in thông tin của GARA LẬP PHIẾU, không phải của Tân Phát
         in_chung_tu($ct, $khach, $this->__itemModel->getByQuotation($id),
-            $this->model('SettingsModel')->map(),
+            cau_hinh_in_an(!empty($item['garage_id']) ? (int) $item['garage_id'] : null),
             _WEB_URL . '/admin/' . $this->routeBase . '/print/' . (int) $id . '?word=1',
             $laWord);
     }
@@ -484,7 +488,15 @@ class Quotations extends Controller {
         if (empty($f['quote_date'])) $errors['quote_date'] = 'Chọn ngày báo giá';
         // "hàng hoá HOẶC dịch vụ": báo giá chỉ toàn dịch vụ (thay dầu, rửa xe)
         // là hoàn toàn hợp lệ với một gara.
-        if (empty($this->buildLines())) $errors['lines'] = 'Báo giá phải có ít nhất 1 dòng hàng hoá hoặc dịch vụ';
+        $lines = $this->buildLines();
+        if (empty($lines)) $errors['lines'] = 'Báo giá phải có ít nhất 1 dòng hàng hoá hoặc dịch vụ';
+
+        /* Mặt hàng phải thuộc kho tổng hoặc danh mục riêng CỦA GARA NÀY. Id hàng
+           riêng của gara khác gửi lên từ form thì lưu vào là in ra tên / mã hàng
+           riêng của họ. */
+        $ids  = array_values(array_unique(array_map('intval', array_column($lines, 'part_id'))));
+        $lech = array_diff($ids, $this->__part->dungDuoc($ids));
+        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của gara — chọn lại dòng hàng';
         return $errors;
     }
 

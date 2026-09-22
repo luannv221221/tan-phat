@@ -3,7 +3,7 @@
 use App\core\Model;
 
 /**
- * GIÁ RIÊNG CỦA GARA — bảng `garage_part_prices`.
+ * GIÁ RIÊNG CỦA GARA — bảng `garage_part_prices`. Gara khác không thấy bảng giá của nhau.
  *
  * Một dòng ở đây mang HAI nghĩa cùng lúc:
  *   1. "Gara này CÓ LÀM mặt hàng đó"   -> nó xuất hiện trong nguồn "Gara hiện tại"
@@ -18,10 +18,11 @@ class GaragePricesModel extends Model {
     protected $_table   = 'garage_part_prices';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_theoGara = true;
 
     /** Mọi mặt hàng gara đã chọn: [part_id => dòng giá] */
     public function theoGara($garageId){
-        $rows = $this->table($this->_table)
+        $rows = $this->bangGara()
                      ->where('garage_id', '=', (int) $garageId)
                      ->get();
         $map = [];
@@ -30,7 +31,7 @@ class GaragePricesModel extends Model {
     }
 
     public function mot($garageId, $partId){
-        return $this->table($this->_table)
+        return $this->bangGara()
                     ->where('garage_id', '=', (int) $garageId)
                     ->where('part_id', '=', (int) $partId)
                     ->first();
@@ -65,12 +66,13 @@ class GaragePricesModel extends Model {
 
     /** Bỏ mặt hàng khỏi danh mục gara (không đụng tới danh mục tổng) */
     public function boChon($garageId, $partId){
-        return $this->delete($this->_table, '`garage_id` = ? AND `part_id` = ?',
-                             [(int) $garageId, (int) $partId]);
+        list($dk, $b) = $this->dkGara();
+        return $this->delete($this->_table, '`garage_id` = ? AND `part_id` = ? AND ' . $dk,
+                             array_merge([(int) $garageId, (int) $partId], $b));
     }
 
     public function demTheoGara($garageId){
-        $r = $this->table($this->_table)->select('COUNT(*) AS c')
+        $r = $this->bangGara()->select('COUNT(*) AS c')
                   ->where('garage_id', '=', (int) $garageId)->first();
         return !empty($r['c']) ? (int) $r['c'] : 0;
     }

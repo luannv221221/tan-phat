@@ -107,11 +107,20 @@ $p4 = (new PartsModel())->add([
 ]);
 ok($p2 > 0 && $p3 > 0 && $p4 > 0, 'Tao du 4 phu tung');
 
-// Ma phu tung phai duy nhat
+/* Ma phu tung phai duy nhat.
+   Tu 000078 (gara doc lap) chi muc la (garage_id, code). MySQL coi cac NULL la
+   khac nhau nen chi muc KHONG chan duoc hai hang KHO TONG (garage_id NULL) cung
+   ma — cho do do findByCode() chan o tang PHP (man Hang hoa / Dich vu / nhap
+   file deu goi no truoc khi luu). Trong CUNG mot gara thi chi muc van chan. */
+ok(!empty((new PartsModel())->findByCode('PT-TEST-001')),
+   'Ma phu tung trung trong kho tong -> findByCode() tim ra, man Hang hoa tu choi',
+   'Chi muc (garage_id, code) khong chan duoc dong garage_id NULL — phai chan o day');
+$garaThu = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn();
+$pdo->prepare("INSERT INTO parts (code, name, slug, status, garage_id, create_at) VALUES ('PT-TEST-RIENG', 'Hang rieng thu', 'pt-test-rieng-1', 1, ?, NOW())")->execute([$garaThu]);
 $dup = false;
-try { (new PartsModel())->add(['code' => 'PT-TEST-001', 'name' => 'Trung ma', 'slug' => 'pt-test-trung', 'status' => 1]); }
+try { $pdo->prepare("INSERT INTO parts (code, name, slug, status, garage_id, create_at) VALUES ('PT-TEST-RIENG', 'Trung ma', 'pt-test-rieng-2', 1, ?, NOW())")->execute([$garaThu]); }
 catch (\Throwable $e){ $dup = true; }
-ok($dup, 'Ma phu tung trung -> bi tu choi (UNIQUE)');
+ok($dup, 'Ma trung trong CUNG mot gara -> CSDL tu choi (UNIQUE garage_id + code)');
 
 // Gia tien phai la DECIMAL, khong duoc lam tron sai
 $pd = (new PartsModel())->getDetail($p1);

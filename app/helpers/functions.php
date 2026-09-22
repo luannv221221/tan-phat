@@ -484,6 +484,10 @@ function phan_trang_html(array $pg, $baseUrl = null, $nhan = 'dòng'){
 function logo_in_an(array $settings = []){
     $goc = __DIR__ . '/../../';
 
+    /* Gara (không phải Tân Phát) chưa đặt logo thì KHÔNG in logo: rơi về logo
+       mặc định của website là in logo Tân Phát lên phiếu của gara khác. */
+    if (empty($settings['logo']) && !empty($settings['khong_logo_mac_dinh'])) return '';
+
     $duongDan = !empty($settings['logo'])
         ? $goc . ltrim($settings['logo'], '/')
         : $goc . 'public/assets/storefront/images/logo.png';
@@ -495,6 +499,38 @@ function logo_in_an(array $settings = []){
           : ($duoi === 'svg' ? 'image/svg+xml' : ($duoi === 'gif' ? 'image/gif' : 'image/png'));
 
     return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($duongDan));
+}
+
+/**
+ * Thông tin ĐƠN VỊ in lên đầu phiếu (báo giá, hoá đơn, biên bản...) — của GARA
+ * LẬP PHIẾU, dạng mảng cùng khoá với Cấu hình chung để mẫu in dùng như cũ.
+ *
+ * Gara độc lập (22/09/2026): báo giá của gara B phải in tên, địa chỉ, SĐT, mã
+ * số thuế, logo của gara B — in "Tân Phát" lên đó là giấy tờ sai người bán.
+ *
+ *   Gara tổng (Tân Phát)  Cấu hình chung như cũ; ô nào ở đó để trống thì lấy
+ *                         từ bảng `garages`.
+ *   Gara khác             Lấy từ bảng `garages`. KHÔNG mang số tài khoản ngân
+ *                         hàng của Tân Phát, không rơi về logo của website.
+ *
+ * @param int|null $garaId gara của chứng từ; null = gara làm việc
+ */
+function cau_hinh_in_an($garaId = null){
+    $chung = \App\core\Load::model('SettingsModel')->map();
+    $g = !empty($garaId) ? \App\core\Load::model('GaragesModel')->getDetail((int) $garaId) : gara_hien_tai();
+    $tu = ['site_name' => 'name', 'address' => 'address', 'hotline' => 'phone',
+           'email' => 'email', 'tax_code' => 'tax_code', 'logo' => 'logo'];
+
+    if (empty($g) || (int) $g['is_master'] === 1){
+        foreach ($tu as $k => $cot){
+            if (empty($chung[$k]) && !empty($g[$cot])) $chung[$k] = $g[$cot];
+        }
+        return $chung;
+    }
+
+    $ra = ['khong_logo_mac_dinh' => 1];
+    foreach ($tu as $k => $cot) $ra[$k] = isset($g[$cot]) && $g[$cot] !== null ? (string) $g[$cot] : '';
+    return $ra;
 }
 
 /**

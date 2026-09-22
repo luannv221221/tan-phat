@@ -3,13 +3,16 @@
 use App\core\Model;
 
 /**
- * BÁN HÀNG — Báo giá (chỉ đề xuất giá, không tác động tồn/kế toán).
+ * BÁN HÀNG — Báo giá (chỉ đề xuất giá, không tác động tồn/kế toán). RIÊNG từng gara;
+ * số báo giá đánh riêng trong mỗi gara. Website (giỏ hàng / yêu cầu báo giá) ghi
+ * vào gara tổng — xem gara_hien_tai().
  */
 class QuotationsModel extends Model {
 
     protected $_table   = 'quotations';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_theoGara = true;
 
     public static $statuses = [
         'draft'    => 'Nháp',
@@ -19,7 +22,7 @@ class QuotationsModel extends Model {
     ];
 
     public function getLists($status = '', $from = '', $to = ''){
-        $q = $this->table($this->_table)
+        $q = $this->bangGara()
             ->select('`quotations`.*, `partners`.`name` AS customer_full')
             ->leftJoinOn('partners', 'quotations.customer_id', 'partners.id');
 
@@ -49,7 +52,7 @@ class QuotationsModel extends Model {
     public function danhSachDeChep($customerId = 0, $limit = 50){
         $customerId = (int) $customerId;
 
-        return $this->table($this->_table)
+        return $this->bangGara()
             ->select('`quotations`.`id`, `quotations`.`quote_no`, `quotations`.`quote_date`, '
                    . '`quotations`.`total_amount`, `quotations`.`status`, '
                    . 'COALESCE(`partners`.`name`, `quotations`.`customer_name`, \'\') AS khach, '
@@ -64,7 +67,7 @@ class QuotationsModel extends Model {
     }
 
     public function nextNo(){
-        $row = $this->table($this->_table)->select('`quote_no`')->orderBy('id', 'DESC')->first();
+        $row = $this->bangGara()->select('`quote_no`')->orderBy('id', 'DESC')->first();
         $n = 0;
         if (!empty($row) && preg_match('/(\d+)$/', $row['quote_no'], $m)){ $n = (int) $m[1]; }
         return 'BG-' . str_pad($n + 1, 6, '0', STR_PAD_LEFT);

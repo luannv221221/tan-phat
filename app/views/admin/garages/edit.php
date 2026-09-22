@@ -16,7 +16,7 @@ $batStatus = isset($old['status'])    ? (int) $old['status'] === 1    : (int) $i
                 </div>
             </div>
 
-            <form action="" method="post">
+            <form action="" method="post" enctype="multipart/form-data">
                 <?php echo csrf_field(); ?>
                 <div class="card-body">
                     @if (!empty($msg))
@@ -65,9 +65,27 @@ $batStatus = isset($old['status'])    ? (int) $old['status'] === 1    : (int) $i
                         </div>
                     </div>
 
+                    <?php /* In lên đầu báo giá / hoá đơn / biên bản của gara này. Gara
+                             độc lập là một doanh nghiệp riêng: phiếu phải mang tên, MST,
+                             logo của chính gara, không phải của Tân Phát. */ ?>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>Mã số thuế</label>
+                            <input type="text" class="form-control" name="tax_code" value="{{$val('tax_code')}}"/>
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label>Email</label>
+                            <input type="email" class="form-control" name="email" value="{{$val('email')}}"/>
+                        </div>
+                    </div>
                     <div class="form-group">
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" name="is_master" id="is_master" value="1" {{$batMaster?'checked':''}}/>
+                        <label>Logo <span class="text-muted small">(in lên đầu phiếu — bỏ trống thì phiếu không có logo)</span></label>
+                        @if (!empty($item['logo']))
+                        <div class="mb-1"><img src="{{_WEB_URL.'/'.ltrim($item['logo'], '/')}}" alt="Logo" style="max-height:48px"/></div>
+                        @endif
+                        <input type="file" class="form-control-file" name="logo_file" accept="image/*"/>
+                    </div>
+
                             <label class="custom-control-label" for="is_master">Đây là gara tổng</label>
                         </div>
                         <small class="form-text text-muted">

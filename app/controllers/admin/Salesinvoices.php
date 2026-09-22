@@ -50,7 +50,9 @@ class Salesinvoices extends Controller {
     private function formData(){
         $this->__data['content']['warehouses'] = $this->__warehouse->getActive();
         $this->__data['content']['partners']   = $this->__partner->getActive();
-        $this->__data['content']['parts']      = $this->__part->getForSelect();
+        /* Kho tổng + danh mục của gara. getForSelect() chỉ có kho tổng, nên hàng
+           và dịch vụ riêng của gara không bao giờ lên được hoá đơn. */
+        $this->__data['content']['parts']      = $this->__part->choGara();
         $this->__data['content']['partnerDiscounts'] = $this->__partner->groupDiscountMap();
     }
 
@@ -542,10 +544,13 @@ class Salesinvoices extends Controller {
     /** Dựng XML HĐĐT (cấu trúc TĐiệp/HĐon tham khảo TT78/NĐ123 — nộp phần mềm HĐĐT) */
     private function buildEinvoiceXml($item, $items){
         $x = function($v){ return htmlspecialchars((string) $v, ENT_XML1 | ENT_QUOTES, 'UTF-8'); };
-        $sellerName = $this->__settings->val('site_name', 'CÔNG TY TÂN PHÁT');
-        $sellerTax  = $this->__settings->val('tax_code', '');
-        $sellerAddr = $this->__settings->val('address', '');
-        $sellerTel  = $this->__settings->val('hotline', '');
+        /* Người bán là GARA LẬP HOÁ ĐƠN — mỗi gara một mã số thuế. In tên / MST
+           của Tân Phát lên hoá đơn điện tử của gara khác là hoá đơn sai người bán. */
+        $dv = cau_hinh_in_an(!empty($item['garage_id']) ? (int) $item['garage_id'] : null);
+        $sellerName = !empty($dv['site_name']) ? $dv['site_name'] : 'CÔNG TY TÂN PHÁT';
+        $sellerTax  = isset($dv['tax_code']) ? (string) $dv['tax_code'] : '';
+        $sellerAddr = isset($dv['address']) ? (string) $dv['address'] : '';
+        $sellerTel  = isset($dv['hotline']) ? (string) $dv['hotline'] : '';
         $buyerName  = !empty($item['customer_name']) ? $item['customer_name'] : 'Khách lẻ';
 
         $lines = '';
@@ -644,8 +649,9 @@ class Salesinvoices extends Controller {
 
         if ($laWord) header_word($item['invoice_no']);
 
+        // Đầu phiếu in thông tin của GARA LẬP HOÁ ĐƠN, không phải của Tân Phát
         in_chung_tu($ct, $khach, $this->__itemModel->getByInvoice($id),
-            $this->model('SettingsModel')->map(),
+            cau_hinh_in_an(!empty($item['garage_id']) ? (int) $item['garage_id'] : null),
             _WEB_URL . '/admin/' . $this->routeBase . '/print/' . (int) $id . '?word=1',
             $laWord);
     }
@@ -734,6 +740,11 @@ class Salesinvoices extends Controller {
 
         if (empty($f['invoice_date'])) $errors['invoice_date'] = 'Chọn ngày hoá đơn';
         if (empty($lines)) $errors['lines'] = 'Hoá đơn phải có ít nhất 1 dòng hàng';
+
+        // Mặt hàng phải thuộc kho tổng hoặc danh mục riêng CỦA GARA NÀY
+        $ids  = array_values(array_unique(array_map('intval', array_column($lines, 'part_id'))));
+        $lech = array_diff($ids, $this->__part->dungDuoc($ids));
+        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của gara — chọn lại dòng hàng';
         return $errors;
     }
 

@@ -44,7 +44,8 @@ class Warranty extends Controller {
 
     private function formData(){
         $this->__data['content']['partners'] = $this->__partner->getActive();
-        $this->__data['content']['parts']    = $this->__part->getForSelect();
+        // Kho tổng + danh mục của gara (hàng / thiết bị riêng của gara cũng bảo hành được)
+        $this->__data['content']['parts']    = $this->__part->choGara();
     }
 
     public function index(){
@@ -320,7 +321,8 @@ class Warranty extends Controller {
         if (empty($item)){ echo 'Không tìm thấy phiếu'; return; }
         if (!$this->canManage($h['warranty_id'])){ $this->__response->redirect('admin/khong-co-quyen'); return; }
 
-        $settings = $this->model('SettingsModel');
+        // Đầu biên bản là GARA của phiếu, không phải Tân Phát
+        $dv = cau_hinh_in_an(!empty($item['garage_id']) ? (int) $item['garage_id'] : null);
 
         $this->render($this->viewDir . '/handover-print', [
             'h'         => $h,
@@ -328,9 +330,9 @@ class Warranty extends Controller {
             'tenPhieu'  => $this->tenPhieu($item['loai'] ?? ''),
             'typeLabel' => isset(WarrantyHandoversModel::$types[$h['type']]) ? WarrantyHandoversModel::$types[$h['type']] : $h['type'],
             'ctx'       => $this->handoverContext($item),
-            'company'   => $settings ? $settings->val('site_name', 'CÔNG TY TÂN PHÁT') : 'CÔNG TY TÂN PHÁT',
-            'address'   => $settings ? $settings->val('address', '') : '',
-            'phone'     => $settings ? $settings->val('hotline', '') : '',
+            'company'   => !empty($dv['site_name']) ? $dv['site_name'] : 'CÔNG TY TÂN PHÁT',
+            'address'   => isset($dv['address']) ? (string) $dv['address'] : '',
+            'phone'     => isset($dv['hotline']) ? (string) $dv['hotline'] : '',
         ]);
     }
 

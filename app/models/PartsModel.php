@@ -107,6 +107,11 @@ class PartsModel extends Model {
 
     /** Áp bộ lọc + từ khoá (dùng chung cho getLists và countLists) */
     private function applyFilters($q, $filters, $keyword, $promoOnly = false){
+        /* Danh sách Hàng hoá / Dịch vụ là KHO TỔNG của Tân Phát. Hàng riêng
+           của các gara không được hiện ở đây — Tân Phát không xem dữ liệu
+           bên trong gara (gara độc lập, 22/09/2026). */
+        $q = $q->whereNull('parts.garage_id');
+
         foreach ($filters as $field => $value){
             $q = $q->where($field, '=', $value);
         }
@@ -544,7 +549,8 @@ class PartsModel extends Model {
      * Trả về tối đa $limit dòng gồm id, code, name.
      */
     public function search($keyword, $excludeId = 0, $limit = 20){
-        $q = $this->table($this->_table)->select('`id`, `code`, `name`');
+        // Phụ kiện đi kèm là chuyện của kho tổng — không gợi ý hàng riêng của gara
+        $q = $this->table($this->_table)->select('`id`, `code`, `name`')->whereNull('garage_id');
 
         if ($excludeId > 0){
             $q = $q->where('id', '!=', (int) $excludeId);
@@ -625,12 +631,61 @@ class PartsModel extends Model {
         return $q->groupBy('parts.id')->orderBy('parts.name', 'ASC')->get();
     }
 
+    /**
+     * Theo id — chỉ trong "kho tổng + hàng riêng của gara làm việc". Hàng riêng
+     * của gara khác coi như không tồn tại: mở / sửa / chọn nó theo id là lộ tên,
+     * mã, giá của gara kia.
+     */
     public function getDetail($id){
-        return $this->getFirst($id);
+        return $this->locKhoTongVaGara($this->table($this->_table)->where('id', '=', (int) $id))->first();
     }
 
+    /**
+     * Theo mã — trong "kho tổng + hàng riêng của gara làm việc". Đây là chỗ
+     * kiểm trùng mã: chỉ mục (garage_id, code) không chặn được trùng giữa các
+     * dòng garage_id NULL (MySQL coi các NULL là khác nhau), nên phải kiểm ở đây.
+     */
     public function findByCode($code){
-        return $this->table($this->_table)->where('code', '=', $code)->first();
+        return $this->locKhoTongVaGara($this->table($this->_table)->where('code', '=', $code))->first();
+    }
+
+    /** Giới hạn truy vấn vào kho tổng (garage_id NULL) + hàng riêng của gara làm việc */
+    private function locKhoTongVaGara($q){
+        $g = self::garaLoc();
+        if ($g === null) return $q;
+        return $q->where(function($s) use ($g){ $s->whereNull('garage_id'); $s->orWhere('garage_id', '=', $g); });
+    }
+
+    /**
+     * Trong $ids, mặt hàng nào gara làm việc ĐƯỢC dùng trên chứng từ: hàng kho
+     * tổng hoặc hàng riêng CỦA CHÍNH gara đó. Hàng riêng của gara khác bị loại —
+     * gửi id của nó lên form là in ra được tên / mã hàng riêng của gara kia.
+     * @return int[]
+     */
+    public function dungDuoc(array $ids){
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($ids)) return [];
+        $q = $this->locKhoTongVaGara($this->table($this->_table)->select('`id`')->whereIn('id', $ids));
+        return array_map('intval', array_column((array) $q->get(), 'id'));
+    }
+
+    /**
+     * Mặt hàng gara làm việc dùng được trên chứng từ (hoá đơn, phiếu bảo hành,
+     * phiếu kho): KHO TỔNG + DANH MỤC CỦA GARA (hàng riêng + hàng tổng gara đã
+     * chọn, giá theo bảng giá riêng). Bản của gara thắng khi trùng id — nó mang
+     * giá riêng. Thay cho getForSelect() ở màn của gara: getForSelect() chỉ có
+     * kho tổng nên hàng / dịch vụ riêng của gara không lên được hoá đơn.
+     */
+    public function choGara($chiHangCoKho = false){
+        $map = [];
+        foreach ($this->theoNguon(self::NGUON_TONG, 0, $chiHangCoKho) as $r) $map[(int) $r['id']] = $r;
+        $gid = (int) gara_hien_tai_id();
+        if ($gid > 0){
+            foreach ($this->theoNguon(self::NGUON_GARA, $gid, $chiHangCoKho) as $r) $map[(int) $r['id']] = $r;
+        }
+        $ds = array_values($map);
+        usort($ds, function($a, $b){ return strcmp(mb_strtolower($a['name']), mb_strtolower($b['name'])); });
+        return $ds;
     }
 
     /**
@@ -641,8 +696,8 @@ class PartsModel extends Model {
      * Vẫn kiểm tra lại bằng findByCode() phòng khi có mã nhập tay chen vào.
      */
     public function nextCode($prefix){
-        $rows = $this->table($this->_table)->select('`code`')
-                     ->whereLike('code', $prefix . '%')->get();
+        $rows = $this->locKhoTongVaGara($this->table($this->_table)->select('`code`')
+                     ->whereLike('code', $prefix . '%'))->get();
 
         $max = 0;
         foreach ($rows ?: [] as $r){
