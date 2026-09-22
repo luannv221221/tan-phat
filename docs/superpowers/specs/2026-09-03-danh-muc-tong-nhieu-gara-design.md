@@ -2,6 +2,12 @@
 
 Ngày chốt: 03/09/2026
 
+> **22/09/2026 — ĐÃ ĐỔI MÔ HÌNH.** Các gara là đơn vị độc lập trên nền tảng Tân
+> Phát, không phải chi nhánh: quyết định "Thấy tất" và "cho phép đổi gara" bên
+> dưới **không còn hiệu lực**. Xem
+> `2026-09-22-gara-doc-lap-tren-nen-tang-design.md`. Phần danh mục riêng / giá
+> riêng của gara vẫn giữ.
+
 ## Vấn đề
 
 Hệ thống hiện phục vụ **một** đơn vị. Sắp tới nhiều gara cùng dùng, và khi lập
