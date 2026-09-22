@@ -286,6 +286,41 @@ if (in_array('chi_tan_phat', $cot('modules'), true)){
        'Chua co trong test: ' . implode(',', array_diff($that, $ds)) . ' | Khong con la man gara: ' . implode(',', array_diff($ds, $that)));
 }
 
+// ---------------------------------------------------------------------------
+section('Cho quen — bang co garage_id thi model phai bat _theoGara');
+
+/* Bảng có cột `garage_id` mà model của nó chưa bật cờ là bảng KHÔNG được chặn.
+   `$chuaLam` ghi bước sẽ bật; bật rồi thì phải xoá khỏi danh sách (test bắt cả
+   chiều đó), nên danh sách chỉ ngắn dần. */
+$ngoaiLe = ['users' => 'dang nhap tim khap cac gara; chan tay o Users::phamVi',
+            'parts' => 'NULL = kho tong, loc bang dieu kien rieng'];
+$chuaLam = [
+    'partners' => 2, 'customer_groups' => 2, 'vehicles' => 2, 'receptions' => 2,
+    'warranty_requests' => 2, 'warranty_handovers' => 2,
+    'quotations' => 3, 'sales_invoices' => 3, 'garage_part_prices' => 3,
+    'warehouses' => 4, 'goods_receipts' => 4, 'goods_issues' => 4, 'stock_takes' => 4, 'warehouse_transfers' => 4,
+];
+$modelCua = [];
+foreach (glob($goc . 'app/models/*.php') as $f){
+    $src = codeOnly($f);
+    if (preg_match('~\$_table\s*=\s*[\'"]([a-z_]+)[\'"]~', $src, $mm)){
+        $modelCua[$mm[1]][] = ['file' => basename($f), 'bat' => (bool) preg_match('~\$_theoGara\s*=\s*true~', $src)];
+    }
+}
+$bangCoGara = $pdo->query("SELECT TABLE_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()
+                           AND COLUMN_NAME = 'garage_id' ORDER BY TABLE_NAME")->fetchAll(PDO::FETCH_COLUMN);
+foreach ($bangCoGara as $b){
+    if (isset($ngoaiLe[$b]) || $b === 'garages') continue;
+    $ms  = isset($modelCua[$b]) ? $modelCua[$b] : [];
+    $bat = !empty($ms) && !in_array(false, array_column($ms, 'bat'), true);
+    if (isset($chuaLam[$b])){
+        ok(!$bat, "`$b` chua bat _theoGara (buoc {$chuaLam[$b]}) — bat roi thi xoa khoi \$chuaLam");
+        continue;
+    }
+    ok($bat, "Model cua `$b` bat _theoGara",
+       empty($ms) ? 'Khong tim thay model nao co $_table = ' . $b : 'Chua bat: ' . implode(', ', array_column($ms, 'file')));
+}
+
 // ==== [CLI] ====
 
 // ==== [HTTP] ====

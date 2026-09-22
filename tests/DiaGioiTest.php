@@ -160,9 +160,12 @@ if (!function_exists('curl_init')){ echo "\n[SKIP] PHP khong co curl.\n"; $donSa
 
 $MK = 'ZzDiaGioi#2026';
 $nhomAdmin = (int) $pdo->query("SELECT id FROM `groups` WHERE name = 'Admin'")->fetchColumn();
-$pdo->prepare("INSERT INTO users (name, email, password, group_id, status, create_at)
-               VALUES ('ZZ Admin dia gioi', 'zz-dg-ad@local.test', ?, ?, 1, NOW())")
-    ->execute([\App\core\Hash::make($MK), $nhomAdmin]);
+/* Tài khoản PHẢI thuộc một gara: từ 22/09/2026 tài khoản không gara không vào
+   được trang quản trị (gara độc lập). Admin thử ở gara tổng, như Admin thật. */
+$garaTong = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn();
+$pdo->prepare("INSERT INTO users (name, email, password, group_id, status, garage_id, create_at)
+               VALUES ('ZZ Admin dia gioi', 'zz-dg-ad@local.test', ?, ?, 1, ?, NOW())")
+    ->execute([\App\core\Hash::make($MK), $nhomAdmin, $garaTong]);
 
 $http = function($method, $url, $jar, $data = null){
     $ch = curl_init($url);

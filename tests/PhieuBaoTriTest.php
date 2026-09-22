@@ -206,9 +206,12 @@ $datCaiDat('maintenance_interval_km', '5000');
 
 $MK = 'ZzBaoTri#2026';
 $A_NHOM = (int) $pdo->query("SELECT id FROM `groups` WHERE name = 'Admin'")->fetchColumn();
+/* Tài khoản PHẢI thuộc một gara: từ 22/09/2026 tài khoản không gara không vào
+   được trang quản trị (gara độc lập). Admin thử ở gara tổng, như Admin thật. */
+$garaTong = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn();
 $pdo->prepare("INSERT INTO users (name, email, password, group_id, status, garage_id, create_at)
-               VALUES ('ZZ Admin bao tri', 'zz-bt-ad@local.test', ?, ?, 1, NULL, NOW())")
-    ->execute([\App\core\Hash::make($MK), $A_NHOM]);
+               VALUES ('ZZ Admin bao tri', 'zz-bt-ad@local.test', ?, ?, 1, ?, NOW())")
+    ->execute([\App\core\Hash::make($MK), $A_NHOM, $garaTong]);
 
 $http = function($method, $url, $jar, $data = null){
     $ch = curl_init($url);
