@@ -142,9 +142,9 @@ function themGara(GaragesModel $GA, $code, $ten, $diaChi, $dienThoai, $thuTu){
 }
 
 echo "1. Tao gara chi nhanh\n";
-$sg = themGara($GA, 'DMSG', 'Tân Phát Sài Gòn',
+$sg = themGara($GA, 'DMSG', 'Gara mẫu Sài Gòn',
                 'KCN Sóng Thần, Dĩ An, Bình Dương', '0274 3777 999', 10);
-$dn = themGara($GA, 'DMDN', 'Tân Phát Đà Nẵng',
+$dn = themGara($GA, 'DMDN', 'Gara mẫu Đà Nẵng',
                 '215 Nguyễn Hữu Thọ, Hải Châu, Đà Nẵng', '0236 3888 777', 11);
 
 /* Kho chi nhánh về đúng chi nhánh. Chỉ đụng kho có mã KHO02 và đang thuộc

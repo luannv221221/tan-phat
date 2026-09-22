@@ -319,7 +319,7 @@ ok(strpos($r['body'], 'zz-nv-trong@local.test') !== false && strpos($r['body'], 
 $r = $http('GET', "$base/admin/users", $jarAD);
 ok(strpos($r['body'], 'zz-nv-tp@local.test') !== false && strpos($r['body'], 'zz-nv-sg@local.test') !== false,
    'Admin khong loc -> thay moi gara');
-ok(strpos($bang($r), '<th>Gara</th>') !== false && strpos($bang($r), 'Tân Phát Sài Gòn') !== false,
+ok(strpos($bang($r), '<th>Gara</th>') !== false && strpos($bang($r), 'Gara mẫu Sài Gòn') !== false,
    'Danh sach co cot Gara, ghi ten gara trong bang');
 ok(strpos($bang($r), 'chưa gán (gara tổng)') !== false, 'Tai khoan chua gan gara ghi ro "chua gan (gara tong)"');
 

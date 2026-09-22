@@ -183,7 +183,7 @@ class Garages extends Controller {
             foreach ($dung as $nhan => $n) $mo[] = $n . ' ' . $nhan;
             Session::flash('msgError',
                 'Không xoá được: gara này đang có ' . implode(', ', $mo)
-              . '. Chuyển những thứ đó sang gara khác trước, hoặc tắt trạng thái hoạt động.');
+              . '. Gara đã có dữ liệu thì chỉ khoá được (tắt trạng thái hoạt động), không xoá.');
             $this->__response->redirect('admin/' . $this->routeBase);
             return;
         }

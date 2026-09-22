@@ -71,27 +71,40 @@ class GaragesModel extends Model {
     }
 
     /**
-     * Gara này còn ràng buộc gì không — để báo cho người dùng biết trước khi xoá.
+     * Gara này còn dữ liệu gì — để báo cho người dùng trước khi xoá.
      *
-     * Khoá ngoại đặt ON DELETE SET NULL nên MySQL sẽ CHO xoá và âm thầm bỏ
-     * trống `garage_id` của kho, nhân viên, báo giá cũ. Đó là hành vi đúng khi
-     * dọn dẹp, nhưng người bấm Xoá cần biết mình đang làm gì.
+     * Khoá ngoại của các bảng riêng gara là RESTRICT (000065, 000076): MySQL
+     * sẽ từ chối lệnh xoá, nhưng người dùng chỉ thấy một lỗi CSDL khó hiểu.
+     * Đếm ở đây để nói thẳng "gara này còn N đối tượng, M phiếu nhập...".
+     * Bảng chưa có cột `garage_id` (CSDL chưa migrate) thì bỏ qua.
      */
     public function dangDungODau($id){
         $id  = (int) $id;
         $ket = [];
         foreach ([
-            'warehouses'     => 'kho',
-            'users'          => 'người dùng',
-            'quotations'     => 'báo giá',
-            'sales_invoices' => 'hoá đơn',
-            /* `parts` phải có mặt ở đây. Khoá ngoại của nó là RESTRICT nên
-               MySQL sẽ từ chối lệnh xoá — nhưng người dùng chỉ thấy một lỗi
-               CSDL khó hiểu. Đếm ở đây để nói thẳng: "gara này còn N hàng riêng". */
-            'parts'          => 'hàng riêng',
+            'warehouses'          => 'kho',
+            'users'               => 'người dùng',
+            'partners'            => 'đối tượng',
+            'customer_groups'     => 'nhóm khách',
+            'vehicles'            => 'xe',
+            'receptions'          => 'phiếu tiếp nhận',
+            'quotations'          => 'báo giá',
+            'sales_invoices'      => 'hoá đơn',
+            'warranty_requests'   => 'phiếu bảo hành / bảo trì',
+            'warranty_handovers'  => 'biên bản bàn giao',
+            'goods_receipts'      => 'phiếu nhập',
+            'goods_issues'        => 'phiếu xuất',
+            'stock_takes'         => 'phiếu kiểm kê',
+            'warehouse_transfers' => 'phiếu chuyển kho',
+            'parts'               => 'hàng riêng',
+            'garage_part_prices'  => 'mặt hàng đã chọn',
         ] as $bang => $nhan){
-            $row = $this->table($bang)->select('COUNT(*) AS c')
-                        ->where('garage_id', '=', $id)->first();
+            try {
+                $row = $this->table($bang)->select('COUNT(*) AS c')
+                            ->where('garage_id', '=', $id)->first();
+            } catch (\Throwable $e){
+                continue;
+            }
             $n = !empty($row['c']) ? (int) $row['c'] : 0;
             if ($n > 0) $ket[$nhan] = $n;
         }

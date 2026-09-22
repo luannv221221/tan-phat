@@ -20,7 +20,7 @@
                         </div>
                         <div class="form-group col-md-8">
                             <label>Tên gara <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="name" placeholder="VD: Tân Phát Sài Gòn" value="{{!empty($old['name'])?$old['name']:''}}"/>
+                            <input type="text" class="form-control" name="name" placeholder="VD: Gara Minh Long" value="{{!empty($old['name'])?$old['name']:''}}"/>
                             {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
                         </div>
                     </div>

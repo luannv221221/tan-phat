@@ -177,7 +177,7 @@ Bật cờ cho: `attributes`, `banners`, `car-body-types`, `car-brands`,
 `modules`, `news`, `news-categories`, `newsletter`, `orders`,
 `part-categories`, `product-brands`, `product-manufacturers`,
 `product-origins`, `product-units`, `products`, `reviews`, `services`,
-`settings`, `tai-khoan-web` (mới).
+`settings`, `thong-ke` (thống kê lượt truy cập website), `tai-khoan-web` (mới).
 
 `customers` **không** bật cờ: từ nay là màn Khách hàng của gara. Dịch vụ và hàng
 riêng của gara quản lý ở **Danh mục của gara**.
@@ -281,21 +281,24 @@ thuộc về ai và không ai thấy.
 
 ## Deploy
 
-Ba bước, giống cách đã làm với migration 000069:
+Mỗi bước thi công mang migration riêng của nó, chạy **trước** khi đẩy code của
+bước đó (code cũ vẫn chạy được sau migration: cột mới để NULL được, ràng buộc
+chỉ nới ra, bảng cũ còn nguyên):
 
-1. **Trước khi đẩy code** — migration A: thêm các cột `garage_id`, gán dữ liệu
-   về Tân Phát, đổi ràng buộc "không trùng" sang theo gara, thêm
-   `modules.chi_tan_phat` và bật cờ, đăng ký module `tai-khoan-web`, thêm
-   `partners.email`, chuyển xe / khách cũ sang `vehicles` / `partners`, thêm cột
-   thông tin gara, đổi tên hai gara mẫu. Code cũ vẫn chạy sau bước này (cột mới
-   để NULL được, ràng buộc chỉ nới ra, bảng cũ còn nguyên).
-2. **Đẩy code.**
-3. **Sau khi đẩy code** — migration B: gán về Tân Phát những dòng code cũ tạo ra
-   trong lúc chờ (`garage_id` NULL), chuyển nốt xe / khách cũ phát sinh trong lúc
-   chờ, rồi đặt NOT NULL và đổi khoá ngoại sang RESTRICT.
+| Bước | Migration |
+|---|---|
+| 1. Nền | thêm `garage_id` cho 9 bảng, gán dữ liệu cũ (chứng từ kho theo kho, còn lại về Tân Phát), `modules.chi_tan_phat` và bật cờ, cột thông tin gara, đổi tên hai gara mẫu |
+| 2. Khách và xe | `partners.email`, module `tai-khoan-web`, chuyển xe / khách cũ sang `vehicles` / `partners`, ràng buộc "không trùng" theo gara cho đối tượng, xe, phiếu tiếp nhận, bảo hành, bàn giao |
+| 3. Bán hàng | ràng buộc theo gara cho báo giá, hoá đơn, mã hàng |
+| 4. Kho | ràng buộc theo gara cho kho, nhập, xuất, kiểm kê, chuyển kho |
+| 5. Khoá lại | chạy **sau** khi đẩy code bước 5: gán về Tân Phát những dòng `garage_id` NULL phát sinh trong lúc chờ, rồi đặt NOT NULL và đổi các khoá ngoại còn `SET NULL` sang RESTRICT |
 
-`tools/xuat-sql-thay-doi.php` thêm phần cho migration A; migration B vào chế độ
-`--sau-khi-day-code`. Mọi câu phải chạy lại được nhiều lần không lỗi.
+Không đặt NOT NULL sớm hơn: trước bước 5 vẫn còn model chưa tự ghi gara, cột bắt
+buộc là form của model đó sập.
+
+`tools/xuat-sql-thay-doi.php` thêm một phần cho mỗi migration bước 1-4; migration
+bước 5 vào chế độ `--sau-khi-day-code`. Mọi câu phải chạy lại được nhiều lần
+không lỗi.
 
 ## Kiểm thử
 
@@ -346,9 +349,10 @@ File mới `tests/CachLyGaraTest.php`, đăng ký vào `tests/run.php`.
 Mỗi bước chạy được và test xong mới sang bước sau. `CachLyGaraTest` viết từ bước
 1 và phủ thêm dần theo từng bước.
 
-1. **Nền** — migration A + B, lớp Model gốc, hàm gara làm việc duy nhất, bỏ ô
+1. **Nền** — migration bước 1, lớp Model gốc, hàm gara làm việc duy nhất, bỏ ô
    đổi gara, đóng khi thiếu gara, cờ `chi_tan_phat` trong menu và
-   `RoleMiddleware`.
+   `RoleMiddleware`. Chưa bật chặn cho model thật nào — mỗi bước sau bật cho
+   nhóm model của nó.
 2. **Khách và xe** — màn Khách hàng mới (đọc `partners`, khối xe đầy đủ), màn
    Tài khoản website, chuyển dữ liệu cũ, đối tượng, nhóm khách, xe, phiếu tiếp
    nhận, bảo hành / bảo trì, bàn giao, lịch bảo hành, nhắc bảo trì.
@@ -356,7 +360,8 @@ Mỗi bước chạy được và test xong mới sang bước sau. `CachLyGaraT
    danh mục của gara, phiếu in, thông tin gara.
 4. **Kho** — kho, tồn kho, tồn kho lâu, biến động tồn, thẻ kho, nhập, xuất,
    kiểm kê, chuyển kho.
-5. **Còn lại** — báo cáo bán hàng, báo cáo CSKH, thống kê, Dashboard, nhân viên.
+5. **Còn lại** — báo cáo bán hàng, báo cáo CSKH, Dashboard, nhân viên,
+   migration khoá lại (NOT NULL + RESTRICT).
 
 ## Rủi ro đã biết
 
