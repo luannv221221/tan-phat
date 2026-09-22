@@ -200,6 +200,70 @@ ok(strpos(file_get_contents($goc . 'app/views/layouts/admin/header.php'), 'garag
 ok(strpos(codeOnly($goc . 'app/providers/AppServiceProvider.php'), 'dsGara') === false,
    'Khong con chia se danh sach gara de doi');
 
+// ---------------------------------------------------------------------------
+section('Lop Model goc — chan theo gara');
+
+/* Model thử trên bảng `warehouses` (đã có garage_id). Bước 1 chưa bật cờ cho
+   model thật nào, nên thử cơ chế bằng một lớp tạm. */
+$khoModel = new class extends \App\core\Model {
+    protected $_table = 'warehouses'; protected $_fields = '*'; protected $_primary = 'id';
+    protected $_theoGara = true;
+};
+$pdo->prepare("INSERT INTO warehouses (code, name, is_default, sort_order, status, garage_id, create_at)
+               VALUES ('ZZCL-KHOA', 'ZZ Kho A', 0, 99, 1, ?, NOW())")->execute([$GA]);
+$khoA = (int) $pdo->lastInsertId();
+$khoB = $so("SELECT id FROM warehouses WHERE code = 'ZZCL-KHOB'");
+$tenKho = function($id) use ($mot){ return $mot("SELECT name, garage_id FROM warehouses WHERE id = ?", [$id]); };
+
+ok(method_exists('\App\core\Model', 'epGara'), 'Model co epGara() de test / cong cu dong lenh ep gara');
+if (method_exists('\App\core\Model', 'epGara')){
+    \App\core\Model::epGara($GB);
+
+    ok(empty($khoModel->getFirst($khoA)), 'getFirst() theo ID cua gara A tu gara B: KHONG thay');
+    ok(!empty($khoModel->getFirst($khoB)), 'getFirst() ID cua chinh gara B: thay');
+    $ma = array_column($khoModel->getList(), 'code');
+    ok(in_array('ZZCL-KHOB', $ma, true) && !in_array('ZZCL-KHOA', $ma, true), 'getList() chi ra kho cua gara B');
+    $ma = array_column($khoModel->getList('`code` LIKE ?', ['ZZCL-%']), 'code');
+    ok($ma === ['ZZCL-KHOB'], 'getList() co dieu kien rieng: van ghep dieu kien gara (dung thu tu bind)', json_encode($ma));
+    $ma = array_column($khoModel->getLimit(1000), 'code');
+    ok(in_array('ZZCL-KHOB', $ma, true) && !in_array('ZZCL-KHOA', $ma, true), 'getLimit() chi ra kho cua gara B');
+
+    $khoModel->updateById(['name' => 'ZZ bi sua'], $khoA);
+    ok($tenKho($khoA)['name'] === 'ZZ Kho A', 'updateById() vao ID cua gara A: KHONG sua duoc');
+    $khoModel->deleteById($khoA);
+    ok(!empty($tenKho($khoA)), 'deleteById() vao ID cua gara A: KHONG xoa duoc');
+
+    $khoModel->updateById(['garage_id' => $GA, 'name' => 'ZZ Kho B2'], $khoB);
+    $b = $tenKho($khoB);
+    ok($b['name'] === 'ZZ Kho B2' && (int) $b['garage_id'] === $GB,
+       'updateById() khong chuyen duoc du lieu sang gara khac (bo garage_id tren form)');
+
+    $khoModel->addNew(['code' => 'ZZCL-KHOM', 'name' => 'ZZ Kho moi', 'is_default' => 0, 'sort_order' => 99,
+                       'status' => 1, 'garage_id' => $GA, 'create_at' => date('Y-m-d H:i:s')]);
+    $moi = $mot("SELECT garage_id FROM warehouses WHERE code = 'ZZCL-KHOM'");
+    ok(!empty($moi) && (int) $moi['garage_id'] === $GB, 'addNew() luon ghi gara lam viec, bo qua garage_id form gui len');
+
+    ok($khoModel->dkGara('w') === ['`w`.`garage_id` = ?', [$GB]], 'dkGara(alias) cho truy van tu viet');
+
+    \App\core\Model::epGara(0);   // giả lập web không xác định được gara
+    ok(empty($khoModel->getFirst($khoB)) && $khoModel->getList() === [], 'Khong xac dinh duoc gara: KHONG tra dong nao');
+    $nem = false;
+    try { $khoModel->addNew(['code' => 'ZZCL-KHOX', 'name' => 'x']); } catch (\RuntimeException $e){ $nem = true; }
+    ok($nem, 'Khong xac dinh duoc gara: addNew() tu choi ghi');
+    ok($khoModel->dkGara() === ['1 = 0', []], 'dkGara() dong khi khong xac dinh duoc gara');
+
+    \App\core\Model::epGara(null);   // dòng lệnh chưa ép: migrate, gieo dữ liệu, xuất SQL
+    ok(!empty($khoModel->getFirst($khoA)), 'Dong lenh chua ep gara: khong chan (migrate / cong cu van chay)');
+    ok($khoModel->dkGara('w') === ['1 = 1', []], 'dkGara() khong loc khi dong lenh chua ep gara');
+
+    $thuong = new class extends \App\core\Model {
+        protected $_table = 'warehouses'; protected $_fields = '*'; protected $_primary = 'id';
+    };
+    \App\core\Model::epGara($GB);
+    ok(!empty($thuong->getFirst($khoA)), 'Model KHONG bat _theoGara thi khong bi anh huong');
+    \App\core\Model::epGara(null);
+}
+
 // ==== [CLI] ====
 
 // ==== [HTTP] ====
