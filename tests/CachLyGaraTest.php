@@ -264,6 +264,28 @@ if (method_exists('\App\core\Model', 'epGara')){
     \App\core\Model::epGara(null);
 }
 
+// ---------------------------------------------------------------------------
+section('Man rieng gara — danh sach phai du');
+
+/* Mọi module KHÔNG có cờ chi_tan_phat là màn riêng của gara. Số bên phải là
+   bước thi công sẽ phủ màn đó vào test dò rò rỉ. Thêm module mới mà quên ghi
+   vào đây là đỏ — không thì màn mới lọt khỏi test cách ly. */
+$manRiengGara = [
+    'bao-cao-ban-hang' => 5, 'bao-cao-cskh' => 5, 'bien-dong-ton' => 4, 'customer-groups' => 2,
+    'customers' => 2, 'garage-catalog' => 3, 'goods-issues' => 4, 'goods-receipts' => 4,
+    'lich-bao-hanh' => 2, 'nhac-bao-tri' => 2, 'partners' => 2, 'quotations' => 3, 'receptions' => 2,
+    'sales-invoices' => 3, 'stock-takes' => 4, 'the-kho' => 4, 'ton-kho' => 4, 'ton-kho-lau' => 4,
+    'transfers' => 4, 'users' => 5, 'vehicles' => 2, 'warehouse-locations' => 4, 'warehouses' => 4,
+    'warranty' => 2,
+];
+if (in_array('chi_tan_phat', $cot('modules'), true)){
+    $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);
+    $ds   = array_keys($manRiengGara);
+    sort($that); sort($ds);
+    ok($that === $ds, 'Moi man rieng gara deu co ten trong danh sach test',
+       'Chua co trong test: ' . implode(',', array_diff($that, $ds)) . ' | Khong con la man gara: ' . implode(',', array_diff($ds, $that)));
+}
+
 // ==== [CLI] ====
 
 // ==== [HTTP] ====
@@ -340,6 +362,31 @@ $http('GET', "$base/admin/garages/doi/$GA", $jarB);
 $r = $http('GET', "$base/admin", $jarB);
 ok(strpos($dauTrang($r), 'ZZ Gara B') !== false && strpos($dauTrang($r), 'ZZ Gara A') === false,
    'Go thang URL doi gara cu van KHONG sang duoc gara A');
+
+// ---------------------------------------------------------------------------
+section('HTTP — man chi Tan Phat');
+
+$r  = $http('GET', "$base/admin", $jarB);
+$mn = $menuTrai($r);
+ok(strpos($mn, "$base/admin/quotations\"") !== false, 'Menu gara B co Bao gia');
+ok(strpos($mn, "$base/admin/customers\"") !== false, 'Menu gara B co Khach hang');
+/* Chọn đúng những màn nhóm Manager ĐANG có quyền xem — không phải màn mà
+   Manager vốn không có quyền, kẻo test xanh vì lý do khác. */
+foreach (['orders', 'garages', 'products', 'reviews', 'part-categories', 'chat', 'contact-messages'] as $l){
+    ok(strpos($mn, "$base/admin/$l\"") === false, "Menu gara B KHONG co `$l` (chi Tan Phat)");
+}
+foreach (['orders', 'garages', 'products'] as $l){
+    $r = $http('GET', "$base/admin/$l", $jarB);
+    ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false,
+       "Go thang /admin/$l tu gara B bi chan", 'HTTP ' . $r['code'] . ' ' . $r['loc']);
+}
+$r = $http('GET', "$base/admin/garages/edit/$GA", $jarB);
+ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false, 'Gara B KHONG mo duoc trang sua gara A');
+
+list($jarTP) = $dangNhap('zz-cl-tp@local.test');
+$mn = $menuTrai($http('GET', "$base/admin", $jarTP));
+ok(strpos($mn, "$base/admin/orders\"") !== false, 'Manager cua Tan Phat VAN thay Don hang web');
+ok($http('GET', "$base/admin/orders", $jarTP)['code'] === 200, 'Manager cua Tan Phat VAN mo duoc Don hang web');
 
 // ==== [HTTP-2] ====
 

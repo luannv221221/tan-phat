@@ -28,23 +28,37 @@ class RoleMiddleware extends Middleware{
 
         $groupData = $groupModel->getGroupByUser($userId);
 
+        $moduleLists = $moduleModel->getLists();
+        $currentModuleId = 0;
+        $currentLink = '';
+        $currentModule = null;
+        if (!empty($moduleLists)){
+            foreach ($moduleLists as $item){
+                if (Request::is('admin/'.$item['link'].'/*', $this->path)){
+                    $currentModuleId = $item['id'];
+                    $currentLink = $item['link'];
+                    $currentModule = $item;
+                    break;
+                }
+            }
+        }
+
+        /* Màn của riêng Tân Phát (website, kho tổng, đơn web...). Nhóm quyền
+           dùng chung cho mọi gara, nên Manager của gara khác cũng "có quyền" —
+           phải chặn theo GARA của tài khoản, TRƯỚC cả phần kiểm quyền nhóm, và
+           kể cả với nhóm không có dòng quyền nào. Menu trái hỏi qua route()
+           nên cũng tự ẩn các màn này. */
+        if (!empty($currentModule['chi_tan_phat']) && !la_gara_tong()){
+            if (empty($this->path)){
+                $response->redirect('admin/khong-co-quyen');
+            }
+            return false;
+        }
+
         if (!empty($groupData)){
             $groupId = $groupData['group_id'];
 
             $permissionData = $permissionModel->getPermission($groupId);
-
-            $moduleLists = $moduleModel->getLists();
-            $currentModuleId = 0;
-            $currentLink = '';
-            if (!empty($moduleLists)){
-                foreach ($moduleLists as $item){
-                    if (Request::is('admin/'.$item['link'].'/*', $this->path)){
-                        $currentModuleId = $item['id'];
-                        $currentLink = $item['link'];
-                        break;
-                    }
-                }
-            }
 
 
 
