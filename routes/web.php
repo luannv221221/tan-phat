@@ -54,18 +54,8 @@ Route::group('admin', function(){
    Route::get('garages/edit/(\d+)',      'admin/garages/edit/$1');
    Route::post('garages/edit/(\d+)',     'admin/garages/postEdit/$1');
    Route::get('garages/delete/(\d+)',    'admin/garages/delete/$1');
-   /* Đổi gara đang làm việc — chỉ ghi session của chính người bấm, không sửa
-      `users.garage_id`.
-
-      Nằm dưới `admin/garages/*` nên RoleMiddleware đòi quyền `view` của module
-      garages. Đó là chủ ý: đổi gara là việc của người quản lý nhiều chi nhánh,
-      không phải của thợ. Nhóm nào không có quyền xem gara thì ô đổi gara cũng
-      không hiện (header hỏi `route('admin/garages')` trước khi vẽ).
-
-      KHÔNG đặt route này ra ngoài `admin/garages/*` cho "dễ": URL nào không
-      khớp `modules.link` thì RoleMiddleware bỏ qua toàn bộ phần kiểm quyền,
-      tức là thành một cửa không ai gác. */
-   Route::get('garages/doi/(\d+)',       'admin/garages/doi/$1');
+   /* Không còn route đổi gara (22/09/2026): các gara độc lập, gara làm việc
+      luôn là gara của tài khoản — xem gara_hien_tai(). */
 
    /* Danh mục của gara — tầng 2 của "danh mục tổng".
       Không có /add, /edit/{id} kiểu CRUD: toàn bộ việc chọn hàng + đặt giá làm

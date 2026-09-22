@@ -14,9 +14,8 @@
  *      sở hữu danh mục tổng. Hai cái thì getMaster() trả về tuỳ thứ tự truy
  *      vấn; không cái nào thì nó phải đoán bừa.
  *
- *   3. Đổi gara ghi nhầm vào CSDL. Ô đổi gara chỉ được ghi session của chính
- *      người bấm. Ghi vào `users.garage_id` thì giám đốc xem hộ chi nhánh một
- *      lát là đổi luôn nơi làm việc của chính mình.
+ *   3. Đổi gara. Từ 22/09/2026 các gara độc lập — KHÔNG còn ô đổi gara, gara
+ *      làm việc luôn là gara của tài khoản (xem CachLyGaraTest).
  */
 
 require_once __DIR__ . '/_helpers.php';
@@ -54,7 +53,7 @@ ok(strpos($src, "'garages'") !== false && strpos($src, 'permissions') !== false,
 section('Man hinh duoc noi vao he thong');
 
 $routes = file_get_contents($goc . 'routes/web.php');
-foreach (['garages', 'garages/add', 'garages/edit/(\d+)', 'garages/delete/(\d+)', 'garages/doi/(\d+)'] as $r){
+foreach (['garages', 'garages/add', 'garages/edit/(\d+)', 'garages/delete/(\d+)'] as $r){
     ok(strpos($routes, "'" . $r . "'") !== false, "Co route $r");
 }
 
@@ -75,23 +74,10 @@ section('Chot chan trong controller');
 $ctl = codeOnly($goc . 'app/controllers/admin/Garages.php');
 ok(strpos($ctl, 'is_master') !== false && strpos($ctl, 'dangDungODau') !== false,
    'Controller co kiem gara tong va kiem rang buoc truoc khi xoa');
-/* Soi RIÊNG thân hàm doi() chứ không soi cả file: khẳng định "cả controller
-   không nhắc tới users" là vô dụng — chỉ cần ai đó viết `UsersModel` (chữ U
-   hoa) là lọt, mà đó đúng là cách người ta sẽ viết. */
-$than = '';
-if (preg_match('~public function doi\([^)]*\)\s*\{(.*?)\n    \}~s', $ctl, $mD)) $than = $mD[1];
-ok($than !== '', 'Doc duoc than ham doi()');
-ok(strpos($than, "Session::set('garage_id'") !== false,
-   'doi() ghi gara vao SESSION');
-ok(stripos($than, 'usersmodel') === false && stripos($than, '->edit(') === false
-   && stripos($than, '->update') === false,
-   'doi() KHONG ghi gi xuong CSDL',
-   'Ghi vao users.garage_id thi xem ho chi nhanh mot lat la doi luon noi lam viec');
-
-// Chỉ nhận đường dẫn nội bộ khi quay lại sau lúc đổi gara.
-ok(strpos($ctl, 'HTTP_REFERER') !== false && strpos($ctl, '_WEB_URL') !== false,
-   'Quay lai sau khi doi gara chi nhan duong dan noi bo',
-   'Nhan bua Referer la mo duong cho link day nguoi dung sang trang ngoai');
+ok(!preg_match('~function\s+doi\s*\(~', $ctl),
+   'Controller KHONG con ham doi gara',
+   'Gara doc lap: doi gara = xem du lieu cua doanh nghiep khac');
+ok(strpos($ctl, "Session::set('garage_id'") === false, 'Controller KHONG ghi gara vao session');
 
 // ---------------------------------------------------------------------------
 section('O chon gara tren cac form');
@@ -119,18 +105,16 @@ ok(substr_count($ctlUser, "'garage_id' => \$this->garaDuocGhi(\$pv)") === 2
 section('Thanh dau trang');
 
 $header = file_get_contents($goc . 'app/views/layouts/admin/header.php');
-ok(strpos($header, "route('admin/garages')") !== false,
-   'O doi gara chi hien khi co quyen xem module gara');
-ok(strpos($header, 'count($dsGara) > 1') !== false,
-   'An o doi gara khi ca he thong chi co mot gara');
+ok(strpos($header, 'garages/doi') === false && strpos($header, 'dsGara') === false,
+   'Dau trang KHONG con o doi gara');
+ok(strpos($header, "\$garaHienTai['name']") !== false, 'Dau trang hien ten gara cua tai khoan');
 ok(strpos($header, '@if') === false && strpos($header, '@foreach') === false,
    'Header viet bang PHP thuan, khong dung cu phap template',
    'Layout KHONG di qua Template::run() nen @if/{{ }} se in ra nguyen van');
 
 $provider = file_get_contents($goc . 'app/providers/AppServiceProvider.php');
-ok(strpos($provider, 'garaHienTai') !== false && strpos($provider, 'dsGara') !== false,
-   'Gara hien tai duoc chia se cho moi man hinh admin',
-   'De tung controller tu nap thi thieu o mot cho la o doi gara bien mat dung o do');
+ok(strpos($provider, 'garaHienTai') !== false && strpos(codeOnly($goc . 'app/providers/AppServiceProvider.php'), 'dsGara') === false,
+   'Chia se gara cua tai khoan cho moi man admin, KHONG chia se danh sach gara de doi');
 
 // ---------------------------------------------------------------------------
 section('Chay that tren MySQL');

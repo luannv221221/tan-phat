@@ -606,20 +606,48 @@ function header_word($tenFile){
 }
 
 /**
- * Gara đang làm việc — [id, code, name, ...] hoặc null nếu chưa khai gara nào.
+ * URL đang là trang quản trị (`admin` hoặc `admin/...`) — đọc thẳng
+ * $_GET['module'] như App::handleUrl() và menu trái.
+ */
+function la_request_quan_tri(){
+    $m = isset($_GET['module']) ? trim((string) $_GET['module'], '/') : '';
+    return $m === 'admin' || strpos($m, 'admin/') === 0;
+}
+
+/**
+ * Id tài khoản quản trị đang đăng nhập, hoặc null.
  *
- * Thứ tự ưu tiên:
- *   1. Gara người này vừa chọn ở ô đổi gara (session)
- *   2. Gara ghi trên tài khoản (`users.garage_id`)
- *   3. Gara tổng
+ * Không chỉ đọc 'dataUser': AppServiceProvider::boot() chạy TRƯỚC
+ * AuthMiddleware — mà 'dataUser' do middleware đặt. Ở request đầu tiên sau khi
+ * đăng nhập chỉ có 'dataToken', nên phải suy từ token.
+ */
+function nguoi_dang_nhap_id(){
+    $id = \App\core\Session::get('dataUser');
+    if (!empty($id)) return (int) $id;
+    $tk = \App\core\Session::get('dataToken');
+    if (!empty($tk)){
+        $row = \App\core\Load::model('LoginToken')->getToken($tk);
+        if (!empty($row['user_id'])) return (int) $row['user_id'];
+    }
+    return null;
+}
+
+/**
+ * Gara làm việc của request này — [id, code, name, is_master, ...] hoặc null.
  *
- * VÌ SAO PHẢI KIỂM TRA LẠI GIÁ TRỊ TRONG SESSION
- * Gara chọn hôm qua có thể đã bị xoá hoặc tắt hoạt động. Tin session mà không
- * đối chiếu lại thì người dùng lập chứng từ cho một gara không còn tồn tại,
- * và khoá ngoại sẽ từ chối lúc lưu — báo lỗi ở chỗ chẳng liên quan gì.
+ * GARA ĐỘC LẬP (22/09/2026): mỗi tài khoản thuộc đúng MỘT gara và chỉ làm việc
+ * trên gara đó. Không còn ô đổi gara — với các gara độc lập, "đổi gara" chính
+ * là xem dữ liệu của doanh nghiệp khác.
  *
- * Kết quả nhớ trong biến static: một request hỏi nhiều lần (header, controller,
- * view) mà chỉ truy vấn một lần.
+ *   Trang quản trị     -> gara ghi trên tài khoản, và gara đó phải đang hoạt
+ *                         động. Không có / đang khoá -> null (AuthMiddleware đá ra).
+ *   Website, dòng lệnh -> gara tổng: website, giỏ hàng, đơn web là của Tân Phát.
+ *
+ * KHÔNG đọc session `garage_id` — ô đổi gara cũ ghi vào đó.
+ *
+ * Chỉ NHỚ kết quả tìm được. Kết quả null không nhớ: ở request khôi phục phiên
+ * từ cookie "Ghi nhớ đăng nhập", lúc boot() hỏi thì chưa có phiên, tới lúc
+ * AuthMiddleware hỏi thì đã có — nhớ null từ lần đầu là đá oan người dùng ra.
  */
 function gara_hien_tai(){
     static $cache = false;
@@ -627,29 +655,34 @@ function gara_hien_tai(){
 
     $model = \App\core\Load::model('GaragesModel');
 
-    $id = (int) \App\core\Session::get('garage_id');
-    if ($id > 0){
-        $g = $model->getDetail($id);
-        if (!empty($g) && (int) $g['status'] === 1) return $cache = $g;
+    if (PHP_SAPI === 'cli' || !la_request_quan_tri()){
+        $master = $model->getMaster();
+        if (!empty($master)) $cache = $master;
+        return !empty($master) ? $master : null;
     }
 
-    $userId = \App\core\Session::get('dataUser');
-    if (!empty($userId)){
-        $u = \App\core\Load::model('UsersModel')->getDetail($userId);
-        if (!empty($u['garage_id'])){
-            $g = $model->getDetail((int) $u['garage_id']);
-            if (!empty($g) && (int) $g['status'] === 1) return $cache = $g;
-        }
-    }
+    $userId = nguoi_dang_nhap_id();
+    if (empty($userId)) return null;
 
-    $master = $model->getMaster();
-    return $cache = (!empty($master) ? $master : null);
+    $u = \App\core\Load::model('UsersModel')->getDetail($userId);
+    if (empty($u['garage_id'])) return null;
+
+    $g = $model->getDetail((int) $u['garage_id']);
+    if (empty($g) || (int) $g['status'] !== 1) return null;
+
+    return $cache = $g;
 }
 
 /** Id của gara đang làm việc, hoặc null — dùng khi lưu chứng từ */
 function gara_hien_tai_id(){
     $g = gara_hien_tai();
     return !empty($g['id']) ? (int) $g['id'] : null;
+}
+
+/** Gara làm việc là gara tổng (Tân Phát) — mở các màn "chỉ Tân Phát" */
+function la_gara_tong(){
+    $g = gara_hien_tai();
+    return !empty($g) && (int) $g['is_master'] === 1;
 }
 
 /**

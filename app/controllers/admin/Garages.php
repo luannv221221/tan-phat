@@ -11,11 +11,11 @@ use App\core\Session;
  * Gara là đơn vị kinh doanh: kho, nhân viên, báo giá, hoá đơn đều thuộc về một
  * gara. Một dòng được đánh dấu là gara tổng — chủ sở hữu danh mục tổng.
  *
- * GARA KHÔNG PHẢI LÀ KHO. Một gara có thể có nhiều kho; các màn hình tồn kho,
- * nhập, xuất, kiểm kê vẫn chạy theo `warehouse_id` như cũ, không đụng tới.
+ * GARA KHÔNG PHẢI LÀ KHO. Một gara có thể có nhiều kho.
  *
- * Ở đây KHÔNG lọc dữ liệu theo gara: đã chốt các gara thấy được của nhau, vì
- * kỹ thuật viên cần biết xe đã thay gì kể cả khi lần trước sửa ở chi nhánh khác.
+ * GARA ĐỘC LẬP (22/09/2026): mỗi gara là một doanh nghiệp riêng, không thấy
+ * dữ liệu của nhau. Màn này là của riêng Tân Phát (cờ `chi_tan_phat`): Tân
+ * Phát thấy danh sách gara, không thấy dữ liệu bên trong gara.
  */
 class Garages extends Controller {
 
@@ -191,36 +191,6 @@ class Garages extends Controller {
         $this->__model->remove($id);
         Session::flash('msg', 'Xoá ' . $this->labelOne . ' thành công');
         $this->__response->redirect('admin/' . $this->routeBase);
-    }
-
-    /**
-     * Đổi gara đang làm việc.
-     *
-     * Ghi vào session của CHÍNH người bấm, không đụng tới `users.garage_id` —
-     * đổi tạm để xem/lập chứng từ hộ chi nhánh khác, đăng xuất vào lại thì trở
-     * về gara của mình. Sửa hẳn thì vào màn Người dùng.
-     */
-    public function doi($id = 0){
-        $item = $this->__model->getDetail((int) $id);
-        if (empty($item) || (int) $item['status'] !== 1){
-            Session::flash('msgError', 'Gara không hợp lệ hoặc đang tắt.');
-        } else {
-            Session::set('garage_id', (int) $item['id']);
-            Session::flash('msg', 'Đang làm việc tại: ' . $item['name']);
-        }
-
-        /* Quay lại đúng trang đang xem. Chỉ nhận đường dẫn nội bộ — nhận bừa
-           Referer là mở đường cho người ta dựng link đẩy sang trang ngoài. */
-        $this->__response->redirect($this->quayVe());
-    }
-
-    private function quayVe(){
-        $ref = isset($_SERVER['HTTP_REFERER']) ? (string) $_SERVER['HTTP_REFERER'] : '';
-        if ($ref !== '' && strpos($ref, _WEB_URL . '/admin') === 0){
-            $duoi = substr($ref, strlen(_WEB_URL) + 1);
-            if (strpos($duoi, '//') === false) return $duoi;
-        }
-        return 'admin';
     }
 
     // ===== Helper =====

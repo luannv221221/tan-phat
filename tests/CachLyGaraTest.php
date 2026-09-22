@@ -176,8 +176,107 @@ ok(strpos($sqlTk, 'UPDATE `goods_receipts` x JOIN `warehouses` w') !== false,
 ok(!preg_match('~MODIFY\s+(COLUMN\s+)?`garage_id`~i', $sqlTk),
    'SQL buoc 1 KHONG doi garage_id sang NOT NULL', 'Dat som la form cua model chua ghi gara sap');
 
+// ---------------------------------------------------------------------------
+section('Gara lam viec — theo tai khoan, khong doi duoc');
+
+$g = gara_hien_tai();
+ok(!empty($g) && (int) $g['id'] === $TP, 'Dong lenh: gara lam viec la gara tong');
+ok(function_exists('la_gara_tong') && la_gara_tong(), 'la_gara_tong() dung o dong lenh');
+
+/* Không một file nào trong app/ còn đọc / ghi session `garage_id`: ô đổi gara cũ
+   ghi vào đó, và phiên nào còn sót giá trị ấy thì vẫn "đổi" được gara. */
+$conSession = [];
+$rii = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($goc . 'app', FilesystemIterator::SKIP_DOTS));
+foreach ($rii as $f){
+    if ($f->getExtension() !== 'php') continue;
+    if (preg_match("~Session::(get|set)\(\s*'garage_id'~", codeOnly($f->getPathname()))) $conSession[] = $f->getFilename();
+}
+ok(empty($conSession), 'Khong con cho nao doc / ghi session garage_id', implode(', ', $conSession));
+ok(strpos(file_get_contents($goc . 'routes/web.php'), 'garages/doi') === false, 'Khong con route doi gara');
+ok(!preg_match('~function\s+doi\s*\(~', codeOnly($goc . 'app/controllers/admin/Garages.php')),
+   'Controller Garages khong con ham doi()');
+ok(strpos(file_get_contents($goc . 'app/views/layouts/admin/header.php'), 'garages/doi') === false,
+   'Dau trang khong con o doi gara');
+ok(strpos(codeOnly($goc . 'app/providers/AppServiceProvider.php'), 'dsGara') === false,
+   'Khong con chia se danh sach gara de doi');
+
 // ==== [CLI] ====
 
 // ==== [HTTP] ====
+
+// ---------------------------------------------------------------------------
+section('HTTP that — tai khoan tam');
+
+if (!function_exists('curl_init')){ echo "\n[SKIP] PHP khong co curl.\n"; exit(summary()); }
+
+$MK   = 'ZzCachLy#2026';
+$hash = \App\core\Hash::make($MK);
+$nhom = function($ten) use ($so){ return $so("SELECT id FROM `groups` WHERE name = ?", [$ten]); };
+$A = $nhom('Admin'); $M = $nhom('Manager'); $S = $nhom('Staff');
+if (!$A || !$M || !$S){ echo "\n[SKIP] Thieu nhom Admin/Manager/Staff.\n"; exit(summary()); }
+
+$taoUser = function($email, $ten, $nhomId, $gara) use ($pdo, $hash){
+    $pdo->prepare("INSERT INTO users (name, email, password, group_id, status, garage_id, create_at)
+                   VALUES (?, ?, ?, ?, 1, ?, NOW())")->execute([$ten, $email, $hash, $nhomId, $gara]);
+    return (int) $pdo->lastInsertId();
+};
+$taoUser('zz-cl-b@local.test',     'ZZ Quan ly B',     $M, $GB);
+$taoUser('zz-cl-tp@local.test',    'ZZ Quan ly TP',    $M, $TP);
+$taoUser('zz-cl-ad@local.test',    'ZZ Admin TP',      $A, $TP);
+$taoUser('zz-cl-trong@local.test', 'ZZ Chua gan gara', $S, null);
+$taoUser('zz-cl-khoa@local.test',  'ZZ Gara bi khoa',  $S, $GK);
+
+$http = function($method, $url, $jar, $data = null){
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_HEADER => true, CURLOPT_FOLLOWLOCATION => false,
+        CURLOPT_COOKIEJAR => $jar, CURLOPT_COOKIEFILE => $jar, CURLOPT_TIMEOUT => 20,
+    ]);
+    if ($method === 'POST'){
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    }
+    $raw  = curl_exec($ch);
+    $info = curl_getinfo($ch);
+    curl_close($ch);
+    $body = $raw === false ? '' : substr($raw, (int) $info['header_size']);
+    /* `text` = HTML đã giải mã: {{ }} của Template mã hoá chữ có dấu thành
+       entity (á -> &aacute;), so chuỗi tiếng Việt trên `body` thô là trượt. */
+    return ['code' => (int) $info['http_code'], 'loc' => (string) $info['redirect_url'],
+            'body' => $body, 'text' => html_entity_decode($body, ENT_QUOTES | ENT_HTML5, 'UTF-8')];
+};
+$token = function($html){ return preg_match('~name="_token" value="([^"]+)"~', $html, $m) ? $m[1] : ''; };
+$jars  = [];
+$dangNhap = function($email) use ($http, $token, $base, $MK, &$jars){
+    $jar = tempnam(sys_get_temp_dir(), 'zzcl');
+    $jars[] = $jar;
+    $r = $http('GET', "$base/dang-nhap", $jar);
+    if ($r['code'] === 0) return null;
+    $tk = $token($r['body']);
+    $http('POST', "$base/dang-nhap", $jar, ['email' => $email, 'password' => $MK, '_token' => $tk]);
+    return [$jar, $tk];
+};
+register_shutdown_function(function() use (&$jars){ foreach ($jars as $j) @unlink($j); });
+$dauTrang = function($r){ return preg_match('~<header class="adm-topbar">.*?</header>~s', $r['text'], $m) ? $m[0] : ''; };
+$menuTrai = function($r){ return preg_match('~<aside class="adm-sidebar">.*?</aside>~s', $r['body'], $m) ? $m[0] : ''; };
+
+$phien = $dangNhap('zz-cl-b@local.test');
+if ($phien === null){ echo "\n[SKIP] Apache khong chay (localhost:88).\n"; exit(summary()); }
+list($jarB) = $phien;
+
+// ---------------------------------------------------------------------------
+section('HTTP — gara lam viec');
+
+$r = $http('GET', "$base/admin", $jarB);
+ok($r['code'] === 200, 'Tai khoan gara B vao duoc trang quan tri (HTTP ' . $r['code'] . ')', $r['loc']);
+ok(strpos($dauTrang($r), 'ZZ Gara B') !== false, 'Dau trang hien ten gara cua tai khoan');
+ok(strpos($r['body'], 'garages/doi') === false, 'Trang KHONG co link doi gara');
+
+$http('GET', "$base/admin/garages/doi/$GA", $jarB);
+$r = $http('GET', "$base/admin", $jarB);
+ok(strpos($dauTrang($r), 'ZZ Gara B') !== false && strpos($dauTrang($r), 'ZZ Gara A') === false,
+   'Go thang URL doi gara cu van KHONG sang duoc gara A');
+
+// ==== [HTTP-2] ====
 
 exit(summary());
