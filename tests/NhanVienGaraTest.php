@@ -297,16 +297,14 @@ $r = $http('GET', "$base/admin/users/delete/$uNVsg", $jarQL);
 ok(strpos($r['loc'], 'khong-co-quyen') !== false, 'Manager bam xoa -> trang khong co quyen');
 ok(!empty($user($uNVsg)), 'Tai khoan van con sau khi Manager thu xoa');
 
-/* --- Manager chua gan gara: khong quan ly duoc ai --- */
+/* --- Manager chua gan gara: gara doc lap — KHONG vao duoc trang quan tri --- */
 list($jarTrong, ) = $dangNhap('zz-ql-trong@local.test');
 $r = $http('GET', "$base/admin/users", $jarTrong);
-ok(strpos($r['text'], 'chưa được gán gara') !== false, 'Manager chua gan gara -> thay loi nhac',
+ok($r['code'] === 302 && strpos($r['loc'], 'dang-nhap') !== false,
+   'Manager chua gan gara -> khong vao duoc trang quan tri',
    'HTTP ' . $r['code'] . ($r['loc'] ? ' -> ' . $r['loc'] : ''));
 ok(strpos($r['body'], 'zz-nv-trong@local.test') === false && strpos($r['body'], 'zz-nv-sg@local.test') === false,
-   'Manager chua gan gara -> danh sach rong',
-   'Loc `garage_id IS NULL` la cho ho quan ly moi tai khoan chua gan');
-$r = $http('GET', "$base/admin/users/add", $jarTrong);
-ok($r['code'] !== 200, 'Manager chua gan gara -> khong mo duoc form them');
+   'Manager chua gan gara -> khong thay tai khoan nao');
 
 /* --- Admin: van toan quyen nhu cu, co them loc gara --- */
 list($jarAD, ) = $dangNhap('zz-ad@local.test');
@@ -321,7 +319,8 @@ ok(strpos($r['body'], 'zz-nv-tp@local.test') !== false && strpos($r['body'], 'zz
    'Admin khong loc -> thay moi gara');
 ok(strpos($bang($r), '<th>Gara</th>') !== false && strpos($bang($r), 'Gara mẫu Sài Gòn') !== false,
    'Danh sach co cot Gara, ghi ten gara trong bang');
-ok(strpos($bang($r), 'chưa gán (gara tổng)') !== false, 'Tai khoan chua gan gara ghi ro "chua gan (gara tong)"');
+ok(strpos($bang($r), 'chưa gán (không đăng nhập được)') !== false,
+   'Tai khoan chua gan gara ghi ro "chua gan (khong dang nhap duoc)"');
 
 $r = $http('GET', "$base/admin/users/add", $jarAD);
 $tk = $token($r['body']) ?: $tk;

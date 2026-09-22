@@ -58,16 +58,16 @@
             <label for="">Gara</label>
             @if ($toanQuyen)
             <select name="garage_id" class="form-control">
-                <option value="">— Chưa gán gara —</option>
+                <option value="">— Chọn gara —</option>
                 @if (!empty($listGarage))
                 @foreach ($listGarage as $g)
                 <option value="{{$g['id']}}" {{!empty($old['garage_id']) && $old['garage_id']==$g['id']?'selected':false}}>{{$g['name']}}</option>
                 @endforeach
                 @endif
             </select>
+            {!! !empty($errors['garage_id'])?'<span style="color:red">'.$errors['garage_id'].'</span>':false !!}
             <small class="form-text text-muted">
-                Gara nơi nhân viên này làm việc — quyết định lúc lập báo giá lấy danh mục và giá nào.
-                Bỏ trống thì tính là gara tổng.
+                Mỗi tài khoản thuộc đúng một gara và chỉ thấy dữ liệu của gara đó. Không có gara thì không đăng nhập được.
             </small>
             @else
             <?php /* Không có ô chọn, không có input ẩn: controller tự ghi gara

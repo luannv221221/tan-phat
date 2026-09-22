@@ -686,6 +686,16 @@ function la_gara_tong(){
 }
 
 /**
+ * Tài khoản $u có gara đang hoạt động không. Không có thì không vào được trang
+ * quản trị: mọi màn nghiệp vụ lọc theo gara, không gara là không có gì để xem.
+ */
+function tai_khoan_co_gara($u){
+    if (empty($u['garage_id'])) return false;
+    $g = \App\core\Load::model('GaragesModel')->getDetail((int) $u['garage_id']);
+    return !empty($g) && (int) $g['status'] === 1;
+}
+
+/**
  * Chuẩn hoá biển số xe: bỏ hết dấu, viết hoa.
  *
  *   "30A-123.45"  -> "30A12345"

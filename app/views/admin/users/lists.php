@@ -58,9 +58,9 @@
                         <option value="{{$g['id']}}" {{$locGara===(string)$g['id']?'selected':''}}>{{$g['name']}}</option>
                         @endforeach
                         @endif
-                        <?php /* Chưa gán gara thì lúc lập báo giá bị tính là gara
-                                 tổng — lọc riêng ra để còn biết mà gán. */ ?>
-                        <option value="none" {{$locGara==='none'?'selected':''}}>Chưa gán gara (tính là gara tổng)</option>
+                        <?php /* Chưa gán gara thì không đăng nhập được — lọc riêng
+                                 ra để còn biết mà gán. */ ?>
+                        <option value="none" {{$locGara==='none'?'selected':''}}>Chưa gán gara (không đăng nhập được)</option>
                     </select>
                 </div>
             </div>
@@ -108,7 +108,7 @@
                 @if (!empty($item['garage_name']))
                 {{$item['garage_name']}}
                 @else
-                <span class="text-muted">— chưa gán (gara tổng)</span>
+                <span class="text-muted">— chưa gán (không đăng nhập được)</span>
                 @endif
             </td>
 

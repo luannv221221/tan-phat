@@ -400,6 +400,14 @@ class Users extends Controller{
         if ($gid > 0 && !in_array($gid, $pv['nhom_ids'], true)){
             $errors['group_id'] = 'Bạn không được cấp nhóm này';
         }
+
+        /* Admin chọn gara trên form: bắt buộc, và phải là gara đang hoạt động.
+           Tài khoản không gara thì không đăng nhập được (AuthMiddleware). */
+        if ($pv['toan_quyen']){
+            $gara = $this->garaTuForm();
+            $g    = $gara !== null ? $this->model('GaragesModel')->getDetail($gara) : null;
+            if (empty($g) || (int) $g['status'] !== 1) $errors['garage_id'] = 'Chưa chọn gara cho tài khoản';
+        }
         return $errors;
     }
 
@@ -420,10 +428,8 @@ class Users extends Controller{
     }
 
     /**
-     * Gara chọn trên form, hoặc null nếu để trống.
-     *
-     * Để trống KHÔNG phải lỗi: nhân viên chưa gán gara thì gara_hien_tai()
-     * rơi về gara tổng. Ép buộc ở đây sẽ chặn việc sửa mọi tài khoản cũ.
+     * Gara chọn trên form, hoặc null nếu để trống. loiForm() báo lỗi khi null:
+     * gara độc lập — tài khoản không gara thì không đăng nhập được.
      */
     private function garaTuForm(){
         $f = $this->__request->getFields();

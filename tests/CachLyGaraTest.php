@@ -279,4 +279,45 @@ ok(strpos($dauTrang($r), 'ZZ Gara B') !== false && strpos($dauTrang($r), 'ZZ Gar
 
 // ==== [HTTP-2] ====
 
+// ---------------------------------------------------------------------------
+section('HTTP — khong co gara thi khong vao duoc');
+
+foreach (['zz-cl-trong@local.test' => 'chua gan gara', 'zz-cl-khoa@local.test' => 'thuoc gara dang khoa'] as $email => $ly){
+    list($jar) = $dangNhap($email);
+    $r = $http('GET', "$base/admin", $jar);
+    ok($r['code'] === 302 && strpos($r['loc'], 'dang-nhap') !== false,
+       "Tai khoan $ly KHONG vao duoc trang quan tri", 'HTTP ' . $r['code'] . ' ' . $r['loc']);
+    $r = $http('GET', "$base/dang-nhap", $jar);
+    ok(strpos($r['text'], 'chưa được gán gara') !== false, "Trang dang nhap bao ro ly do ($ly)");
+}
+
+/* Khoá gara GIỮA CHỪNG: phiên đang mở phải bị huỷ ở request kế tiếp */
+list($jarB2) = $dangNhap('zz-cl-b@local.test');
+ok($http('GET', "$base/admin", $jarB2)['code'] === 200, 'Gara B dang hoat dong: vao duoc');
+$pdo->prepare("UPDATE garages SET status = 0 WHERE id = ?")->execute([$GB]);
+$r = $http('GET', "$base/admin", $jarB2);
+ok($r['code'] === 302 && strpos($r['loc'], 'dang-nhap') !== false,
+   'Khoa gara giua chung: bi dua ra trang dang nhap ngay request ke tiep', 'HTTP ' . $r['code'] . ' ' . $r['loc']);
+$pdo->prepare("UPDATE garages SET status = 1 WHERE id = ?")->execute([$GB]);
+$r = $http('GET', "$base/admin", $jarB2);
+ok($r['code'] === 302, 'Mo khoa lai thi phien cu van da bi huy — phai dang nhap lai', 'HTTP ' . $r['code']);
+
+/* Admin tạo tài khoản: bắt buộc chọn gara */
+list($jarAD) = $dangNhap('zz-cl-ad@local.test');
+$them = function($email, $gara) use ($http, $token, $base, $jarAD, $S, $MK){
+    $f = $http('GET', "$base/admin/users/add", $jarAD);   // mở form: xoá flash `old`, lấy token
+    return $http('POST', "$base/admin/users/add", $jarAD, [
+        '_token' => $token($f['body']), 'name' => 'ZZ Tai khoan moi', 'email' => $email,
+        'password' => $MK, 'confirm_password' => $MK, 'group_id' => $S, 'status' => 1, 'garage_id' => $gara,
+    ]);
+};
+$them('zz-cl-moi1@local.test', '');
+ok($so("SELECT COUNT(*) FROM users WHERE email = 'zz-cl-moi1@local.test'") === 0,
+   'Admin KHONG tao duoc tai khoan khong co gara', 'Tai khoan khong gara thi khong dang nhap duoc — tao ra chi de nam do');
+$f = $http('GET', "$base/admin/users/add", $jarAD);
+ok(strpos($f['text'], 'Chưa chọn gara') !== false, 'Form bao loi "Chua chon gara"');
+$them('zz-cl-moi2@local.test', (string) $GB);
+$moi = $mot("SELECT garage_id FROM users WHERE email = 'zz-cl-moi2@local.test'");
+ok(!empty($moi) && (int) $moi['garage_id'] === $GB, 'Admin tao tai khoan cho gara B: tai khoan thuoc gara B');
+
 exit(summary());

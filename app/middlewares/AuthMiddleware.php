@@ -44,6 +44,16 @@ class AuthMiddleware extends Middleware {
                 $response->redirect('dang-nhap');
             }
 
+            /* Đóng khi thiếu gara: tài khoản mất gara, hoặc gara bị khoá giữa
+               chừng, thì đá ra ngay chứ không để đi tiếp với "gara = null" —
+               lớp Model gốc gặp null sẽ trả rỗng, người dùng chỉ thấy các màn
+               trống trơn mà không hiểu vì sao. */
+            if (empty(gara_hien_tai())){
+                $this->huyPhien();
+                Session::flash('msg', 'Tài khoản chưa được gán gara, hoặc gara đang bị khoá. Liên hệ quản trị Tân Phát.');
+                $response->redirect('dang-nhap');
+            }
+
             $this->setActivity(); //Lưu thời gian hoạt động cuối cùng của user
 
             return true;
@@ -79,6 +89,15 @@ class AuthMiddleware extends Middleware {
         Session::regenerate();
         Session::set('dataToken', $row['id']);
         Session::set('dataUser', $row['user_id']);
+    }
+
+    /** Huỷ phiên như Đăng xuất: token, session, cookie ghi nhớ */
+    private function huyPhien(){
+        $tokenId = Session::get('dataToken');
+        if (!empty($tokenId)) Load::model('LoginToken')->remove($tokenId);
+        Session::remove('dataToken');
+        Session::remove('dataUser');
+        \App\core\Cookie::remove(\LoginToken::REMEMBER_COOKIE);
     }
 
     public function setActivity(){
