@@ -47,11 +47,20 @@ ok(in_array('vehicles', $bang, true), 'Co bang `vehicles` (xe cua khach)');
 ok(in_array('receptions', $bang, true), 'Co bang `receptions` (phieu tiep nhan)');
 if (!in_array('vehicles', $bang, true)){ echo "\n[SKIP] Chua chay migration 000072.\n"; exit(summary()); }
 
+/* Từ 000077 (gara độc lập): duy nhất TRONG MỘT GARA — hai gara cùng có khách
+   mang chiếc xe đó là hai hồ sơ riêng. Chỉ mục phải gồm đúng (garage_id, cột). */
 $idx = [];
-foreach ($pdo->query("SHOW INDEX FROM vehicles") as $r) $idx[$r['Key_name']] = (int) $r['Non_unique'] === 0;
-ok(!empty($idx['uq_vehicles_bien_so']), 'Bien so (chuan hoa) la DUY NHAT',
+foreach ($pdo->query("SHOW INDEX FROM vehicles") as $r){
+    if ((int) $r['Non_unique'] === 0) $idx[$r['Key_name']][(int) $r['Seq_in_index']] = $r['Column_name'];
+}
+ok(isset($idx['uq_vehicles_gara_bien_so']) && $idx['uq_vehicles_gara_bien_so'] === [1 => 'garage_id', 2 => 'bien_so_chuan'],
+   'Bien so (chuan hoa) la DUY NHAT trong mot gara',
    'Khong duy nhat thi moi lan go khac nhau lai sinh mot xe moi');
-ok(!empty($idx['uq_vehicles_so_khung']), 'So khung la duy nhat (cho phep nhieu NULL)');
+ok(isset($idx['uq_vehicles_gara_so_khung']) && $idx['uq_vehicles_gara_so_khung'] === [1 => 'garage_id', 2 => 'so_khung'],
+   'So khung la duy nhat trong mot gara (cho phep nhieu NULL)');
+ok(!isset($idx['uq_vehicles_bien_so']) && !isset($idx['uq_vehicles_so_khung']),
+   'Khong con chi muc duy nhat TOAN HE THONG cho bien so / so khung',
+   'Con thi gara B khong khai duoc xe khach cua minh chi vi gara A da co xe do');
 
 $fk = [];
 foreach ($pdo->query(

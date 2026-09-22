@@ -46,7 +46,12 @@ ok(strpos($lists, 'Thêm khách hàng') !== false, 'Danh sach co nut Them khach 
 
 $ctl = codeOnly($goc . 'app/controllers/admin/Customers.php');
 ok(strpos($ctl, 'public function postAdd') !== false, 'Controller co postAdd()');
-ok(strpos($ctl, 'adminAdd') !== false, 'postAdd() dung MembersModel::adminAdd()');
+/* Từ 22/09/2026 (gara độc lập) khách của gara nằm ở `partners` — cùng bản ghi
+   với màn Đối tượng, có xe đầy đủ, lập được phiếu. `members` chỉ còn là tài
+   khoản website (màn Tài khoản website). Các khẳng định về MembersModel bên
+   dưới vẫn giữ: website vẫn tạo tài khoản khách như cũ. */
+ok(strpos($ctl, "model('PartnersModel')") !== false && strpos($ctl, "nextCode('KH-')") !== false,
+   'postAdd() tao khach trong bang doi tuong (partners), tu cap ma KH- cua gara');
 
 /* Vẫn KHÔNG có xoá: khách có thể đã phát sinh đơn hàng, đánh giá, xe. */
 ok(strpos($ctl, 'public function delete') === false,

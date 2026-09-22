@@ -43,7 +43,14 @@ class Receptions extends Controller {
     private function formData(){
         $c = &$this->__data['content'];
         $c['xeDs']    = $this->__vehicle->getLists(['status' => '1']);
-        $c['coVanDs'] = $this->__user->getLists(['users.status' => 1]);
+        // Cố vấn là nhân viên CỦA GARA NÀY — không liệt kê người của gara khác
+        $c['coVanDs'] = $this->__user->getLists(['users.status' => 1, 'users.garage_id' => gara_hien_tai_id()]);
+    }
+
+    /** Nhân viên thuộc gara làm việc — cố vấn gửi lên phải là người của gara mình */
+    private function laNhanVienGara($userId){
+        $u = $this->__user->getDetail((int) $userId);
+        return !empty($u) && (int) $u['garage_id'] === (int) gara_hien_tai_id();
     }
 
     public function index(){
@@ -114,7 +121,6 @@ class Receptions extends Controller {
             /* Chủ xe chụp lại lúc tiếp nhận: xe sang tay thì phiếu cũ vẫn ghi
                đúng người mang xe tới hôm ấy. */
             'partner_id'   => !empty($xe['partner_id']) ? (int) $xe['partner_id'] : null,
-            'garage_id'    => gara_hien_tai_id(),
             'created_by'   => Session::get('dataUser'),
         ]));
 
@@ -258,7 +264,7 @@ class Receptions extends Controller {
         if (!empty($f['ngay_ra']) && !empty($f['ngay_vao']) && $f['ngay_ra'] < $f['ngay_vao']){
             $errors['ngay_ra'] = 'Ngày ra không thể trước ngày vào';
         }
-        if (!empty($f['co_van_id']) && empty($this->__user->getDetail((int) $f['co_van_id']))){
+        if (!empty($f['co_van_id']) && !$this->laNhanVienGara((int) $f['co_van_id'])){
             $errors['co_van_id'] = 'Cố vấn dịch vụ không hợp lệ';
         }
         return $errors;

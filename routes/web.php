@@ -68,23 +68,22 @@ Route::group('admin', function(){
 
    //Route users
 
-   // Khách hàng (bảng `members` — khách đăng ký ngoài website).
-   // Khác hẳn `users` phía dưới: `users` là tài khoản nhân viên có phân quyền.
-   // Không có route xoá — khách có thể đã phát sinh đơn hàng, chỉ khoá/mở.
+   /* Khách hàng CỦA GARA (bảng `partners`, loại khách) — cùng bản ghi với màn
+      Đối tượng. Xe khai ở màn Xe của khách (vehicles/add?ve=customer). Không có
+      route xoá: khách đã có xe, phiếu; ngừng giao dịch thì tắt. */
    Route::get('customers', 'admin/customers');
-   /* CÓ thêm mới (nhưng vẫn không có xoá): khách vãng lai lái xe tới gara phải
-      tạo được hồ sơ, nếu không thì khai biển số vào đâu. */
    Route::get('customers/add', 'admin/customers/add');
    Route::post('customers/add', 'admin/customers/postAdd');
    Route::get('customers/edit/(\d+)', 'admin/customers/edit/$1');
    Route::post('customers/edit/(\d+)', 'admin/customers/postEdit/$1');
    Route::get('customers/toggle/(\d+)', 'admin/customers/toggle/$1');
-   /* Xe cua khach — quan ly ngay trong man Sua khach hang.
-      Xe khong ton tai doc lap voi chu cua no nen khong lam module rieng;
-      dung chung quyen `edit` cua customers (kiem trong controller). */
-   Route::post('customers/xe-them/(\d+)', 'admin/customers/xeThem/$1');
-   Route::post('customers/xe-sua/(\d+)',  'admin/customers/xeSua/$1');
-   Route::get('customers/xe-xoa/(\d+)',   'admin/customers/xeXoa/$1');
+
+   /* Tài khoản website (bảng `members`) — CHỈ Tân Phát. Khách tự đăng ký trên
+      website; không có thêm, không có xoá, chỉ sửa / khoá / mở. */
+   Route::get('tai-khoan-web', 'admin/taikhoanweb');
+   Route::get('tai-khoan-web/edit/(\d+)', 'admin/taikhoanweb/edit/$1');
+   Route::post('tai-khoan-web/edit/(\d+)', 'admin/taikhoanweb/postEdit/$1');
+   Route::get('tai-khoan-web/toggle/(\d+)', 'admin/taikhoanweb/toggle/$1');
 
    Route::get('users', 'admin/users');
 

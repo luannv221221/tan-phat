@@ -85,10 +85,14 @@ class MembersModel extends Model {
         return $this->updateById($data, $id);
     }
 
-    // ================= Màn hình quản trị (admin/customers) =================
+    // ================= Màn hình quản trị (admin/tai-khoan-web) =================
+    /* Từ 22/09/2026 bảng này chỉ là TÀI KHOẢN ĐĂNG NHẬP WEBSITE của Tân Phát.
+       Khách của từng gara (có xe, có phiếu) nằm ở `partners` — màn Khách hàng. */
 
     /**
-     * Danh sách khách hàng cho admin, kèm số đơn đã đặt.
+     * Tài khoản website cho admin, kèm số đơn đã đặt. Chỉ tài khoản CÓ email:
+     * tài khoản không email là khách vãng lai lập tại gara ngày trước, không
+     * đăng nhập website được — đã chuyển sang màn Khách hàng (migration 000077).
      *
      * @param string $keyword lọc theo tên / email / SĐT
      * @param string $status  '' = tất cả, '1' = đang hoạt động, '0' = đã khoá
@@ -111,31 +115,15 @@ class MembersModel extends Model {
 
     /** Mệnh đề WHERE dùng chung cho adminList/adminCount. Giá trị luôn qua placeholder. */
     private function adminWhere($keyword, $status){
-        $cond = [];
+        $cond = ["`email` IS NOT NULL AND `email` <> ''"];
         $bind = [];
 
+        /* Không tìm theo biển số nữa: xe của khách giờ nằm ở màn Khách hàng
+           (bảng `vehicles`), tra biển số ở đó. */
         if ($keyword !== ''){
-            /* Tìm thêm theo BIỂN SỐ XE.
-               CSKH nhận điện thoại thường chỉ có mỗi biển số ("xe 30A-12345 hẹn
-               sáng mai"), chưa biết tên chủ. Bắt họ tra tên trước rồi mới ra xe
-               là làm ngược quy trình thật.
-
-               Một khách có nhiều xe nên phải dùng EXISTS chứ không JOIN: JOIN sẽ
-               nhân dòng, khách 3 xe hiện ra 3 lần trong danh sách.
-
-               So theo cột bien_so_chuan (chỉ chữ + số, viết hoa) nên gõ
-               "30a 123 45" hay "30A-123.45" đều ra. */
-            $cond[] = '(`name` LIKE ? OR `email` LIKE ? OR `phone` LIKE ?'
-                    . ' OR EXISTS (SELECT 1 FROM `member_vehicles` mv'
-                    . '             WHERE mv.`member_id` = `members`.`id`'
-                    . '               AND mv.`bien_so_chuan` LIKE ?))';
+            $cond[] = '(`name` LIKE ? OR `email` LIKE ? OR `phone` LIKE ?)';
             $like   = '%' . $keyword . '%';
             $bind[] = $like; $bind[] = $like; $bind[] = $like;
-
-            $chuan  = preg_replace('/[^A-Za-z0-9]/', '', $keyword);
-            // Từ khoá không còn chữ/số nào (vd gõ mỗi "---") thì cho khớp rỗng,
-            // đừng để '%%' biến thành "khớp mọi biển số".
-            $bind[] = $chuan === '' ? "\x00" : '%' . strtoupper($chuan) . '%';
         }
         if ($status === '0' || $status === '1'){
             $cond[] = '`status` = ?';

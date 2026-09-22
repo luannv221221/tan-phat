@@ -34,17 +34,47 @@ $mot = function($sql, $b = []) use ($pdo){ $st = $pdo->prepare($sql); $st->execu
 $so  = function($sql, $b = []) use ($pdo){ $st = $pdo->prepare($sql); $st->execute($b); return (int) $st->fetchColumn(); };
 $cot = function($bang) use ($pdo){ return $pdo->query("SHOW COLUMNS FROM `$bang`")->fetchAll(PDO::FETCH_COLUMN); };
 
-/* Dọn rác — chạy trước (lần trước chết giữa chừng) và khi kết thúc */
-$donSach = function() use ($pdo, $cot){
-    $pdo->exec("DELETE t FROM login_tokens t JOIN users u ON u.id = t.user_id WHERE u.email LIKE 'zz-cl-%@local.test'");
-    $pdo->exec("DELETE FROM users WHERE email LIKE 'zz-cl-%@local.test'");
-    $pdo->exec("DELETE FROM goods_receipts WHERE receipt_no LIKE 'ZZCL-%'");
-    $ds = "SELECT id FROM (SELECT id FROM garages WHERE code LIKE 'ZZG%') t";
-    foreach (['partners', 'warehouses', 'garage_part_prices'] as $b){
-        if (in_array('garage_id', $cot($b), true)) $pdo->exec("DELETE FROM `$b` WHERE garage_id IN ($ds)");
-    }
-    $pdo->exec("DELETE FROM warehouses WHERE code LIKE 'ZZCL-%'");
-    $pdo->exec("DELETE FROM garages WHERE code LIKE 'ZZG%'");
+/* Dọn rác — chạy trước (lần trước chết giữa chừng) và khi kết thúc.
+   Xoá theo thứ tự con trước cha (khoá ngoại RESTRICT). Mỗi câu bọc try: bảng /
+   cột chưa có (CSDL chưa migrate tới bước đó) thì bỏ qua câu đó. */
+$donSach = function() use ($pdo){
+    $g  = "SELECT id FROM (SELECT id FROM garages WHERE code LIKE 'ZZG%') zg";
+    $cau = [
+        "DELETE t FROM login_tokens t JOIN users u ON u.id = t.user_id WHERE u.email LIKE 'zz-cl-%@local.test'",
+        "DELETE FROM users WHERE email LIKE 'zz-cl-%@local.test'",
+        "DELETE FROM warranty_handovers WHERE garage_id IN ($g)",
+        "DELETE FROM warranty_requests WHERE garage_id IN ($g)",
+        "DELETE i FROM sales_invoice_items i JOIN sales_invoices x ON x.id = i.invoice_id WHERE x.garage_id IN ($g)",
+        "DELETE FROM sales_invoices WHERE garage_id IN ($g)",
+        "DELETE i FROM quotation_items i JOIN quotations x ON x.id = i.quotation_id WHERE x.garage_id IN ($g)",
+        "DELETE FROM quotations WHERE garage_id IN ($g)",
+        "DELETE FROM receptions WHERE garage_id IN ($g)",
+        "DELETE FROM vehicles WHERE garage_id IN ($g)",
+        "DELETE FROM goods_receipts WHERE receipt_no LIKE 'ZZCL-%'",
+        "DELETE FROM goods_receipts WHERE garage_id IN ($g)",
+        "DELETE FROM goods_issues WHERE garage_id IN ($g)",
+        "DELETE FROM stock_takes WHERE garage_id IN ($g)",
+        "DELETE FROM warehouse_transfers WHERE garage_id IN ($g)",
+        "DELETE s FROM stock_cards s JOIN warehouses w ON w.id = s.warehouse_id WHERE w.garage_id IN ($g) OR w.code LIKE 'ZZCL-%'",
+        "DELETE s FROM stocks s JOIN warehouses w ON w.id = s.warehouse_id WHERE w.garage_id IN ($g) OR w.code LIKE 'ZZCL-%'",
+        "DELETE l FROM warehouse_locations l JOIN warehouses w ON w.id = l.warehouse_id WHERE w.garage_id IN ($g) OR w.code LIKE 'ZZCL-%'",
+        "DELETE FROM warehouses WHERE garage_id IN ($g)",
+        "DELETE FROM warehouses WHERE code LIKE 'ZZCL-%'",
+        "DELETE FROM partners WHERE garage_id IN ($g)",
+        "DELETE FROM customer_groups WHERE garage_id IN ($g)",
+        "DELETE FROM garage_part_prices WHERE garage_id IN ($g)",
+        "DELETE FROM parts WHERE garage_id IN ($g)",
+        "DELETE FROM garage_settings WHERE garage_id IN ($g)",
+        "DELETE FROM garages WHERE code LIKE 'ZZG%'",
+        /* Dòng test tạo ra mà KHÔNG mang gara ZZ — chỉ xảy ra khi chặn gara đang
+           hỏng (thử phá), và lần chạy lại migration 000076 gán chúng về gara
+           tổng. Dọn theo đúng dấu nhận biết của test này. */
+        "DELETE FROM warranty_requests WHERE customer_name = 'ZZ Khach le B'",
+        "DELETE FROM receptions WHERE vehicle_id IN (SELECT id FROM (SELECT id FROM vehicles WHERE bien_so_chuan IN ('ZZ911111', 'ZZ822222')) t)",
+        "DELETE FROM vehicles WHERE bien_so_chuan IN ('ZZ911111', 'ZZ822222')",
+        "DELETE FROM partners WHERE name IN ('ZZ Khach cua A', 'ZZ Khach moi B', 'ZZ Khach trung sdt A', 'ZZ Khach xep nhom A', 'ZZ bi gara B sua')",
+    ];
+    foreach ($cau as $c){ try { $pdo->exec($c); } catch (\Throwable $e){} }
 };
 $donSach();
 register_shutdown_function($donSach);
@@ -126,7 +156,8 @@ if (count($mg) === 1){
                 'car-years', 'chat', 'contact-messages', 'du-an', 'galleries', 'garages', 'groups', 'menus', 'modules',
                 'news', 'news-categories', 'newsletter', 'orders', 'part-categories', 'product-brands',
                 'product-manufacturers', 'product-origins', 'product-units', 'products', 'reviews', 'services',
-                'settings', 'thong-ke'];
+                'settings', 'thong-ke',
+                'tai-khoan-web'];   // 000077 — tài khoản website tách khỏi màn Khách hàng
     sort($dsCo); sort($mongDoi);
     ok($dsCo === $mongDoi, 'Dung ' . count($mongDoi) . ' man chi Tan Phat',
        'Thua: ' . implode(',', array_diff($dsCo, $mongDoi)) . ' | Thieu: ' . implode(',', array_diff($mongDoi, $dsCo)));
@@ -167,14 +198,27 @@ foreach ($bangMoi as $b => $fk){
 }
 ok(strpos($sqlTk, 'ALTER TABLE `modules` ADD COLUMN `chi_tan_phat`') !== false, 'SQL them cot chi_tan_phat');
 ok(preg_match("~UPDATE `modules` SET `chi_tan_phat` = 1 WHERE `link` IN \(([^)]*)\)~", $sqlTk, $mm) === 1
-   && substr_count($mm[1], "'") === 2 * 30,
-   'SQL bat co cho dung 30 man chi Tan Phat (chep tu may nay)');
+   && substr_count($mm[1], "'") === 2 * count($mongDoi),
+   'SQL bat co cho dung ' . count($mongDoi) . ' man chi Tan Phat (chep tu may nay)');
 ok(strpos($sqlTk, 'UPDATE `goods_receipts` x JOIN `warehouses` w') !== false,
    'SQL gan phieu nhap theo kho truoc khi do ve gara tong');
 /* Chỉ bắt câu ĐỔI cột có sẵn thành NOT NULL. `garage_part_prices` tạo mới với
    `garage_id INT NOT NULL` từ 000065 là đúng — bảng đó luôn có gara. */
 ok(!preg_match('~MODIFY\s+(COLUMN\s+)?`garage_id`~i', $sqlTk),
    'SQL buoc 1 KHONG doi garage_id sang NOT NULL', 'Dat som la form cua model chua ghi gara sap');
+
+/* Phần 18 — 000077 */
+ok(strpos($sqlTk, "'2026_09_22_000077_khach_va_xe_theo_gara'") !== false, 'SQL danh dau da chay migration 000077');
+ok(strpos($sqlTk, 'CREATE TABLE IF NOT EXISTS `garage_settings`') !== false, 'SQL tao bang cau hinh rieng tung gara');
+ok(strpos($sqlTk, "'tai-khoan-web', 1,") !== false, 'SQL dang ky man Tai khoan website, co co chi Tan Phat');
+foreach (['uq_partners_gara_code', 'uq_vehicles_gara_bien_so', 'uq_vehicles_gara_so_khung', 'uq_receptions_gara_no',
+          'uq_warranty_gara_no', 'uq_handover_gara_no'] as $ix){
+    ok(strpos($sqlTk, "ADD UNIQUE KEY `$ix`") !== false, "SQL them chi muc khong trung THEO GARA: $ix");
+}
+ok(strpos($sqlTk, 'INSERT INTO `vehicles`') !== false && strpos($sqlTk, 'FROM `member_vehicles` v') !== false,
+   'SQL chuyen xe tu bang cu sang `vehicles`');
+ok(!preg_match('~GROUP BY v\.`bien_so_chuan`~', $sqlTk),
+   'SQL chuyen xe KHONG dung GROUP BY cot khong gop', 'ONLY_FULL_GROUP_BY (mac dinh MySQL 5.7+) bao loi');
 
 // ---------------------------------------------------------------------------
 section('Gara lam viec — theo tai khoan, khong doi duoc');
@@ -295,8 +339,6 @@ section('Cho quen — bang co garage_id thi model phai bat _theoGara');
 $ngoaiLe = ['users' => 'dang nhap tim khap cac gara; chan tay o Users::phamVi',
             'parts' => 'NULL = kho tong, loc bang dieu kien rieng'];
 $chuaLam = [
-    'partners' => 2, 'customer_groups' => 2, 'vehicles' => 2, 'receptions' => 2,
-    'warranty_requests' => 2, 'warranty_handovers' => 2,
     'quotations' => 3, 'sales_invoices' => 3, 'garage_part_prices' => 3,
     'warehouses' => 4, 'goods_receipts' => 4, 'goods_issues' => 4, 'stock_takes' => 4, 'warehouse_transfers' => 4,
 ];
@@ -422,6 +464,156 @@ list($jarTP) = $dangNhap('zz-cl-tp@local.test');
 $mn = $menuTrai($http('GET', "$base/admin", $jarTP));
 ok(strpos($mn, "$base/admin/orders\"") !== false, 'Manager cua Tan Phat VAN thay Don hang web');
 ok($http('GET', "$base/admin/orders", $jarTP)['code'] === 200, 'Manager cua Tan Phat VAN mo duoc Don hang web');
+
+// ---------------------------------------------------------------------------
+section('HTTP — buoc 2: khach, xe, phieu cua gara A khong lot sang gara B');
+
+$bayGio = date('Y-m-d H:i:s');
+$homNay = date('Y-m-d');
+$ins = function($bang, array $d) use ($pdo){
+    $c = array_keys($d);
+    $pdo->prepare("INSERT INTO `$bang` (`" . implode('`, `', $c) . "`) VALUES (" . implode(', ', array_fill(0, count($c), '?')) . ")")
+        ->execute(array_values($d));
+    return (int) $pdo->lastInsertId();
+};
+
+/* Một bộ dữ liệu ĐỦ LOẠI của gara A, mỗi thứ mang dấu nhận biết riêng */
+$nhomA = $ins('customer_groups', ['name' => 'ZZ Nhom cua A', 'discount_percent' => 5, 'status' => 1,
+                                  'garage_id' => $GA, 'create_at' => $bayGio]);
+$khA   = $ins('partners', ['code' => 'ZZCL-KHA', 'name' => 'ZZ Khach cua A', 'type' => 'customer', 'phone' => '0911000111',
+                           'group_id' => $nhomA, 'status' => 1, 'garage_id' => $GA, 'create_at' => $bayGio]);
+$xeA   = $ins('vehicles', ['partner_id' => $khA, 'bien_so' => 'ZZ9-111.11', 'bien_so_chuan' => 'ZZ911111',
+                           'so_khung' => 'ZZVINGARAA000001', 'so_km' => 1000, 'status' => 1,
+                           'garage_id' => $GA, 'create_at' => $bayGio]);
+$tnA   = $ins('receptions', ['reception_no' => 'ZZCL-TN-A', 'vehicle_id' => $xeA, 'partner_id' => $khA,
+                             'ngay_vao' => $homNay, 'status' => 'tiep_nhan', 'garage_id' => $GA, 'create_at' => $bayGio]);
+$ngayCu = date('Y-m-d', strtotime('-7 months'));
+$btA   = $ins('warranty_requests', ['request_no' => 'ZZCL-BT-A', 'loai' => 'bao_tri', 'partner_id' => $khA,
+                                    'customer_name' => 'ZZ Khach cua A', 'vehicle_id' => $xeA, 'bien_so' => 'ZZ9-111.11',
+                                    'bien_so_chuan' => 'ZZ911111', 'so_km' => 1000, 'received_date' => $ngayCu,
+                                    'completed_date' => $ngayCu, 'status' => 'done', 'garage_id' => $GA, 'create_at' => $bayGio]);
+$bbA   = $ins('warranty_handovers', ['handover_no' => 'ZZCL-BB-A', 'warranty_id' => $btA, 'type' => 'receive',
+                                     'handover_date' => $homNay, 'garage_id' => $GA, 'create_at' => $bayGio]);
+
+$dauA   = ['ZZ Khach cua A', 'ZZ Nhom cua A', 'ZZ9-111.11', 'ZZVINGARAA000001', 'ZZCL-TN-A', 'ZZCL-BT-A', 'ZZCL-BB-A', '0911000111'];
+/* $boQua: từ khoá người dùng vừa gõ — ô tìm kiếm in lại nó, đó không phải lộ */
+$loDauA = function($r, $boQua = '') use ($dauA){
+    $ra = [];
+    foreach ($dauA as $d) if ($d !== $boQua && strpos($r['text'], $d) !== false) $ra[] = $d;
+    return $ra;
+};
+
+/* 1. Danh sách + tìm kiếm */
+foreach (['partners', 'customers', 'customers?q=ZZ9-111.11', 'customers?q=0911000111', 'customer-groups',
+          'vehicles', 'vehicles?q=ZZ9', 'receptions', 'receptions?q=ZZ9', 'warranty', 'warranty?q=ZZ9',
+          'lich-bao-hanh', 'nhac-bao-tri?mode=all'] as $url){
+    $r  = $http('GET', "$base/admin/$url", $jarB);
+    $tu = preg_match('~[?&]q=([^&]*)~', $url, $mq) ? urldecode($mq[1]) : '';
+    ok($r['code'] === 200 && $loDauA($r, $tu) === [], "Gara B mo /admin/$url: khong lo du lieu gara A",
+       'HTTP ' . $r['code'] . ' ' . $r['loc'] . ' | lo: ' . implode(', ', $loDauA($r, $tu)));
+}
+
+/* 2. Mở theo ID của gara A (sửa, in, lập từ) */
+foreach (["partners/edit/$khA", "customers/edit/$khA", "customer-groups/edit/$nhomA", "vehicles/edit/$xeA",
+          "receptions/edit/$tnA", "warranty/edit/$btA", "warranty/handover-add/$btA", "warranty/handover-print/$bbA",
+          "receptions/add?vehicle_id=$xeA", "warranty/add?tu=$btA", "warranty/add?reception_id=$tnA"] as $url){
+    $r = $http('GET', "$base/admin/$url", $jarB);
+    ok($loDauA($r) === [], "Gara B mo /admin/$url (ID cua gara A): khong lo gi",
+       'HTTP ' . $r['code'] . ' | lo: ' . implode(', ', $loDauA($r)));
+}
+
+/* 3. Sửa / xoá / đổi trạng thái theo ID của gara A — dữ liệu A phải KHÔNG đổi */
+$tkB  = $token($http('GET', "$base/admin/customers/add", $jarB)['body']);
+$post = function($url, array $d) use ($http, $base, $jarB, &$tkB){
+    return $http('POST', "$base/admin/$url", $jarB, array_merge(['_token' => $tkB], $d));
+};
+$get  = function($url) use ($http, $base, $jarB){ return $http('GET', "$base/admin/$url", $jarB); };
+$cot1 = function($bang, $c, $id) use ($mot){ $r = $mot("SELECT `$c` FROM `$bang` WHERE id = ?", [$id]); return $r ? $r[$c] : null; };
+
+$post("partners/edit/$khA", ['code' => 'ZZCL-KHA', 'name' => 'ZZ bi gara B sua', 'type' => 'customer', 'status' => 1]);
+$post("customers/edit/$khA", ['name' => 'ZZ bi gara B sua', 'phone' => '0911000111']);
+ok($cot1('partners', 'name', $khA) === 'ZZ Khach cua A', 'POST sua khach cua gara A (Doi tuong + Khach hang): KHONG sua duoc');
+$get("customers/toggle/$khA");
+ok((int) $cot1('partners', 'status', $khA) === 1, 'Tat khach cua gara A tu gara B: KHONG duoc');
+$get("partners/delete/$khA");
+ok($cot1('partners', 'id', $khA) !== null, 'Xoa khach cua gara A tu gara B: KHONG xoa duoc');
+$post("customer-groups/edit/$nhomA", ['name' => 'ZZ bi sua', 'status' => 1]);
+$get("customer-groups/delete/$nhomA");
+ok($cot1('customer_groups', 'name', $nhomA) === 'ZZ Nhom cua A', 'Sua / xoa nhom khach cua gara A: KHONG duoc');
+$post("vehicles/edit/$xeA", ['bien_so' => 'ZZ9-111.11', 'so_km' => 999999, 'status' => 1]);
+$get("vehicles/delete/$xeA");
+ok((int) $cot1('vehicles', 'so_km', $xeA) === 1000, 'Sua / xoa xe cua gara A tu gara B: KHONG duoc');
+$get("receptions/set-status/$tnA?status=huy");
+$get("receptions/delete/$tnA");
+ok($cot1('receptions', 'status', $tnA) === 'tiep_nhan', 'Doi trang thai / xoa phieu tiep nhan cua gara A: KHONG duoc');
+$get("warranty/set-status/$btA?status=cancelled");
+$get("warranty/delete/$btA");
+ok($cot1('warranty_requests', 'status', $btA) === 'done', 'Doi trang thai / xoa phieu bao tri cua gara A: KHONG duoc');
+$post("warranty/handover-store/$btA", ['type' => 'return', 'handover_date' => $homNay]);
+$get("warranty/handover-delete/$bbA");
+ok($so("SELECT COUNT(*) FROM warranty_handovers WHERE warranty_id = ?", [$btA]) === 1,
+   'Lap / xoa bien ban giao nhan tren phieu cua gara A: KHONG duoc');
+$get("nhac-bao-tri/mark/$btA");
+ok($cot1('warranty_requests', 'reminded_at', $btA) === null, 'Danh dau "da nhac" phieu cua gara A: KHONG duoc');
+
+/* 4. Lưu chứng từ của B kèm ID của A — phải bị từ chối / không nối vào */
+$post('vehicles/add', ['partner_id' => $khA, 'bien_so' => 'ZZ8-222.22', 'status' => 1]);
+ok($so("SELECT COUNT(*) FROM vehicles WHERE bien_so_chuan = 'ZZ822222'") === 0, 'Gara B khai xe gan cho khach cua gara A: bi tu choi');
+$post('receptions/add', ['vehicle_id' => $xeA, 'ngay_vao' => $homNay, 'status' => 'tiep_nhan']);
+ok($so("SELECT COUNT(*) FROM receptions WHERE vehicle_id = ? AND garage_id = ?", [$xeA, $GB]) === 0,
+   'Gara B lap phieu tiep nhan cho xe cua gara A: bi tu choi');
+$post('warranty/add', ['loai' => 'bao_hanh', 'reception_id' => $tnA, 'partner_id' => $khA, 'customer_name' => 'ZZ Khach le B',
+                       'received_date' => $homNay, 'product_name' => 'ZZ may rua xe']);
+$w = $mot("SELECT * FROM warranty_requests WHERE customer_name = 'ZZ Khach le B'");
+ok(!empty($w) && (int) $w['garage_id'] === $GB && $w['reception_id'] === null && $w['partner_id'] === null && $w['vehicle_id'] === null,
+   'Phieu bao hanh cua gara B KHONG noi duoc vao phieu tiep nhan / khach / xe cua gara A', json_encode($w));
+$post('customers/add', ['name' => 'ZZ Khach xep nhom A', 'phone' => '0933000333', 'group_id' => $nhomA]);
+ok($so("SELECT COUNT(*) FROM partners WHERE name = 'ZZ Khach xep nhom A'") === 0, 'Gara B xep khach vao nhom khach cua gara A: bi tu choi');
+
+/* 5. Mỗi gara tự đánh số, tự có "không trùng" riêng */
+$post('customers/add', ['name' => 'ZZ Khach moi B', 'phone' => '0922000222']);
+$khB = $mot("SELECT * FROM partners WHERE name = 'ZZ Khach moi B' AND garage_id = ?", [$GB]);
+ok(!empty($khB) && (int) $khB['garage_id'] === $GB && $khB['code'] === 'KH-0001',
+   'Khach dau tien cua gara B: ma KH-0001 (danh so rieng tung gara)', json_encode($khB));
+$post('customers/add', ['name' => 'ZZ Khach trung sdt A', 'phone' => '0911000111']);
+ok($so("SELECT COUNT(*) FROM partners WHERE name = 'ZZ Khach trung sdt A' AND garage_id = ?", [$GB]) === 1,
+   'Trung SDT voi khach cua gara A: KHONG canh bao (khac gara, khong duoc lo ten khach A)');
+$khBId = !empty($khB) ? (int) $khB['id'] : 0;
+$r = $post('vehicles/add', ['partner_id' => $khBId, 'bien_so' => 'ZZ9-111.11', 'so_khung' => 'ZZVINGARAA000001',
+                            'status' => 1, 've' => 'customer']);
+$xeB = $mot("SELECT * FROM vehicles WHERE bien_so_chuan = 'ZZ911111' AND garage_id = ?", [$GB]);
+ok(!empty($xeB) && (int) $xeB['partner_id'] === $khBId,
+   'Gara B khai duoc xe TRUNG bien so + so khung voi xe cua gara A (hai ho so rieng)');
+ok(strpos($r['loc'], "admin/customers/edit/$khBId") !== false, 'Khai xe tu man Khach hang xong quay ve dung ho so khach', $r['loc']);
+$xeBId = !empty($xeB) ? (int) $xeB['id'] : 0;
+$post('receptions/add', ['vehicle_id' => $xeBId, 'ngay_vao' => $homNay, 'status' => 'tiep_nhan', 'km_vao' => 500]);
+$tnB = $mot("SELECT * FROM receptions WHERE vehicle_id = ?", [$xeBId]);
+ok(!empty($tnB) && $tnB['reception_no'] === 'TN-000001' && (int) $tnB['garage_id'] === $GB,
+   'Phieu tiep nhan dau tien cua gara B: TN-000001 (khong noi tiep so cua gara khac)', json_encode($tnB));
+
+/* 6. Chuỗi khách -> xe -> phiếu ngay trên màn Khách hàng */
+$r = $get("customers/edit/$khBId");
+ok(strpos($r['text'], 'ZZ9-111.11') !== false && strpos($r['text'], 'ZZVINGARAA000001') !== false,
+   'Ho so khach hien xe kem bien so + so khung (VIN)');
+ok(strpos($r['body'], 'receptions/add?vehicle_id=' . $xeBId) !== false, 'Tu ho so khach lap duoc phieu tiep nhan cho tung xe');
+ok(strpos($get('customers?q=ZZVINGARAA000001')['text'], 'ZZ Khach moi B') !== false, 'Tim khach theo SO KHUNG (VIN)');
+ok(strpos($get('customers?q=' . rawurlencode('zz9 11111'))['text'], 'ZZ Khach moi B') !== false, 'Tim khach theo bien so go kieu khac');
+ok(strpos($get('partners?q=' . rawurlencode('ZZ Khach moi B'))['text'], 'ZZ Khach moi B') !== false,
+   'Khach them o man Khach hang hien ngay o man Doi tuong (cung mot ban ghi)');
+
+/* 7. Tài khoản website là của Tân Phát */
+$r = $get('tai-khoan-web');
+ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false, 'Gara B KHONG vao duoc man Tai khoan website');
+ok($http('GET', "$base/admin/tai-khoan-web", $jarTP)['code'] === 200, 'Tan Phat vao duoc man Tai khoan website');
+
+/* 8. Chu kỳ bảo trì là cấu hình RIÊNG của gara */
+$truoc = $pdo->query("SELECT svalue FROM site_settings WHERE skey = 'maintenance_interval_km'")->fetchColumn();
+$tkNhac = $token($get('nhac-bao-tri')['body']) ?: $tkB;
+$http('POST', "$base/admin/nhac-bao-tri/save-config", $jarB, ['_token' => $tkNhac, 'interval' => 3, 'km' => 1234, 'window' => 9]);
+ok($pdo->query("SELECT svalue FROM site_settings WHERE skey = 'maintenance_interval_km'")->fetchColumn() === $truoc,
+   'Gara B luu chu ky bao tri: KHONG doi Cau hinh chung (cua Tan Phat)');
+ok($so("SELECT COUNT(*) FROM garage_settings WHERE garage_id = ? AND skey = 'maintenance_interval_km' AND svalue = '1234'", [$GB]) === 1,
+   'Chu ky luu vao cau hinh RIENG cua gara B');
 
 // ==== [HTTP-2] ====
 

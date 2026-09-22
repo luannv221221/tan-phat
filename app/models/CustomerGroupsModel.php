@@ -3,21 +3,22 @@
 use App\core\Model;
 
 /**
- * CSKH — Nhóm khách hàng (gắn vào partners).
+ * CSKH — Nhóm khách hàng (gắn vào partners) — RIÊNG từng gara.
  */
 class CustomerGroupsModel extends Model {
 
-    protected $_table   = 'customer_groups';
-    protected $_fields  = '*';
-    protected $_primary = 'id';
+    protected $_table    = 'customer_groups';
+    protected $_fields   = '*';
+    protected $_primary  = 'id';
+    protected $_theoGara = true;
 
     public function getLists(){
-        return $this->table($this->_table)
+        return $this->bangGara()
                     ->orderBy('sort_order', 'ASC')->orderBy('name', 'ASC')->get();
     }
 
     public function getActive(){
-        return $this->table($this->_table)
+        return $this->bangGara()
                     ->where('status', '=', 1)->orderBy('name', 'ASC')->get();
     }
 

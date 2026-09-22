@@ -3,13 +3,14 @@
 use App\core\Model;
 
 /**
- * CSKH-2 — Biên bản giao nhận thiết bị bảo hành (receive/return).
+ * CSKH-2 — Biên bản giao nhận thiết bị bảo hành (receive/return). RIÊNG từng gara.
  */
 class WarrantyHandoversModel extends Model {
 
     protected $_table   = 'warranty_handovers';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_theoGara = true;
 
     public static $types = [
         'receive' => 'Biên bản NHẬN thiết bị',
@@ -20,13 +21,13 @@ class WarrantyHandoversModel extends Model {
 
     /** Danh sách BB của 1 phiếu bảo hành (mới nhất trước) */
     public function getByWarranty($warrantyId){
-        return $this->table($this->_table)
+        return $this->bangGara()
             ->where('warranty_id', '=', (int) $warrantyId)
             ->orderBy('id', 'DESC')->get();
     }
 
     public function nextNo(){
-        $row = $this->table($this->_table)->select('`handover_no`')->orderBy('id', 'DESC')->first();
+        $row = $this->bangGara()->select('`handover_no`')->orderBy('id', 'DESC')->first();
         $n = 0;
         if (!empty($row) && preg_match('/(\d+)$/', $row['handover_no'], $m)){ $n = (int) $m[1]; }
         return 'BBGN-' . str_pad($n + 1, 6, '0', STR_PAD_LEFT);

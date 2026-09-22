@@ -132,7 +132,11 @@ $donSach = function() use ($pdo){
 $donSach();
 
 $seq = 0;
-$tao = function(array $d) use ($W, &$seq){
+/* Gara độc lập: phiếu phải thuộc một gara, không thì màn Lịch / Nhắc bảo trì
+   của gara nào cũng không thấy. Phiếu mẫu tạo ở dòng lệnh (không có gara làm
+   việc) nên ghi thẳng gara tổng — gara của tài khoản Admin tạm bên dưới. */
+$garaCuaPhieu = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn();
+$tao = function(array $d) use ($W, &$seq, $garaCuaPhieu){
     $seq++;
     $bs = $d['bien_so'] ?? null;
     /* Phiếu đã xong thì ngày nhận không thể sau ngày xong. Để mặc định "hôm
@@ -150,6 +154,7 @@ $tao = function(array $d) use ($W, &$seq){
         'fee'           => 0,
         'bien_so'       => $bs,
         'bien_so_chuan' => $bs !== null ? chuan_hoa_bien_so($bs) : null,
+        'garage_id'     => $garaCuaPhieu,
     ], $d));
 };
 $ids = function($rows){ return array_map('intval', array_column((array) $rows, 'id')); };
@@ -203,6 +208,20 @@ $datCaiDat = function($k, $v) use ($pdo){
 $datCaiDat('maintenance_interval_months', '6');
 $datCaiDat('maintenance_window_days', '30');
 $datCaiDat('maintenance_interval_km', '5000');
+
+/* Gara độc lập: chu kỳ lưu RIÊNG từng gara (`garage_settings`), chưa đặt thì
+   đọc Cấu hình chung. Cất cấu hình riêng mà gara tổng đang có, gỡ ra để test
+   chạy trên mặc định ở trên, cuối test trả lại nguyên. */
+$caiDatGaraGoc = [];
+$coBangGara = (int) $pdo->query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()
+                                 AND TABLE_NAME = 'garage_settings'")->fetchColumn() > 0;
+$garaTongBt = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn();
+if ($coBangGara){
+    $st = $pdo->prepare("SELECT skey, svalue FROM garage_settings WHERE garage_id = ? AND skey LIKE 'maintenance_%'");
+    $st->execute([$garaTongBt]);
+    $caiDatGaraGoc = $st->fetchAll(PDO::FETCH_KEY_PAIR);
+    $pdo->prepare("DELETE FROM garage_settings WHERE garage_id = ? AND skey LIKE 'maintenance_%'")->execute([$garaTongBt]);
+}
 
 $MK = 'ZzBaoTri#2026';
 $A_NHOM = (int) $pdo->query("SELECT id FROM `groups` WHERE name = 'Admin'")->fetchColumn();
@@ -348,8 +367,9 @@ $r = $http('GET', "$base/admin/warranty?loai=bao_tri", $jar);
 ok(strpos($r['text'], $soPhieu($A)) !== false && strpos($r['text'], $soPhieu($B)) === false,
    'Danh sach phieu loc theo loai');
 
-$pdo->prepare("INSERT INTO warranty_handovers (handover_no, warranty_id, type, handover_date, create_at)
-               VALUES (?, ?, 'receive', CURDATE(), NOW())")->execute(['ZZBB-' . time(), $R1]);
+// Biên bản thuộc cùng gara với phiếu của nó (gara độc lập — xem $garaCuaPhieu)
+$pdo->prepare("INSERT INTO warranty_handovers (handover_no, warranty_id, type, handover_date, garage_id, create_at)
+               VALUES (?, ?, 'receive', CURDATE(), ?, NOW())")->execute(['ZZBB-' . time(), $R1, $garaCuaPhieu]);
 $hid = (int) $pdo->lastInsertId();
 $r = $http('GET', "$base/admin/warranty/handover-print/$hid", $jar);
 ok(strpos($r['text'], 'theo phiếu bảo trì') !== false,
@@ -361,15 +381,29 @@ $r = $http('GET', "$base/admin/nhac-bao-tri", $jar);
 $tk = $token($r['body']) ?: $tk;
 $http('POST', "$base/admin/nhac-bao-tri/save-config", $jar, ['_token' => $tk, 'interval' => 4, 'km' => 8000, 'window' => 15]);
 $doc = [];
-foreach ($pdo->query("SELECT skey, svalue FROM site_settings WHERE skey LIKE 'maintenance_%'") as $x) $doc[$x['skey']] = $x['svalue'];
+if ($coBangGara){
+    $st = $pdo->prepare("SELECT skey, svalue FROM garage_settings WHERE garage_id = ? AND skey LIKE 'maintenance_%'");
+    $st->execute([$garaTongBt]);
+    $doc = $st->fetchAll(PDO::FETCH_KEY_PAIR);
+}
 ok(($doc['maintenance_interval_km'] ?? '') === '8000' && ($doc['maintenance_interval_months'] ?? '') === '4',
-   'Luu duoc chu ky thang + km', json_encode($doc));
+   'Luu duoc chu ky thang + km — vao cau hinh RIENG cua gara', json_encode($doc));
+$chung = $pdo->query("SELECT svalue FROM site_settings WHERE skey = 'maintenance_interval_km'")->fetchColumn();
+ok($chung === '5000', 'Cau hinh chung KHONG bi doi khi mot gara luu chu ky cua minh',
+   'Gara nay luu la doi luon chu ky cua moi gara khac');
 
 @unlink($jar);
 
 // Dọn sạch + trả cài đặt
 $donSach();
 foreach ($caiDatGoc as $k => $v) $datCaiDat($k, $v);
+if ($coBangGara){
+    $pdo->prepare("DELETE FROM garage_settings WHERE garage_id = ? AND skey LIKE 'maintenance_%'")->execute([$garaTongBt]);
+    foreach ($caiDatGaraGoc as $k => $v){
+        $pdo->prepare("INSERT INTO garage_settings (garage_id, skey, svalue, update_at) VALUES (?, ?, ?, NOW())")
+            ->execute([$garaTongBt, $k, $v]);
+    }
+}
 ok((int) $pdo->query("SELECT COUNT(*) FROM warranty_requests WHERE customer_name LIKE 'ZZBT%'")->fetchColumn() === 0,
    'Da don sach phieu test');
 

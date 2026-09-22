@@ -3,13 +3,18 @@
 use App\core\Model;
 
 /**
- * KT-4 — Đối tượng: khách hàng + nhà cung cấp (DÙNG CHUNG toàn hệ thống).
+ * KT-4 — Đối tượng: khách hàng + nhà cung cấp CỦA TỪNG GARA.
+ *
+ * Gara độc lập (22/09/2026): mỗi gara một danh sách khách / NCC riêng, không
+ * thấy của nhau ($_theoGara). Màn CSKH › Khách hàng và màn Bán hàng › Đối
+ * tượng cùng đọc / sửa bảng này — một khách chỉ nằm MỘT chỗ.
  */
 class PartnersModel extends Model {
 
-    protected $_table   = 'partners';
-    protected $_fields  = '*';
-    protected $_primary = 'id';
+    protected $_table    = 'partners';
+    protected $_fields   = '*';
+    protected $_primary  = 'id';
+    protected $_theoGara = true;
 
     public static $types = [
         'customer' => 'Khách hàng',
@@ -36,7 +41,7 @@ class PartnersModel extends Model {
      * riêng nhóm đó.
      */
     public function getLists(array $loc = []){
-        $q = $this->table($this->_table);
+        $q = $this->bangGara();
 
         $tu = isset($loc['q']) ? trim((string) $loc['q']) : '';
         if ($tu !== ''){
@@ -66,15 +71,63 @@ class PartnersModel extends Model {
                  ->get();
     }
 
+    /**
+     * Khách của gara cho màn CSKH › Khách hàng.
+     *
+     * Tìm được theo tên, mã, SĐT, email, và theo BIỂN SỐ / SỐ KHUNG của xe —
+     * khách quay lại thường chỉ đọc biển số. Biển số so trên cột chuẩn hoá và
+     * chuẩn hoá luôn từ khoá (xem VehiclesModel::getLists).
+     *
+     * @param array $loc    ['q' => ..., 'status' => '1' | '0' | '', 'group' => id | '']
+     * @param int   $limit  0 = không giới hạn
+     */
+    public function khachHang(array $loc = [], $limit = 0, $offset = 0){
+        list($where, $b) = $this->dkKhachHang($loc);
+        $sql = "SELECT p.*, g.`name` AS nhom_ten
+                  FROM `partners` p
+                  LEFT JOIN `customer_groups` g ON g.`id` = p.`group_id`
+                 WHERE $where ORDER BY p.`id` DESC";
+        if ((int) $limit > 0) $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, (int) $offset);
+        return $this->getRaw($sql, $b);
+    }
+
+    /** Số khách khớp bộ lọc — cho phân trang của màn Khách hàng */
+    public function demKhachHang(array $loc = []){
+        list($where, $b) = $this->dkKhachHang($loc);
+        $r = $this->firstRaw("SELECT COUNT(*) AS c FROM `partners` p WHERE $where", $b);
+        return !empty($r['c']) ? (int) $r['c'] : 0;
+    }
+
+    /** Mệnh đề WHERE dùng chung cho khachHang / demKhachHang. Giá trị luôn qua placeholder. */
+    private function dkKhachHang(array $loc){
+        list($dk, $b) = $this->dkGara('p');
+        $where = "$dk AND p.`type` IN ('customer', 'both')";
+
+        $tu = isset($loc['q']) ? trim((string) $loc['q']) : '';
+        if ($tu !== ''){
+            $like  = '%' . $tu . '%';
+            $chuan = chuan_hoa_bien_so($tu);
+            $where .= " AND (p.`name` LIKE ? OR p.`code` LIKE ? OR p.`phone` LIKE ? OR p.`email` LIKE ?
+                         OR EXISTS (SELECT 1 FROM `vehicles` v WHERE v.`partner_id` = p.`id`
+                                     AND (v.`bien_so_chuan` LIKE ? OR v.`so_khung` LIKE ?)))";
+            array_push($b, $like, $like, $like, $like,
+                       $chuan === '' ? "\x00" : '%' . $chuan . '%', $like);
+        }
+        $tt = isset($loc['status']) ? (string) $loc['status'] : '';
+        if ($tt === '1' || $tt === '0'){ $where .= " AND p.`status` = ?"; $b[] = (int) $tt; }
+        if (!empty($loc['group']) && (int) $loc['group'] > 0){ $where .= " AND p.`group_id` = ?"; $b[] = (int) $loc['group']; }
+        return [$where, $b];
+    }
+
     /** Tổng số đối tượng, không lọc — để hiện "đang xem 3 / 6" */
     public function demTatCa(){
-        $r = $this->table($this->_table)->select('COUNT(*) AS c')->first();
+        $r = $this->bangGara()->select('COUNT(*) AS c')->first();
         return !empty($r['c']) ? (int) $r['c'] : 0;
     }
 
     /** Đang hoạt động — cho dropdown chọn đối tượng trên phiếu */
     public function getActive(){
-        return $this->table($this->_table)
+        return $this->bangGara()
                     ->where('status', '=', 1)
                     ->orderBy('name', 'ASC')
                     ->get();
@@ -84,7 +137,7 @@ class PartnersModel extends Model {
 
     /** [partner_id => % chiết khấu nhóm KH] — cho auto-điền chiết khấu dòng */
     public function groupDiscountMap(){
-        $rows = $this->table($this->_table)
+        $rows = $this->bangGara()
             ->select('`partners`.`id`, `customer_groups`.`discount_percent`')
             ->joinOn('customer_groups', 'partners.group_id', 'customer_groups.id')
             ->get();
@@ -93,8 +146,25 @@ class PartnersModel extends Model {
         return $map;
     }
 
+    /** Theo mã — trong gara làm việc (mã chỉ duy nhất trong một gara) */
     public function findByCode($code){
-        return $this->table($this->_table)->where('code', '=', $code)->first();
+        return $this->bangGara()->where('code', '=', $code)->first();
+    }
+
+    /** Khách đầu tiên dùng số điện thoại này — để cảnh báo tạo trùng người */
+    public function findByPhone($phone){
+        $phone = trim((string) $phone);
+        if ($phone === '') return [];
+        return $this->bangGara()->where('phone', '=', $phone)->first();
+    }
+
+    /** Mã kế tiếp theo tiền tố trong gara làm việc: KH-0001, KH-0002... */
+    public function nextCode($tienTo = 'KH-'){
+        $n = 0;
+        foreach ((array) $this->bangGara()->select('`code`')->whereLike('code', $tienTo . '%')->get() as $r){
+            if (preg_match('/(\d+)$/', $r['code'], $m)) $n = max($n, (int) $m[1]);
+        }
+        return $tienTo . str_pad($n + 1, 4, '0', STR_PAD_LEFT);
     }
 
     public function add($data){

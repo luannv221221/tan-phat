@@ -40,7 +40,7 @@ $menuGroups = [
     // từ phía một gara, nên thuộc nhóm Hàng hoá chứ không phải nhóm Hệ thống.
     'Hàng hoá'           => ['products', 'services', 'garage-catalog', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
-    'CSKH'               => ['customers', 'customer-groups', 'vehicles', 'receptions', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'chat', 'contact-messages', 'reviews', 'newsletter', 'bao-cao-cskh'],
+    'CSKH'               => ['customers', 'customer-groups', 'vehicles', 'receptions', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'chat', 'contact-messages', 'reviews', 'newsletter', 'tai-khoan-web', 'bao-cao-cskh'],
 
     // --- Khu 2: trang bán hàng trên web ---
     'Quản lý website'    => ['news', 'news-categories', 'du-an', 'galleries', 'banners', 'menus'],

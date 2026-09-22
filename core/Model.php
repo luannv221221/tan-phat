@@ -65,6 +65,27 @@ class Model extends Database {
         return [$cot . ' = ?', [$g]];
     }
 
+    /**
+     * Thêm điều kiện gara vào truy vấn QueryBuilder đang dựng:
+     *   $this->locGara($this->table('quotations'), 'quotations.garage_id')
+     * $cot mặc định `<bảng của model>.garage_id`. Dòng lệnh chưa ép gara thì
+     * không thêm gì; ĐÓNG (garaLoc = 0) thì so với 0 — không gara nào có id 0,
+     * nên không khớp dòng nào.
+     *
+     * Gọi NGAY SAU table(), trước mọi orWhere ở tầng ngoài cùng: `WHERE gara = ?
+     * OR x` là thủng.
+     */
+    protected function locGara($q, $cot = null){
+        $g = self::garaLoc();
+        if ($g === null) return $q;
+        return $q->where($cot !== null ? $cot : $this->_table . '.garage_id', '=', $g);
+    }
+
+    /** Bảng của model, ĐÃ lọc theo gara — điểm bắt đầu cho truy vấn QueryBuilder */
+    protected function bangGara(){
+        return $this->locGara($this->table($this->_table));
+    }
+
     /** Ghép điều kiện gara vào $where của các hàm có sẵn (bind của gara đứng SAU) */
     private function voiGara($where, array $bindings){
         if (!$this->_theoGara) return [$where, $bindings];

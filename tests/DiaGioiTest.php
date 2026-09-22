@@ -151,6 +151,7 @@ foreach (['partners', 'members'] as $bang){
 $donSach = function() use ($pdo){
     $pdo->exec("DELETE FROM partners WHERE code LIKE 'ZZDG%'");
     $pdo->exec("DELETE FROM members WHERE email LIKE 'zz-dg-%@local.test'");
+    $pdo->exec("DELETE FROM partners WHERE email LIKE 'zz-dg-%@local.test' OR name = 'ZZ Khach dia gioi'");
     $pdo->exec("DELETE t FROM login_tokens t JOIN users u ON u.id = t.user_id WHERE u.email = 'zz-dg-ad@local.test'");
     $pdo->exec("DELETE FROM users WHERE email = 'zz-dg-ad@local.test'");
 };
@@ -272,9 +273,11 @@ ok(preg_match('~data-dia-gioi="tinh"[^>]*data-chon="1"~s', $r['body']) === 1
    'Form sua chon san tinh dang luu');
 ok(strpos($r['body'], 'data-chon="4"') !== false, 'Form sua chon san phuong dang luu');
 
-/* --- Khach hang CSKH --- */
+/* --- Khach hang CSKH ---
+   Tu 22/09/2026 man Khach hang la khach CUA GARA (bang partners), khong con
+   la tai khoan website (members). */
 $khachTheoEmail = function($email) use ($pdo){
-    $st = $pdo->prepare("SELECT * FROM members WHERE email = ?");
+    $st = $pdo->prepare("SELECT * FROM partners WHERE email = ?");
     $st->execute([$email]);
     return $st->fetch(PDO::FETCH_ASSOC);
 };
@@ -290,7 +293,7 @@ $kh = $khachTheoEmail('zz-dg-1@local.test');
 ok(!empty($kh), 'Luu duoc khach hang moi');
 ok(!empty($kh) && (int) $kh['province_code'] === 1 && mb_strpos((string) $kh['ward_name'], 'Ba Đình') !== false,
    'Khach hang luu du ma va ten tinh/phuong',
-   'adminAdd() loc cot — thieu khai 4 cot la mat du lieu am tham: '
+   'Thieu 4 cot khi luu la mat du lieu am tham: '
    . json_encode($kh ? [$kh['province_code'], $kh['ward_name']] : null));
 
 /* Sửa sang tỉnh khác */
@@ -300,7 +303,7 @@ if (!empty($xaTinhKhac) && !empty($kh)){
     ok(strpos($r['body'], 'data-chon="1"') !== false, 'Form sua khach chon san tinh dang luu');
 
     $http('POST', "$base/admin/customers/edit/" . (int) $kh['id'], $jar, [
-        '_token' => $tk, 'name' => 'ZZ Khach dia gioi', 'phone' => '0912000111',
+        '_token' => $tk, 'name' => 'ZZ Khach dia gioi', 'phone' => '0912000111', 'email' => 'zz-dg-1@local.test',
         'address' => '5 Lê Lợi', 'status' => 1,
         'province_code' => $tinhKhac, 'ward_code' => (int) $xaTinhKhac[0]['c'],
     ]);
@@ -312,7 +315,7 @@ if (!empty($xaTinhKhac) && !empty($kh)){
 
     /* Gửi phường không thuộc tỉnh -> không đổi gì */
     $http('POST', "$base/admin/customers/edit/" . (int) $kh['id'], $jar, [
-        '_token' => $tk, 'name' => 'ZZ Khach dia gioi', 'phone' => '0912000111',
+        '_token' => $tk, 'name' => 'ZZ Khach dia gioi', 'phone' => '0912000111', 'email' => 'zz-dg-1@local.test',
         'address' => '5 Lê Lợi', 'status' => 1,
         'province_code' => $tinhKhac, 'ward_code' => 4,
     ]);
@@ -324,7 +327,8 @@ if (!empty($xaTinhKhac) && !empty($kh)){
 @unlink($jar);
 $donSach();
 ok((int) $pdo->query("SELECT COUNT(*) FROM partners WHERE code LIKE 'ZZDG%'")->fetchColumn() === 0
-   && (int) $pdo->query("SELECT COUNT(*) FROM members WHERE email LIKE 'zz-dg-%@local.test'")->fetchColumn() === 0,
+   && (int) $pdo->query("SELECT COUNT(*) FROM members WHERE email LIKE 'zz-dg-%@local.test'")->fetchColumn() === 0
+   && (int) $pdo->query("SELECT COUNT(*) FROM partners WHERE email LIKE 'zz-dg-%@local.test'")->fetchColumn() === 0,
    'Da don sach du lieu test');
 
 exit(summary());

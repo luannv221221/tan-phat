@@ -4,9 +4,9 @@
     @if (!empty($msg))
     <div class="alert alert-danger"><i class="fas fa-exclamation-circle mr-1"></i> {{$msg}}</div>
     @endif
-    <?php /* Khai xe từ màn Đối tượng: lưu xong quay về đúng khách đó */ ?>
-    @if ($ve === 'partner')
-    <input type="hidden" name="ve" value="partner"/>
+    <?php /* Khai xe từ màn Đối tượng / Khách hàng: lưu xong quay về đúng khách đó */ ?>
+    @if ($ve === 'partner' || $ve === 'customer')
+    <input type="hidden" name="ve" value="{{$ve}}"/>
     @endif
 
     <div class="card card-outline card-primary">

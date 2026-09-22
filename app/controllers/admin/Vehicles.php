@@ -93,7 +93,9 @@ class Vehicles extends Controller {
         $c['page_name'] = 'Thêm xe';
         $c['item']      = null;
         $c['old']       = $old;
-        $c['ve']        = !empty($f['ve']) ? (string) $f['ve'] : '';
+        // Lưu lỗi quay lại form thì tham số trên URL mất — đọc lại từ `old`
+        $ve = !empty($f['ve']) ? (string) $f['ve'] : (!empty($old['ve']) ? (string) $old['ve'] : '');
+        $c['ve']        = in_array($ve, ['partner', 'customer'], true) ? $ve : '';
         $c['errors']    = Session::flash('errors');
         $c['msg']       = Session::flash('msg');
 
@@ -107,10 +109,11 @@ class Vehicles extends Controller {
         $id = $this->__model->add($this->buildData());
         Session::flash('msg', 'Đã thêm xe ' . $this->__request->getFields()['bien_so']);
 
-        // Quay về màn Đối tượng nếu xe được khai từ đó
+        // Quay về màn Đối tượng / Khách hàng nếu xe được khai từ đó
         $f = $this->__request->getFields();
-        if (!empty($f['ve']) && $f['ve'] === 'partner' && !empty($f['partner_id'])){
-            $this->__response->redirect('admin/partners/edit/' . (int) $f['partner_id']); return;
+        if (!empty($f['ve']) && !empty($f['partner_id'])){
+            if ($f['ve'] === 'partner'){ $this->__response->redirect('admin/partners/edit/' . (int) $f['partner_id']); return; }
+            if ($f['ve'] === 'customer'){ $this->__response->redirect('admin/customers/edit/' . (int) $f['partner_id']); return; }
         }
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $id);
     }

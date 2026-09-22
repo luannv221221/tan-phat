@@ -27,7 +27,9 @@ class Baotri extends Controller {
 
     function __construct(){
         $this->__model    = $this->model('WarrantyRequestsModel');
-        $this->__settings = $this->model('SettingsModel');
+        /* Chu kỳ bảo trì là cấu hình RIÊNG của từng gara (chưa đặt thì lấy
+           Cấu hình chung). Lưu vào site_settings là gara này đổi hộ mọi gara. */
+        $this->__settings = $this->model('GarageSettingsModel');
         $this->__request  = new Request();
         $this->__response = new Response();
     }

@@ -23,6 +23,8 @@
  *   000074  đồng bộ collation hai bảng xe / phiếu tiếp nhận về utf8mb4_unicode_ci
  *   000075  collation MẶC ĐỊNH của CSDL -> utf8mb4_unicode_ci
  *   000076  gara độc lập — nền: garage_id cho 9 bảng, màn chỉ Tân Phát, thông tin gara
+ *   000077  gara độc lập — khách và xe: email đối tượng, cấu hình riêng gara, màn
+ *           Tài khoản website, chuyển khách / xe cũ, "không trùng" theo gara
  *
  * RIÊNG 000069 (Manager tự thêm nhân viên cho gara mình) nằm ở file KHÁC,
  * chạy SAU khi đẩy code:
@@ -124,7 +126,7 @@ if (in_array('--sau-khi-day-code', $argv, true)){
 }
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000076 (trừ 000069)\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000077 (trừ 000069)\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
@@ -140,6 +142,8 @@ echo "-- Phần 13 thêm bảng xe của khách + phiếu tiếp nhận, và c�
 echo "--   giá / hoá đơn / phiếu bảo hành về phiếu tiếp nhận và về xe.\n";
 echo "-- Phần 17 gara độc lập (nền): garage_id cho 9 bảng, gán dữ liệu cũ vào gara,\n";
 echo "--   đánh dấu màn chỉ Tân Phát, cột thông tin gara. Cột mới để NULL được.\n";
+echo "-- Phần 18 khách và xe theo gara: màn Tài khoản website, chuyển khách / xe cũ\n";
+echo "--   sang đối tượng / xe, số phiếu - biển số không trùng TRONG TỪNG GARA.\n";
 echo "-- Quyền Manager tự thêm nhân viên (000069) KHÔNG nằm ở đây — nó ở file\n";
 echo "-- deploy/sau-khi-day-code.sql, dán SAU khi đẩy code.\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
@@ -1003,6 +1007,95 @@ foreach (['DMSG' => ['Tân Phát Sài Gòn', 'Gara mẫu Sài Gòn'], 'DMDN' => 
 echo "\n";
 
 /* ------------------------------------------------------------------ *
+ * 18. Gara độc lập — khách và xe                             — 000077
+ *
+ * Chuyển khách / xe cũ bằng SQL: mã khách dựng từ id tài khoản (KH-M00012)
+ * nên chạy lại vẫn ra đúng mã đó, không tạo trùng. (migrate.php đánh mã
+ * KH-0001... liền số — hai cách cho hai mã khác nhau, cùng đúng.)
+ * ------------------------------------------------------------------ */
+echo "\n-- 18. Gara doc lap — khach va xe (000077)\n\n";
+$tongSql = "(SELECT g.`id` FROM `garages` g WHERE g.`is_master` = 1 ORDER BY g.`id` LIMIT 1)";
+
+ddlNeuThieu('g18_email',
+    "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'partners' AND COLUMN_NAME = 'email'",
+    "ALTER TABLE `partners` ADD COLUMN `email` VARCHAR(150) DEFAULT NULL AFTER `phone`");
+
+echo "CREATE TABLE IF NOT EXISTS `garage_settings` (\n"
+   . "  `id` INT AUTO_INCREMENT PRIMARY KEY,\n"
+   . "  `garage_id` INT NOT NULL,\n"
+   . "  `skey` VARCHAR(100) NOT NULL,\n"
+   . "  `svalue` TEXT DEFAULT NULL,\n"
+   . "  `update_at` DATETIME DEFAULT NULL,\n"
+   . "  UNIQUE KEY `uq_gs_key` (`garage_id`, `skey`),\n"
+   . "  CONSTRAINT `fk_gs_garage` FOREIGN KEY (`garage_id`) REFERENCES `garages` (`id`) ON DELETE CASCADE ON UPDATE CASCADE\n"
+   . ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n";
+
+echo "-- Man Tai khoan website (chi Tan Phat) + quyen, chep tu may nay\n";
+printf("INSERT INTO `modules` (`name`, `link`, `chi_tan_phat`, `create_at`)\n"
+     . "  SELECT %s, 'tai-khoan-web', 1, %s FROM DUAL\n"
+     . "  WHERE NOT EXISTS (SELECT 1 FROM `modules` x WHERE x.`link` = 'tai-khoan-web');\n",
+     q('Tài khoản website'), q($now));
+echo "UPDATE `modules` SET `chi_tan_phat` = 1 WHERE `link` = 'tai-khoan-web';\n";
+foreach ($db->query("SELECT g.`name` AS nhom, p.`role` FROM `permissions` p
+                       JOIN `groups` g ON g.`id` = p.`group_id` JOIN `modules` m ON m.`id` = p.`module_id`
+                      WHERE m.`link` = 'tai-khoan-web' ORDER BY g.`name`, p.`role`")->fetchAll(PDO::FETCH_ASSOC) as $r){
+    printf("INSERT INTO `permissions` (`module_id`,`group_id`,`role`)\n"
+         . "  SELECT m.`id`, g.`id`, %s FROM `modules` m JOIN `groups` g\n"
+         . "   WHERE m.`link` = 'tai-khoan-web' AND g.`name` = %s\n"
+         . "     AND NOT EXISTS (SELECT 1 FROM (SELECT * FROM `permissions`) p\n"
+         . "                      WHERE p.`module_id` = m.`id` AND p.`group_id` = g.`id` AND p.`role` = %s);\n",
+        q($r['role']), q($r['nhom']), q($r['role']));
+}
+
+echo "\n-- Khach vang lai cu (tai khoan khong email, hoac co xe o bang cu) -> doi tuong loai khach\n";
+echo "INSERT INTO `partners` (`code`, `name`, `type`, `phone`, `email`, `address`, `province_code`, `province_name`,\n"
+   . "                        `ward_code`, `ward_name`, `status`, `sort_order`, `garage_id`, `create_at`)\n"
+   . "  SELECT CONCAT('KH-M', LPAD(m.`id`, 5, '0')), IF(m.`name` IS NULL OR m.`name` = '', CONCAT('Khach ', m.`id`), m.`name`),\n"
+   . "         'customer', NULLIF(m.`phone`, ''), NULLIF(m.`email`, ''), NULLIF(m.`address`, ''), m.`province_code`, m.`province_name`,\n"
+   . "         m.`ward_code`, m.`ward_name`, m.`status`, 0, $tongSql, " . q($now) . "\n"
+   . "    FROM `members` m\n"
+   . "   WHERE m.`partner_id` IS NULL\n"
+   . "     AND (m.`email` IS NULL OR m.`email` = '' OR EXISTS (SELECT 1 FROM `member_vehicles` v WHERE v.`member_id` = m.`id`))\n"
+   . "     AND NOT EXISTS (SELECT 1 FROM (SELECT `code`, `garage_id` FROM `partners`) p\n"
+   . "                      WHERE p.`code` = CONCAT('KH-M', LPAD(m.`id`, 5, '0')) AND p.`garage_id` = $tongSql);\n";
+echo "UPDATE `members` m JOIN `partners` p ON p.`code` = CONCAT('KH-M', LPAD(m.`id`, 5, '0')) AND p.`garage_id` = $tongSql\n"
+   . "   SET m.`partner_id` = p.`id` WHERE m.`partner_id` IS NULL;\n";
+echo "INSERT INTO `vehicles` (`partner_id`, `bien_so`, `bien_so_chuan`, `hang_xe`, `model_xe`, `nam_sx`, `mau_xe`, `so_km`,\n"
+   . "                        `ghi_chu`, `status`, `garage_id`, `create_at`)\n"
+   . "  SELECT m.`partner_id`, v.`bien_so`, v.`bien_so_chuan`, NULLIF(v.`hang_xe`, ''), NULLIF(v.`model_xe`, ''), v.`nam_sx`,\n"
+   . "         NULLIF(v.`mau_xe`, ''), v.`so_km`, NULLIF(v.`ghi_chu`, ''), 1, $tongSql, " . q($now) . "\n"
+   . "    FROM `member_vehicles` v JOIN `members` m ON m.`id` = v.`member_id`\n"
+   . "   WHERE v.`bien_so_chuan` <> ''\n"
+   /* Hai tài khoản cùng khai một biển số: chỉ lấy dòng đầu — biển số không
+      được trùng trong một gara. Không dùng GROUP BY: cột không gộp làm
+      ONLY_FULL_GROUP_BY (mặc định MySQL 5.7+) báo lỗi. */
+   . "     AND v.`id` = (SELECT MIN(v2.`id`) FROM `member_vehicles` v2 WHERE v2.`bien_so_chuan` = v.`bien_so_chuan`)\n"
+   . "     AND NOT EXISTS (SELECT 1 FROM (SELECT `garage_id`, `bien_so_chuan` FROM `vehicles`) x\n"
+   . "                      WHERE x.`garage_id` = $tongSql AND x.`bien_so_chuan` = v.`bien_so_chuan`);\n\n";
+
+echo "-- Khong trung: tinh TRONG TUNG GARA. Them chi muc moi truoc, bo chi muc cu sau.\n";
+foreach ([
+    ['partners',           'uq_partners_code',     'uq_partners_gara_code',     '`garage_id`, `code`'],
+    ['vehicles',           'uq_vehicles_bien_so',  'uq_vehicles_gara_bien_so',  '`garage_id`, `bien_so_chuan`'],
+    ['vehicles',           'uq_vehicles_so_khung', 'uq_vehicles_gara_so_khung', '`garage_id`, `so_khung`'],
+    ['receptions',         'uq_receptions_no',     'uq_receptions_gara_no',     '`garage_id`, `reception_no`'],
+    ['warranty_requests',  'uq_warranty_no',       'uq_warranty_gara_no',       '`garage_id`, `request_no`'],
+    ['warranty_handovers', 'uq_handover_no',       'uq_handover_gara_no',       '`garage_id`, `handover_no`'],
+] as $d){
+    list($bang, $cu, $moi, $cotMoi) = $d;
+    $coIdx = function($ten) use ($bang){
+        return "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE()"
+             . " AND TABLE_NAME = '$bang' AND INDEX_NAME = '$ten'";
+    };
+    ddlNeuThieu('g18_' . $moi, $coIdx($moi), "ALTER TABLE `$bang` ADD UNIQUE KEY `$moi` ($cotMoi)");
+    // Bỏ chỉ mục cũ: chạy khi CÒN (đếm > 0) — đảo điều kiện của ddlNeuThieu
+    printf("SET @%s = (SELECT IF((%s) = 0, 'SELECT 1', %s));\n"
+         . "PREPARE st_%s FROM @%s; EXECUTE st_%s; DEALLOCATE PREPARE st_%s;\n\n",
+        'g18x_' . $cu, $coIdx($cu), q("ALTER TABLE `$bang` DROP INDEX `$cu`"),
+        'g18x_' . $cu, 'g18x_' . $cu, 'g18x_' . $cu, 'g18x_' . $cu);
+}
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
@@ -1032,6 +1125,7 @@ foreach ([
     '2026_09_17_000074_dong_bo_collation_xe_va_phieu',
     '2026_09_17_000075_collation_mac_dinh_csdl',
     '2026_09_22_000076_nen_gara_doc_lap',
+    '2026_09_22_000077_khach_va_xe_theo_gara',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên

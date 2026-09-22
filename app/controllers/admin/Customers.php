@@ -6,17 +6,20 @@ use App\core\Response;
 use App\core\Session;
 
 /**
- * ADMIN — Khách hàng (bảng `members`).
+ * CSKH — Khách hàng CỦA GARA (bảng `partners`, loại khách).
  *
- * VÌ SAO CÓ MÀN HÌNH NÀY: "Quản lý người dùng" đọc bảng `users` — tài khoản
- * nhân viên có group_id và phân quyền. Khách đăng ký ngoài website lại nằm ở
- * bảng `members`, hoàn toàn khác, nên trước đây không hiện ở bất cứ đâu trong
- * admin.
+ * Quan điểm xuyên suốt: kho tổng -> nhiều gara -> mỗi gara nhiều KHÁCH -> mỗi
+ * khách nhiều XE -> mỗi xe nhiều PHIẾU.
  *
- * KHÔNG có chức năng XOÁ: khách có thể đã phát sinh đơn hàng / đánh giá
- * (khoá ngoại ON DELETE SET NULL nên xoá đi thì đơn mất luôn dấu vết người
- * đặt). Cần chặn ai đó thì KHOÁ tài khoản (status = 0) — đủ để họ không đăng
- * nhập được mà lịch sử vẫn nguyên.
+ * VÌ SAO KHÔNG CÒN ĐỌC `members`: trước 22/09/2026 màn này đọc bảng tài khoản
+ * website, xe lưu ở một bảng riêng chỉ có biển số / hãng / model gõ tay — không
+ * có VIN, số máy, và KHÔNG lập được phiếu tiếp nhận (phiếu gắn với xe của Đối
+ * tượng). Chuỗi khách -> xe -> phiếu đứt ngay tại màn này. Giờ màn Khách hàng
+ * và màn Bán hàng › Đối tượng cùng đọc / sửa MỘT bản ghi; xe là bảng `vehicles`
+ * đầy đủ. Tài khoản website tách sang màn Tài khoản website (chỉ Tân Phát).
+ *
+ * KHÔNG có XOÁ ở đây: khách đã có xe, phiếu, báo giá. Ngừng giao dịch thì tắt
+ * trạng thái. Cần xoá hẳn thì làm ở màn Đối tượng.
  */
 class Customers extends Controller {
 
@@ -26,75 +29,73 @@ class Customers extends Controller {
     private $perPage   = 20;
 
     private $__data = [];
-    private $__model, $__xe, $__request, $__response;
+    private $__model, $__xe, $__nhom, $__request, $__response;
 
     function __construct(){
-        $this->__model    = $this->model('MembersModel');
-        $this->__xe       = $this->model('MemberVehiclesModel');
+        $this->__model    = $this->model('PartnersModel');
+        $this->__xe       = $this->model('VehiclesModel');
+        $this->__nhom     = $this->model('CustomerGroupsModel');
         $this->__request  = new Request();
         $this->__response = new Response();
     }
 
     private function baseData(){
-        $this->__data['content']['routeBase'] = $this->routeBase;
-        $this->__data['content']['labelMany'] = $this->labelMany;
+        $c = &$this->__data['content'];
+        $c['routeBase'] = $this->routeBase;
+        $c['labelMany'] = $this->labelMany;
+        $c['dsNhom']    = $this->__nhom->getActive();
+    }
+
+    /** Khách của gara làm việc — NCC thuần (type = supplier) không phải khách */
+    private function khach($id){
+        $p = $this->__model->getDetail((int) $id);
+        return (!empty($p) && in_array($p['type'], ['customer', 'both'], true)) ? $p : null;
     }
 
     public function index(){
-        $f       = $this->__request->getFields();
-        $keyword = isset($f['keyword']) ? trim($f['keyword']) : '';
-        $status  = isset($f['status']) ? (string) $f['status'] : '';
-        $page    = (isset($f['page']) && (int) $f['page'] > 0) ? (int) $f['page'] : 1;
+        $f   = $this->__request->getFields();
+        $loc = [
+            'q'      => isset($f['q']) ? trim((string) $f['q']) : '',
+            'status' => (isset($f['status']) && ($f['status'] === '1' || $f['status'] === '0')) ? $f['status'] : '',
+            'group'  => !empty($f['group']) ? (int) $f['group'] : '',
+        ];
 
-        // Số dòng/trang chọn ở chân bảng; 0 = "Tất cả".
+        // Số dòng/trang chọn ở chân bảng; 0 = "Tất cả"
         $perPage    = phan_trang_so_dong($this->perPage);
-        $total      = $this->__model->adminCount($keyword, $status);
-        $totalPages = $perPage > 0 ? (int) ceil($total / $perPage) : 1;
-        if ($totalPages < 1) $totalPages = 1;
+        $page       = (isset($f['page']) && (int) $f['page'] > 0) ? (int) $f['page'] : 1;
+        $total      = $this->__model->demKhachHang($loc);
+        $totalPages = $perPage > 0 ? max(1, (int) ceil($total / $perPage)) : 1;
         if ($page > $totalPages) $page = $totalPages;
-
-        /* adminList() ghép thẳng vào "LIMIT n" — mà LIMIT 0 trong MySQL là
-           KHÔNG dòng nào chứ không phải "hết". Nên "Tất cả" phải quy ra một
-           số thật lớn, không truyền 0 xuống. */
+        /* LIMIT 0 trong MySQL là KHÔNG dòng nào chứ không phải "hết" — "Tất cả"
+           phải quy ra một số thật lớn. */
         $limit = $perPage > 0 ? $perPage : PHP_INT_MAX;
 
         $this->baseData();
         $c = &$this->__data['content'];
-        $c['page_name']  = $this->labelMany;
-        $c['dataList']   = $this->__model->adminList($keyword, $status, $limit, ($page - 1) * $perPage);
-
-        /* Xe cua tung khach — lay MOT lan cho ca trang thay vi hoi lai theo
-           tung dong. Danh sach 20 khach ma hoi 20 lan la 20 truy van thua. */
-        $c['xeTheoKhach'] = $this->__xe->theoNhieuKhach(
-            array_map(function($x){ return $x['id']; }, $c['dataList'] ?: [])
-        );
-        $c['keyword']    = $keyword;
-        $c['filterSt']   = $status;
-        $c['page']       = $page;
-        $c['perPage']    = $perPage;
-        $c['total']      = $total;
-        $c['totalPages'] = $totalPages;
-        $c['msg']        = Session::flash('msg');
-        $c['msgError']   = Session::flash('msgError');
+        $ds = (array) $this->__model->khachHang($loc, $limit, ($page - 1) * $perPage);
+        $c['page_name']   = $this->labelMany;
+        $c['dataList']    = $ds;
+        $c['xeTheoKhach'] = $this->__xe->theoNhieuChu(array_column($ds, 'id'));
+        $c['loc']         = $loc;
+        $c['dangLoc']     = ($loc['q'] !== '' || $loc['status'] !== '' || $loc['group'] !== '');
+        $c['tongTatCa']   = $c['dangLoc'] ? $this->__model->demKhachHang([]) : $total;
+        $c['page']        = $page;
+        $c['perPage']     = $perPage;
+        $c['total']       = $total;
+        $c['totalPages']  = $totalPages;
+        $c['msg']         = Session::flash('msg');
+        $c['msgError']    = Session::flash('msgError');
 
         $this->__data['sub_content'] = $this->viewDir . '/lists';
         $this->__data['page_title']  = $this->labelMany;
         $this->render('layouts/admin/master_admin', $this->__data);
     }
 
-    /**
-     * Thêm khách ngay tại gara.
-     *
-     * Màn này ban đầu chỉ để XEM và KHOÁ tài khoản khách tự đăng ký trên web,
-     * nên cố tình không có nút Thêm. Nhưng từ khi nó gánh thêm việc quản lý xe
-     * của khách thì thiếu hẳn một nửa: khách vãng lai lái xe tới gara không tạo
-     * được hồ sơ, nên cũng không khai được biển số — đúng tình huống mà tính
-     * năng đó sinh ra để phục vụ.
-     */
     public function add(){
         $this->baseData();
         $c = &$this->__data['content'];
         $c['page_name'] = 'Thêm khách hàng';
+        $c['maMoi']     = $this->__model->nextCode('KH-');
         $c['errors']    = Session::flash('errors');
         $c['old']       = Session::flash('old');
         $c['msg']       = Session::flash('msg');
@@ -104,60 +105,103 @@ class Customers extends Controller {
         $this->render('layouts/admin/master_admin', $this->__data);
     }
 
-    /* ===== Tỉnh / phường (34 tỉnh, 2 cấp sau sáp nhập 2025) =====
-       Để trống cả hai thì thôi; chọn rồi thì phường phải thuộc tỉnh — chỉ
-       server kiểm được, trình duyệt gửi lên mã gì cũng được. */
-
-    /** Tra tỉnh/phường từ form, thêm lỗi vào $errors nếu chọn sai cặp */
-    private function diaGioi(&$errors){
-        $f    = $this->__request->getFields();
-        $tinh = !empty($f['province_code']) ? (int) $f['province_code'] : 0;
-        $xa   = !empty($f['ward_code']) ? (int) $f['ward_code'] : 0;
-        if ($tinh <= 0 && $xa <= 0) return null;
-
-        $dg = dia_gioi_tra($tinh, $xa);
-        if ($dg === null){
-            $errors['province_code'] = 'Chọn lại tỉnh và phường/xã — phường phải thuộc tỉnh đã chọn';
-        }
-        return $dg;
-    }
-
-    /** Bốn cột để lưu — tên lấy từ nguồn dữ liệu, không nhận tên client gửi */
-    private function diaGioiLuu($dg){
-        $f = $this->__request->getFields();
-        return [
-            'province_code' => $dg !== null ? (int) $f['province_code'] : null,
-            'province_name' => $dg !== null ? $dg['province'] : null,
-            'ward_code'     => $dg !== null ? (int) $f['ward_code'] : null,
-            'ward_name'     => $dg !== null ? $dg['ward'] : null,
-        ];
-    }
-
-    /** Giữ lựa chọn khi form quay lại vì lỗi */
-    private function diaGioiOld(){
-        $f = $this->__request->getFields();
-        return [
-            'province_code' => !empty($f['province_code']) ? (int) $f['province_code'] : '',
-            'ward_code'     => !empty($f['ward_code']) ? (int) $f['ward_code'] : '',
-        ];
-    }
-
     public function postAdd(){
+        list($errors, $data) = $this->docForm(null);
+        if (!empty($errors)){ $this->quayLai($errors, 'add'); return; }
+
+        $id = $this->__model->add(array_merge($data, [
+            'code'   => $this->__model->nextCode('KH-'),
+            'type'   => 'customer',
+            'status' => 1,
+        ]));
+
+        /* Sang thẳng màn Sửa: gần như lần nào thêm khách ở gara cũng là để khai
+           luôn chiếc xe họ vừa mang tới, mà khối "Xe của khách" nằm ở đó. */
+        Session::flash('msg', 'Đã thêm khách hàng. Khai xe của khách ngay bên dưới.');
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $id);
+    }
+
+    public function edit($id = 0){
+        $item = $this->khach($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy khách hàng.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+
+        $xe = (array) $this->__xe->theoChu((int) $id);
+        $soPhieu = [];
+        foreach ($xe as $x) $soPhieu[(int) $x['id']] = $this->__xe->demPhieu((int) $x['id']);
+
+        $this->baseData();
+        $c = &$this->__data['content'];
+        $c['page_name'] = 'Khách hàng ' . $item['name'];
+        $c['item']      = $item;
+        $c['dsXe']      = $xe;
+        $c['soPhieu']   = $soPhieu;
+        $c['errors']    = Session::flash('errors');
+        $c['old']       = Session::flash('old');
+        $c['msg']       = Session::flash('msg');
+        $c['msgError']  = Session::flash('msgError');
+
+        $this->__data['sub_content'] = $this->viewDir . '/edit';
+        $this->__data['page_title']  = 'Khách hàng ' . $item['name'];
+        $this->render('layouts/admin/master_admin', $this->__data);
+    }
+
+    public function postEdit($id = 0){
+        $item = $this->khach($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy khách hàng.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+
+        list($errors, $data) = $this->docForm((int) $id);
+        if (!empty($errors)){ $this->quayLai($errors, 'edit/' . (int) $id); return; }
+
+        $f = $this->__request->getFields();
+        $data['status'] = !empty($f['status']) ? 1 : 0;
+        $this->__model->edit($data, (int) $id);
+        Session::flash('msg', 'Đã cập nhật khách hàng.');
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $id);
+    }
+
+    /** Tắt / bật nhanh từ danh sách */
+    public function toggle($id = 0){
+        $item = $this->khach($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy khách hàng.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (!route('admin/' . $this->routeBase . '/edit/' . (int) $id)){
+            $this->__response->redirect('admin/khong-co-quyen'); return;
+        }
+        $new = ((int) $item['status'] === 1) ? 0 : 1;
+        $this->__model->edit(['status' => $new], (int) $id);
+        Session::flash('msg', ($new === 1 ? 'Đã bật lại khách ' : 'Đã tắt khách ') . $item['name']);
+        $this->__response->redirect('admin/' . $this->routeBase);
+    }
+
+    // ===== Helper =====
+
+    /**
+     * Đọc + kiểm form thêm / sửa. Trả [lỗi, dữ liệu để lưu].
+     * $id = null khi thêm (lúc đó mới cảnh báo trùng số điện thoại).
+     */
+    private function docForm($id){
         $f       = $this->__request->getFields();
-        $name    = isset($f['name']) ? trim($f['name']) : '';
-        $email   = isset($f['email']) ? trim($f['email']) : '';
-        $phone   = isset($f['phone']) ? trim($f['phone']) : '';
-        $address = isset($f['address']) ? trim($f['address']) : '';
-        $pass    = isset($f['new_password']) ? $f['new_password'] : '';
+        $name    = isset($f['name']) ? trim((string) $f['name']) : '';
+        $phone   = isset($f['phone']) ? trim((string) $f['phone']) : '';
+        $email   = isset($f['email']) ? trim((string) $f['email']) : '';
+        $address = isset($f['address']) ? trim((string) $f['address']) : '';
+        $nhomId  = !empty($f['group_id']) ? (int) $f['group_id'] : 0;
 
         $errors = [];
-        if ($name === '') $errors['name'] = 'Nhập họ tên';
-        $dg = $this->diaGioi($errors);
+        if ($name === '') $errors['name'] = 'Nhập họ tên khách';
 
-        /* Phải có ÍT NHẤT một cách liên lạc. Không có cả hai thì hồ sơ này về
-           sau không ai tra ra được là của ai — và khách vãng lai ở gara thì
-           số điện thoại mới là thứ nhận ra người, không phải email. */
-        if ($email === '' && $phone === ''){
+        /* Phải có ÍT NHẤT một cách liên lạc: không có thì hồ sơ này về sau không
+           ai tra ra được là của ai — mà ở gara, số điện thoại mới là thứ nhận ra
+           người. */
+        if ($phone === '' && $email === ''){
             $errors['phone'] = 'Nhập số điện thoại hoặc email — cần ít nhất một cách liên lạc';
         }
         if ($phone !== '' && !is_phone($phone)){
@@ -166,230 +210,61 @@ class Customers extends Controller {
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)){
             $errors['email'] = 'Email không đúng định dạng';
         }
-        if ($email !== '' && !empty($this->__model->findByEmail($email))){
-            $errors['email'] = 'Email này đã có khách khác dùng';
-        }
+
         /* Trùng số điện thoại chỉ CẢNH BÁO chứ không chặn: hai vợ chồng dùng
            chung một số là chuyện thường. Nhưng phải nói ra, vì tạo trùng người
-           thì lịch sử xe của khách bị chia đôi. */
-        $trungSdt = $phone !== '' ? $this->__model->findByPhone($phone) : null;
-        if (!empty($trungSdt) && empty($f['xac_nhan_trung'])){
-            $errors['phone'] = 'Số này đã thuộc về khách "' . $trungSdt['name']
-                             . '". Tích vào ô xác nhận bên dưới nếu vẫn muốn tạo hồ sơ mới.';
-        }
-        if ($pass !== '' && strlen($pass) < 6){
-            $errors['new_password'] = 'Mật khẩu tối thiểu 6 ký tự';
-        }
-
-        if (!empty($errors)){
-            Session::flash('errors', $errors);
-            Session::flash('old', array_merge(['name' => $name, 'email' => $email,
-                                   'phone' => $phone, 'address' => $address], $this->diaGioiOld()));
-            $this->__response->redirect('admin/' . $this->routeBase . '/add'); return;
+           thì lịch sử xe của khách bị chia đôi. Chỉ so trong gara này. */
+        if ($id === null && $phone !== '' && empty($errors['phone'])){
+            $trung = $this->__model->findByPhone($phone);
+            if (!empty($trung) && empty($f['xac_nhan_trung'])){
+                $errors['phone'] = 'Số này đã thuộc về khách "' . $trung['name']
+                                 . '". Tích vào ô xác nhận bên dưới nếu vẫn muốn tạo hồ sơ mới.';
+            }
         }
 
-        $id = $this->__model->adminAdd(array_merge([
-            'name' => $name, 'email' => $email, 'phone' => $phone,
-            'address' => $address, 'password' => $pass, 'status' => 1,
-        ], $this->diaGioiLuu($dg)));
+        // Nhóm khách phải là nhóm CỦA GARA NÀY
+        if ($nhomId > 0 && empty($this->__nhom->getDetail($nhomId))){
+            $errors['group_id'] = 'Nhóm khách không hợp lệ';
+        }
 
-        /* Đưa thẳng sang màn Sửa: gần như lần nào thêm khách ở gara cũng là để
-           khai luôn chiếc xe họ vừa mang tới, mà khối "Xe của khách" nằm ở đó. */
-        Session::flash('msg', 'Đã thêm khách hàng. Khai biển số xe của khách ngay bên dưới.');
-        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $id);
+        /* Tỉnh / phường: để trống cả hai thì thôi; chọn rồi thì phường phải
+           thuộc tỉnh — chỉ server kiểm được. Tên lấy từ nguồn dữ liệu, không
+           nhận tên client gửi lên. */
+        $tinh = !empty($f['province_code']) ? (int) $f['province_code'] : 0;
+        $xa   = !empty($f['ward_code']) ? (int) $f['ward_code'] : 0;
+        $dg   = null;
+        if ($tinh > 0 || $xa > 0){
+            $dg = dia_gioi_tra($tinh, $xa);
+            if ($dg === null) $errors['province_code'] = 'Chọn lại tỉnh và phường/xã — phường phải thuộc tỉnh đã chọn';
+        }
+
+        return [$errors, [
+            'name'          => $name,
+            'phone'         => $phone !== '' ? $phone : null,
+            'email'         => $email !== '' ? $email : null,
+            'address'       => $address !== '' ? $address : null,
+            'group_id'      => $nhomId > 0 ? $nhomId : null,
+            'province_code' => $dg !== null ? $tinh : null,
+            'province_name' => $dg !== null ? $dg['province'] : null,
+            'ward_code'     => $dg !== null ? $xa : null,
+            'ward_name'     => $dg !== null ? $dg['ward'] : null,
+        ]];
     }
 
-    public function edit($id = 0){
-        $item = $this->__model->getDetail((int) $id);
-        if (empty($item)){
-            Session::flash('msgError', 'Không tìm thấy khách hàng.');
-            $this->__response->redirect('admin/' . $this->routeBase); return;
-        }
-
-        $this->baseData();
-        $c = &$this->__data['content'];
-        $c['page_name'] = 'Sửa khách hàng';
-        $c['item']      = $item;
-        $c['dsXe']      = $this->__xe->getByMember((int) $id);
-        $c['errors']    = Session::flash('errors');
-        $c['old']       = Session::flash('old');
-        $c['msg']       = Session::flash('msg');
-
-        $this->__data['sub_content'] = $this->viewDir . '/edit';
-        $this->__data['page_title']  = 'Sửa khách hàng';
-        $this->render('layouts/admin/master_admin', $this->__data);
-    }
-
-    public function postEdit($id = 0){
-        $item = $this->__model->getDetail((int) $id);
-        if (empty($item)){
-            Session::flash('msgError', 'Không tìm thấy khách hàng.');
-            $this->__response->redirect('admin/' . $this->routeBase); return;
-        }
-
-        $f       = $this->__request->getFields();
-        $name    = isset($f['name']) ? trim($f['name']) : '';
-        $phone   = isset($f['phone']) ? trim($f['phone']) : '';
-        $address = isset($f['address']) ? trim($f['address']) : '';
-        $status  = !empty($f['status']) ? 1 : 0;
-        $newPass = isset($f['new_password']) ? $f['new_password'] : '';
-
-        $errors = [];
-        if ($name === '') $errors['name'] = 'Nhập họ tên';
-        $dg = $this->diaGioi($errors);
-        if ($phone !== '' && !is_phone($phone)){
-            $errors['phone'] = 'Số điện thoại không hợp lệ (di động 10 số hoặc cố định 11 số)';
-        }
-        // Admin đặt lại mật khẩu hộ khách thì không cần biết mật khẩu cũ,
-        // nhưng vẫn phải đủ dài. Bỏ trống = không đổi.
-        if ($newPass !== '' && strlen($newPass) < 6){
-            $errors['new_password'] = 'Mật khẩu tối thiểu 6 ký tự';
-        }
-
-        if (!empty($errors)){
-            Session::flash('errors', $errors);
-            Session::flash('old', array_merge(['name' => $name, 'phone' => $phone,
-                                   'address' => $address, 'status' => $status], $this->diaGioiOld()));
-            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $id); return;
-        }
-
-        $this->__model->updateProfile(array_merge([
-            'name'    => $name,
-            'phone'   => $phone !== '' ? $phone : null,
-            'address' => $address !== '' ? $address : null,
-            'status'  => $status,
-        ], $this->diaGioiLuu($dg)), (int) $id);
-
-        if ($newPass !== ''){
-            $this->__model->updatePassword($newPass, (int) $id);
-            Session::flash('msg', 'Đã cập nhật khách hàng và đặt lại mật khẩu.');
-        } else {
-            Session::flash('msg', 'Đã cập nhật khách hàng.');
-        }
-
-        $this->__response->redirect('admin/' . $this->routeBase);
-    }
-
-    /* ==================================================================
-     * XE CỦA KHÁCH
-     *
-     * Một khách nhiều xe, nên quản lý ngay trong màn Sửa khách hàng thay vì
-     * làm một màn hình riêng: xe không tồn tại độc lập với chủ của nó.
-     * Dùng chung quyền `edit` của module customers.
-     * ================================================================== */
-
-    /** Thêm một xe cho khách */
-    public function xeThem($memberId = 0){
-        $kh = $this->__model->getDetail((int) $memberId);
-        if (empty($kh)){
-            Session::flash('msgError', 'Không tìm thấy khách hàng.');
-            $this->__response->redirect('admin/' . $this->routeBase); return;
-        }
-        if (!route('admin/' . $this->routeBase . '/edit/' . (int) $memberId)){
-            $this->__response->redirect('admin/khong-co-quyen'); return;
-        }
-
-        $f  = $this->__request->getFields();
-        $bs = isset($f['bien_so']) ? trim($f['bien_so']) : '';
-
-        if (MemberVehiclesModel::chuanHoaBienSo($bs) === ''){
-            Session::flash('msgError', 'Biển số xe không được để trống.');
-            $this->quayLaiSua($memberId); return;
-        }
-
-        $this->__xe->add([
-            'member_id' => (int) $memberId,
-            'bien_so'   => $bs,
-            'hang_xe'   => $this->hoacNull($f, 'hang_xe'),
-            'model_xe'  => $this->hoacNull($f, 'model_xe'),
-            'nam_sx'    => !empty($f['nam_sx']) ? (int) $f['nam_sx'] : null,
-            'mau_xe'    => $this->hoacNull($f, 'mau_xe'),
-            'so_km'     => $this->soKm($f),
-            'ghi_chu'   => $this->hoacNull($f, 'ghi_chu'),
+    private function quayLai($errors, $back){
+        $f = $this->__request->getFields();
+        Session::flash('errors', $errors);
+        Session::flash('old', [
+            'name'          => isset($f['name']) ? $f['name'] : '',
+            'phone'         => isset($f['phone']) ? $f['phone'] : '',
+            'email'         => isset($f['email']) ? $f['email'] : '',
+            'address'       => isset($f['address']) ? $f['address'] : '',
+            'group_id'      => isset($f['group_id']) ? $f['group_id'] : '',
+            'status'        => !empty($f['status']) ? 1 : 0,
+            'province_code' => !empty($f['province_code']) ? (int) $f['province_code'] : '',
+            'ward_code'     => !empty($f['ward_code']) ? (int) $f['ward_code'] : '',
         ]);
-
-        Session::flash('msg', 'Đã thêm xe ' . $bs);
-        $this->quayLaiSua($memberId);
-    }
-
-    /** Sửa một xe (chủ yếu để cập nhật số km mỗi lần xe vào gara) */
-    public function xeSua($xeId = 0){
-        $xe = $this->__xe->getDetail((int) $xeId);
-        if (empty($xe)){
-            Session::flash('msgError', 'Không tìm thấy xe.');
-            $this->__response->redirect('admin/' . $this->routeBase); return;
-        }
-        if (!route('admin/' . $this->routeBase . '/edit/' . (int) $xe['member_id'])){
-            $this->__response->redirect('admin/khong-co-quyen'); return;
-        }
-
-        $f  = $this->__request->getFields();
-        $bs = isset($f['bien_so']) ? trim($f['bien_so']) : '';
-
-        if (MemberVehiclesModel::chuanHoaBienSo($bs) === ''){
-            Session::flash('msgError', 'Biển số xe không được để trống.');
-            $this->quayLaiSua($xe['member_id']); return;
-        }
-
-        $this->__xe->edit([
-            'bien_so'  => $bs,
-            'hang_xe'  => $this->hoacNull($f, 'hang_xe'),
-            'model_xe' => $this->hoacNull($f, 'model_xe'),
-            'nam_sx'   => !empty($f['nam_sx']) ? (int) $f['nam_sx'] : null,
-            'mau_xe'   => $this->hoacNull($f, 'mau_xe'),
-            'so_km'    => $this->soKm($f),
-            'ghi_chu'  => $this->hoacNull($f, 'ghi_chu'),
-        ], (int) $xeId);
-
-        Session::flash('msg', 'Đã cập nhật xe ' . $bs);
-        $this->quayLaiSua($xe['member_id']);
-    }
-
-    public function xeXoa($xeId = 0){
-        $xe = $this->__xe->getDetail((int) $xeId);
-        if (empty($xe)){
-            Session::flash('msgError', 'Không tìm thấy xe.');
-            $this->__response->redirect('admin/' . $this->routeBase); return;
-        }
-        if (!route('admin/' . $this->routeBase . '/edit/' . (int) $xe['member_id'])){
-            $this->__response->redirect('admin/khong-co-quyen'); return;
-        }
-
-        $this->__xe->remove((int) $xeId);
-        Session::flash('msg', 'Đã xoá xe ' . $xe['bien_so']);
-        $this->quayLaiSua($xe['member_id']);
-    }
-
-    private function quayLaiSua($memberId){
-        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $memberId);
-    }
-
-    private function hoacNull(array $f, $ten){
-        return (isset($f[$ten]) && trim($f[$ten]) !== '') ? trim($f[$ten]) : null;
-    }
-
-    /** Số km: bỏ dấu phân cách nghìn người dùng hay gõ ("120.000", "120,000") */
-    private function soKm(array $f){
-        if (!isset($f['so_km'])) return null;
-        $v = preg_replace('/[^\d]/', '', (string) $f['so_km']);
-        return $v === '' ? null : (int) $v;
-    }
-
-    /** Khoá / mở khoá nhanh từ danh sách */
-    public function toggle($id = 0){
-        $item = $this->__model->getDetail((int) $id);
-        if (empty($item)){
-            Session::flash('msgError', 'Không tìm thấy khách hàng.');
-            $this->__response->redirect('admin/' . $this->routeBase); return;
-        }
-
-        $new = ((int) $item['status'] === 1) ? 0 : 1;
-        $this->__model->updateProfile(['status' => $new], (int) $id);
-
-        Session::flash('msg', $new === 1
-            ? 'Đã mở khoá tài khoản ' . $item['email']
-            : 'Đã khoá tài khoản ' . $item['email']);
-
-        $this->__response->redirect('admin/' . $this->routeBase);
+        Session::flash('msg', 'Vui lòng kiểm tra các lỗi bên dưới');
+        $this->__response->redirect('admin/' . $this->routeBase . '/' . $back);
     }
 }

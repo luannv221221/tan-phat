@@ -4,6 +4,7 @@ use App\core\Model;
 
 /**
  * CSKH — Phiếu bảo hành / bảo trì (chung một bảng, phân biệt bằng cột `loai`).
+ * RIÊNG từng gara; số phiếu đánh riêng trong mỗi gara.
  * Luồng: received (tiếp nhận) -> processing (đang xử lý) -> done / cancelled.
  *
  *   Bảo hành  hàng hoặc xe HỎNG, còn trong hạn bảo hành — khách tới vì có lỗi.
@@ -18,6 +19,7 @@ class WarrantyRequestsModel extends Model {
     protected $_table   = 'warranty_requests';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_theoGara = true;
 
     public static $statuses = [
         'received'   => 'Tiếp nhận',
@@ -58,7 +60,7 @@ class WarrantyRequestsModel extends Model {
     }
 
     public function getLists($status = '', $from = '', $to = '', $keyword = '', $loai = ''){
-        $q = $this->table($this->_table)
+        $q = $this->bangGara()
             ->select('`warranty_requests`.*, `partners`.`name` AS partner_full')
             ->leftJoinOn('partners', 'warranty_requests.partner_id', 'partners.id');
 
@@ -99,7 +101,7 @@ class WarrantyRequestsModel extends Model {
      */
     public function getSchedule($loai = '', $khoang = '', $homNay = null){
         $homNay = $homNay ?: date('Y-m-d');
-        $q = $this->table($this->_table)
+        $q = $this->bangGara()
             ->select('`warranty_requests`.*, `partners`.`name` AS partner_full')
             ->leftJoinOn('partners', 'warranty_requests.partner_id', 'partners.id')
             ->whereIn('warranty_requests.status', ['received', 'processing']);
@@ -130,7 +132,7 @@ class WarrantyRequestsModel extends Model {
 
     /** Đếm phiếu theo trạng thái trong kỳ — cho báo cáo CSKH */
     public function countByStatus($from = '', $to = ''){
-        $q = $this->table($this->_table)->select('`status`, COUNT(*) AS total, SUM(`fee`) AS total_fee');
+        $q = $this->bangGara()->select('`status`, COUNT(*) AS total, SUM(`fee`) AS total_fee');
         if ($from !== '') $q = $q->where('received_date', '>=', $from);
         if ($to !== '')   $q = $q->where('received_date', '<=', $to);
         $rows = $q->groupBy('status')->get();
@@ -147,7 +149,7 @@ class WarrantyRequestsModel extends Model {
      * bảo dưỡng xe.
      */
     public function baoTriDaXong(){
-        return $this->table($this->_table)
+        return $this->bangGara()
             ->select('`warranty_requests`.*, `partners`.`name` AS partner_full, `partners`.`phone` AS partner_phone')
             ->leftJoinOn('partners', 'warranty_requests.partner_id', 'partners.id')
             ->where('warranty_requests.loai', '=', 'bao_tri')
@@ -159,7 +161,7 @@ class WarrantyRequestsModel extends Model {
 
     /** Phiếu bảo trì đang mở — xe đã có hẹn lần mới thì không cần gọi nhắc nữa */
     public function baoTriDangMo(){
-        return $this->table($this->_table)
+        return $this->bangGara()
             ->select('`id`, `request_no`, `received_date`, `appointment_date`, `bien_so_chuan`, `serial_no`, '
                    . '`partner_id`, `phone`, `customer_name`, `part_id`, `product_name`')
             ->where('loai', '=', 'bao_tri')
@@ -168,7 +170,8 @@ class WarrantyRequestsModel extends Model {
 
     /**
      * Mọi lần ghi số km của các xe có biển số (ĐÃ chuẩn hoá) trong $ds, gom từ
-     * báo giá, hoá đơn bán, phiếu bảo hành / bảo trì và xe của khách.
+     * báo giá, hoá đơn bán, phiếu bảo hành / bảo trì và xe của khách — CHỈ của
+     * gara làm việc: gara khác có chiếc xe cùng biển số là một hồ sơ khác.
      * Trả [bien_so_chuan => [['ngay' => 'Y-m-d', 'km' => int], ...]].
      *
      * Phần mềm không biết đồng hồ xe hôm nay chỉ bao nhiêu — chỉ biết những
@@ -183,10 +186,10 @@ class WarrantyRequestsModel extends Model {
             'quotations'        => '`quote_date`',
             'sales_invoices'    => '`invoice_date`',
             'warranty_requests' => '`received_date`',
-            'member_vehicles'   => 'DATE(COALESCE(`update_at`, `create_at`))',
+            'vehicles'          => 'DATE(COALESCE(`update_at`, `create_at`))',
         ];
         foreach ($nguon as $bang => $cotNgay){
-            $rows = $this->table($bang)
+            $rows = $this->locGara($this->table($bang), $bang . '.garage_id')
                 ->select('`bien_so_chuan`, ' . $cotNgay . ' AS ngay, `so_km` AS km')
                 ->whereIn('bien_so_chuan', $ds)
                 ->whereNotNull('so_km')->get();
@@ -212,7 +215,7 @@ class WarrantyRequestsModel extends Model {
     public function nextNo($loai = 'bao_hanh'){
         $loai = self::loaiHopLe($loai);
         $tien = self::$tienTo[$loai] . '-';
-        $row = $this->table($this->_table)->select('`request_no`')
+        $row = $this->bangGara()->select('`request_no`')
             ->where('loai', '=', $loai)
             ->whereLike('request_no', $tien . '%')
             ->orderBy('id', 'DESC')->first();

@@ -3,7 +3,7 @@
 use App\core\Model;
 
 /**
- * PHIẾU TIẾP NHẬN — một lần xe vào xưởng.
+ * PHIẾU TIẾP NHẬN — một lần xe vào xưởng. RIÊNG từng gara, số phiếu đánh riêng.
  *
  * Đây là tầng còn thiếu của mô hình: một XE nhiều lần vào xưởng, mỗi lần vào
  * sinh ra báo giá / hoá đơn / phiếu bảo hành của riêng lần đó. Trước đây các
@@ -17,6 +17,7 @@ class ReceptionsModel extends Model {
     protected $_table   = 'receptions';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_theoGara = true;
 
     public static $statuses = [
         'tiep_nhan' => 'Tiếp nhận',
@@ -58,7 +59,7 @@ class ReceptionsModel extends Model {
      *       vehicle_id, dang_mo ('1' = còn ở xưởng)
      */
     public function getLists(array $loc = []){
-        $q = $this->table($this->_table)->select($this->chonKemTen());
+        $q = $this->bangGara()->select($this->chonKemTen());
         $q = $this->joinKemTen($q);
 
         if (!empty($loc['status']) && isset(self::$statuses[$loc['status']])){
@@ -89,7 +90,7 @@ class ReceptionsModel extends Model {
     public function theoXe($vehicleId){
         $vehicleId = (int) $vehicleId;
         if ($vehicleId <= 0) return [];
-        $q = $this->table($this->_table)->select($this->chonKemTen());
+        $q = $this->bangGara()->select($this->chonKemTen());
         return $this->joinKemTen($q)
             ->where('receptions.vehicle_id', '=', $vehicleId)
             ->orderBy('receptions.ngay_vao', 'DESC')
@@ -97,13 +98,13 @@ class ReceptionsModel extends Model {
     }
 
     public function getDetail($id){
-        $q = $this->table($this->_table)->select($this->chonKemTen());
+        $q = $this->bangGara()->select($this->chonKemTen());
         return $this->joinKemTen($q)->where('receptions.id', '=', (int) $id)->first();
     }
 
-    /** Số phiếu kế tiếp: TN-000001 */
+    /** Số phiếu kế tiếp TRONG GARA làm việc: TN-000001 */
     public function nextNo(){
-        $row = $this->table($this->_table)->select('`reception_no`')
+        $row = $this->bangGara()->select('`reception_no`')
             ->whereLike('reception_no', 'TN-%')
             ->orderBy('id', 'DESC')->first();
         $n = 0;
@@ -118,13 +119,13 @@ class ReceptionsModel extends Model {
     public function chungTu($id){
         $id = (int) $id;
         return [
-            'quotations' => (array) $this->table('quotations')
+            'quotations' => (array) $this->locGara($this->table('quotations'), 'quotations.garage_id')
                 ->select('`id`, `quote_no` AS so, `quote_date` AS ngay, `total_amount` AS tien, `status`')
                 ->where('reception_id', '=', $id)->orderBy('id', 'DESC')->get(),
-            'sales_invoices' => (array) $this->table('sales_invoices')
+            'sales_invoices' => (array) $this->locGara($this->table('sales_invoices'), 'sales_invoices.garage_id')
                 ->select('`id`, `invoice_no` AS so, `invoice_date` AS ngay, `total_amount` AS tien, `status`')
                 ->where('reception_id', '=', $id)->orderBy('id', 'DESC')->get(),
-            'warranty' => (array) $this->table('warranty_requests')
+            'warranty' => (array) $this->locGara($this->table('warranty_requests'), 'warranty_requests.garage_id')
                 ->select('`id`, `request_no` AS so, `received_date` AS ngay, `loai`, `status`')
                 ->where('reception_id', '=', $id)->orderBy('id', 'DESC')->get(),
         ];

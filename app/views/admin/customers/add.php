@@ -19,9 +19,9 @@ $val = function ($key) use ($old) {
 
                     <div class="alert alert-info py-2">
                         <i class="fas fa-info-circle mr-1"></i>
-                        Khách vãng lai chỉ cần <b>họ tên</b> và <b>số điện thoại</b>.
-                        Email và mật khẩu để trống — khách không cần tài khoản đăng nhập website.
-                        Thêm xong sẽ sang ngay màn hình khai biển số xe.
+                        Khách vãng lai chỉ cần <b>họ tên</b> và <b>số điện thoại</b>. Mã khách tự cấp
+                        (<b>{{$maMoi}}</b>). Thêm xong sẽ sang ngay màn hình khai xe:
+                        biển số, số khung (VIN), số máy, hãng / model / năm.
                     </div>
 
                     <div class="form-group">
@@ -30,11 +30,18 @@ $val = function ($key) use ($old) {
                         {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
                     </div>
 
-                    <div class="form-group">
-                        <label>Số điện thoại</label>
-                        <input type="tel" inputmode="numeric" maxlength="11" name="phone"
-                               class="form-control" value="{{$val('phone')}}" placeholder="0912345678"/>
-                        {!! !empty($errors['phone'])?'<small class="text-danger">'.e($errors['phone']).'</small>':false !!}
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Số điện thoại</label>
+                            <input type="tel" inputmode="numeric" maxlength="11" name="phone"
+                                   class="form-control" value="{{$val('phone')}}" placeholder="0912345678"/>
+                            {!! !empty($errors['phone'])?'<small class="text-danger">'.e($errors['phone']).'</small>':false !!}
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Email <span class="text-muted small">(không bắt buộc)</span></label>
+                            <input type="email" name="email" class="form-control" value="{{$val('email')}}"/>
+                            {!! !empty($errors['email'])?'<small class="text-danger">'.e($errors['email']).'</small>':false !!}
+                        </div>
                     </div>
 
                     <?php /* Ô xác nhận chỉ hiện khi đã bị chặn vì trùng số — bày sẵn
@@ -51,12 +58,16 @@ $val = function ($key) use ($old) {
                     @endif
 
                     <div class="form-group">
-                        <label>Email <span class="text-muted small">(không bắt buộc)</span></label>
-                        <input type="email" name="email" class="form-control" value="{{$val('email')}}"/>
-                        <small class="form-text text-muted">
-                            Chỉ cần khi khách muốn tự đăng nhập website để xem đơn hàng.
-                        </small>
-                        {!! !empty($errors['email'])?'<small class="text-danger">'.e($errors['email']).'</small>':false !!}
+                        <label>Nhóm khách</label>
+                        <select name="group_id" class="form-control">
+                            <option value="">— Chưa xếp nhóm —</option>
+                            @if (!empty($dsNhom))
+                            @foreach ($dsNhom as $g)
+                            <option value="{{$g['id']}}" {{(string)$val('group_id')===(string)$g['id']?'selected':''}}>{{$g['name']}}</option>
+                            @endforeach
+                            @endif
+                        </select>
+                        {!! !empty($errors['group_id'])?'<small class="text-danger">'.e($errors['group_id']).'</small>':false !!}
                     </div>
 
                     <?php /* Tỉnh / phường: 34 tỉnh, 2 cấp (sau sáp nhập 2025).
@@ -81,18 +92,11 @@ $val = function ($key) use ($old) {
                         </div>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group mb-0">
                         <label>Địa chỉ <span class="text-muted small">(số nhà, đường)</span></label>
                         <textarea name="address" class="form-control" rows="2">{{$val('address')}}</textarea>
                     </div>
                     <script src="{{asset('public/assets/js/dia-gioi.js')}}"></script>
-
-                    <div class="form-group mb-0">
-                        <label>Mật khẩu <span class="text-muted small">(không bắt buộc)</span></label>
-                        <input type="password" name="new_password" class="form-control" autocomplete="new-password"
-                               placeholder="Bỏ trống nếu khách không đăng nhập website"/>
-                        {!! !empty($errors['new_password'])?'<small class="text-danger">'.e($errors['new_password']).'</small>':false !!}
-                    </div>
 
                 </div>
 

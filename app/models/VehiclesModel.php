@@ -3,11 +3,12 @@
 use App\core\Model;
 
 /**
- * XE CỦA KHÁCH — một khách nhiều xe, một xe nhiều phiếu tiếp nhận.
+ * XE CỦA KHÁCH — một khách nhiều xe, một xe nhiều phiếu tiếp nhận. RIÊNG từng gara.
  *
  * Biển số lưu hai bản: `bien_so` nguyên văn người gõ, `bien_so_chuan` đã bỏ
- * dấu và viết hoa (chuan_hoa_bien_so) và là cột DUY NHẤT — gõ "30A-123.45",
- * "30a12345" hay "30A 123 45" đều là một xe.
+ * dấu và viết hoa (chuan_hoa_bien_so) và DUY NHẤT TRONG MỘT GARA — gõ
+ * "30A-123.45", "30a12345" hay "30A 123 45" đều là một xe. Hai gara độc lập
+ * cùng có khách mang chiếc xe đó thì là hai hồ sơ riêng.
  *
  * Hãng / model / năm có HAI đường: khoá tới danh mục xe (brand_id, model_id,
  * car_year_id) và cột chữ gõ tay (hang_xe, model_xe, nam_sx) cho xe lạ chưa
@@ -18,6 +19,7 @@ class VehiclesModel extends Model {
     protected $_table   = 'vehicles';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_theoGara = true;
 
     /** Các cột join thêm — dùng chung cho danh sách và chi tiết */
     private function chonKemTen(){
@@ -54,7 +56,7 @@ class VehiclesModel extends Model {
      *       brand_id, status ('1' | '0'), khong_chu ('1' = xe chưa gán chủ)
      */
     public function getLists(array $loc = []){
-        $q = $this->table($this->_table)->select($this->chonKemTen());
+        $q = $this->bangGara()->select($this->chonKemTen());
         $q = $this->joinKemTen($q);
 
         if (!empty($loc['partner_id'])) $q = $q->where('vehicles.partner_id', '=', (int) $loc['partner_id']);
@@ -87,14 +89,28 @@ class VehiclesModel extends Model {
     public function theoChu($partnerId){
         $partnerId = (int) $partnerId;
         if ($partnerId <= 0) return [];
-        $q = $this->table($this->_table)->select($this->chonKemTen());
+        $q = $this->bangGara()->select($this->chonKemTen());
         return $this->joinKemTen($q)
             ->where('vehicles.partner_id', '=', $partnerId)
             ->orderBy('vehicles.id', 'DESC')->get();
     }
 
+    /**
+     * Xe của NHIỀU khách một lần — [partner_id => [xe, ...]] cho danh sách khách.
+     * Hỏi theo từng dòng thì 20 khách là 20 truy vấn thừa.
+     */
+    public function theoNhieuChu(array $ids){
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($ids)) return [];
+        $rows = $this->bangGara()->select('`vehicles`.`id`, `vehicles`.`partner_id`, `vehicles`.`bien_so`, `vehicles`.`so_khung`')
+            ->whereIn('vehicles.partner_id', $ids)->orderBy('vehicles.id', 'ASC')->get();
+        $ra = [];
+        foreach ((array) $rows as $r) $ra[(int) $r['partner_id']][] = $r;
+        return $ra;
+    }
+
     public function getDetail($id){
-        $q = $this->table($this->_table)->select($this->chonKemTen());
+        $q = $this->bangGara()->select($this->chonKemTen());
         return $this->joinKemTen($q)->where('vehicles.id', '=', (int) $id)->first();
     }
 
@@ -102,14 +118,14 @@ class VehiclesModel extends Model {
     public function theoBienSo($bienSo){
         $chuan = chuan_hoa_bien_so($bienSo);
         if ($chuan === '') return [];
-        return $this->table($this->_table)->where('bien_so_chuan', '=', $chuan)->first();
+        return $this->bangGara()->where('bien_so_chuan', '=', $chuan)->first();
     }
 
     /** Tra xe theo số khung — trống thì KHÔNG tra, vì '' không phải một xe */
     public function theoSoKhung($soKhung){
         $vin = strtoupper(trim((string) $soKhung));
         if ($vin === '') return [];
-        return $this->table($this->_table)->where('so_khung', '=', $vin)->first();
+        return $this->bangGara()->where('so_khung', '=', $vin)->first();
     }
 
     /** Gợi ý xe cho ô chọn nhanh trên chứng từ (tối đa $gioiHan dòng) */
@@ -130,7 +146,7 @@ class VehiclesModel extends Model {
 
     /** Số phiếu tiếp nhận của một xe — để biết có được xoá xe không */
     public function demPhieu($id){
-        $r = $this->table('receptions')->select('COUNT(*) AS n')
+        $r = $this->locGara($this->table('receptions'), 'receptions.garage_id')->select('COUNT(*) AS n')
             ->where('vehicle_id', '=', (int) $id)->first();
         return !empty($r['n']) ? (int) $r['n'] : 0;
     }
@@ -143,7 +159,7 @@ class VehiclesModel extends Model {
     public function capNhatKm($id, $km){
         $km = (int) $km;
         if ($km <= 0) return false;
-        $xe = $this->table($this->_table)->select('`so_km`')->where('id', '=', (int) $id)->first();
+        $xe = $this->bangGara()->select('`so_km`')->where('id', '=', (int) $id)->first();
         if (empty($xe)) return false;
         if ($xe['so_km'] !== null && (int) $xe['so_km'] >= $km) return false;
         return $this->updateById(['so_km' => $km, 'update_at' => date('Y-m-d H:i:s')], (int) $id);
@@ -212,13 +228,13 @@ class VehiclesModel extends Model {
     public function chungTuTheoXe($id){
         $id = (int) $id;
         return [
-            'quotations' => (array) $this->table('quotations')
+            'quotations' => (array) $this->locGara($this->table('quotations'), 'quotations.garage_id')
                 ->select('`id`, `quote_no` AS so, `quote_date` AS ngay, `total_amount` AS tien, `status`, `reception_id`')
                 ->where('vehicle_id', '=', $id)->orderBy('id', 'DESC')->get(),
-            'sales_invoices' => (array) $this->table('sales_invoices')
+            'sales_invoices' => (array) $this->locGara($this->table('sales_invoices'), 'sales_invoices.garage_id')
                 ->select('`id`, `invoice_no` AS so, `invoice_date` AS ngay, `total_amount` AS tien, `status`, `reception_id`')
                 ->where('vehicle_id', '=', $id)->orderBy('id', 'DESC')->get(),
-            'warranty' => (array) $this->table('warranty_requests')
+            'warranty' => (array) $this->locGara($this->table('warranty_requests'), 'warranty_requests.garage_id')
                 ->select('`id`, `request_no` AS so, `received_date` AS ngay, `loai`, `status`, `reception_id`')
                 ->where('vehicle_id', '=', $id)->orderBy('id', 'DESC')->get(),
         ];
