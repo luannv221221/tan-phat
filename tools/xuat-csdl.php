@@ -84,7 +84,10 @@ foreach ($bangs as $bang){
 
     // Lấy nguyên văn định nghĩa bảng — khớp tuyệt đối, không phải dựng lại
     $tao = $db->query("SHOW CREATE TABLE `$bang`")->fetch(PDO::FETCH_NUM);
-    $ra($tao[1] . ";\n\n");
+    /* TRỪ collation riêng của MySQL 8 (`utf8mb4_0900_ai_ci`): MySQL 5.7 và
+       MariaDB không có, dán vào là báo #1273 Unknown collation và dừng giữa
+       chừng. Đổi sang utf8mb4_unicode_ci — collation cả dự án đang dùng. */
+    $ra(str_replace('utf8mb4_0900_ai_ci', 'utf8mb4_unicode_ci', $tao[1]) . ";\n\n");
 
     if ($boLog && in_array($bang, $bangLog, true)){
         $ra("-- (bo qua du lieu: bang nhat ky, chay voi --bo-log)\n\n");

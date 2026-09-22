@@ -47,6 +47,7 @@ $tests = [
     'PhieuBaoTriTest.php'         => 'CSKH — phieu bao tri + lich + nhac bao tri theo thang / km',
     'DiaGioiTest.php'             => 'DIA CHI — chon tinh / phuong (API ngoai + duong lui)',
     'XeVaPhieuTest.php'           => 'CSKH — 1 khach nhieu xe, 1 xe nhieu phieu tiep nhan',
+    'CollationTest.php'           => 'CSDL — moi bang cung utf8mb4_unicode_ci (chong loi #1273 khi deploy)',
 ];
 
 $php      = PHP_BINARY;

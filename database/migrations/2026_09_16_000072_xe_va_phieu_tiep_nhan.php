@@ -78,7 +78,7 @@ return new class extends Migration {
             CONSTRAINT `fk_vehicles_brand`   FOREIGN KEY (`brand_id`) REFERENCES `car_brands` (`id`) ON DELETE SET NULL,
             CONSTRAINT `fk_vehicles_model`   FOREIGN KEY (`model_id`) REFERENCES `car_models` (`id`) ON DELETE SET NULL,
             CONSTRAINT `fk_vehicles_year`    FOREIGN KEY (`car_year_id`) REFERENCES `car_years` (`id`) ON DELETE SET NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
         /* ---------- 2. Bảng PHIẾU TIẾP NHẬN ---------- */
         $this->run("CREATE TABLE IF NOT EXISTS `receptions` (
@@ -108,7 +108,7 @@ return new class extends Migration {
             CONSTRAINT `fk_receptions_partner` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL,
             CONSTRAINT `fk_receptions_garage`  FOREIGN KEY (`garage_id`) REFERENCES `garages` (`id`) ON DELETE SET NULL,
             CONSTRAINT `fk_receptions_covan`   FOREIGN KEY (`co_van_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
         /* ---------- 3. Cột nối trên chứng từ ---------- */
         foreach (['quotations', 'sales_invoices', 'warranty_requests'] as $bang){

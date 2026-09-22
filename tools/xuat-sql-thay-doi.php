@@ -20,6 +20,8 @@
  *   000071  tỉnh / phường cho Đối tượng và Khách hàng (4 cột mỗi bảng)
  *   000072  xe của khách + phiếu tiếp nhận (1 khách nhiều xe, 1 xe nhiều phiếu)
  *   000073  đổi tên màn "Cấu hình website" thành "Cấu hình chung"
+ *   000074  đồng bộ collation hai bảng xe / phiếu tiếp nhận về utf8mb4_unicode_ci
+ *   000075  collation MẶC ĐỊNH của CSDL -> utf8mb4_unicode_ci
  *
  * RIÊNG 000069 (Manager tự thêm nhân viên cho gara mình) nằm ở file KHÁC,
  * chạy SAU khi đẩy code:
@@ -121,7 +123,7 @@ if (in_array('--sau-khi-day-code', $argv, true)){
 }
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000073 (trừ 000069)\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000075 (trừ 000069)\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
@@ -793,7 +795,7 @@ CREATE TABLE IF NOT EXISTS `vehicles` (
   CONSTRAINT `fk_vehicles_brand`   FOREIGN KEY (`brand_id`) REFERENCES `car_brands` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_vehicles_model`   FOREIGN KEY (`model_id`) REFERENCES `car_models` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_vehicles_year`    FOREIGN KEY (`car_year_id`) REFERENCES `car_years` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `receptions` (
   `id`            INT NOT NULL AUTO_INCREMENT,
@@ -822,7 +824,7 @@ CREATE TABLE IF NOT EXISTS `receptions` (
   CONSTRAINT `fk_receptions_partner` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_receptions_garage`  FOREIGN KEY (`garage_id`) REFERENCES `garages` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_receptions_covan`   FOREIGN KEY (`co_van_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SQL_VEHICLES;
 
@@ -902,6 +904,32 @@ echo "-- website nữa, nên đổi tên hiển thị. Đường dẫn và quy�
 printf("UPDATE `modules` SET `name` = %s WHERE `link` = %s;\n\n", q('Cấu hình chung'), q('settings'));
 
 /* ------------------------------------------------------------------ *
+ * 15. Đồng bộ collation bảng xe / phiếu tiếp nhận          — 000074
+ *
+ * Phòng khi bảng đã lỡ được tạo với collation khác (vd. MariaDB tự gán
+ * utf8mb4_general_ci): chỉ chuyển khi CHƯA là utf8mb4_unicode_ci.
+ * ------------------------------------------------------------------ */
+echo "\n-- 15. Đồng bộ collation bảng xe / phiếu tiếp nhận với các bảng còn lại.\n";
+echo "-- Lệch collation thì so chuỗi giữa hai bảng báo 'Illegal mix of collations'.\n\n";
+foreach (['vehicles', 'receptions'] as $bangCo){
+    ddlNeuThieu(
+        'col_' . $bangCo,
+        "SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
+      . " AND TABLE_NAME = '$bangCo' AND TABLE_COLLATION = 'utf8mb4_unicode_ci'",
+        "ALTER TABLE `$bangCo` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    );
+}
+
+/* 16. Collation mặc định của CSDL — 000075. Không ghi tên CSDL: câu áp cho
+   CSDL đang chọn trong phpMyAdmin, tên CSDL trên server có thể khác local. */
+echo "
+-- 16. Collation mac dinh cua CSDL: bang tao sau khong ghi collation se nhan cai nay.
+";
+echo "ALTER DATABASE CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+";
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
@@ -928,6 +956,8 @@ foreach ([
     '2026_09_16_000071_tinh_phuong_cho_doi_tuong',
     '2026_09_16_000072_xe_va_phieu_tiep_nhan',
     '2026_09_17_000073_doi_ten_cau_hinh_chung',
+    '2026_09_17_000074_dong_bo_collation_xe_va_phieu',
+    '2026_09_17_000075_collation_mac_dinh_csdl',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên
