@@ -155,6 +155,27 @@ if (in_array('garage_id', $cot('partners'), true)){
     ok(false, 'Gara co doi tuong thi dangDungODau() bao ro', '`partners` chua co cot garage_id');
 }
 
+// ---------------------------------------------------------------------------
+section('SQL trien khai cho 000076');
+
+$sqlTk = (string) shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($goc . 'tools/xuat-sql-thay-doi.php') . ' --chi-cau-truc');
+ok(strpos($sqlTk, "'2026_09_22_000076_nen_gara_doc_lap'") !== false, 'SQL danh dau da chay migration 000076');
+foreach ($bangMoi as $b => $fk){
+    ok(strpos($sqlTk, "ALTER TABLE `$b` ADD COLUMN `garage_id` INT DEFAULT NULL") !== false
+       && strpos($sqlTk, "CONSTRAINT `$fk`") !== false,
+       "SQL them garage_id + khoa ngoai cho `$b`");
+}
+ok(strpos($sqlTk, 'ALTER TABLE `modules` ADD COLUMN `chi_tan_phat`') !== false, 'SQL them cot chi_tan_phat');
+ok(preg_match("~UPDATE `modules` SET `chi_tan_phat` = 1 WHERE `link` IN \(([^)]*)\)~", $sqlTk, $mm) === 1
+   && substr_count($mm[1], "'") === 2 * 30,
+   'SQL bat co cho dung 30 man chi Tan Phat (chep tu may nay)');
+ok(strpos($sqlTk, 'UPDATE `goods_receipts` x JOIN `warehouses` w') !== false,
+   'SQL gan phieu nhap theo kho truoc khi do ve gara tong');
+/* Chỉ bắt câu ĐỔI cột có sẵn thành NOT NULL. `garage_part_prices` tạo mới với
+   `garage_id INT NOT NULL` từ 000065 là đúng — bảng đó luôn có gara. */
+ok(!preg_match('~MODIFY\s+(COLUMN\s+)?`garage_id`~i', $sqlTk),
+   'SQL buoc 1 KHONG doi garage_id sang NOT NULL', 'Dat som la form cua model chua ghi gara sap');
+
 // ==== [CLI] ====
 
 // ==== [HTTP] ====

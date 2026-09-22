@@ -22,6 +22,7 @@
  *   000073  đổi tên màn "Cấu hình website" thành "Cấu hình chung"
  *   000074  đồng bộ collation hai bảng xe / phiếu tiếp nhận về utf8mb4_unicode_ci
  *   000075  collation MẶC ĐỊNH của CSDL -> utf8mb4_unicode_ci
+ *   000076  gara độc lập — nền: garage_id cho 9 bảng, màn chỉ Tân Phát, thông tin gara
  *
  * RIÊNG 000069 (Manager tự thêm nhân viên cho gara mình) nằm ở file KHÁC,
  * chạy SAU khi đẩy code:
@@ -123,7 +124,7 @@ if (in_array('--sau-khi-day-code', $argv, true)){
 }
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000075 (trừ 000069)\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000076 (trừ 000069)\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
@@ -137,6 +138,8 @@ echo "-- Phần 11 thêm phiếu bảo trì (cột `loai` trên phiếu bảo h�
 echo "-- Phần 12 thêm tỉnh / phường cho Đối tượng và Khách hàng.\n";
 echo "-- Phần 13 thêm bảng xe của khách + phiếu tiếp nhận, và cột nối từ báo\n";
 echo "--   giá / hoá đơn / phiếu bảo hành về phiếu tiếp nhận và về xe.\n";
+echo "-- Phần 17 gara độc lập (nền): garage_id cho 9 bảng, gán dữ liệu cũ vào gara,\n";
+echo "--   đánh dấu màn chỉ Tân Phát, cột thông tin gara. Cột mới để NULL được.\n";
 echo "-- Quyền Manager tự thêm nhân viên (000069) KHÔNG nằm ở đây — nó ở file\n";
 echo "-- deploy/sau-khi-day-code.sql, dán SAU khi đẩy code.\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
@@ -930,6 +933,76 @@ echo "ALTER DATABASE CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ";
 
 /* ------------------------------------------------------------------ *
+ * 17. Gara độc lập — nền                                     — 000076
+ *
+ * Cột mới để NULL được: code của các bước sau mới tự ghi gara, đặt NOT NULL
+ * bây giờ là form thêm đối tượng / phiếu nhập trên server sập.
+ * Danh sách màn chỉ Tân Phát CHÉP từ máy này (đã migrate), không viết cứng.
+ * ------------------------------------------------------------------ */
+echo "\n-- 17. Gara doc lap — nen (000076)\n\n";
+
+$bang17 = [
+    'partners'            => 'fk_partner_garage',
+    'customer_groups'     => 'fk_cgroup_garage',
+    'vehicles'            => 'fk_vehicle_garage',
+    'warranty_requests'   => 'fk_warranty_garage',
+    'warranty_handovers'  => 'fk_handover_garage',
+    'goods_receipts'      => 'fk_receipt_garage',
+    'goods_issues'        => 'fk_issue_garage',
+    'stock_takes'         => 'fk_take_garage',
+    'warehouse_transfers' => 'fk_transfer_garage',
+];
+foreach ($bang17 as $bang => $fk){
+    ddlNeuThieu(
+        'g17_' . $bang,
+        "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+      . " AND TABLE_NAME = '$bang' AND COLUMN_NAME = 'garage_id'",
+        "ALTER TABLE `$bang` ADD COLUMN `garage_id` INT DEFAULT NULL, ADD KEY `idx_{$bang}_garage` (`garage_id`),"
+      . " ADD CONSTRAINT `$fk` FOREIGN KEY (`garage_id`) REFERENCES `garages` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE"
+    );
+}
+
+echo "-- Chung tu kho lay gara THEO KHO cua no\n";
+foreach (['goods_receipts' => 'warehouse_id', 'goods_issues' => 'warehouse_id',
+          'stock_takes' => 'warehouse_id', 'warehouse_transfers' => 'from_warehouse_id'] as $bang => $cotKho){
+    echo "UPDATE `$bang` x JOIN `warehouses` w ON w.`id` = x.`$cotKho` SET x.`garage_id` = w.`garage_id`"
+       . " WHERE x.`garage_id` IS NULL AND w.`garage_id` IS NOT NULL;\n";
+}
+echo "\n-- Con lai ve gara tong\n";
+foreach (array_merge(array_keys($bang17), ['warehouses', 'users', 'quotations', 'sales_invoices', 'receptions']) as $bang){
+    echo "UPDATE `$bang` SET `garage_id` = (SELECT g.`id` FROM `garages` g WHERE g.`is_master` = 1 ORDER BY g.`id` LIMIT 1)"
+       . " WHERE `garage_id` IS NULL;\n";
+}
+
+echo "\n-- Man chi Tan Phat\n";
+ddlNeuThieu(
+    'g17_chi_tp',
+    "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+  . " AND TABLE_NAME = 'modules' AND COLUMN_NAME = 'chi_tan_phat'",
+    "ALTER TABLE `modules` ADD COLUMN `chi_tan_phat` TINYINT(1) NOT NULL DEFAULT 0"
+);
+$dsChiTp = $db->query("SELECT `link` FROM `modules` WHERE `chi_tan_phat` = 1 ORDER BY `link`")->fetchAll(PDO::FETCH_COLUMN);
+if (!empty($dsChiTp)){
+    echo "UPDATE `modules` SET `chi_tan_phat` = 1 WHERE `link` IN (" . implode(', ', array_map('q', $dsChiTp)) . ");\n\n";
+}
+
+echo "-- Thong tin gara de in len phieu\n";
+foreach (['tax_code' => 'VARCHAR(30)', 'email' => 'VARCHAR(150)', 'logo' => 'VARCHAR(255)'] as $c => $kieu){
+    ddlNeuThieu(
+        'g17_gara_' . $c,
+        "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+      . " AND TABLE_NAME = 'garages' AND COLUMN_NAME = '$c'",
+        "ALTER TABLE `garages` ADD COLUMN `$c` $kieu DEFAULT NULL"
+    );
+}
+
+echo "-- Ten gara mau — chi doi khi con dung ten cu\n";
+foreach (['DMSG' => ['Tân Phát Sài Gòn', 'Gara mẫu Sài Gòn'], 'DMDN' => ['Tân Phát Đà Nẵng', 'Gara mẫu Đà Nẵng']] as $ma => $ten){
+    printf("UPDATE `garages` SET `name` = %s WHERE `code` = %s AND `name` = %s;\n", q($ten[1]), q($ma), q($ten[0]));
+}
+echo "\n";
+
+/* ------------------------------------------------------------------ *
  * Đánh dấu đã chạy — để sau này lỡ gọi migrate.php cũng không chạy lại
  * ------------------------------------------------------------------ */
 echo "\n-- ---------------------------------------------------------------------\n";
@@ -958,6 +1031,7 @@ foreach ([
     '2026_09_17_000073_doi_ten_cau_hinh_chung',
     '2026_09_17_000074_dong_bo_collation_xe_va_phieu',
     '2026_09_17_000075_collation_mac_dinh_csdl',
+    '2026_09_22_000076_nen_gara_doc_lap',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên
