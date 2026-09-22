@@ -50,7 +50,7 @@ class Goodsreceipts extends Controller {
     private function formData(){
         $this->__data['content']['warehouses'] = $this->__warehouse->getActive();
         $this->__data['content']['partners']   = $this->__partner->getActive();
-        $this->__data['content']['parts']      = $this->__part->getForSelect(true);
+        $this->__data['content']['parts']      = $this->__part->choGara(true);
         // KHO-3: vị trí trong kho (select phụ thuộc kho) cho ô "Vị trí" dòng hàng
         $this->__data['content']['locations']  = $this->__location->getActiveList();
     }
@@ -326,6 +326,10 @@ class Goodsreceipts extends Controller {
                 }
             }
         }
+        // Mặt hàng phải thuộc kho tổng hoặc danh mục riêng CỦA GARA NÀY
+        $ids  = array_values(array_unique(array_map('intval', array_column($this->buildLines(), 'part_id'))));
+        $lech = array_diff($ids, $this->__part->dungDuoc($ids));
+        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của gara — chọn lại dòng hàng';
         return $errors;
     }
 

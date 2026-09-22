@@ -33,17 +33,12 @@ $isActive  = isset($old['status'])     ? !empty($old['status'])     : ((int) $it
                         </div>
                     </div>
 
+                    <?php /* Kho luôn thuộc GARA CỦA NGƯỜI TẠO (gara độc lập) — không có ô chọn
+                             gara: chọn được là tạo được kho cho gara khác. */ ?>
                     <div class="form-group">
                         <label>Gara</label>
-                        <select name="garage_id" class="form-control">
-                            <option value="">— Chưa gán gara —</option>
-                            @if (!empty($listGarage))
-                            @foreach ($listGarage as $g)
-                            <option value="{{$g['id']}}" {{$v('garage_id')==$g['id']?'selected':false}}>{{$g['name']}}</option>
-                            @endforeach
-                            @endif
-                        </select>
-                        <small class="form-text text-muted">Đơn vị sở hữu kho này. Một gara có thể có nhiều kho.</small>
+                        <input type="text" class="form-control" value="{{!empty($garaHienTai['name']) ? $garaHienTai['name'] : ''}}" disabled/>
+                        <small class="form-text text-muted">Kho thuộc gara của bạn. Một gara có thể có nhiều kho.</small>
                     </div>
 
                     <div class="form-group">

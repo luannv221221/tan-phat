@@ -106,9 +106,11 @@ $tat  = $taoHang('CB-TEST-OFF','CB Ngung ban', 'part',     70000, 0);
 // Báo giá cũ: 3 dòng, giá lúc lập KHÁC giá hiện tại
 // customer_id để NULL chứ không phải 0: cột này có khoá ngoại sang `partners`,
 // số 0 không trỏ tới dòng nào nên MySQL chặn ngay (lỗi 1452).
-$pdo->prepare("INSERT INTO quotations (quote_no,customer_id,quote_date,vat_rate,subtotal,tax_amount,total_amount,status,create_at)
-               VALUES (?,?,?,?,?,?,?,?,?)")
-    ->execute(['CB-TEST-001', null, date('Y-m-d'), 10, 0, 0, 0, 'draft', $now]);
+// Gara độc lập: báo giá phải thuộc một gara (garage_id NOT NULL) — ghi gara tổng
+$garaTongCb = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn();
+$pdo->prepare("INSERT INTO quotations (quote_no,customer_id,quote_date,vat_rate,subtotal,tax_amount,total_amount,status,garage_id,create_at)
+               VALUES (?,?,?,?,?,?,?,?,?,?)")
+    ->execute(['CB-TEST-001', null, date('Y-m-d'), 10, 0, 0, 0, 'draft', $garaTongCb, $now]);
 $bg = (int) $pdo->lastInsertId();
 
 $themDong = function($partId, $sl, $gia, $ck) use ($pdo, $bg){

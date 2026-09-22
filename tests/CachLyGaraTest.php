@@ -131,7 +131,11 @@ if (count($mg) === 1){
     $pdo->prepare("INSERT INTO warehouses (code, name, is_default, sort_order, status, garage_id, create_at)
                    VALUES ('ZZCL-KHOB', 'ZZ Kho B', 0, 99, 1, ?, NOW())")->execute([$GB]);
     $khoB = (int) $pdo->lastInsertId();
-    if (in_array('garage_id', $cot('goods_receipts'), true)){
+    /* Chỉ thử được khi cột còn để NULL — sau 000080 (khoá lại) garage_id đã
+       bắt buộc, không còn dòng "chưa có gara" nào để gán nữa. */
+    $choNullPn = $so("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'goods_receipts' AND COLUMN_NAME = 'garage_id' AND IS_NULLABLE = 'YES'") === 1;
+    if ($choNullPn){
         $pdo->prepare("INSERT INTO goods_receipts (receipt_no, warehouse_id, receipt_date, garage_id, create_at)
                        VALUES ('ZZCL-PN1', ?, CURDATE(), NULL, NOW())")->execute([$khoB]);
     }
@@ -151,9 +155,14 @@ if (count($mg) === 1){
         ok($trong === 0, "Migration gan het dong cua `$b` vao mot gara", "Con $trong dong garage_id IS NULL");
     }
 
-    $pn = $mot("SELECT garage_id FROM goods_receipts WHERE receipt_no = 'ZZCL-PN1'");
-    ok(!empty($pn) && (int) $pn['garage_id'] === $GB, 'Phieu nhap lay gara THEO KHO cua no, khong do het ve gara tong',
-       'Dang: ' . json_encode($pn));
+    if ($choNullPn){
+        $pn = $mot("SELECT garage_id FROM goods_receipts WHERE receipt_no = 'ZZCL-PN1'");
+        ok(!empty($pn) && (int) $pn['garage_id'] === $GB, 'Phieu nhap lay gara THEO KHO cua no, khong do het ve gara tong',
+           'Dang: ' . json_encode($pn));
+    }
+    /* Xong việc thì bỏ ngay: để lại thì nó thành "phiếu nhập số 1" của gara B và
+       phiếu B lập ở bước 4 bị đánh thành số 2. */
+    $pdo->exec("DELETE FROM goods_receipts WHERE receipt_no = 'ZZCL-PN1'");
 
     $luat = [];
     foreach ($pdo->query("SELECT TABLE_NAME, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS
@@ -186,6 +195,36 @@ if (count($mg) === 1){
     }
     ok($so("SELECT COUNT(*) FROM garages WHERE code IN ('DMSG', 'DMDN') AND name LIKE 'Tân Phát%'") === 0,
        'Hai gara mau khong con mang ten "Tan Phat ..." (khoi bi hieu la chi nhanh)');
+}
+
+// ---------------------------------------------------------------------------
+section('Migration 000080 — khoa lai (chay SAU khi day code)');
+
+$mg80 = glob($goc . 'database/migrations/*_khoa_lai_gara_doc_lap.php');
+ok(count($mg80) === 1, 'Co migration khoa lai');
+$daChay80 = $so("SELECT COUNT(*) FROM migrations WHERE migration LIKE '%khoa_lai_gara_doc_lap'") === 1;
+if ($daChay80){
+    $nullCon = [];
+    foreach (array_merge(array_keys($bangMoi), ['warehouses', 'quotations', 'sales_invoices', 'receptions']) as $b){
+        if ($so("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?
+                 AND COLUMN_NAME = 'garage_id' AND IS_NULLABLE = 'YES'", [$b]) === 1) $nullCon[] = $b;
+    }
+    ok(empty($nullCon), 'garage_id BAT BUOC o moi bang rieng gara', 'Con cho NULL: ' . implode(', ', $nullCon));
+    ok($so("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'
+            AND COLUMN_NAME = 'garage_id' AND IS_NULLABLE = 'YES'") === 1,
+       '`users`.`garage_id` van de NULL duoc (tai khoan chua gan gara: khong dang nhap duoc)');
+    $luat80 = [];
+    foreach ($pdo->query("SELECT TABLE_NAME, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS
+                          WHERE CONSTRAINT_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME = 'garages'") as $r) $luat80[$r['TABLE_NAME']] = $r['DELETE_RULE'];
+    $conSetNull = array_keys(array_filter($luat80, function($v){ return $v === 'SET NULL'; }));
+    ok(empty($conSetNull), 'Khong con khoa ngoai nao toi garages la SET NULL', 'Con: ' . implode(', ', $conSetNull));
+    $quyenM = $pdo->query("SELECT CONCAT(m.link, ':', p.role) FROM permissions p JOIN modules m ON m.id = p.module_id
+                           JOIN `groups` g ON g.id = p.group_id WHERE g.name = 'Manager'
+                           AND m.link IN ('warehouses', 'warehouse-locations')")->fetchAll(PDO::FETCH_COLUMN);
+    ok(!array_diff(['warehouses:add', 'warehouses:edit', 'warehouse-locations:view', 'warehouse-locations:add'], $quyenM),
+       'Chu gara (Manager) tu tao / sua duoc kho + vi tri kho cua gara minh', implode(', ', $quyenM));
+} else {
+    echo "  [SKIP] Chua chay migration 000080 (khoa lai) — chay SAU khi day code.\n";
 }
 
 require_once $goc . 'app/models/GaragesModel.php';
@@ -360,9 +399,7 @@ section('Cho quen — bang co garage_id thi model phai bat _theoGara');
    chiều đó), nên danh sách chỉ ngắn dần. */
 $ngoaiLe = ['users' => 'dang nhap tim khap cac gara; chan tay o Users::phamVi',
             'parts' => 'NULL = kho tong, loc bang dieu kien rieng'];
-$chuaLam = [
-    'goods_receipts' => 4, 'goods_issues' => 4, 'stock_takes' => 4, 'warehouse_transfers' => 4,
-];
+$chuaLam = [];   // bước 4 xong: mọi bảng riêng gara đều đã bật chặn
 $modelCua = [];
 foreach (glob($goc . 'app/models/*.php') as $f){
     $src = codeOnly($f);
@@ -751,6 +788,155 @@ $http('GET', "$base/admin/garages/toggle/$GA", $jarAD);
 ok((int) $cot1('garages', 'status', $GA) === 0, 'Khoa gara A: gara chuyen sang khoa');
 $http('GET', "$base/admin/garages/toggle/$GA", $jarAD);
 ok((int) $cot1('garages', 'status', $GA) === 1, 'Mo khoa lai gara A');
+
+// ---------------------------------------------------------------------------
+section('HTTP — buoc 4: kho, ton kho, the kho, phieu kho cua gara A khong lot sang gara B');
+
+$khoA2 = $ins('warehouses', ['code' => 'ZZCL-KHOA2', 'name' => 'ZZ Kho A hai', 'is_default' => 0, 'sort_order' => 99,
+                             'status' => 1, 'garage_id' => $GA, 'create_at' => $bayGio]);
+$ins('stocks', ['warehouse_id' => $khoAId, 'part_id' => $ptTong, 'quantity' => 77, 'avg_cost' => 13579, 'update_at' => $bayGio]);
+$ins('stock_cards', ['warehouse_id' => $khoAId, 'part_id' => $ptTong, 'move_date' => $homNay, 'doc_type' => 'receipt', 'doc_id' => 0,
+                     'doc_no' => 'ZZCL-PN-A', 'qty_in' => 77, 'qty_out' => 0, 'unit_cost' => 13579, 'balance_qty' => 77,
+                     'balance_value' => 77 * 13579, 'create_at' => $bayGio]);
+$pnA = $ins('goods_receipts', ['receipt_no' => 'ZZCL-PNK-A', 'receipt_type' => 'nhap_mua', 'warehouse_id' => $khoAId, 'receipt_date' => $homNay,
+                               'status' => 0, 'garage_id' => $GA, 'create_at' => $bayGio]);
+$pxA = $ins('goods_issues', ['issue_no' => 'ZZCL-PXK-A', 'warehouse_id' => $khoAId, 'issue_date' => $homNay, 'status' => 0,
+                             'garage_id' => $GA, 'create_at' => $bayGio]);
+$kkA = $ins('stock_takes', ['take_no' => 'ZZCL-KK-A', 'warehouse_id' => $khoAId, 'take_date' => $homNay, 'status' => 0,
+                            'garage_id' => $GA, 'create_at' => $bayGio]);
+$ckA = $ins('warehouse_transfers', ['transfer_no' => 'ZZCL-CK-A', 'from_warehouse_id' => $khoAId, 'to_warehouse_id' => $khoA2,
+                                    'transfer_date' => $homNay, 'status' => 0, 'garage_id' => $GA, 'create_at' => $bayGio]);
+$vtA = $ins('warehouse_locations', ['warehouse_id' => $khoAId, 'code' => 'ZZCL-VT-A', 'name' => 'ZZ Vi tri A', 'level' => 1,
+                                    'full_path' => 'ZZ Vi tri A', 'status' => 1, 'create_at' => $bayGio]);
+
+$dau4   = ['ZZ Kho A', 'ZZCL-KHOA', 'ZZCL-PN-A', 'ZZCL-PNK-A', 'ZZCL-PXK-A', 'ZZCL-KK-A', 'ZZCL-CK-A', 'ZZCL-VT-A', 'ZZ Vi tri A', '13.579'];
+$loDau4 = function($r) use ($dau4){ $ra = []; foreach ($dau4 as $d) if (strpos($r['text'], $d) !== false) $ra[] = $d; return $ra; };
+
+/* 1. Danh sách, báo cáo tồn / thẻ kho — kể cả khi sửa ?warehouse_id= thành kho của A */
+foreach (['warehouses', 'goods-receipts', 'goods-issues', 'stock-takes', 'transfers', 'warehouse-locations',
+          'ton-kho', "ton-kho?warehouse_id=$khoAId", 'ton-kho-lau', "ton-kho-lau?warehouse_id=$khoAId",
+          "the-kho?part_id=$ptTong", "the-kho?part_id=$ptTong&warehouse_id=$khoAId",
+          "bien-dong-ton?part_id=$ptTong", "bien-dong-ton?part_id=$ptTong&warehouse_id=$khoAId",
+          'goods-receipts/add', 'goods-issues/add', 'transfers/add', 'stock-takes/add', 'warehouse-locations/add',
+          "sales-invoices/copy-lines/$hdBId?tu=hoadon&warehouse_id=$khoAId"] as $url){
+    $r = $get($url);
+    ok($loDau4($r) === [], "Gara B mo /admin/$url: khong lo kho / ton / the kho / phieu kho cua A",
+       'HTTP ' . $r['code'] . ' ' . $r['loc'] . ' | lo: ' . implode(', ', $loDau4($r)));
+}
+
+/* 2. Theo ID của A */
+foreach (["warehouses/edit/$khoAId", "goods-receipts/edit/$pnA", "goods-issues/edit/$pxA", "stock-takes/edit/$kkA",
+          "transfers/edit/$ckA", "warehouse-locations/edit/$vtA"] as $url){
+    $r = $get($url);
+    ok($loDau4($r) === [], "Gara B mo /admin/$url (ID cua gara A): khong lo gi", 'HTTP ' . $r['code'] . ' | lo: ' . implode(', ', $loDau4($r)));
+}
+
+/* 3. Ghi sổ / xoá theo ID của A */
+foreach (["goods-receipts/post/$pnA", "goods-issues/post/$pxA", "stock-takes/post/$kkA", "transfers/post/$ckA",
+          "goods-receipts/delete/$pnA", "goods-issues/delete/$pxA", "stock-takes/delete/$kkA", "transfers/delete/$ckA",
+          "warehouses/delete/$khoA2", "warehouse-locations/delete/$vtA"] as $url) $get($url);
+ok((int) $cot1('goods_receipts', 'status', $pnA) === 0 && (int) $cot1('goods_issues', 'status', $pxA) === 0
+   && (int) $cot1('stock_takes', 'status', $kkA) === 0 && (int) $cot1('warehouse_transfers', 'status', $ckA) === 0,
+   'Ghi so phieu kho cua gara A tu gara B: KHONG duoc');
+ok($cot1('goods_receipts', 'id', $pnA) !== null && $cot1('goods_issues', 'id', $pxA) !== null && $cot1('stock_takes', 'id', $kkA) !== null
+   && $cot1('warehouse_transfers', 'id', $ckA) !== null && $cot1('warehouses', 'id', $khoA2) !== null
+   && $cot1('warehouse_locations', 'id', $vtA) !== null,
+   'Xoa phieu kho / kho / vi tri kho cua gara A tu gara B: KHONG xoa duoc');
+ok((float) ($mot("SELECT quantity FROM stocks WHERE warehouse_id = ? AND part_id = ?", [$khoAId, $ptTong])['quantity'] ?? 0) == 77,
+   'Ton kho cua gara A khong doi');
+
+/* 4. Lập phiếu của B nhắm vào kho của A */
+$post('goods-receipts/add', ['type' => 'nhap_mua', 'warehouse_id' => $khoAId, 'receipt_date' => $homNay,
+                             'line_part' => [$ptTong], 'line_qty' => [5], 'line_cost' => [1000], 'line_note' => [''], 'line_loc_id' => ['']]);
+$post('stock-takes/add', ['warehouse_id' => $khoAId, 'take_date' => $homNay, 'line_part' => [$ptTong], 'line_actual' => [1], 'line_note' => ['']]);
+$post('transfers/add', ['from_warehouse_id' => $khoBId, 'to_warehouse_id' => $khoAId, 'transfer_date' => $homNay,
+                        'line_part' => [$ptTong], 'line_qty' => [1], 'line_note' => ['']]);
+$post('warehouse-locations/add', ['warehouse_id' => $khoAId, 'code' => 'ZZCL-VT-B', 'name' => 'ZZ Vi tri B lan', 'status' => 1]);
+ok($so("SELECT COUNT(*) FROM goods_receipts WHERE warehouse_id = ? AND garage_id = ?", [$khoAId, $GB]) === 0
+   && $so("SELECT COUNT(*) FROM stock_takes WHERE warehouse_id = ? AND garage_id = ?", [$khoAId, $GB]) === 0,
+   'Gara B lap phieu nhap / kiem ke vao kho cua gara A: bi tu choi');
+ok($so("SELECT COUNT(*) FROM warehouse_transfers WHERE to_warehouse_id = ?", [$khoAId]) === 0,
+   'Chuyen kho tu gara B sang kho cua gara A: bi tu choi (hang tu Tan Phat / gara khac di bang phieu nhap)');
+ok($so("SELECT COUNT(*) FROM warehouse_locations WHERE code = 'ZZCL-VT-B'") === 0, 'Gara B tao vi tri trong kho cua gara A: bi tu choi');
+
+/* 4b. Phiếu kho của B, vào kho CỦA B, nhưng mang hàng riêng của gara A */
+$khoB2 = $ins('warehouses', ['code' => 'ZZCL-KHOB2', 'name' => 'ZZ Kho B hai', 'is_default' => 0, 'sort_order' => 99,
+                             'status' => 1, 'garage_id' => $GB, 'create_at' => $bayGio]);
+$post('goods-receipts/add', ['type' => 'nhap_mua', 'warehouse_id' => $khoBId, 'receipt_date' => $homNay,
+                             'line_part' => [$hrA], 'line_qty' => [5], 'line_cost' => [1000], 'line_note' => [''], 'line_loc_id' => ['']]);
+$post('goods-issues/add', ['type' => 'xuat_khac', 'warehouse_id' => $khoBId, 'issue_date' => $homNay,
+                           'line_part' => [$hrA], 'line_qty' => [1], 'line_note' => ['']]);
+$post('stock-takes/add', ['warehouse_id' => $khoBId, 'take_date' => $homNay, 'line_part' => [$hrA], 'line_actual' => [1], 'line_note' => ['']]);
+$post('transfers/add', ['from_warehouse_id' => $khoBId, 'to_warehouse_id' => $khoB2, 'transfer_date' => $homNay,
+                        'line_part' => [$hrA], 'line_qty' => [1], 'line_note' => ['']]);
+foreach (['goods_receipt_items' => ['goods_receipts', 'receipt_id', 'Phieu nhap'], 'goods_issue_items' => ['goods_issues', 'issue_id', 'Phieu xuat'],
+          'stock_take_items' => ['stock_takes', 'take_id', 'Phieu kiem ke'], 'warehouse_transfer_items' => ['warehouse_transfers', 'transfer_id', 'Phieu chuyen kho']]
+         as $dong => [$phieu, $khoa, $ten]){
+    ok($so("SELECT COUNT(*) FROM `$dong` i JOIN `$phieu` p ON p.id = i.`$khoa` WHERE p.garage_id = ? AND i.part_id = ?", [$GB, $hrA]) === 0,
+       "$ten cua gara B mang hang rieng cua gara A: bi tu choi");
+}
+
+/* 5. Mỗi gara tự có mã kho / số phiếu */
+$post('warehouses/add', ['code' => 'KHO01', 'name' => 'ZZ Kho chinh B', 'status' => 1, 'sort_order' => 0]);
+$khoMoiB = $mot("SELECT * FROM warehouses WHERE code = 'KHO01' AND garage_id = ?", [$GB]);
+ok(!empty($khoMoiB), 'Gara B dat duoc ma kho KHO01 du Tan Phat da co KHO01 (ma kho rieng tung gara)');
+$post('goods-receipts/add', ['type' => 'nhap_mua', 'warehouse_id' => $khoBId, 'receipt_date' => $homNay,
+                             'line_part' => [$ptTong], 'line_qty' => [5], 'line_cost' => [1000], 'line_note' => [''], 'line_loc_id' => ['']]);
+$pnB = $mot("SELECT * FROM goods_receipts WHERE garage_id = ? ORDER BY id DESC LIMIT 1", [$GB]);
+ok(!empty($pnB) && $pnB['receipt_no'] === 'PNK-000001', 'Phieu nhap dau tien cua gara B: PNK-000001', json_encode($pnB ? $pnB['receipt_no'] : null));
+$get('goods-receipts/post/' . (!empty($pnB) ? (int) $pnB['id'] : 0));
+ok((float) ($mot("SELECT quantity FROM stocks WHERE warehouse_id = ? AND part_id = ?", [$khoBId, $ptTong])['quantity'] ?? 0) == 5,
+   'Ghi so phieu nhap cua gara B: cong ton vao kho cua B');
+
+/* 6. Động cơ tồn kho: website chỉ tính kho Tân Phát; ghi sổ vào kho gara khác bị từ chối */
+require_once $goc . 'app/models/StocksModel.php';
+$SM = new StocksModel();
+\App\core\Model::epGara($TP);
+$tongTP = (float) ($mot("SELECT COALESCE(SUM(s.quantity), 0) AS t FROM stocks s JOIN warehouses w ON w.id = s.warehouse_id
+                         WHERE s.part_id = ? AND w.garage_id = ?", [$ptTong, $TP])['t'] ?? 0);
+ok(abs($SM->totalByPart($ptTong) - $tongTP) < 1e-6, 'Ton hien tren website = ton cac kho CUA TAN PHAT (khong cong ton cua gara A)',
+   'totalByPart=' . $SM->totalByPart($ptTong) . ' / kho Tan Phat=' . $tongTP);
+\App\core\Model::epGara($GB);
+/* Bắt đúng lỗi của chốt gara — động cơ còn chốt khác (lùi ngày, tồn âm, lỗi
+   CSDL đều là RuntimeException), chỉ "có ném" thì chốt gara hỏng vẫn qua. */
+$loiGhi = '';
+foreach (['applyIn'  => [$khoAId, $ptTong, 1, 1000, 'receipt', 0, 'ZZCL-THU', $homNay],
+          'applyOut' => [$khoAId, $ptTong, 1, 'issue', 0, 'ZZCL-THU', $homNay]] as $ham => $thamSo){
+    $loi = '';
+    try { $SM->$ham(...$thamSo); } catch (\RuntimeException $e){ $loi = $e->getMessage(); }
+    ok(strpos($loi, 'khong thuoc gara') !== false, "Ghi so vao kho cua gara khac ($ham): dong co ton kho tu choi (lop chan thu hai)",
+       $loi === '' ? 'khong nem loi' : $loi);
+}
+ok((float) ($mot("SELECT quantity FROM stocks WHERE warehouse_id = ? AND part_id = ?", [$khoAId, $ptTong])['quantity'] ?? 0) == 77
+   && $so("SELECT COUNT(*) FROM stock_cards WHERE doc_no = 'ZZCL-THU'") === 0,
+   'Sau lan ghi bi tu choi: ton va the kho cua gara A nguyen ven');
+ok($SM->tonTheoNhieuHang($khoAId, [$ptTong]) === [], 'Hoi ton kho cua gara khac: khong tra so');
+\App\core\Model::epGara(null);
+
+// ---------------------------------------------------------------------------
+section('HTTP — buoc 5: Tong quan theo gara');
+
+/* Đơn hàng website là của Tân Phát: gara khác xem Tổng quan thấy số của CHÍNH MÌNH */
+$tq = $http('GET', "$base/admin", $jarB);
+ok($tq['code'] === 200 && strpos($tq['text'], 'Doanh thu đã ghi sổ') !== false && strpos($tq['text'], 'Tổng hàng chốt') === false,
+   'Tong quan cua gara B: the hoa don / bao gia cua gara, KHONG co the don hang web cua Tan Phat', 'HTTP ' . $tq['code']);
+$tq = $http('GET', "$base/admin", $jarTP);
+ok($tq['code'] === 200 && strpos($tq['text'], 'Tổng hàng chốt') !== false, 'Tong quan cua Tan Phat: van co the don hang web');
+
+require_once $goc . 'app/models/SalesInvoicesModel.php';
+require_once $goc . 'app/models/QuotationsModel.php';
+$tuNgay = date('Y-m-d 00:00:00'); $denNgay = date('Y-m-d 00:00:00', strtotime('+1 day'));
+$tongKy = function($ds){ $c = 0; $s = 0.0; foreach ($ds as $x){ $c += $x['count']; $s += $x['sum']; } return [$c, $s]; };
+\App\core\Model::epGara($GB);
+$hdKy = $tongKy((new SalesInvoicesModel())->thongKeKy($tuNgay, $denNgay));
+$bgKy = $tongKy((new QuotationsModel())->thongKeKy($tuNgay, $denNgay));
+\App\core\Model::epGara(null);
+$hdDb = $mot("SELECT COUNT(*) AS c, COALESCE(SUM(total_amount), 0) AS s FROM sales_invoices WHERE garage_id = ? AND invoice_date = CURDATE()", [$GB]);
+$bgDb = $mot("SELECT COUNT(*) AS c, COALESCE(SUM(total_amount), 0) AS s FROM quotations WHERE garage_id = ? AND quote_date = CURDATE()", [$GB]);
+ok($hdKy[0] === (int) $hdDb['c'] && abs($hdKy[1] - (float) $hdDb['s']) < 0.01,
+   'So lieu hoa don tren Tong quan cua gara B = hoa don CUA B (khong cong hoa don ZZCL-HD-A cua gara A)', json_encode([$hdKy, $hdDb]));
+ok($bgKy[0] === (int) $bgDb['c'] && abs($bgKy[1] - (float) $bgDb['s']) < 0.01,
+   'So lieu bao gia tren Tong quan cua gara B = bao gia CUA B', json_encode([$bgKy, $bgDb]));
 
 // ==== [HTTP-2] ====
 

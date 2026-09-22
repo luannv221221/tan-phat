@@ -10,6 +10,11 @@ use App\core\Model;
  *
  * ⚠️ Các hàm applyIn/applyOut/reverseDoc KHÔNG tự mở transaction — controller
  * bọc cả phiên ghi sổ trong 1 transaction để nguyên tử (tồn + thẻ kho + bút toán).
+ *
+ * GARA ĐỘC LẬP (22/09/2026): bảng này không có cột gara — nó đi theo KHO, mà
+ * kho thuộc gara. Mọi truy vấn "mọi kho" giới hạn vào kho của gara làm việc
+ * (locKhoGara); website thì là kho của Tân Phát. Ghi sổ vào kho không thuộc
+ * gara thì từ chối (chanKhoLa) — lớp chặn thứ hai, sau việc controller kiểm kho.
  */
 class StocksModel extends Model {
 
@@ -17,8 +22,16 @@ class StocksModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
-    /** Dòng tồn hiện tại của (kho, phụ tùng) hoặc null */
+    /** Ghi sổ vào kho của gara khác: từ chối (transaction của controller rollback) */
+    private function chanKhoLa($warehouseId){
+        if (!$this->khoThuocGara($warehouseId)){
+            throw new \RuntimeException('Kho ' . (int) $warehouseId . ' khong thuoc gara lam viec — khong ghi so.');
+        }
+    }
+
+    /** Dòng tồn hiện tại của (kho, phụ tùng) hoặc null — kho của gara khác coi như không có */
     public function getRow($warehouseId, $partId){
+        if (!$this->khoThuocGara($warehouseId)) return null;
         return $this->table($this->_table)
                     ->where('warehouse_id', '=', (int) $warehouseId)
                     ->where('part_id', '=', (int) $partId)
@@ -35,6 +48,7 @@ class StocksModel extends Model {
      * Ngoài transaction thì FOR UPDATE chỉ là câu SELECT bình thường, vô hại.
      */
     private function getRowForUpdate($warehouseId, $partId){
+        $this->chanKhoLa($warehouseId);
         $row = $this->firstRaw(
             'SELECT * FROM `stocks` WHERE `warehouse_id` = ? AND `part_id` = ? FOR UPDATE',
             [(int) $warehouseId, (int) $partId]
@@ -61,7 +75,8 @@ class StocksModel extends Model {
     public function tonTheoNhieuHang($warehouseId, array $partIds){
         $ids = array_values(array_unique(array_map('intval', $partIds)));
         $ids = array_filter($ids, function($v){ return $v > 0; });
-        if (empty($ids)) return [];
+        // Tồn ở kho của gara khác: không trả — hỏi bằng ?warehouse_id= là đọc được tồn của họ
+        if (empty($ids) || !$this->khoThuocGara($warehouseId)) return [];
 
         $holes = implode(',', array_fill(0, count($ids), '?'));
         $rows  = $this->getRaw(
@@ -89,7 +104,8 @@ class StocksModel extends Model {
      * Bình quân theo lượng chứ không lấy đại một kho.
      */
     public function avgCostAnyWarehouse($partId){
-        $r = $this->table($this->_table)
+        // "Bất kỳ kho nào" CỦA GARA NÀY — giá vốn của gara khác không phải giá vốn của mình
+        $r = $this->locKhoGara($this->table($this->_table), 'warehouse_id')
                   ->select('SUM(`quantity` * `avg_cost`) AS gia_tri, SUM(`quantity`) AS so_luong')
                   ->where('part_id', '=', (int) $partId)
                   ->where('quantity', '>', 0)
@@ -123,6 +139,7 @@ class StocksModel extends Model {
      *   bq_mới = (SL_cũ*bq_cũ + SL_nhập*giá_nhập) / (SL_cũ + SL_nhập)
      */
     public function applyIn($warehouseId, $partId, $qty, $unitCost, $docType, $docId, $docNo, $date, $note = null){
+        $this->chanKhoLa($warehouseId);
         $this->chanLuiNgay($warehouseId, $partId, $date);
 
         $qty      = (float) $qty;
@@ -146,6 +163,7 @@ class StocksModel extends Model {
      * @return float đơn giá bình quân đã dùng (giá vốn/đơn vị)
      */
     public function applyOut($warehouseId, $partId, $qty, $docType, $docId, $docNo, $date, $note = null){
+        $this->chanKhoLa($warehouseId);
         $this->chanLuiNgay($warehouseId, $partId, $date);
 
         $qty = (float) $qty;
@@ -296,6 +314,7 @@ class StocksModel extends Model {
      * khôi phục tồn về số dư của thẻ liền trước. Giả định đã kiểm isLastMovement.
      */
     public function reverseDoc($warehouseId, $partId, $docType, $docId){
+        $this->chanKhoLa($warehouseId);
         $this->delete('stock_cards',
             '`warehouse_id` = ? AND `part_id` = ? AND `doc_type` = ? AND `doc_id` = ?',
             [(int) $warehouseId, (int) $partId, $docType, (int) $docId]);
@@ -333,9 +352,9 @@ class StocksModel extends Model {
         $this->getRaw('SELECT `id` FROM `stocks` WHERE `part_id` IN (' . $holes . ') FOR UPDATE', $ids);
     }
 
-    /** Tổng tồn của 1 phụ tùng trên MỌI kho (cho storefront — TASK_79) */
+    /** Tổng tồn của 1 phụ tùng trên mọi kho CỦA GARA (website: kho của Tân Phát — TASK_79) */
     public function totalByPart($partId){
-        $r = $this->table($this->_table)
+        $r = $this->locKhoGara($this->table($this->_table), 'warehouse_id')
                   ->select('SUM(`quantity`) AS total')
                   ->where('part_id', '=', (int) $partId)->first();
         return (float) ($r['total'] ?? 0);
@@ -366,6 +385,7 @@ class StocksModel extends Model {
             ->joinOn('parts', 'stocks.part_id', 'parts.id')
             ->joinOn('warehouses', 'stocks.warehouse_id', 'warehouses.id')
             ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id');
+        $q = $this->locKhoGara($q, 'stocks.warehouse_id');
 
         if ($warehouseId > 0){
             $q = $q->where('stocks.warehouse_id', '=', (int) $warehouseId);
@@ -388,6 +408,7 @@ class StocksModel extends Model {
             ->select('`stock_cards`.*, `warehouses`.`name` AS warehouse_name')
             ->joinOn('warehouses', 'stock_cards.warehouse_id', 'warehouses.id')
             ->where('stock_cards.part_id', '=', (int) $partId);
+        $q = $this->locKhoGara($q, 'stock_cards.warehouse_id');
 
         if ($warehouseId > 0) $q = $q->where('stock_cards.warehouse_id', '=', (int) $warehouseId);
         if ($from !== '')     $q = $q->where('stock_cards.move_date', '>=', $from);
@@ -450,7 +471,7 @@ class StocksModel extends Model {
             if ($warehouseId > 0){
                 $opening = $this->getBalanceBefore($partId, (int) $warehouseId, $from)['qty'];
             } else {
-                $whs = $this->table('stock_cards')->select('DISTINCT `warehouse_id`')
+                $whs = $this->locKhoGara($this->table('stock_cards'), 'warehouse_id')->select('DISTINCT `warehouse_id`')
                             ->where('part_id', '=', $partId)->get();
                 foreach ($whs ?: [] as $w){
                     $opening += $this->getBalanceBefore($partId, (int) $w['warehouse_id'], $from)['qty'];
@@ -458,7 +479,7 @@ class StocksModel extends Model {
             }
         }
 
-        $q = $this->table('stock_cards')
+        $q = $this->locKhoGara($this->table('stock_cards'), 'warehouse_id')
                   ->select('`move_date`, `qty_in`, `qty_out`')
                   ->where('part_id', '=', $partId);
         if ($warehouseId > 0) $q = $q->where('warehouse_id', '=', (int) $warehouseId);
@@ -512,7 +533,7 @@ class StocksModel extends Model {
          * là sai ngay.
          */
         if ((int) $warehouseId <= 0){
-            $whs = $this->table('stock_cards')->select('DISTINCT `warehouse_id`')
+            $whs = $this->locKhoGara($this->table('stock_cards'), 'warehouse_id')->select('DISTINCT `warehouse_id`')
                         ->where('part_id', '=', (int) $partId)->get();
 
             $qty = 0.0; $val = 0.0;
@@ -524,6 +545,7 @@ class StocksModel extends Model {
             return ['qty' => $qty, 'value' => $val];
         }
 
+        if (!$this->khoThuocGara($warehouseId)) return ['qty' => 0.0, 'value' => 0.0];
         $row = $this->table('stock_cards')
             ->where('part_id', '=', (int) $partId)
             ->where('move_date', '<', $from)

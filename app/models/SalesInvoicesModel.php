@@ -97,6 +97,20 @@ class SalesInvoicesModel extends Model {
         return str_pad($n + 1, 8, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Số / tổng tiền hoá đơn trong kỳ theo trạng thái (0 nháp, 1 đã ghi sổ), của
+     * GARA làm việc — [status => ['count' => n, 'sum' => tiền]] cho trang Tổng
+     * quan. $to là mốc KHÔNG tính (đầu ngày hôm sau).
+     */
+    public function thongKeKy($from, $to){
+        $rows = $this->bangGara()->select('`status`, COUNT(*) AS c, COALESCE(SUM(`total_amount`), 0) AS s')
+            ->where('invoice_date', '>=', substr($from, 0, 10))->where('invoice_date', '<', substr($to, 0, 10))
+            ->groupBy('status')->get();
+        $out = [];
+        foreach ((array) $rows as $r) $out[(string) $r['status']] = ['count' => (int) $r['c'], 'sum' => (float) $r['s']];
+        return $out;
+    }
+
     public function add($data){
         $data['create_at'] = date('Y-m-d H:i:s');
         $this->addNew($data);

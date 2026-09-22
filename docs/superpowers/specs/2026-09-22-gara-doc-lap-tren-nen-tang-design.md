@@ -253,6 +253,16 @@ DELETE RESTRICT**: gara đã có dữ liệu không xoá được, chỉ khoá �
 Lý do: để `SET NULL` thì xoá gara xong, chứng từ của gara đó nằm lại mà không
 thuộc về ai và không ai thấy.
 
+`users.garage_id` vẫn **để NULL được** (khoá ngoại đã đổi sang RESTRICT): tài
+khoản chưa gán gara là trạng thái có thật. Tài khoản đó không đăng nhập được
+(`AuthMiddleware`), không phải dữ liệu mồ côi.
+
+MySQL 8 không cho `MODIFY` cột đang nằm trong khoá ngoại `ON UPDATE CASCADE`
+khi `FOREIGN_KEY_CHECKS = 1` ("Cannot change column … used in a foreign key").
+Vì vậy câu đặt NOT NULL chạy lúc tắt kiểm tra khoá ngoại, sau đó bật lại. Làm vậy
+an toàn: bước trước đó đã lấp hết NULL, và câu này chỉ đổi cho-phép-NULL, không
+đổi kiểu cột.
+
 ## Giao diện
 
 - **Đầu trang:** bỏ ô đổi gara, chỉ hiện tên gara của tài khoản.
@@ -267,7 +277,14 @@ thuộc về ai và không ai thấy.
   địa chỉ, SĐT, mã số thuế, logo của gara lập phiếu. Gara `TP01` thiếu thông tin
   nào thì lấy từ Cấu hình chung như hiện nay.
 - **Nhân viên:** Admin Tân Phát xem tài khoản của mọi gara; Manager gara chỉ thấy
-  người của gara mình (đã có).
+  người của gara mình (đã có). Tạo tài khoản bắt buộc chọn gara.
+- **Kho:** kho luôn thuộc gara của người tạo, form không còn ô chọn gara. Chủ gara
+  (nhóm Manager) được thêm / sửa / xoá kho và vị trí kho của gara mình. Quyền này
+  cấp ở migration khoá lại, **sau** khi đẩy code: form Kho cũ còn ô chọn gara, cấp
+  sớm là Manager tạo được kho cho gara khác.
+- **Tổng quan:** Tân Phát thấy thẻ đơn hàng website như cũ. Gara khác thấy doanh
+  thu hoá đơn đã ghi sổ, hoá đơn chưa ghi sổ và báo giá đã lập **của chính mình**.
+  Không thấy doanh thu web của Tân Phát.
 
 ## Dữ liệu đang có
 
@@ -291,7 +308,7 @@ chỉ nới ra, bảng cũ còn nguyên):
 | 2. Khách và xe | `partners.email`, module `tai-khoan-web`, chuyển xe / khách cũ sang `vehicles` / `partners`, ràng buộc "không trùng" theo gara cho đối tượng, xe, phiếu tiếp nhận, bảo hành, bàn giao |
 | 3. Bán hàng | ràng buộc theo gara cho báo giá, hoá đơn, mã hàng |
 | 4. Kho | ràng buộc theo gara cho kho, nhập, xuất, kiểm kê, chuyển kho |
-| 5. Khoá lại | chạy **sau** khi đẩy code bước 5: gán về Tân Phát những dòng `garage_id` NULL phát sinh trong lúc chờ, rồi đặt NOT NULL và đổi các khoá ngoại còn `SET NULL` sang RESTRICT |
+| 5. Khoá lại | chạy **sau** khi đẩy code bước 5: gán về đúng gara những dòng `garage_id` NULL phát sinh trong lúc chờ (chứng từ kho theo kho, còn lại về Tân Phát), đổi các khoá ngoại còn `SET NULL` sang RESTRICT, đặt NOT NULL, cấp quyền kho / vị trí kho cho Manager |
 
 Không đặt NOT NULL sớm hơn: trước bước 5 vẫn còn model chưa tự ghi gara, cột bắt
 buộc là form của model đó sập.

@@ -31,18 +31,33 @@ class Dashboard extends Controller {
         $prevTo   = $from;
         $prevFrom = date('Y-m-d 00:00:00', strtotime($from . ' -' . $days . ' day'));
 
-        $cur  = $this->__orderModel->statsByStatus($from, $to);
-        $prev = $this->__orderModel->statsByStatus($prevFrom, $prevTo);
+        /* Gara độc lập: đơn hàng website là của Tân Phát. Gara khác xem Tổng quan
+           thì thấy số của CHÍNH MÌNH (hoá đơn, báo giá) — không được thấy doanh
+           thu web của Tân Phát. */
+        if (la_gara_tong()){
+            $cur  = $this->__orderModel->statsByStatus($from, $to);
+            $prev = $this->__orderModel->statsByStatus($prevFrom, $prevTo);
 
-        // --- 3 thẻ ---
-        // "Chốt" = đã xác nhận trở đi (bỏ đơn mới chưa duyệt và đơn đã huỷ).
-        $closed = ['confirmed', 'shipping', 'completed'];
+            // "Chốt" = đã xác nhận trở đi (bỏ đơn mới chưa duyệt và đơn đã huỷ).
+            $closed = ['confirmed', 'shipping', 'completed'];
 
-        $this->__data['content']['cards'] = [
-            $this->card('Tổng hàng chốt',  'clipboard-check', 'green', $cur, $prev, $closed),
-            $this->card('Đơn đã huỷ',      'arrow-left-right', 'amber', $cur, $prev, ['cancelled']),
-            $this->card('Đơn hoàn thành',  'shopping-bag',    'blue',  $cur, $prev, ['completed']),
-        ];
+            $this->__data['content']['cards'] = [
+                $this->card('Tổng hàng chốt',  'clipboard-check', 'green', $cur, $prev, $closed),
+                $this->card('Đơn đã huỷ',      'arrow-left-right', 'amber', $cur, $prev, ['cancelled']),
+                $this->card('Đơn hoàn thành',  'shopping-bag',    'blue',  $cur, $prev, ['completed']),
+            ];
+        } else {
+            $hd  = $this->model('SalesInvoicesModel');
+            $bg  = $this->model('QuotationsModel');
+            $hdCur = $hd->thongKeKy($from, $to);  $hdPrev = $hd->thongKeKy($prevFrom, $prevTo);
+            $bgCur = $bg->thongKeKy($from, $to);  $bgPrev = $bg->thongKeKy($prevFrom, $prevTo);
+
+            $this->__data['content']['cards'] = [
+                $this->card('Doanh thu đã ghi sổ', 'clipboard-check',  'green', $hdCur, $hdPrev, ['1']),
+                $this->card('Hoá đơn chưa ghi sổ', 'shopping-bag',     'amber', $hdCur, $hdPrev, ['0']),
+                $this->card('Báo giá đã lập',      'arrow-left-right', 'blue',  $bgCur, $bgPrev, array_keys(QuotationsModel::$statuses)),
+            ];
+        }
 
         $this->__data['content']['ranges']    = self::$ranges;
         $this->__data['content']['rangeDays'] = $days;

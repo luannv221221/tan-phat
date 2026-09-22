@@ -81,6 +81,32 @@ class Model extends Database {
         return $q->where($cot !== null ? $cot : $this->_table . '.garage_id', '=', $g);
     }
 
+    /**
+     * Id các kho CỦA GARA làm việc — cho bảng không có cột `garage_id` mà đi
+     * theo kho (stocks, stock_cards, warehouse_locations).
+     *   null  -> không lọc (dòng lệnh chưa ép gara)
+     *   []    -> đóng (không xác định được gara)
+     */
+    public function khoCuaGara(){
+        $g = self::garaLoc();
+        if ($g === null) return null;
+        if ($g === 0) return [];
+        return array_map('intval', array_column(
+            $this->getRaw('SELECT `id` FROM `warehouses` WHERE `garage_id` = ?', [$g]), 'id'));
+    }
+
+    /** Kho $id có thuộc gara làm việc không (không lọc thì luôn đúng) */
+    public function khoThuocGara($id){
+        $ds = $this->khoCuaGara();
+        return $ds === null || in_array((int) $id, $ds, true);
+    }
+
+    /** Giới hạn truy vấn đang dựng vào các kho của gara: $cotKho IN (...) */
+    protected function locKhoGara($q, $cotKho){
+        $ds = $this->khoCuaGara();
+        return $ds === null ? $q : $q->whereIn($cotKho, $ds);
+    }
+
     /** Bảng của model, ĐÃ lọc theo gara — điểm bắt đầu cho truy vấn QueryBuilder */
     protected function bangGara(){
         return $this->locGara($this->table($this->_table));

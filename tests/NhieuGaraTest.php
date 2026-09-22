@@ -87,8 +87,12 @@ ok(strpos($vUser, 'name="garage_id"') !== false, 'Man Nguoi dung co o chon gara'
 $vUserAdd = file_get_contents($goc . 'app/views/admin/users/add.php');
 ok(strpos($vUserAdd, 'name="garage_id"') !== false, 'Man Them nguoi dung co o chon gara');
 
+/* Gara độc lập (22/09/2026): kho luôn thuộc gara của người tạo. Còn ô chọn gara
+   là tạo / chuyển được kho sang gara khác. */
 $vKho = file_get_contents($goc . 'app/views/admin/warehouses/edit.php');
-ok(strpos($vKho, 'name="garage_id"') !== false, 'Man Kho co o chon gara');
+ok(strpos($vKho, 'name="garage_id"') === false, 'Man Kho KHONG co o chon gara (kho thuoc gara cua nguoi tao)');
+ok(strpos(codeOnly($goc . 'app/controllers/admin/Warehouses.php'), "'garage_id'") === false,
+   'Controller Kho KHONG doc garage_id tu form');
 
 /* Đếm đúng CÂU GHI (`'garage_id' => ...`), không đếm mọi lần chuỗi
    "garage_id" xuất hiện: hàm đọc giá trị từ form đã nhắc tên cột 2 lần rồi,
@@ -156,11 +160,12 @@ $fk = $pdo->query("SELECT TABLE_NAME, DELETE_RULE FROM information_schema.REFERE
 $luat = [];
 foreach ($fk as $f) $luat[$f['TABLE_NAME']] = $f['DELETE_RULE'];
 
-/* Chứng từ và tài nguyên: xoá gara thì chúng MẤT CHỦ, không được biến mất.
-   CASCADE ở đây là xoá lịch sử bán hàng trong im lặng. */
+/* Gara độc lập (000080): xoá gara đang có kho / nhân viên / chứng từ thì CSDL
+   CHẶN (RESTRICT). SET NULL như trước là để lại chứng từ "không của ai" — gara
+   độc lập thì chứng từ đó không còn ai thấy. Gara đã có dữ liệu chỉ khoá được. */
 foreach (['warehouses', 'users', 'quotations', 'sales_invoices'] as $b){
-    ok(isset($luat[$b]) && $luat[$b] === 'SET NULL',
-       "`$b` tro ve garages voi ON DELETE SET NULL",
+    ok(isset($luat[$b]) && $luat[$b] === 'RESTRICT',
+       "`"."$b`"." tro ve garages voi ON DELETE RESTRICT",
        'Dang la ' . (isset($luat[$b]) ? $luat[$b] : 'KHONG CO KHOA NGOAI'));
 }
 
@@ -184,6 +189,12 @@ ok(!empty($master) && (int) $master['is_master'] === 1, 'getMaster() tra ve dung
 $soTruoc = count($m->getLists());
 $idA = $m->add(['code' => 'ZZA', 'name' => 'Gara thu A', 'is_master' => 0, 'status' => 1, 'sort_order' => 90]);
 $idB = $m->add(['code' => 'ZZB', 'name' => 'Gara thu B', 'is_master' => 0, 'status' => 0, 'sort_order' => 91]);
+register_shutdown_function(function() use ($pdo, $master){
+    // Chết giữa chừng vẫn phải trả nguyên trạng: gara tổng cũ, kho tạm, gara thử
+    $pdo->prepare("UPDATE garages SET is_master = IF(id = ?, 1, 0)")->execute([$master['id']]);
+    $pdo->exec("DELETE FROM warehouses WHERE code = 'ZZ-KHO-NG'");
+    $pdo->exec("DELETE FROM garages WHERE code IN ('ZZA', 'ZZB')");
+});
 ok(count($m->getLists()) === $soTruoc + 2, 'Them duoc gara moi');
 
 $maCode = $m->findByCode('ZZA');
@@ -210,28 +221,27 @@ $m->clearMasterExcept($master['id']);
 /* dangDungODau(): gara rỗng thì không có ràng buộc nào */
 ok($m->dangDungODau($idB) === [], 'Gara chua co gi thi khong bao rang buoc');
 
-$pdo->prepare("UPDATE warehouses SET garage_id = ? WHERE id = (SELECT id FROM (SELECT MIN(id) AS id FROM warehouses) t)")
-    ->execute([$idA]);
+/* Kho TẠM của gara thử — KHÔNG mượn kho thật. Bản cũ chuyển kho có id nhỏ nhất
+   (tức Kho tổng của Tân Phát) sang gara thử: test chết giữa chừng là kho tổng
+   mất chủ, đã xảy ra thật ngày 22/09/2026. */
+$pdo->prepare("INSERT INTO warehouses (code, name, is_default, sort_order, status, garage_id, create_at)
+               VALUES ('ZZ-KHO-NG', 'ZZ Kho thu gara', 0, 99, 1, ?, NOW())")->execute([$idA]);
+$khoThu = (int) $pdo->lastInsertId();
 $dung = $m->dangDungODau($idA);
 ok(isset($dung['kho']) && $dung['kho'] >= 1, 'Gara dang giu kho thi bao ro la co kho');
 
-// Trả kho về gara tổng
-$pdo->prepare("UPDATE warehouses SET garage_id = ? WHERE garage_id = ?")->execute([$master['id'], $idA]);
-
-/* --- 5. Xoá gara KHÔNG được kéo theo dữ liệu --- */
-$pdo->prepare("UPDATE warehouses SET garage_id = ? WHERE id = (SELECT id FROM (SELECT MIN(id) AS id FROM warehouses) t)")
-    ->execute([$idA]);
-$khoTruoc = (int) $pdo->query("SELECT COUNT(*) FROM warehouses")->fetchColumn();
-$m->remove($idA);
-$khoSau = (int) $pdo->query("SELECT COUNT(*) FROM warehouses")->fetchColumn();
-ok($khoSau === $khoTruoc, 'Xoa gara KHONG lam mat kho cua no',
-   'ON DELETE CASCADE nham cho la xoa mot gara keo theo ca kho va chung tu');
-$moCoi = (int) $pdo->query("SELECT COUNT(*) FROM warehouses WHERE garage_id IS NULL")->fetchColumn();
-ok($moCoi >= 1, 'Kho cua gara da xoa tro thanh vo chu (SET NULL), khong bien mat');
+/* --- 5. Xoá gara đang có kho: CSDL chặn, kho còn nguyên chủ --- */
+$biChan = false;
+try { $m->remove($idA); } catch (\Throwable $e){ $biChan = true; }
+ok($biChan && (int) $pdo->query("SELECT COUNT(*) FROM garages WHERE id = " . (int) $idA)->fetchColumn() === 1,
+   'Gara con kho thi CSDL KHONG cho xoa (RESTRICT)',
+   'Xoa duoc la kho + chung tu cua gara thanh "khong cua ai"');
+ok((int) $pdo->query("SELECT garage_id FROM warehouses WHERE id = $khoThu")->fetchColumn() === (int) $idA,
+   'Kho cua gara van nguyen chu');
 
 // Dọn sạch
-$pdo->prepare("UPDATE warehouses SET garage_id = ? WHERE garage_id IS NULL")->execute([$master['id']]);
+$pdo->exec("DELETE FROM warehouses WHERE id = $khoThu");
+$m->remove($idA);
 $m->remove($idB);
 ok(count($m->getLists()) === $soTruoc, 'Da don sach du lieu test');
-
 exit(summary());

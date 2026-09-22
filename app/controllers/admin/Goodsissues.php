@@ -47,7 +47,7 @@ class Goodsissues extends Controller {
     private function formData(){
         $this->__data['content']['warehouses'] = $this->__warehouse->getActive();
         $this->__data['content']['partners']   = $this->__partner->getActive();
-        $this->__data['content']['parts']      = $this->__part->getForSelect(true);
+        $this->__data['content']['parts']      = $this->__part->choGara(true);
     }
 
     public function index(){
@@ -325,6 +325,10 @@ class Goodsissues extends Controller {
         if (empty($this->buildLines())){
             $errors['lines'] = 'Phiếu phải có ít nhất 1 dòng hàng (hàng hoá + số lượng > 0)';
         }
+        // Mặt hàng phải thuộc kho tổng hoặc danh mục riêng CỦA GARA NÀY
+        $ids  = array_values(array_unique(array_map('intval', array_column($this->buildLines(), 'part_id'))));
+        $lech = array_diff($ids, $this->__part->dungDuoc($ids));
+        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của gara — chọn lại dòng hàng';
         return $errors;
     }
 

@@ -105,6 +105,9 @@ $HD = new SalesInvoicesModel();
 $IT = new SalesInvoiceItemsModel();
 $ST = new StocksModel();
 $P  = new PartsModel();
+/* Gara độc lập: chứng từ phải thuộc một gara (garage_id NOT NULL). Dòng lệnh
+   không có gara làm việc nên lớp Model không tự ghi — ép gara tổng. */
+\App\core\Model::epGara((int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn());
 
 $kho = $pdo->query("SELECT id FROM warehouses ORDER BY id LIMIT 1")->fetchColumn();
 ok(!empty($kho), 'Co kho de thu');

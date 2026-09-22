@@ -73,6 +73,19 @@ class QuotationsModel extends Model {
         return 'BG-' . str_pad($n + 1, 6, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * Số / tổng tiền báo giá trong kỳ theo trạng thái, của GARA làm việc — cho
+     * trang Tổng quan. $to là mốc KHÔNG tính (đầu ngày hôm sau).
+     */
+    public function thongKeKy($from, $to){
+        $rows = $this->bangGara()->select('`status`, COUNT(*) AS c, COALESCE(SUM(`total_amount`), 0) AS s')
+            ->where('quote_date', '>=', substr($from, 0, 10))->where('quote_date', '<', substr($to, 0, 10))
+            ->groupBy('status')->get();
+        $out = [];
+        foreach ((array) $rows as $r) $out[(string) $r['status']] = ['count' => (int) $r['c'], 'sum' => (float) $r['s']];
+        return $out;
+    }
+
     public function add($data){
         $data['create_at'] = date('Y-m-d H:i:s');
         $this->addNew($data);

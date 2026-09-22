@@ -10,15 +10,16 @@ class WarehouseTransfersModel extends Model {
     protected $_table   = 'warehouse_transfers';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_theoGara = true;   // RIÊNG từng gara; số phiếu đánh riêng trong mỗi gara
 
     public function getLists($from = '', $to = ''){
         // QueryBuilder không cho self-join alias (warehouses 2 lần) -> map tên kho ở PHP.
-        $q = $this->table($this->_table)->select('*');
+        $q = $this->bangGara()->select('*');
         if ($from !== '') $q = $q->where('transfer_date', '>=', $from);
         if ($to !== '')   $q = $q->where('transfer_date', '<=', $to);
         $rows = $q->orderBy('transfer_date', 'DESC')->orderBy('id', 'DESC')->get();
 
-        $whs = $this->table('warehouses')->select('`id`, `name`')->get();
+        $whs = $this->locGara($this->table('warehouses'), 'warehouses.garage_id')->select('`id`, `name`')->get();
         $map = [];
         foreach ($whs ?: [] as $w){ $map[(int) $w['id']] = $w['name']; }
         foreach ($rows as &$r){
@@ -31,7 +32,7 @@ class WarehouseTransfersModel extends Model {
     public function getDetail($id){ return $this->getFirst($id); }
 
     public function nextNo(){
-        $row = $this->table($this->_table)->select('`transfer_no`')->orderBy('id', 'DESC')->first();
+        $row = $this->bangGara()->select('`transfer_no`')->orderBy('id', 'DESC')->first();
         $n = 0;
         if (!empty($row) && preg_match('/(\d+)$/', $row['transfer_no'], $m)){ $n = (int) $m[1]; }
         return 'PDC-' . str_pad($n + 1, 6, '0', STR_PAD_LEFT);

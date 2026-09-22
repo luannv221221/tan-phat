@@ -42,7 +42,7 @@ class Stocktakes extends Controller {
     }
     private function formData(){
         $this->__data['content']['warehouses'] = $this->__warehouse->getActive();
-        $this->__data['content']['parts']      = $this->__part->getForSelect(true);
+        $this->__data['content']['parts']      = $this->__part->choGara(true);
     }
 
     public function index(){
@@ -244,6 +244,10 @@ class Stocktakes extends Controller {
         if ($whId <= 0 || empty($this->__warehouse->getDetail($whId))) $errors['warehouse_id'] = 'Chọn kho kiểm kê';
         if (empty($f['take_date'])) $errors['take_date'] = 'Chọn ngày';
         if (empty($this->buildLines())) $errors['lines'] = 'Phiếu phải có ít nhất 1 dòng hàng hoá';
+        // Mặt hàng phải thuộc kho tổng hoặc danh mục riêng CỦA GARA NÀY
+        $ids  = array_values(array_unique(array_map('intval', array_column($this->buildLines(), 'part_id'))));
+        $lech = array_diff($ids, $this->__part->dungDuoc($ids));
+        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của gara — chọn lại dòng hàng';
         return $errors;
     }
 

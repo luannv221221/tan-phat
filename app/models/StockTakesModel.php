@@ -10,9 +10,10 @@ class StockTakesModel extends Model {
     protected $_table   = 'stock_takes';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_theoGara = true;   // RIÊNG từng gara; số phiếu đánh riêng trong mỗi gara
 
     public function getLists($from = '', $to = ''){
-        $q = $this->table($this->_table)
+        $q = $this->bangGara()
             ->select('`stock_takes`.*, `warehouses`.`name` AS warehouse_name')
             ->joinOn('warehouses', 'stock_takes.warehouse_id', 'warehouses.id');
         if ($from !== '') $q = $q->where('stock_takes.take_date', '>=', $from);
@@ -23,7 +24,7 @@ class StockTakesModel extends Model {
     public function getDetail($id){ return $this->getFirst($id); }
 
     public function nextNo(){
-        $row = $this->table($this->_table)->select('`take_no`')->orderBy('id', 'DESC')->first();
+        $row = $this->bangGara()->select('`take_no`')->orderBy('id', 'DESC')->first();
         $n = 0;
         if (!empty($row) && preg_match('/(\d+)$/', $row['take_no'], $m)){ $n = (int) $m[1]; }
         return 'PKK-' . str_pad($n + 1, 6, '0', STR_PAD_LEFT);

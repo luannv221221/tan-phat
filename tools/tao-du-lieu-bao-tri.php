@@ -30,6 +30,10 @@ $db = new PDO(
     _USER, _PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
 );
 $W = new WarrantyRequestsModel();
+/* Gara độc lập: phiếu phải thuộc một gara (garage_id NOT NULL), và số phiếu đánh
+   riêng từng gara. Dòng lệnh không có gara làm việc nên lớp Model không tự ghi —
+   ép gara tổng: phiếu mẫu là của Tân Phát. */
+\App\core\Model::epGara(gara_hien_tai_id());
 
 $dem = function() use ($db){
     $st = $db->prepare("SELECT COUNT(*) FROM `warranty_requests` WHERE `note` = ?");

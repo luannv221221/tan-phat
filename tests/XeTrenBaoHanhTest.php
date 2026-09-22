@@ -146,6 +146,9 @@ ok($coIdx, 'Co chi muc tren bien_so_chuan');
 
 require_once $goc . 'app/models/WarrantyRequestsModel.php';
 $W = new WarrantyRequestsModel();
+/* Gara độc lập: chứng từ phải thuộc một gara (garage_id NOT NULL). Dòng lệnh
+   không có gara làm việc nên lớp Model không tự ghi — ép gara tổng. */
+\App\core\Model::epGara((int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn());
 
 $demTruoc = count($W->getLists());
 

@@ -7,6 +7,10 @@ use App\core\Model;
  *
  * full_path tự dựng từ tên các cấp cha; level = cấp (1..5).
  * QueryBuilder không self-join được nên cây dựng bằng PHP.
+ *
+ * Gara độc lập: bảng không có cột gara, đi theo KHO — mọi truy vấn giới hạn
+ * vào kho của gara làm việc (locKhoGara). Mở / sửa theo id vị trí của kho gara
+ * khác thì coi như không có.
  */
 class WarehouseLocationsModel extends Model {
 
@@ -16,13 +20,16 @@ class WarehouseLocationsModel extends Model {
 
     const MAX_LEVEL = 5;
 
-    public function getDetail($id){ return $this->getFirst($id); }
+    public function getDetail($id){
+        return $this->locKhoGara($this->table($this->_table)->where('id', '=', (int) $id), 'warehouse_id')->first();
+    }
 
     /** Toàn bộ vị trí (kèm tên kho) — cho danh sách/cây admin */
     public function getLists($warehouseId = 0){
         $q = $this->table($this->_table)
             ->select('`warehouse_locations`.*, `warehouses`.`code` AS warehouse_code, `warehouses`.`name` AS warehouse_name')
             ->joinOn('warehouses', 'warehouse_locations.warehouse_id', 'warehouses.id');
+        $q = $this->locKhoGara($q, 'warehouse_locations.warehouse_id');
         if ($warehouseId > 0) $q = $q->where('warehouse_locations.warehouse_id', '=', (int) $warehouseId);
         return $q->orderBy('warehouse_locations.warehouse_id', 'ASC')
                  ->orderBy('warehouse_locations.full_path', 'ASC')->get();
@@ -30,14 +37,14 @@ class WarehouseLocationsModel extends Model {
 
     /** Vị trí trong 1 kho, sắp theo cây (full_path) — cho dropdown chọn cha */
     public function getByWarehouse($warehouseId){
-        return $this->table($this->_table)
+        return $this->locKhoGara($this->table($this->_table), 'warehouse_id')
             ->where('warehouse_id', '=', (int) $warehouseId)
             ->orderBy('full_path', 'ASC')->get();
     }
 
     /** Mọi vị trí đang bật (kèm mã kho) — cho datalist gợi ý trên phiếu nhập */
     public function getActivePaths(){
-        return $this->table($this->_table)
+        return $this->locKhoGara($this->table($this->_table), 'warehouse_locations.warehouse_id')
             ->select('`warehouse_locations`.`full_path`, `warehouse_locations`.`warehouse_id`, `warehouses`.`code` AS warehouse_code')
             ->joinOn('warehouses', 'warehouse_locations.warehouse_id', 'warehouses.id')
             ->where('warehouse_locations.status', '=', 1)
@@ -47,7 +54,7 @@ class WarehouseLocationsModel extends Model {
 
     /** Vị trí đang bật (id, kho, full_path, code) — cho select trên phiếu nhập */
     public function getActiveList(){
-        return $this->table($this->_table)
+        return $this->locKhoGara($this->table($this->_table), 'warehouse_id')
             ->select('`id`, `warehouse_id`, `code`, `full_path`, `level`')
             ->where('status', '=', 1)
             ->orderBy('warehouse_id', 'ASC')
@@ -56,7 +63,7 @@ class WarehouseLocationsModel extends Model {
 
     /** Có vị trí đang bật nào trong kho này không? (để biết có bắt buộc chọn) */
     public function countActiveInWarehouse($warehouseId){
-        $r = $this->table($this->_table)->select('COUNT(*) AS c')
+        $r = $this->locKhoGara($this->table($this->_table), 'warehouse_id')->select('COUNT(*) AS c')
                   ->where('warehouse_id', '=', (int) $warehouseId)
                   ->where('status', '=', 1)->first();
         return (int) ($r['c'] ?? 0);

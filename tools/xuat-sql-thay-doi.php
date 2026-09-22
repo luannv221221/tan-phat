@@ -26,6 +26,7 @@
  *   000077  gara độc lập — khách và xe: email đối tượng, cấu hình riêng gara, màn
  *           Tài khoản website, chuyển khách / xe cũ, "không trùng" theo gara
  *   000078  gara độc lập — bán hàng: số báo giá / hoá đơn / mã hàng không trùng theo gara
+ *   000079  gara độc lập — kho: mã kho, số phiếu nhập / xuất / kiểm kê / chuyển kho theo gara
  *
  * RIÊNG 000069 (Manager tự thêm nhân viên cho gara mình) nằm ở file KHÁC,
  * chạy SAU khi đẩy code:
@@ -75,10 +76,10 @@ $now = date('Y-m-d H:i:s');
    mất. Cấu trúc thì ngược lại — chỉ thêm bảng và cột, không đụng dữ liệu. */
 $chiCauTruc = in_array('--chi-cau-truc', $argv, true);
 
-/* --sau-khi-day-code: CHỈ xuất 000069 rồi dừng. Xem giải thích ở đầu file. */
+/* --sau-khi-day-code: CHỈ xuất 000069 + 000080 rồi dừng. Xem giải thích ở đầu file. */
 if (in_array('--sau-khi-day-code', $argv, true)){
     echo "-- =====================================================================\n";
-    echo "-- TÂN PHÁT — CHẠY SAU KHI ĐÃ ĐẨY CODE (migration 000069)\n";
+    echo "-- TÂN PHÁT — CHẠY SAU KHI ĐÃ ĐẨY CODE (migration 000069 + 000080)\n";
     echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php --sau-khi-day-code\n";
     echo "--\n";
     echo "-- Cho nhóm Manager tự thêm nhân viên cho gara của mình: quyền xem / thêm /\n";
@@ -88,6 +89,11 @@ if (in_array('--sau-khi-day-code', $argv, true)){
     echo "-- Code mới mới có chốt chặn: Manager chỉ cấp được nhóm thấp hơn mình, chỉ\n";
     echo "-- trong gara mình. Dán trước thì Manager vào màn Người dùng CŨ — không\n";
     echo "-- giới hạn gì — và tạo được tài khoản Admin.\n";
+    echo "--\n";
+    echo "-- 000080 (gara độc lập — khoá lại): garage_id bắt buộc ở mọi bảng riêng gara,\n";
+    echo "-- khoá ngoại tới gara thành RESTRICT, chủ gara tự quản lý kho + vị trí kho.\n";
+    echo "-- Dán trước khi có code mới thì form của model cũ (chưa tự ghi gara) sập,\n";
+    echo "-- và Manager vào form Kho CŨ (còn ô chọn gara) tạo được kho cho gara khác.\n";
     echo "--\n";
     echo "-- Chạy lại nhiều lần không sinh dòng trùng.\n";
     echo "-- =====================================================================\n\n";
@@ -101,33 +107,91 @@ if (in_array('--sau-khi-day-code', $argv, true)){
           ORDER BY p.`role`"
     )->fetchAll(PDO::FETCH_COLUMN);
 
-    if (empty($ds)){
-        echo "-- (may nay chua chay migration 000069 — chua co gi de xuat)\n";
-        exit;
-    }
-    foreach ($ds as $role){
+    $batch   = (int) $db->query("SELECT COALESCE(MAX(batch),0) FROM migrations")->fetchColumn();
+    $danhDau = function($mg) use ($batch, $now){
+        echo "\n-- Đánh dấu migration đã chạy (PHẢI có `ran_at`: NOT NULL, không mặc định)\n";
+        printf("INSERT INTO `migrations` (`migration`,`batch`,`ran_at`)\n"
+             . "  SELECT %s, %d, %s FROM DUAL\n"
+             . "  WHERE NOT EXISTS (SELECT 1 FROM `migrations` x WHERE x.`migration` = %s);\n",
+            q($mg), $batch, q($now), q($mg));
+    };
+    $quyen = function($link, $nhom, $role){
         printf("INSERT INTO `permissions` (`module_id`,`group_id`,`role`)\n"
              . "  SELECT m.`id`, g.`id`, %s\n"
              . "    FROM `modules` m JOIN `groups` g\n"
              . "   WHERE m.`link` = %s AND g.`name` = %s\n"
              . "     AND NOT EXISTS (SELECT 1 FROM (SELECT * FROM `permissions`) p\n"
              . "                      WHERE p.`module_id` = m.`id` AND p.`group_id` = g.`id` AND p.`role` = %s);\n",
-            q($role), q('users'), q('Manager'), q($role));
+            q($role), q($link), q($nhom), q($role));
+    };
+
+    echo "-- ---- 000069: Manager tu them nhan vien cho gara minh ----\n";
+    if (empty($ds)){
+        echo "-- (may nay chua chay migration 000069 — bo qua phan nay)\n";
+    } else {
+        foreach ($ds as $role) $quyen('users', 'Manager', $role);
+        $danhDau('2026_09_11_000069_manager_them_nhan_vien_gara');
     }
 
-    $batch = (int) $db->query("SELECT COALESCE(MAX(batch),0) FROM migrations")->fetchColumn();
-    $mg = '2026_09_11_000069_manager_them_nhan_vien_gara';
-    echo "\n-- Đánh dấu migration đã chạy (PHẢI có `ran_at`: NOT NULL, không mặc định)\n";
-    printf("INSERT INTO `migrations` (`migration`,`batch`,`ran_at`)\n"
-         . "  SELECT %s, %d, %s FROM DUAL\n"
-         . "  WHERE NOT EXISTS (SELECT 1 FROM `migrations` x WHERE x.`migration` = %s);\n",
-        q($mg), $batch, q($now), q($mg));
+    /* ---- 000080: gara độc lập — KHOÁ LẠI ----
+       Chạy sau khi code mới đã lên: code cũ còn model chưa tự ghi gara, cột
+       NOT NULL là form của model đó sập. */
+    $daChay80 = (int) $db->query("SELECT COUNT(*) FROM migrations WHERE migration = '2026_09_22_000080_khoa_lai_gara_doc_lap'")->fetchColumn();
+    echo "\n-- ---- 000080: gara doc lap — khoa lai (garage_id bat buoc, khoa ngoai RESTRICT) ----\n";
+    if (!$daChay80){
+        echo "-- (may nay chua chay migration 000080 — bo qua phan nay)\n";
+    } else {
+        $tongSql = "(SELECT g.`id` FROM `garages` g WHERE g.`is_master` = 1 ORDER BY g.`id` LIMIT 1)";
+        $bang80 = ['partners' => null, 'customer_groups' => null, 'vehicles' => null, 'receptions' => null,
+                   'quotations' => null, 'sales_invoices' => 'warehouse_id', 'warranty_requests' => null,
+                   'warranty_handovers' => null, 'warehouses' => null, 'goods_receipts' => 'warehouse_id',
+                   'goods_issues' => 'warehouse_id', 'stock_takes' => 'warehouse_id', 'warehouse_transfers' => 'from_warehouse_id'];
+        echo "-- 1. Gan not dong garage_id NULL (code cu tao trong luc cho)\n";
+        foreach ($bang80 as $b => $cotKho){
+            if ($cotKho !== null){
+                echo "UPDATE `$b` x JOIN `warehouses` w ON w.`id` = x.`$cotKho` SET x.`garage_id` = w.`garage_id`"
+                   . " WHERE x.`garage_id` IS NULL AND w.`garage_id` IS NOT NULL;\n";
+            }
+            echo "UPDATE `$b` SET `garage_id` = $tongSql WHERE `garage_id` IS NULL;\n";
+        }
+        echo "\n-- 2. Khoa ngoai SET NULL -> RESTRICT (bo roi them lai)\n";
+        foreach (['warehouses' => 'fk_wh_garage', 'users' => 'fk_user_garage', 'quotations' => 'fk_quote_garage',
+                  'sales_invoices' => 'fk_inv_garage', 'receptions' => 'fk_receptions_garage'] as $b => $fk){
+            $dem = "SELECT COUNT(*) FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE()"
+                 . " AND TABLE_NAME = '$b' AND CONSTRAINT_NAME = '$fk'";
+            printf("SET @%s = (SELECT IF((%s) = 0, 'SELECT 1', %s));\n"
+                 . "PREPARE st_%s FROM @%s; EXECUTE st_%s; DEALLOCATE PREPARE st_%s;\n",
+                'k80x_' . $b, $dem . " AND DELETE_RULE = 'SET NULL'", q("ALTER TABLE `$b` DROP FOREIGN KEY `$fk`"),
+                'k80x_' . $b, 'k80x_' . $b, 'k80x_' . $b, 'k80x_' . $b);
+            ddlNeuThieu('k80_' . $b, $dem,
+                "ALTER TABLE `$b` ADD CONSTRAINT `$fk` FOREIGN KEY (`garage_id`) REFERENCES `garages` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE");
+        }
+        /* MySQL 8 chặn MODIFY cột đứng trong khoá ngoại ON UPDATE CASCADE khi
+           FOREIGN_KEY_CHECKS = 1 ("Cannot change column ... used in a foreign key")
+           — tắt tạm trong lúc đổi. An toàn: bước 1 đã lấp hết NULL, bước này chỉ
+           đổi cho-phép-NULL, không đổi kiểu, không đụng dữ liệu. */
+        echo "-- 3. garage_id bat buoc (users giu NULL duoc: tai khoan chua gan gara)\n";
+        echo "SET @fk80_cu = @@FOREIGN_KEY_CHECKS;\nSET FOREIGN_KEY_CHECKS = 0;\n";
+        foreach (array_keys($bang80) as $b){
+            printf("SET @%s = (SELECT IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()"
+                 . " AND TABLE_NAME = '%s' AND COLUMN_NAME = 'garage_id' AND IS_NULLABLE = 'YES') = 0, 'SELECT 1', %s));\n"
+                 . "PREPARE st_%s FROM @%s; EXECUTE st_%s; DEALLOCATE PREPARE st_%s;\n",
+                'nn80_' . $b, $b, q("ALTER TABLE `$b` MODIFY `garage_id` INT NOT NULL"),
+                'nn80_' . $b, 'nn80_' . $b, 'nn80_' . $b, 'nn80_' . $b);
+        }
+        echo "SET FOREIGN_KEY_CHECKS = @fk80_cu;\n";
+        echo "\n-- 4. Chu gara (Manager) tu quan ly kho + vi tri kho cua gara minh\n";
+        foreach (['warehouses' => ['add', 'edit', 'delete'], 'warehouse-locations' => ['view', 'add', 'edit', 'delete']] as $link => $roles){
+            foreach ($roles as $role) $quyen($link, 'Manager', $role);
+        }
+        $danhDau('2026_09_22_000080_khoa_lai_gara_doc_lap');
+    }
     echo "\n-- Hết.\n";
     exit;
 }
 
 echo "-- =====================================================================\n";
-echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000078 (trừ 000069)\n";
+echo "-- TÂN PHÁT — thay đổi CSDL, tương đương migration 000059 → 000079 (trừ 000069)\n";
 echo "-- Sinh tự động lúc $now bằng tools/xuat-sql-thay-doi.php\n";
 echo "--\n";
 echo "-- Phần 1-3 chỉ sửa và thêm DỮ LIỆU.\n";
@@ -146,6 +210,7 @@ echo "--   đánh dấu màn chỉ Tân Phát, cột thông tin gara. Cột mớ
 echo "-- Phần 18 khách và xe theo gara: màn Tài khoản website, chuyển khách / xe cũ\n";
 echo "--   sang đối tượng / xe, số phiếu - biển số không trùng TRONG TỪNG GARA.\n";
 echo "-- Phần 19 bán hàng theo gara: số báo giá, số hoá đơn, mã hàng không trùng theo gara.\n";
+echo "-- Phần 20 kho theo gara: mã kho, số phiếu kho không trùng theo gara.\n";
 echo "-- Quyền Manager tự thêm nhân viên (000069) KHÔNG nằm ở đây — nó ở file\n";
 echo "-- deploy/sau-khi-day-code.sql, dán SAU khi đẩy code.\n";
 echo "-- Không có DROP nào. Chạy lại nhiều lần không sinh dòng trùng và không\n";
@@ -1103,11 +1168,17 @@ foreach ([
  * Số báo giá / số hoá đơn / mã hàng không trùng TRONG TỪNG GARA. Mã hàng kho
  * tổng (garage_id NULL) chỉ kiểm được bằng PHP — xem PartsModel::findByCode.
  * ------------------------------------------------------------------ */
-echo "\n-- 19. Gara doc lap — ban hang (000078): khong trung theo gara\n\n";
+echo "\n-- 19-20. Gara doc lap — ban hang (000078) + kho (000079): khong trung theo gara\n\n";
 foreach ([
     ['quotations',     'uq_quote_no',   'uq_quote_gara_no',   '`garage_id`, `quote_no`'],
     ['sales_invoices', 'uq_invoice_no', 'uq_invoice_gara_no', '`garage_id`, `invoice_no`'],
     ['parts',          'uq_parts_code', 'uq_parts_gara_code', '`garage_id`, `code`'],
+    // 20. Kho (000079): mã kho, số phiếu nhập / xuất / kiểm kê / chuyển kho
+    ['warehouses',          'uq_warehouses_code', 'uq_warehouses_gara_code', '`garage_id`, `code`'],
+    ['goods_receipts',      'uq_receipt_no',      'uq_receipt_gara_no',      '`garage_id`, `receipt_no`'],
+    ['goods_issues',        'uq_issue_no',        'uq_issue_gara_no',        '`garage_id`, `issue_no`'],
+    ['stock_takes',         'uq_take_no',         'uq_take_gara_no',         '`garage_id`, `take_no`'],
+    ['warehouse_transfers', 'uq_transfer_no',     'uq_transfer_gara_no',     '`garage_id`, `transfer_no`'],
 ] as $d){
     list($bang, $cu, $moi, $cotMoi) = $d;
     $coIdx = function($ten) use ($bang){
@@ -1153,6 +1224,7 @@ foreach ([
     '2026_09_22_000076_nen_gara_doc_lap',
     '2026_09_22_000077_khach_va_xe_theo_gara',
     '2026_09_22_000078_ban_hang_theo_gara',
+    '2026_09_22_000079_kho_theo_gara',
 ] as $mg){
     /* PHẢI có `ran_at`: cột đó NOT NULL và KHÔNG có giá trị mặc định, thiếu là
        MySQL báo lỗi 1364. Trên máy đã migrate thì mấy dòng này đã tồn tại nên

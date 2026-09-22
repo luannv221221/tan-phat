@@ -78,9 +78,11 @@ ok($P->demTatCa() === $tongBang, 'demTatCa() khop so dong that');
 
 /* --- Du lieu thu: mot khach, mot NCC, mot "Ca hai" --- */
 $pdo->exec("DELETE FROM partners WHERE code LIKE 'ZZL-%'");
-$them = $pdo->prepare("INSERT INTO partners (code,name,type,group_id,phone,tax_code,status,sort_order,create_at)
-                       VALUES (?,?,?,?,?,?,?,0,NOW())");
-$nhom = $pdo->query("SELECT id FROM customer_groups ORDER BY id LIMIT 1")->fetchColumn();
+// Gara độc lập: đối tượng phải thuộc một gara (garage_id NOT NULL) — ghi gara tổng
+$garaTongPl = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn();
+$them = $pdo->prepare("INSERT INTO partners (code,name,type,group_id,phone,tax_code,status,sort_order,garage_id,create_at)
+                       VALUES (?,?,?,?,?,?,?,0,$garaTongPl,NOW())");
+$nhom = $pdo->query("SELECT id FROM customer_groups WHERE garage_id = $garaTongPl ORDER BY id LIMIT 1")->fetchColumn();
 $them->execute(['ZZL-KH',   'ZZL Khach thu',    'customer', $nhom ?: null, '0911000001', 'ZZMST001', 1]);
 $them->execute(['ZZL-NCC',  'ZZL NCC thu',      'supplier', null,          '0911000002', 'ZZMST002', 1]);
 $them->execute(['ZZL-BOTH', 'ZZL Vua mua vua ban', 'both',  null,          '0911000003', 'ZZMST003', 1]);

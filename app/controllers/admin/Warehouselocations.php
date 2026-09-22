@@ -121,7 +121,10 @@ class Warehouselocations extends Controller {
     private function validate($selfId = 0){
         $f = $this->__request->getFields();
         $errors = [];
-        if (empty($f['warehouse_id'])) $errors['warehouse_id'] = 'Chọn kho';
+        // Kho phải là kho CỦA GARA NÀY (WarehousesModel lọc theo gara)
+        if (empty($f['warehouse_id']) || empty($this->__warehouse->getDetail((int) $f['warehouse_id']))){
+            $errors['warehouse_id'] = 'Chọn kho';
+        }
         if (empty(trim($f['name'] ?? ''))) $errors['name'] = 'Nhập tên vị trí';
         if (empty(trim($f['code'] ?? ''))) $errors['code'] = 'Nhập mã vị trí';
 

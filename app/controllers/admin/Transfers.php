@@ -39,7 +39,7 @@ class Transfers extends Controller {
     }
     private function formData(){
         $this->__data['content']['warehouses'] = $this->__warehouse->getActive();
-        $this->__data['content']['parts']      = $this->__part->getForSelect(true);
+        $this->__data['content']['parts']      = $this->__part->choGara(true);
     }
 
     public function index(){
@@ -228,6 +228,10 @@ class Transfers extends Controller {
         if ($fromW > 0 && $fromW === $toW) $errors['to_warehouse_id'] = 'Kho đích phải khác kho nguồn';
         if (empty($f['transfer_date'])) $errors['transfer_date'] = 'Chọn ngày';
         if (empty($this->buildLines())) $errors['lines'] = 'Phiếu phải có ít nhất 1 dòng hàng';
+        // Mặt hàng phải thuộc kho tổng hoặc danh mục riêng CỦA GARA NÀY
+        $ids  = array_values(array_unique(array_map('intval', array_column($this->buildLines(), 'part_id'))));
+        $lech = array_diff($ids, $this->__part->dungDuoc($ids));
+        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của gara — chọn lại dòng hàng';
         return $errors;
     }
 

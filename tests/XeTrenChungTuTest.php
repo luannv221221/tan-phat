@@ -171,6 +171,9 @@ foreach (['quotations', 'sales_invoices'] as $bang){
 
 require_once $goc . 'app/models/QuotationsModel.php';
 $Q = new QuotationsModel();
+/* Gara độc lập: chứng từ phải thuộc một gara (garage_id NOT NULL). Dòng lệnh
+   không có gara làm việc nên lớp Model không tự ghi — ép gara tổng. */
+\App\core\Model::epGara((int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn());
 
 /* Lưu đúng như controller làm: giữ nguyên văn + chuẩn hoá + km bỏ dấu chấm */
 $goVao  = '40g-474.89';

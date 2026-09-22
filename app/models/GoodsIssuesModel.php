@@ -13,6 +13,7 @@ class GoodsIssuesModel extends Model {
     protected $_table   = 'goods_issues';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_theoGara = true;   // RIÊNG từng gara; số phiếu đánh riêng trong mỗi gara
 
     public static $types = [
         'xuat_ban'  => 'Xuất bán (giá vốn)',
@@ -21,7 +22,7 @@ class GoodsIssuesModel extends Model {
     ];
 
     public function getLists($type = '', $from = '', $to = ''){
-        $q = $this->table($this->_table)
+        $q = $this->bangGara()
             ->select('`goods_issues`.*, `warehouses`.`name` AS warehouse_name, '
                    . '`partners`.`name` AS partner_full')
             ->joinOn('warehouses', 'goods_issues.warehouse_id', 'warehouses.id')
@@ -38,12 +39,12 @@ class GoodsIssuesModel extends Model {
     public function getDetail($id){ return $this->getFirst($id); }
 
     public function findByNo($no){
-        return $this->table($this->_table)->where('issue_no', '=', $no)->first();
+        return $this->bangGara()->where('issue_no', '=', $no)->first();
     }
 
     /** Sinh số phiếu kế tiếp PXK-000001 */
     public function nextNo(){
-        $row = $this->table($this->_table)
+        $row = $this->bangGara()
                     ->select('`issue_no`')
                     ->orderBy('id', 'DESC')->first();
         $n = 0;
