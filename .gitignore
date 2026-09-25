@@ -71,3 +71,7 @@ public/assets/uploads/categories/*
 # Nho tam danh sach tinh / phuong tai tu API ngoai (dia_gioi_*)
 storage/cache/*
 !storage/cache/.gitkeep
+
+# ... nhung anh ten test-*.jpg thi khong: do la rac cua cac lan chay thu
+# tools/tai-anh-san-pham.php, khong co ban ghi nao trong CSDL tro vao.
+public/assets/uploads/parts/test-*.jpg

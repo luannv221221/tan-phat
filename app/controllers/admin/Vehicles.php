@@ -190,6 +190,9 @@ class Vehicles extends Controller {
     public function models($brandId = 0){ $this->ra($this->__model->modelTheoHang($brandId)); }
     public function years($modelId = 0){  $this->ra($this->__model->namTheoModel($modelId)); }
 
+    /** Xe của một khách — cho ô chọn xe trên báo giá / hoá đơn / phiếu bảo hành */
+    public function xeTheoKhach($partnerId = 0){ $this->ra($this->__model->chonTheoChu($partnerId)); }
+
     // ===== Helper =====
 
     private function validate($id){

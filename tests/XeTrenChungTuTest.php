@@ -226,4 +226,87 @@ ok($r2['bien_so'] === null && $r2['so_km'] === null,
 $pdo->prepare("DELETE FROM `quotations` WHERE id IN (?, ?)")->execute([$id, $id2]);
 ok(empty($Q->getDetail($id)) && empty($Q->getDetail($id2)), 'Da don sach du lieu test');
 
+// ---------------------------------------------------------------------------
+section('O chon xe theo khach — mot khach nhieu xe');
+
+/* Một khách nhiều xe: gõ tay biển số là sai chính tả lúc nào không biết, và
+   chứng từ không gắn được vào xe nào. Chọn khách xong phải chọn được xe TRONG
+   DANH SÁCH XE CỦA KHÁCH ĐÓ. Số km thì KHÔNG điền hộ — số trên chứng từ là số
+   đọc trên đồng hồ lúc xe vào, chỉ nhắc xe đang ghi bao nhiêu. */
+
+require_once $goc . 'app/models/VehiclesModel.php';
+require_once $goc . 'app/models/PartnersModel.php';
+$XE = new VehiclesModel();
+$KH = new PartnersModel();
+
+$khId = (int) $KH->add(['code' => 'ZZ-XEK-' . time(), 'name' => 'ZZ Khach nhieu xe', 'type' => 'customer',
+                        'phone' => '0900000111', 'status' => 1, 'sort_order' => 0]);
+$xe1 = (int) $XE->add(['partner_id' => $khId, 'bien_so' => '30A-777.11', 'bien_so_chuan' => chuan_hoa_bien_so('30A-777.11'),
+                       'hang_xe' => 'Toyota', 'model_xe' => 'Vios', 'nam_sx' => 2019, 'so_km' => 41000, 'status' => 1]);
+$xe2 = (int) $XE->add(['partner_id' => $khId, 'bien_so' => '30A-777.22', 'bien_so_chuan' => chuan_hoa_bien_so('30A-777.22'),
+                       'hang_xe' => 'Kia', 'model_xe' => 'Morning', 'nam_sx' => 2021, 'so_km' => null, 'status' => 1]);
+$khTrong = (int) $KH->add(['code' => 'ZZ-XEK0-' . time(), 'name' => 'ZZ Khach chua khai xe', 'type' => 'customer',
+                           'phone' => '0900000222', 'status' => 1, 'sort_order' => 0]);
+
+$ds = $XE->chonTheoChu($khId);
+ok(count($ds) === 2, 'chonTheoChu() tra ve dung 2 xe cua khach', 'ra ' . count($ds) . ' dong');
+$bienSo = array_column($ds, 'c');
+ok(in_array('30A-777.11', $bienSo, true) && in_array('30A-777.22', $bienSo, true),
+   'Gia tri cua o chon la BIEN SO — lien_ket_xe() tra ra xe tu bien so',
+   json_encode($bienSo, JSON_UNESCAPED_UNICODE));
+$mot = null;
+foreach ($ds as $x) if ($x['c'] === '30A-777.11') $mot = $x;
+ok($mot !== null && strpos($mot['n'], '30A-777.11') === 0 && strpos($mot['n'], 'Toyota Vios 2019') !== false,
+   'Nhan hien ra co bien so + hang / model / nam', $mot ? $mot['n'] : 'khong thay');
+ok($mot !== null && $mot['km'] === 41000, 'Kem so km dang ghi de NHAC nguoi lap', $mot ? var_export($mot['km'], true) : '-');
+foreach ($ds as $x) if ($x['c'] === '30A-777.22') ok($x['km'] === null, 'Xe chua ghi km thi km = null, khong phai 0');
+
+ok($XE->chonTheoChu($khTrong) === [], 'Khach chua khai xe: tra ve rong (form quay ve o go tay)');
+ok($XE->chonTheoChu(0) === [], 'Khong chon khach: tra ve rong');
+
+/* Chặn theo gara: xe của gara khác không được lọt vào ô chọn */
+$garaKhac = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 0 ORDER BY id LIMIT 1")->fetchColumn();
+if ($garaKhac > 0){
+    $pdo->prepare("UPDATE `vehicles` SET `garage_id` = ? WHERE `id` = ?")->execute([$garaKhac, $xe2]);
+    ok(count($XE->chonTheoChu($khId)) === 1,
+       'Xe da chuyen sang gara khac thi khong con trong o chon',
+       'O chon phai loc theo gara nhu moi truy van xe khac');
+    $pdo->prepare("UPDATE `vehicles` SET `garage_id` = (SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1) WHERE `id` = ?")
+        ->execute([$xe2]);
+}
+
+/* Đường JSON phải có route, không thì ô chọn nạp về trang 404 */
+$rt = codeOnly($goc . 'routes/web.php');
+ok(strpos($rt, 'vehicles/xe-theo-khach') !== false, 'Co route JSON vehicles/xe-theo-khach');
+ok(strpos(codeOnly($goc . 'app/controllers/admin/Vehicles.php'), 'function xeTheoKhach') !== false,
+   'Controller co ham xeTheoKhach()');
+
+/* Sáu form phải có ô chọn, và CHỈ MỘT ô gửi biển số lên server */
+foreach (['quotations/add', 'quotations/edit', 'sales-invoices/add', 'sales-invoices/edit',
+          'warranty/add', 'warranty/edit'] as $v){
+    $src = file_get_contents($goc . 'app/views/admin/' . $v . '.php');
+    ok(strpos($src, 'data-xe-khach') !== false, "$v: co o chon xe theo khach");
+    ok(strpos($src, 'js-xe-list') !== false && strpos($src, 'js-xe-go') !== false, "$v: co ca o chon va o go tay");
+    ok(strpos($src, 'xe-cua-khach.js') !== false, "$v: co nap xe-cua-khach.js");
+    ok(substr_count($src, 'name="bien_so"') === 1,
+       "$v: CHI MOT o gui bien so len server",
+       'Hai o cung ten la gui hai gia tri, gia tri sau de mat gia tri truoc');
+    ok(strpos($src, 'js-xe-km') !== false, "$v: co cho nhac so km dang ghi cua xe");
+}
+
+$js = file_get_contents($goc . 'public/assets/js/xe-cua-khach.js');
+ok(strpos($js, 'reception_id') !== false,
+   'JS bo qua khi lap tu phieu tiep nhan — xe do phieu quyet dinh');
+ok(!preg_match('~\.name\s*=~', $js),
+   'JS KHONG gan name cho o chon — o go tay van la o duy nhat gui len');
+ok(strpos($js, 'oGo.value = oList.value') !== false,
+   'Chon xe thi dien bien so vao o gui len server');
+ok(!preg_match('~oKm\.value\s*=~', $js),
+   'JS KHONG dien ho so km — nguoi lap go so hien tai');
+
+// Dọn sạch
+$pdo->prepare("DELETE FROM `vehicles` WHERE id IN (?, ?)")->execute([$xe1, $xe2]);
+$pdo->prepare("DELETE FROM `partners` WHERE id IN (?, ?)")->execute([$khId, $khTrong]);
+ok(empty($XE->getDetail($xe1)) && empty($KH->getDetail($khId)), 'Da don sach khach / xe test');
+
 exit(summary());

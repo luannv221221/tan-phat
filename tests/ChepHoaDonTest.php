@@ -181,8 +181,12 @@ ok($co < (float) $dong2[0]['quantity'],
    'Khong nhan ra thi nguoi lap in phieu dua khach roi moi bi chan luc ghi so');
 
 /* --- Danh sách để chép: hoá đơn của CHÍNH khách được đẩy lên đầu --- */
+/* Khách phải thuộc ĐÚNG gara test đang làm việc (gara tổng): danhSachDeChep()
+   lọc theo gara, lấy khách của gara khác thì danh sách rỗng — đỏ oan. */
 $khachId = $pdo->query("SELECT customer_id FROM sales_invoices
-                         WHERE customer_id IS NOT NULL ORDER BY id DESC LIMIT 1")->fetchColumn();
+                         WHERE customer_id IS NOT NULL
+                           AND garage_id = (SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1)
+                         ORDER BY id DESC LIMIT 1")->fetchColumn();
 if (!empty($khachId)){
     $ds = $HD->danhSachDeChep((int) $khachId, 50);
     ok(!empty($ds), 'danhSachDeChep() tra ve danh sach');

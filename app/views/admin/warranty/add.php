@@ -90,22 +90,24 @@
                      thì gần như vô nghĩa, và khi khách quay lại, biển số mới là
                      thứ người ta đọc. Để trống được: bảo hành thiết bị cầm tay
                      thì không có xe nào. */ ?>
-            <div class="form-row">
+            <div class="form-row" data-xe-khach="partner_id" data-url="<?php echo _WEB_URL; ?>/admin/vehicles">
                 <div class="form-group col-md-4">
                     <label>Biển số xe</label>
-                    <input type="text" name="bien_so" class="form-control text-uppercase"
+                    <select class="form-control js-xe-list d-none"></select>
+                    <input type="text" name="bien_so" class="form-control text-uppercase js-xe-go"
                            placeholder="VD: 30A-123.45"
                            value="{{!empty($old['bien_so'])?$old['bien_so']:''}}"/>
-                    <small class="form-text text-muted">Bảo dưỡng xe thì chỉ cần biển số, không phải chọn sản phẩm.</small>
+                    <small class="form-text text-muted js-xe-nhac">Bảo dưỡng xe thì chỉ cần biển số, không phải chọn sản phẩm.</small>
                 </div>
                 <div class="form-group col-md-3">
                     <label>Số km</label>
                     <input type="text" name="so_km" class="form-control text-right"
                            placeholder="VD: 100.000"
                            value="{{!empty($old['so_km'])?$old['so_km']:''}}"/>
-                    <small class="form-text text-muted">Nhắc bảo trì theo km tính từ số này.</small>
+                    <small class="form-text text-muted js-xe-km">Nhắc bảo trì theo km tính từ số này.</small>
                 </div>
             </div>
+            <script src="{{asset('public/assets/js/xe-cua-khach.js')}}"></script>
             <div class="form-row">
                 <div class="form-group col-md-3">
                     <label>Ngày tiếp nhận <span class="text-danger">*</span></label>

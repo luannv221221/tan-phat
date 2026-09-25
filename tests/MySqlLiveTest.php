@@ -106,7 +106,11 @@ ok(!empty($g) && isset($g['group_id']),
 
 $um   = new UsersModel();
 $list = $um->getLists();
-ok(count($list) === 5, 'UsersModel::getLists() tra ve 5 user', 'so dong: ' . count($list));
+/* Đối chiếu với số đếm THẬT, không chốt cứng một con số: máy nào cũng có thể có
+   thêm tài khoản (vd. dữ liệu mẫu của gara) mà không phải là lỗi. */
+$soUser = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
+ok(count($list) === $soUser, 'UsersModel::getLists() tra ve du so user (' . $soUser . ')',
+   'so dong: ' . count($list) . ' / bang users: ' . $soUser);
 ok(isset($list[0]['group_name']), 'getLists() leftJoinOn(`groups`) lay duoc group_name',
    json_encode($list[0]));
 
@@ -127,8 +131,8 @@ ok(empty($evil2), 'Payload comment "--" KHONG dang nhap duoc');
 
 $evil3 = (new UsersModel())->getLists(['users.name' => "'; DROP TABLE users;--"]);
 ok(count($evil3) === 0, 'Payload DROP TABLE trong filter -> khong lot');
-$still = $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
-ok($still == 5, 'Bang users VAN CON (khong bi DROP)', "so user: $still");
+$still = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
+ok($still === $soUser && $still > 0, 'Bang users VAN CON (khong bi DROP)', "so user: $still / truoc do: $soUser");
 
 // ================================================================
 section('B4 — Luong nang cap md5 -> bcrypt tren MySQL THAT');

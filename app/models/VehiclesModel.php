@@ -96,6 +96,34 @@ class VehiclesModel extends Model {
     }
 
     /**
+     * Xe của một khách, gọn cho Ô CHỌN XE trên chứng từ (báo giá / hoá đơn /
+     * bảo hành): [['c' => biển số, 'n' => nhãn hiện ra, 'km' => km đang ghi]].
+     *
+     * Giá trị là BIỂN SỐ chứ không phải id: chứng từ vẫn lưu biển số, và
+     * `lien_ket_xe()` tự tra ra xe từ biển số — đổi sang id là phải sửa cả
+     * đường lưu của bốn loại chứng từ.
+     *
+     * `km` để người lập biết xe đang ghi bao nhiêu mà gõ số HIỆN TẠI, chứ
+     * không điền hộ: số km trên chứng từ là số đọc được lúc xe vào.
+     */
+    public function chonTheoChu($partnerId){
+        $ds = [];
+        foreach ((array) $this->theoChu($partnerId) as $r){
+            $ten = trim(implode(' ', array_filter([
+                !empty($r['hang_dm'])  ? $r['hang_dm']  : $r['hang_xe'],
+                !empty($r['model_dm']) ? $r['model_dm'] : $r['model_xe'],
+                !empty($r['nam_sx'])   ? $r['nam_sx']   : '',
+            ])));
+            $ds[] = [
+                'c'  => $r['bien_so'],
+                'n'  => $r['bien_so'] . ($ten !== '' ? ' — ' . $ten : ''),
+                'km' => $r['so_km'] !== null ? (int) $r['so_km'] : null,
+            ];
+        }
+        return $ds;
+    }
+
+    /**
      * Xe của NHIỀU khách một lần — [partner_id => [xe, ...]] cho danh sách khách.
      * Hỏi theo từng dòng thì 20 khách là 20 truy vấn thừa.
      */

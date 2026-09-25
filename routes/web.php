@@ -341,6 +341,8 @@ Route::group('admin', function(){
    // Danh muc xe cho o chon day chuyen hang -> model -> nam (JSON)
    Route::get("vehicles/models/(\d+)", "admin/vehicles/models/$1");
    Route::get("vehicles/years/(\d+)",  "admin/vehicles/years/$1");
+   // Xe cua mot khach, cho o chon xe tren bao gia / hoa don / phieu bao hanh (JSON)
+   Route::get("vehicles/xe-theo-khach/(\d+)", "admin/vehicles/xeTheoKhach/$1");
    // Phieu tiep nhan: doi trang thai
    Route::get("receptions/set-status/(\d+)", "admin/receptions/setStatus/$1");
 

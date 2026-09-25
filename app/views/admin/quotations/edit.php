@@ -117,18 +117,22 @@ $tabs = [
         </div>
 
         <?php /* XE CỦA PHIẾU — xem chú thích ở add.php */ ?>
-        <div class="form-row">
+        <div class="form-row" data-xe-khach="customer_id" data-url="<?php echo _WEB_URL; ?>/admin/vehicles">
             <div class="form-group col-md-4 mb-0">
                 <label>Biển số xe</label>
-                <input type="text" name="bien_so" class="form-control text-uppercase"
+                <select class="form-control js-xe-list d-none"></select>
+                <input type="text" name="bien_so" class="form-control text-uppercase js-xe-go"
                        placeholder="VD: 40G-474.89" value="{{$sel('bien_so')}}"/>
+                <small class="form-text text-muted js-xe-nhac">Gõ kiểu nào cũng được — hệ thống tự chuẩn hoá để tra cứu.</small>
             </div>
             <div class="form-group col-md-3 mb-0">
                 <label>Số km vào</label>
                 <input type="text" name="so_km" class="form-control text-right"
                        placeholder="VD: 100.000" value="{{$sel('so_km')}}"/>
+                <small class="form-text text-muted js-xe-km">Gõ số km đọc trên đồng hồ lúc xe vào.</small>
             </div>
         </div>
+        <script src="{{asset('public/assets/js/xe-cua-khach.js')}}"></script>
     </div></div>
 
     <div class="card card-outline card-info">
