@@ -322,6 +322,21 @@ Route::group('admin', function(){
    // Báo cáo bán hàng (chỉ xem)
    Route::get('bao-cao-ban-hang', 'admin/salesreport');
 
+   /* =========================================================
+    * KẾ TOÁN — PHIẾU THU / PHIẾU CHI
+    *
+    * Mới dựng CHỖ ĐỨNG: hai màn hình đã khai trong bảng `modules`
+    * (migration 000082) nên hiện được trên menu trái, nhưng chưa có
+    * nghiệp vụ — vào thì ra trang "đang xây dựng".
+    *
+    * Phải đăng ký route thật chứ không bỏ trống: Route::is() trả TRUE
+    * cho đường dẫn chưa khai (không có route thì không có middleware để
+    * hỏi), nên bỏ trống là nút hiện ra cho MỌI tài khoản, kể cả nhóm
+    * chưa được cấp quyền. Có route thì RoleMiddleware mới gác được.
+    * ========================================================= */
+   Route::get('phieu-thu', 'admin/phieuthu');
+   Route::get('phieu-chi', 'admin/phieuchi');
+
    /* THEM NHANH MOT DONG DANH MUC — nut + canh moi o chon tren moi man.
       Mot duong dung chung; controller tu kiem quyen THEM o dung man danh muc
       tuong ung, nen nut nay khong thanh duong vong qua phan quyen. */

@@ -382,6 +382,10 @@ $manRiengGara = [
     'sales-invoices' => 3, 'stock-takes' => 4, 'the-kho' => 4, 'ton-kho' => 4, 'ton-kho-lau' => 4,
     'transfers' => 4, 'users' => 5, 'vehicles' => 2, 'warehouse-locations' => 4, 'warehouses' => 4,
     'warranty' => 2,
+    /* Hai màn Kế toán mới dựng CHỖ ĐỨNG (migration 000082): chưa có bảng số
+       liệu riêng nên chưa có gì mà rò. Số 0 = CHƯA phủ test dò rò rỉ; dựng
+       nghiệp vụ thật thì đổi sang bước tương ứng và viết test cách ly. */
+    'phieu-thu' => 0, 'phieu-chi' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);

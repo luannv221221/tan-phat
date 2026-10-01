@@ -51,6 +51,7 @@ $tests = [
     'CachLyGaraTest.php'          => 'HE THONG — gara doc lap: cach ly du lieu giua cac gara',
     'ChiChonKhongGoTest.php'      => 'HE THONG — chi duoc chon tu danh muc, khong go tay',
     'ThemNhanhTest.php'           => 'HE THONG — nut + canh o chon: them nhanh mot dong danh muc',
+    'MenuKeToanTest.php'          => 'KE TOAN — nhom Phieu thu / Phieu chi tren menu admin',
 ];
 
 $php      = PHP_BINARY;

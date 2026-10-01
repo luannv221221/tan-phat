@@ -35,6 +35,10 @@ $isActive = function ($link) use ($currentUrl) {
 $menuGroups = [
     // --- Khu 1: việc hằng ngày ở quầy ---
     'Bán hàng'           => ['quotations', 'sales-invoices', 'orders', 'partners', 'bao-cao-ban-hang'],
+    // Kế toán đứng NGAY SAU Bán hàng: phiếu thu sinh ra từ hoá đơn bán,
+    // phiếu chi từ phiếu nhập — tiền vào tiền ra là bước kế tiếp của việc
+    // bán hàng, chưa phải một khu quản trị riêng.
+    'Kế toán'            => ['phieu-thu', 'phieu-chi'],
     'Kho'                => ['goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
     // `garage-catalog` đứng ngay sau `services`: nó là danh mục hàng hoá nhìn
     // từ phía một gara, nên thuộc nhóm Hàng hoá chứ không phải nhóm Hệ thống.
@@ -56,6 +60,7 @@ $menuGroups = [
 
 $groupIcons = [
     'Bán hàng'           => 'shopping-cart',
+    'Kế toán'            => 'receipt',
     'Kho'                => 'warehouse',
     'Hàng hoá'           => 'cog',
     'Danh mục xe'        => 'car',
@@ -81,9 +86,13 @@ if (!empty($listModules)) {
 }
 
 // KHÔNG có nhóm "Khác". Module nào không nằm trong $menuGroups thì không lên menu.
-// Hiện đó là 9 module kế toán (accounts, vouchers, journal, so-cai, ...) — đã bỏ
-// khỏi giao diện từ commit 12b18ac. Bảng `modules` và quyền vẫn giữ nguyên, nên
-// muốn dùng lại chỉ cần thêm link vào $menuGroups ở trên.
+// Chiều ngược lại cũng đúng: tên có trong $menuGroups mà bảng `modules` không có
+// dòng tương ứng thì nút vẫn không mọc ra — phải khai module bằng migration.
+//
+// Phân hệ kế toán cũ (accounts, vouchers, journal, so-cai...) đã bị gỡ HẲN: mã
+// nguồn từ commit 12b18ac, còn 9 bảng + 13 dòng `modules` + 40 dòng quyền thì từ
+// migration 000048. Nhóm "Kế toán" ở trên là làm LẠI TỪ ĐẦU (migration 000082),
+// hiện mới có chỗ đứng trên menu, chưa có nghiệp vụ.
 ?>
 <aside class="adm-sidebar">
 
