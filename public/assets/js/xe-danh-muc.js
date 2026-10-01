@@ -82,6 +82,10 @@
         for (var i = 0; i < ds.length; i++) khoiTao(ds[i]);
     }
 
+    /* Hộp "thêm xe nhanh" dựng ô chọn sau khi trang đã tải, nên phải gọi lại
+       được khởi tạo cho đúng cụm ô đó. */
+    window.XeDanhMuc = { khoiTao: khoiTao };
+
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', chay);
     else chay();
 })();

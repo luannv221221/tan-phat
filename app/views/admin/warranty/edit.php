@@ -91,22 +91,13 @@ $__laBaoTri = ($loai === 'bao_tri');
     <div class="card"><div class="card-body">
         <div class="form-row">
             <div class="form-group col-md-4">
-                <label>Đối tượng (khách)</label>
+                <label>Khách hàng <span class="text-danger">*</span></label>
                 <select name="partner_id" class="form-control js-search" data-placeholder="Gõ tên hoặc mã để tìm...">
-                    <option value="">— Chọn / khách lẻ —</option>
+                    <option value="">— Chọn khách —</option>
                     @foreach ($partners as $pn)
                     <option value="{{$pn['id']}}" {{$v('partner_id')==$pn['id']?'selected':''}}>{{$pn['code'].' - '.$pn['name']}}</option>
                     @endforeach
                 </select>
-            </div>
-            <div class="form-group col-md-4">
-                <label>Tên khách (nếu lẻ)</label>
-                <input type="text" name="customer_name" class="form-control" value="{{$v('customer_name')}}"/>
-                {!! !empty($errors['customer_name'])?'<small class="text-danger">'.e($errors['customer_name']).'</small>':false !!}
-            </div>
-            <div class="form-group col-md-4">
-                <label>Điện thoại</label>
-                <input type="tel" name="phone" class="form-control" value="{{$v('phone')}}"/>
             </div>
         </div>
         <div class="form-row">
@@ -120,11 +111,6 @@ $__laBaoTri = ($loai === 'bao_tri');
                 </select>
             </div>
             <div class="form-group col-md-4">
-                <label>Tên thiết bị (nhập tay)</label>
-                <input type="text" name="product_name" class="form-control" value="{{$v('product_name')}}"/>
-                {!! !empty($errors['product_name'])?'<small class="text-danger">'.e($errors['product_name']).'</small>':false !!}
-            </div>
-            <div class="form-group col-md-4">
                 <label>Số serial</label>
                 <input type="text" name="serial_no" class="form-control" value="{{$v('serial_no')}}"/>
                 <small class="form-text text-muted">Serial của phụ tùng, khác biển số xe bên dưới.</small>
@@ -135,7 +121,13 @@ $__laBaoTri = ($loai === 'bao_tri');
         <div class="form-row" data-xe-khach="partner_id" data-url="<?php echo _WEB_URL; ?>/admin/vehicles">
             <div class="form-group col-md-4">
                 <label>Biển số xe</label>
-                <select class="form-control js-xe-list d-none"></select>
+                <div class="input-group js-xe-cum d-none">
+                    <select class="form-control js-xe-list"></select>
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-outline-secondary js-xe-them d-none"
+                                title="Khai xe mới cho khách này"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
                 <input type="text" name="bien_so" class="form-control text-uppercase js-xe-go"
                        placeholder="VD: 30A-123.45" value="{{$v('bien_so')}}"/>
                 <small class="form-text text-muted js-xe-nhac">Bảo dưỡng xe thì chỉ cần biển số, không phải chọn sản phẩm.</small>
@@ -147,7 +139,9 @@ $__laBaoTri = ($loai === 'bao_tri');
                 <small class="form-text text-muted js-xe-km">Gõ số km đọc trên đồng hồ lúc xe vào.</small>
             </div>
         </div>
-        <script src="{{asset('public/assets/js/xe-cua-khach.js')}}"></script>
+        <script src="{{asset('public/assets/js/xe-danh-muc.js')}}"></script>
+            <script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>
+            <script src="{{asset('public/assets/js/xe-cua-khach.js')}}"></script>
         <div class="form-row">
             <div class="form-group col-md-3">
                 <label>Ngày tiếp nhận <span class="text-danger">*</span></label>
@@ -160,7 +154,14 @@ $__laBaoTri = ($loai === 'bao_tri');
             </div>
             <div class="form-group col-md-3">
                 <label>Kỹ thuật viên</label>
-                <input type="text" name="technician" class="form-control" value="{{$v('technician')}}"/>
+                <select name="technician_id" class="form-control">
+                        <option value="">— Chọn nhân viên —</option>
+                        @if (!empty($ktvDs))
+                        @foreach ($ktvDs as $u)
+                        <option value="{{$u['id']}}" {{(int)$v('technician_id')===(int)$u['id']?'selected':''}}>{{$u['name']}}</option>
+                        @endforeach
+                        @endif
+                    </select>
             </div>
             <div class="form-group col-md-3">
                 <label>Phí (₫)</label>

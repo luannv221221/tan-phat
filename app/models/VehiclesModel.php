@@ -112,7 +112,8 @@ class VehiclesModel extends Model {
             $ten = trim(implode(' ', array_filter([
                 !empty($r['hang_dm'])  ? $r['hang_dm']  : $r['hang_xe'],
                 !empty($r['model_dm']) ? $r['model_dm'] : $r['model_xe'],
-                !empty($r['nam_sx'])   ? $r['nam_sx']   : '',
+                // Năm nay nằm ở danh mục; `nam_sx` chỉ còn ở xe cũ chưa dồn
+                !empty($r['nam_dm'])   ? $r['nam_dm']   : (!empty($r['nam_sx']) ? $r['nam_sx'] : ''),
             ])));
             $ds[] = [
                 'c'  => $r['bien_so'],
@@ -247,6 +248,102 @@ class VehiclesModel extends Model {
         $r = $this->table('car_years')->select('`id`')
             ->where('id', '=', $yearId)->where('model_id', '=', $modelId)->first();
         return !empty($r);
+    }
+
+    /** Màu xe đang dùng, cho ô chọn */
+    public function mauDanhMuc(){
+        return (array) $this->table('car_colors')->select('`id`, `name`')
+            ->where('status', '=', 1)->orderBy('sort_order', 'ASC')->orderBy('name', 'ASC')->get();
+    }
+
+    public function mauCoThat($colorId){
+        $colorId = (int) $colorId;
+        if ($colorId <= 0) return true;
+        return !empty($this->table('car_colors')->select('`id`')->where('id', '=', $colorId)->first());
+    }
+
+    /* ===== Thêm nhanh vào danh mục xe ===== */
+
+    /**
+     * Thêm một dòng vào danh mục xe — trùng thì DÙNG LẠI dòng cũ.
+     *
+     * Danh mục xe dùng chung cho mọi gara, mà gara nào cũng được thêm. Nếu cứ
+     * thêm thẳng thì gara này gõ "Mitsubishi", gara kia gõ "MITSUBISHI", danh
+     * mục chung có hai dòng cho một hãng — đúng cái loạn mà ô chọn sinh ra để
+     * tránh. Nên đối chiếu bằng SLUG: bỏ dấu, thường hoá, bỏ khoảng trắng thừa;
+     * "Mitsubishi", "MITSUBISHI", " mitsubishi " đều ra `mitsubishi` và về
+     * chung một dòng.
+     *
+     * Trả ['c' => id, 'n' => tên, 'trung' => true nếu dùng lại dòng có sẵn].
+     */
+    public function themDanhMuc($loai, $ten, $cha = 0){
+        $ten = trim(preg_replace('/\s+/u', ' ', (string) $ten));
+        $cha = (int) $cha;
+        if ($ten === '') return null;
+
+        if ($loai === 'nam') return $this->themNam($cha, $ten);
+
+        $bang = ['hang' => 'car_brands', 'model' => 'car_models', 'mau' => 'car_colors'];
+        if (!isset($bang[$loai])) return null;
+        $bang = $bang[$loai];
+
+        if ($loai === 'model' && $cha <= 0) return null;
+
+        $slug = slugify($ten);
+        if ($slug === '') return null;
+
+        // Trùng thì dùng lại — kể cả dòng đang tắt, để không sinh bản sao
+        $q = $this->table($bang)->select('`id`, `name`')->where('slug', '=', $slug);
+        if ($loai === 'model') $q = $this->table($bang)->select('`id`, `name`')
+            ->where('slug', '=', $slug)->where('brand_id', '=', $cha);
+        $co = $q->first();
+        if (!empty($co)) return ['c' => (int) $co['id'], 'n' => $co['name'], 'trung' => true];
+
+        /* Slug duy nhất trong bảng: hai hãng cùng có model "CX-5" thì dòng sau
+           phải mang slug khác, nếu không INSERT đổ vì khoá duy nhất. */
+        if ($loai === 'model'
+            && !empty($this->table($bang)->select('`id`')->where('slug', '=', $slug)->first())){
+            $slug .= '-' . $cha;
+        }
+
+        $dat = ['name' => $ten, 'slug' => $slug, 'status' => 1, 'create_at' => date('Y-m-d H:i:s')];
+        if ($loai === 'model') $dat['brand_id'] = $cha;
+
+        /* insert() thẳng, KHÔNG addNew(): danh mục xe dùng chung toàn hệ
+           thống, không có cột garage_id để addNew() gắn vào. */
+        $this->insert($bang, $dat);
+
+        return ['c' => (int) $this->lastId(), 'n' => $ten, 'trung' => false];
+    }
+
+    /**
+     * Thêm một năm cho model. Năm nằm trong mốc đã có thì dùng lại mốc đó —
+     * mốc năm ở đây là khoảng (2018–2022), không phải từng năm rời.
+     */
+    private function themNam($modelId, $nam){
+        $modelId = (int) $modelId;
+        $nam     = (int) preg_replace('/[^\d]/', '', (string) $nam);
+        if ($modelId <= 0 || $nam < 1950 || $nam > ((int) date('Y') + 1)) return null;
+
+        $rows = (array) $this->table('car_years')->select('`id`, `name`, `year_from`, `year_to`')
+            ->where('model_id', '=', $modelId)->get();
+        foreach ($rows as $r){
+            $tu  = (int) $r['year_from'];
+            $den = (int) ($r['year_to'] ?: $r['year_from']);
+            if ($nam >= $tu && $nam <= $den)
+                return ['c' => (int) $r['id'], 'n' => $r['name'], 'trung' => true];
+        }
+
+        $this->insert('car_years', [
+            'model_id'  => $modelId,
+            'year_from' => $nam,
+            'year_to'   => $nam,
+            'name'      => (string) $nam,
+            'status'    => 1,
+            'create_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return ['c' => (int) $this->lastId(), 'n' => (string) $nam, 'trung' => false];
     }
 
     /**

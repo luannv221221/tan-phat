@@ -194,7 +194,13 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
                 <?php /* XE CỦA PHIẾU — xem chú thích ở add.php */ ?>
                 <div class="form-group col-md-4">
                     <label>Biển số xe</label>
-                    <select class="form-control js-xe-list d-none"></select>
+                    <div class="input-group js-xe-cum d-none">
+                        <select class="form-control js-xe-list"></select>
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-outline-secondary js-xe-them d-none"
+                                    title="Khai xe mới cho khách này"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
                     <input type="text" name="bien_so" class="form-control text-uppercase js-xe-go"
                            placeholder="VD: 40G-474.89" value="{{$sel('bien_so')}}"/>
                     <small class="form-text text-muted js-xe-nhac">Gõ kiểu nào cũng được — hệ thống tự chuẩn hoá để tra cứu.</small>
@@ -206,6 +212,8 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
                     <small class="form-text text-muted js-xe-km">Gõ số km đọc trên đồng hồ lúc xe vào.</small>
                 </div>
             </div>
+            <script src="{{asset('public/assets/js/xe-danh-muc.js')}}"></script>
+            <script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>
             <script src="{{asset('public/assets/js/xe-cua-khach.js')}}"></script>
         </div></div>
 

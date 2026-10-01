@@ -322,6 +322,11 @@ Route::group('admin', function(){
    // Báo cáo bán hàng (chỉ xem)
    Route::get('bao-cao-ban-hang', 'admin/salesreport');
 
+   /* THEM NHANH MOT DONG DANH MUC — nut + canh moi o chon tren moi man.
+      Mot duong dung chung; controller tu kiem quyen THEM o dung man danh muc
+      tuong ung, nen nut nay khong thanh duong vong qua phan quyen. */
+   Route::post("them-nhanh/danh-muc", "admin/themnhanh/danhMuc");
+
    /* Tỉnh / phường cho các ô chọn địa chỉ. Server gọi API ngoài rồi nhớ tạm;
       không có module `dia-gioi` trong bảng modules nên chỉ cần đăng nhập. */
    Route::get("dia-gioi/tinh",     "admin/diagioi/tinh");
@@ -341,8 +346,13 @@ Route::group('admin', function(){
    // Danh muc xe cho o chon day chuyen hang -> model -> nam (JSON)
    Route::get("vehicles/models/(\d+)", "admin/vehicles/models/$1");
    Route::get("vehicles/years/(\d+)",  "admin/vehicles/years/$1");
+   Route::get("vehicles/hang",         "admin/vehicles/hang");
+   Route::get("vehicles/mau",          "admin/vehicles/mau");
    // Xe cua mot khach, cho o chon xe tren bao gia / hoa don / phieu bao hanh (JSON)
    Route::get("vehicles/xe-theo-khach/(\d+)", "admin/vehicles/xeTheoKhach/$1");
+   /* Them nhanh ngay tren form: ca chiec xe cho khach dang chon.
+      POST vi co ghi du lieu. */
+   Route::post("vehicles/them-nhanh",    "admin/vehicles/themXeNhanh");
    // Phieu tiep nhan: doi trang thai
    Route::get("receptions/set-status/(\d+)", "admin/receptions/setStatus/$1");
 

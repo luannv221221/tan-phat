@@ -14,14 +14,17 @@
 
                     <div class="form-group">
                         <label>Hãng xe <span class="text-danger">*</span></label>
-                        <select name="brand_id" class="form-control">
-                            <option value="">— Chọn hãng —</option>
-                            @if (!empty($brands))
-                                @foreach ($brands as $b)
-                                <option value="{{$b['id']}}" {{(!empty($old['brand_id']) && $old['brand_id']==$b['id'])?'selected':''}}>{{$b['name']}}</option>
-                                @endforeach
-                            @endif
-                        </select>
+                        <div class="input-group">
+                            <select name="brand_id" class="form-control">
+                                <option value="">— Chọn hãng —</option>
+                                @if (!empty($brands))
+                                    @foreach ($brands as $b)
+                                    <option value="{{$b['id']}}" {{(!empty($old['brand_id']) && $old['brand_id']==$b['id'])?'selected':''}}>{{$b['name']}}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <div class="input-group-append">{!! nut_them_nhanh('hang', 'brand_id', ['nhan' => 'hãng xe', 'vd' => 'VD: Mitsubishi']) !!}</div>
+                        </div>
                         {!! !empty($errors['brand_id'])?'<small class="text-danger">'.e($errors['brand_id']).'</small>':false !!}
                     </div>
 
@@ -40,14 +43,17 @@
 
                     <div class="form-group">
                         <label>Kiểu dáng (dòng xe)</label>
-                        <select name="body_type_id" class="form-control">
-                            <option value="">— Không xác định —</option>
-                            @if (!empty($bodyTypes))
-                                @foreach ($bodyTypes as $bt)
-                                <option value="{{$bt['id']}}" {{(!empty($old['body_type_id']) && $old['body_type_id']==$bt['id'])?'selected':''}}>{{$bt['name']}}</option>
-                                @endforeach
-                            @endif
-                        </select>
+                        <div class="input-group">
+                            <select name="body_type_id" class="form-control">
+                                <option value="">— Không xác định —</option>
+                                @if (!empty($bodyTypes))
+                                    @foreach ($bodyTypes as $bt)
+                                    <option value="{{$bt['id']}}" {{(!empty($old['body_type_id']) && $old['body_type_id']==$bt['id'])?'selected':''}}>{{$bt['name']}}</option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <div class="input-group-append">{!! nut_them_nhanh('car-body', 'body_type_id', ['nhan' => 'kiểu dáng', 'vd' => 'VD: Bán tải']) !!}</div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -72,3 +78,4 @@
         </div>
     </div>
 </div>
+<script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>

@@ -1069,3 +1069,49 @@ function lien_ket_xe($f){
     }
     return $ra;
 }
+/**
+ * NÚT + CẠNH Ô CHỌN — thêm nhanh một dòng danh mục ngay trên form.
+ *
+ * Ô chọn nào cũng gặp cùng chỗ tắc: danh mục không bao giờ đủ. Người dùng đang
+ * lập phiếu, gặp một đơn vị tính chưa có, mà phải bỏ dở sang màn Danh mục rồi
+ * quay lại làm từ đầu. Nút này thêm tại chỗ rồi chọn luôn.
+ *
+ * Trả về HTML của nút. Đặt trong `.input-group-append` cạnh ô chọn, CÙNG form:
+ *
+ *   <div class="input-group">
+ *       <select name="unit_id" class="form-control">…</select>
+ *       <div class="input-group-append">
+ *           {!! nut_them_nhanh('part-unit', 'unit_id', ['nhan' => 'đơn vị tính', 'vd' => 'VD: Cái']) !!}
+ *       </div>
+ *   </div>
+ *
+ * Nhớ nạp public/assets/js/them-nhanh.js trên view đó.
+ *
+ * $loai  — khớp DanhMucNhanhModel::$loai, hoặc hang / model / nam / mau (danh
+ *          mục xe). Máy chủ có danh sách trắng và tự kiểm quyền THÊM.
+ * $o     — name của ô chọn sẽ được điền.
+ * $tuy   — nhan, vd, cha (name ô chọn cha), nhan_cha, cha_bat_buoc, day
+ *          (ô này là đầu một chuỗi: thêm xong ô sau phải nạp lại).
+ */
+function nut_them_nhanh($loai, $o, array $tuy = []){
+    $nhan = isset($tuy['nhan']) ? $tuy['nhan'] : 'dòng mới';
+    $at   = [
+        'type'            => 'button',
+        'class'           => 'btn btn-outline-secondary',
+        'title'           => 'Thêm ' . $nhan . ' vào danh mục',
+        'data-them-nhanh' => $loai,
+        'data-o'          => $o,
+        'data-nhan'       => $nhan,
+        'data-url'        => _WEB_URL . '/admin/them-nhanh/danh-muc',
+    ];
+    if (!empty($tuy['vd']))           $at['data-vd']            = $tuy['vd'];
+    if (!empty($tuy['cha']))          $at['data-cha']           = $tuy['cha'];
+    if (!empty($tuy['nhan_cha']))     $at['data-nhan-cha']      = $tuy['nhan_cha'];
+    if (!empty($tuy['cha_bat_buoc'])) $at['data-cha-bat-buoc']  = '1';
+    if (!empty($tuy['day']))          $at['data-day']           = '1';
+
+    $chuoi = '';
+    foreach ($at as $k => $v) $chuoi .= ' ' . $k . '="' . htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8') . '"';
+
+    return '<button' . $chuoi . '><i class="fas fa-plus"></i></button>';
+}

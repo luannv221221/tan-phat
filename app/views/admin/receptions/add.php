@@ -68,7 +68,7 @@ $tien = function($x){ return number_format((float) $x, 0, ',', '.'); };
                     {!! !empty($errors['km_vao'])?'<small class="text-danger">'.e($errors['km_vao']).'</small>':false !!}
                     <small class="form-text text-muted">Số trên đồng hồ lúc xe vào.</small>
                 </div>
-                <div class="form-group col-md-3">
+                <div class="form-group col-md-6">
                     <label>Cố vấn dịch vụ</label>
                     <select name="co_van_id" class="form-control">
                         <option value="">— Chọn nhân viên —</option>
@@ -79,11 +79,7 @@ $tien = function($x){ return number_format((float) $x, 0, ',', '.'); };
                         @endif
                     </select>
                     {!! !empty($errors['co_van_id'])?'<small class="text-danger">'.e($errors['co_van_id']).'</small>':false !!}
-                </div>
-                <div class="form-group col-md-3">
-                    <label>Hoặc gõ tên cố vấn</label>
-                    <input type="text" name="co_van" class="form-control" value="{{$v('co_van')}}"/>
-                    <small class="form-text text-muted">Chỉ dùng khi người đó chưa có tài khoản.</small>
+                    <small class="form-text text-muted">Chọn từ nhân viên của gara — người chưa có tài khoản thì thêm ở màn Người dùng.</small>
                 </div>
             </div>
 

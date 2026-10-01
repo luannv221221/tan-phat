@@ -43,6 +43,7 @@ class Vehicles extends Controller {
         $c = &$this->__data['content'];
         $c['partners'] = $this->__partner->getLists(['type' => 'customer', 'status' => '1']);
         $c['hangDs']   = $this->__model->hangDanhMuc();
+        $c['mauDs']    = $this->__model->mauDanhMuc();
     }
 
     public function index(){
@@ -193,6 +194,52 @@ class Vehicles extends Controller {
     /** Xe của một khách — cho ô chọn xe trên báo giá / hoá đơn / phiếu bảo hành */
     public function xeTheoKhach($partnerId = 0){ $this->ra($this->__model->chonTheoChu($partnerId)); }
 
+    /** Hãng xe trong danh mục (JSON) — cho ô chọn ở hộp thêm xe nhanh */
+    public function hang(){
+        $ds = [];
+        foreach ((array) $this->__model->hangDanhMuc() as $h) $ds[] = ['c' => (int) $h['id'], 'n' => $h['name']];
+        $this->ra($ds);
+    }
+
+    /** Màu xe trong danh mục (JSON) — cho ô chọn màu ở form thêm xe nhanh */
+    public function mau(){
+        $ds = [];
+        foreach ($this->__model->mauDanhMuc() as $m) $ds[] = ['c' => (int) $m['id'], 'n' => $m['name']];
+        $this->ra($ds);
+    }
+
+    /**
+     * Thêm nhanh một chiếc xe cho khách, gọi từ nút + cạnh ô chọn xe trên báo
+     * giá / hoá đơn / phiếu bảo hành.
+     *
+     * Trả về đúng dạng mà ô chọn xe đang dùng, để thêm xong là chọn được ngay
+     * mà không phải tải lại trang và mất những gì đang gõ dở.
+     */
+    public function themXeNhanh(){
+        $f         = $this->__request->getFields();
+        $partnerId = !empty($f['partner_id']) ? (int) $f['partner_id'] : 0;
+        $bienSo    = isset($f['bien_so']) ? trim((string) $f['bien_so']) : '';
+
+        if ($partnerId <= 0 || empty($this->__partner->getDetail($partnerId))){
+            $this->ra(['ok' => false, 'loi' => 'Chọn khách hàng trước']);
+        }
+
+        $errors = $this->validate(null);
+        if (!empty($errors)){
+            $this->ra(['ok' => false, 'loi' => reset($errors)]);
+        }
+
+        $dat = $this->buildData();
+        $dat['partner_id'] = $partnerId;          // xe thêm từ chứng từ luôn thuộc khách đang chọn
+        $this->__model->add($dat);
+
+        /* Trả về đúng dạng của chonTheoChu(): giá trị là BIỂN SỐ, không phải
+           id — chứng từ lưu biển số. Lấy lại cả danh sách để ô chọn dựng lại
+           nguyên vẹn, xe mới nằm đúng chỗ của nó. */
+        $this->ra(['ok' => true, 'bien_so' => $bienSo,
+                   'ds'  => $this->__model->chonTheoChu($partnerId)]);
+    }
+
     // ===== Helper =====
 
     private function validate($id){
@@ -220,24 +267,30 @@ class Vehicles extends Controller {
             }
         }
 
-        // Model phải thuộc hãng, năm phải thuộc model — kiểm ở server
+        /* Hãng và model BẮT BUỘC chọn từ danh mục. Trước đây được bỏ trống rồi
+           gõ chữ vào ô riêng, nên lọc theo hãng bỏ sót xe và báo cáo không gom
+           được. Danh mục thiếu thì thêm ngay bằng nút + trên form. */
         $brandId = !empty($f['brand_id']) ? (int) $f['brand_id'] : 0;
         $modelId = !empty($f['model_id']) ? (int) $f['model_id'] : 0;
         $yearId  = !empty($f['car_year_id']) ? (int) $f['car_year_id'] : 0;
+        $colorId = !empty($f['color_id']) ? (int) $f['color_id'] : 0;
+
+        if ($brandId <= 0){
+            $errors['brand_id'] = 'Chọn hãng xe — thiếu trong danh mục thì bấm dấu + để thêm';
+        }
+        if ($modelId <= 0){
+            $errors['model_id'] = 'Chọn model — thiếu trong danh mục thì bấm dấu + để thêm';
+        }
+
+        // Model phải thuộc hãng, năm phải thuộc model — kiểm ở server
         if (!$this->__model->modelThuocHang($modelId, $brandId)){
             $errors['model_id'] = 'Chọn lại hãng và model — model phải thuộc hãng đã chọn';
         }
         if (!$this->__model->namThuocModel($yearId, $modelId)){
             $errors['car_year_id'] = 'Chọn lại model và năm — năm phải thuộc model đã chọn';
         }
-
-        // Năm gõ tay: chặn số vô nghĩa (gõ 20199 hay 199)
-        $nam = isset($f['nam_sx']) ? trim((string) $f['nam_sx']) : '';
-        if ($nam !== ''){
-            $n = (int) preg_replace('/[^\d]/', '', $nam);
-            if ($n < 1950 || $n > ((int) date('Y') + 1)){
-                $errors['nam_sx'] = 'Năm sản xuất phải từ 1950 đến ' . ((int) date('Y') + 1);
-            }
+        if (!$this->__model->mauCoThat($colorId)){
+            $errors['color_id'] = 'Màu xe không có trong danh mục';
         }
 
         if (!empty($f['partner_id']) && empty($this->__partner->getDetail((int) $f['partner_id']))){
@@ -254,7 +307,7 @@ class Vehicles extends Controller {
         $brandId = !empty($f['brand_id']) ? (int) $f['brand_id'] : null;
         $modelId = !empty($f['model_id']) ? (int) $f['model_id'] : null;
         $yearId  = !empty($f['car_year_id']) ? (int) $f['car_year_id'] : null;
-        $namGo   = isset($f['nam_sx']) ? (int) preg_replace('/[^\d]/', '', (string) $f['nam_sx']) : 0;
+        $colorId = !empty($f['color_id']) ? (int) $f['color_id'] : null;
 
         return [
             'partner_id'    => !empty($f['partner_id']) ? (int) $f['partner_id'] : null,
@@ -267,13 +320,16 @@ class Vehicles extends Controller {
             'brand_id'      => $brandId,
             'model_id'      => $modelId,
             'car_year_id'   => $yearId,
-            /* Chọn từ danh mục thì KHÔNG lưu chữ gõ tay nữa — hai nguồn tên cho
-               cùng một thứ là bắt đầu lệch nhau. Chữ gõ tay chỉ dành cho xe lạ. */
-            'hang_xe'       => $brandId === null && !empty($f['hang_xe']) ? trim($f['hang_xe']) : null,
-            'model_xe'      => $modelId === null && !empty($f['model_xe']) ? trim($f['model_xe']) : null,
-            'nam_sx'        => $yearId === null && $namGo > 0 ? $namGo : null,
-            'phien_ban'     => !empty($f['phien_ban']) ? trim($f['phien_ban']) : null,
-            'mau_xe'        => !empty($f['mau_xe']) ? trim($f['mau_xe']) : null,
+            'color_id'      => $colorId,
+            /* Cột chữ gõ tay cũ (hang_xe, model_xe, nam_sx, phien_ban, mau_xe)
+               không còn nhận gì từ form: xoá trắng khi lưu để không còn hai
+               nguồn tên cho cùng một thứ. Xe cũ ghi bằng chữ đã được migration
+               000081 dồn vào danh mục. */
+            'hang_xe'       => null,
+            'model_xe'      => null,
+            'nam_sx'        => null,
+            'phien_ban'     => null,
+            'mau_xe'        => null,
             'so_km'         => isset($f['so_km']) && preg_replace('/[^\d]/', '', (string) $f['so_km']) !== ''
                                ? (int) preg_replace('/[^\d]/', '', (string) $f['so_km']) : null,
             'ghi_chu'       => !empty($f['ghi_chu']) ? trim($f['ghi_chu']) : null,

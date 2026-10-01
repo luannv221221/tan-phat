@@ -15,12 +15,15 @@
                     </div>
                     <div class="form-group col-md-4">
                         <label>Danh mục</label>
-                        <select name="category_id" class="form-control">
-                            <option value="">— Chọn —</option>
-                            @foreach ($categories as $c)
-                            <option value="{{$c['id']}}" {{(!empty($old['category_id']) && $old['category_id']==$c['id'])?'selected':''}}>{{$c['name']}}</option>
-                            @endforeach
-                        </select>
+                        <div class="input-group">
+                            <select name="category_id" class="form-control">
+                                <option value="">— Chọn —</option>
+                                @foreach ($categories as $c)
+                                <option value="{{$c['id']}}" {{(!empty($old['category_id']) && $old['category_id']==$c['id'])?'selected':''}}>{{$c['name']}}</option>
+                                @endforeach
+                            </select>
+                            <div class="input-group-append">{!! nut_them_nhanh('news-cat', 'category_id', ['nhan' => 'danh mục tin', 'vd' => 'VD: Tin xưởng']) !!}</div>
+                        </div>
                     </div>
                 </div>
                 <div class="form-row">
@@ -60,3 +63,4 @@
         </form>
     </div>
 </div></div>
+<script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>

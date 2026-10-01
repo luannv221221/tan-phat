@@ -154,6 +154,11 @@ $donSach = function() use ($pdo){
     $pdo->exec("DELETE FROM receptions WHERE note = 'ZZXP'");
     $pdo->exec("DELETE FROM vehicles WHERE bien_so_chuan LIKE 'ZZXP%'");
     $pdo->exec("DELETE FROM partners WHERE code LIKE 'ZZXP%'");
+    /* Danh mục xe dùng chung mọi gara — hãng / model test thêm vào mà không
+       dọn thì lần sau gara thật cũng thấy "ZZ Hang la" trong ô chọn. */
+    $pdo->exec("DELETE FROM car_years WHERE model_id IN (SELECT id FROM car_models WHERE slug LIKE 'zz-model-la%')");
+    $pdo->exec("DELETE FROM car_models WHERE slug LIKE 'zz-model-la%'");
+    $pdo->exec("DELETE FROM car_brands WHERE slug LIKE 'zz-hang-la%'");
     $pdo->exec("DELETE t FROM login_tokens t JOIN users u ON u.id = t.user_id WHERE u.email = 'zz-xp@local.test'");
     $pdo->exec("DELETE FROM users WHERE email = 'zz-xp@local.test'");
 };
@@ -209,7 +214,22 @@ $lapXe = function($bienSo, $them = []) use ($http, $base, $jar, &$tk, $kh){
 };
 $lapXe('zzxp-11.111', ['so_khung' => 'zzxpvin1', 'so_may' => 'zzxpmay1', 'so_km' => '10.000',
                        'brand_id' => (int) $hang['id'], 'model_id' => (int) $mdl['id'], 'car_year_id' => (int) $nam]);
-$lapXe('ZZXP-22.222', ['hang_xe' => 'ZZ Hang la', 'model_xe' => 'ZZ Model la', 'nam_sx' => '2016']);
+/* Xe lạ: hãng / model KHÔNG còn gõ tay được. Thêm thẳng vào danh mục bằng
+   đúng đường mà nút + trên form dùng, rồi chọn. */
+$themDm = function($loai, $ten, $cha = 0) use ($http, $base, $jar, &$tk){
+    $r = $http('POST', "$base/admin/them-nhanh/danh-muc", $jar,
+               ['_token' => $tk, 'loai' => $loai, 'ten' => $ten, 'cha' => $cha]);
+    $j = json_decode($r['body'], true);
+    return is_array($j) && !empty($j['ok']) ? $j : null;
+};
+$hangLa  = $themDm('hang', 'ZZ Hang la');
+$modelLa = $hangLa ? $themDm('model', 'ZZ Model la', $hangLa['c']) : null;
+$namLa   = $modelLa ? $themDm('nam', '2016', $modelLa['c']) : null;
+ok(!empty($hangLa) && !empty($modelLa) && !empty($namLa),
+   'Xe la: them thang vao danh muc bang nut + ngay tren form');
+
+$lapXe('ZZXP-22.222', ['brand_id' => $hangLa['c'] ?? 0, 'model_id' => $modelLa['c'] ?? 0,
+                       'car_year_id' => $namLa['c'] ?? 0]);
 $xe1 = $pdo->query("SELECT * FROM vehicles WHERE bien_so_chuan='ZZXP11111'")->fetch(PDO::FETCH_ASSOC);
 $xe2 = $pdo->query("SELECT * FROM vehicles WHERE bien_so_chuan='ZZXP22222'")->fetch(PDO::FETCH_ASSOC);
 ok(!empty($xe1) && !empty($xe2), 'MOT khach khai duoc NHIEU xe');
@@ -217,15 +237,25 @@ ok(!empty($xe1) && $xe1['so_khung'] === 'ZZXPVIN1' && (int) $xe1['brand_id'] ===
    && (int) $xe1['car_year_id'] === (int) $nam,
    'Xe luu so khung (hoa), hang / model / nam tu danh muc');
 ok(!empty($xe1) && $xe1['hang_xe'] === null, 'Chon danh muc thi KHONG luu chu go tay');
-ok(!empty($xe2) && $xe2['hang_xe'] === 'ZZ Hang la' && (int) $xe2['nam_sx'] === 2016,
-   'Xe la: go tay hang / model / nam van luu duoc');
+ok(!empty($xe2) && (int) $xe2['brand_id'] === (int) ($hangLa['c'] ?? 0)
+   && $xe2['hang_xe'] === null && $xe2['nam_sx'] === null,
+   'Xe la sau khi them danh muc: luu bang KHOA danh muc, khong con chu go tay');
+
+/* Gõ tay gửi thẳng lên server cũng không ăn: ô đã bỏ khỏi form thì đường lưu
+   cũng phải bỏ, không thì ai cũng POST tay được. */
+$tieuFlash('admin/vehicles/add');
+$lapXe('zzxp-55.555', ['hang_xe' => 'ZZ Go lau', 'model_xe' => 'ZZ Model lau', 'nam_sx' => '2015']);
+ok((int) $pdo->query("SELECT COUNT(*) FROM vehicles WHERE bien_so_chuan='ZZXP55555'")->fetchColumn() === 0,
+   'Chi go tay hang / model, khong chon danh muc -> khong luu duoc');
+$tieuFlash('admin/vehicles/add');
 
 /* Biển số trùng (gõ kiểu khác) và số khung trùng: phải bị chặn */
-$lapXe('ZZXP 11 111');
+$lapXe('ZZXP 11 111', ['brand_id' => (int) $hang['id'], 'model_id' => (int) $mdl['id']]);
 ok((int) $pdo->query("SELECT COUNT(*) FROM vehicles WHERE bien_so_chuan='ZZXP11111'")->fetchColumn() === 1,
    'Bien so go kieu khac van la MOT xe (khong tao ban ghi thu hai)');
 $tieuFlash('admin/vehicles/add');
-$lapXe('zzxp-33.333', ['so_khung' => 'ZZXPVIN1']);
+$lapXe('zzxp-33.333', ['so_khung' => 'ZZXPVIN1',
+                       'brand_id' => (int) $hang['id'], 'model_id' => (int) $mdl['id']]);
 ok((int) $pdo->query("SELECT COUNT(*) FROM vehicles WHERE bien_so_chuan='ZZXP33333'")->fetchColumn() === 0,
    'So khung trung -> khong luu duoc');
 $tieuFlash('admin/vehicles/add');
@@ -294,10 +324,13 @@ ok(!empty($bg) && $bg['bien_so_chuan'] === 'ZZXP11111' && (int) $bg['so_km'] ===
 
 $r  = $http('GET', "$base/admin/warranty/add?loai=bao_tri&reception_id=" . (int) $tn['id'], $jar);
 $tk = $token($r['body']) ?: $tk;
+/* Khách CHỌN chứ không gõ: tên trên phiếu là bản chụp từ đối tượng đã chọn. */
 $http('POST', "$base/admin/warranty/add", $jar, ['_token' => $tk, 'loai' => 'bao_tri',
-    'reception_id' => (int) $tn['id'], 'customer_name' => 'ZZXP Khach', 'bien_so' => 'zzxp-11.111',
+    'reception_id' => (int) $tn['id'], 'partner_id' => (int) $kh['id'], 'bien_so' => 'zzxp-11.111',
     'so_km' => '12.500', 'received_date' => date('Y-m-d'), 'fee' => 0]);
-$bt = $pdo->query("SELECT * FROM warranty_requests WHERE customer_name='ZZXP Khach' ORDER BY id DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+$bt = $pdo->query("SELECT * FROM warranty_requests WHERE partner_id = " . (int) $kh['id'] . " ORDER BY id DESC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+ok(!empty($bt) && $bt['customer_name'] === $kh['name'],
+   'Ten khach tren phieu la BAN CHUP tu doi tuong da chon, khong phai chu go tay');
 ok(!empty($bt) && (int) $bt['reception_id'] === (int) $tn['id'] && (int) $bt['vehicle_id'] === (int) $xe1['id'],
    'Phieu bao tri cung gan vao phieu tiep nhan va xe');
 

@@ -53,63 +53,72 @@
                 </div>
             </div>
 
-            <?php /* Hãng → model → năm lấy từ Danh mục xe. Ô sau tải theo ô trước,
-                     và server kiểm lại model có thuộc hãng, năm có thuộc model. */ ?>
+            <?php /* Hãng → model → năm → màu lấy từ Danh mục xe. CHỈ ĐƯỢC CHỌN:
+                     ô gõ tay cũ đã bỏ vì mỗi người ghi một kiểu thì lọc và báo
+                     cáo không gom được. Danh mục thiếu thì bấm + thêm tại chỗ. */ ?>
             <div class="form-row">
                 <div class="form-group col-md-4">
-                    <label>Hãng xe <span class="text-muted small">(danh mục)</span></label>
-                    <select name="brand_id" class="form-control" data-xe="hang" data-url="{{_WEB_URL.'/admin/vehicles'}}">
-                        <option value="">— Không chọn —</option>
-                        @if (!empty($hangDs))
-                        @foreach ($hangDs as $h)
-                        <option value="{{$h['id']}}" {{(int)$v('brand_id')===(int)$h['id']?'selected':''}}>{{$h['name']}}</option>
-                        @endforeach
-                        @endif
-                    </select>
+                    <label>Hãng xe <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <select name="brand_id" class="form-control" data-xe="hang" data-url="{{_WEB_URL.'/admin/vehicles'}}">
+                            <option value="">— Chọn hãng —</option>
+                            @if (!empty($hangDs))
+                            @foreach ($hangDs as $h)
+                            <option value="{{$h['id']}}" {{(int)$v('brand_id')===(int)$h['id']?'selected':''}}>{{$h['name']}}</option>
+                            @endforeach
+                            @endif
+                        </select>
+                        <div class="input-group-append">
+                            {!! nut_them_nhanh('hang', 'brand_id', ['nhan' => 'hãng xe', 'vd' => 'VD: Mitsubishi', 'day' => 1]) !!}
+                        </div>
+                    </div>
+                    {!! !empty($errors['brand_id'])?'<small class="text-danger">'.e($errors['brand_id']).'</small>':false !!}
                 </div>
                 <div class="form-group col-md-4">
-                    <label>Model</label>
-                    <select name="model_id" class="form-control" data-xe="model" data-chon="{{$v('model_id')}}" disabled>
-                        <option value="">— Chọn hãng trước —</option>
-                    </select>
+                    <label>Model <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <select name="model_id" class="form-control" data-xe="model" data-chon="{{$v('model_id')}}" disabled>
+                            <option value="">— Chọn hãng trước —</option>
+                        </select>
+                        <div class="input-group-append">
+                            {!! nut_them_nhanh('model', 'model_id', ['nhan' => 'model', 'vd' => 'VD: Xpander', 'cha' => 'brand_id', 'nhan_cha' => 'hãng xe', 'cha_bat_buoc' => 1, 'day' => 1]) !!}
+                        </div>
+                    </div>
                     {!! !empty($errors['model_id'])?'<small class="text-danger">'.e($errors['model_id']).'</small>':false !!}
                 </div>
                 <div class="form-group col-md-4">
                     <label>Năm sản xuất</label>
-                    <select name="car_year_id" class="form-control" data-xe="nam" data-chon="{{$v('car_year_id')}}" disabled>
-                        <option value="">— Chọn model trước —</option>
-                    </select>
+                    <div class="input-group">
+                        <select name="car_year_id" class="form-control" data-xe="nam" data-chon="{{$v('car_year_id')}}" disabled>
+                            <option value="">— Chọn model trước —</option>
+                        </select>
+                        <div class="input-group-append">
+                            {!! nut_them_nhanh('nam', 'car_year_id', ['nhan' => 'năm SX', 'vd' => 'VD: 2022', 'cha' => 'model_id', 'nhan_cha' => 'model', 'cha_bat_buoc' => 1]) !!}
+                        </div>
+                    </div>
                     {!! !empty($errors['car_year_id'])?'<small class="text-danger">'.e($errors['car_year_id']).'</small>':false !!}
                 </div>
             </div>
 
             <div class="form-row">
-                <div class="col-12"><p class="text-muted small mb-1"><i class="fas fa-info-circle mr-1"></i> Xe lạ chưa có trong Danh mục xe thì gõ tay ba ô dưới đây (chọn danh mục rồi thì không cần gõ):</p></div>
-                <div class="form-group col-md-4">
-                    <label class="small">Hãng (gõ tay)</label>
-                    <input type="text" name="hang_xe" class="form-control form-control-sm" value="{{$v('hang_xe')}}"/>
-                </div>
-                <div class="form-group col-md-4">
-                    <label class="small">Model (gõ tay)</label>
-                    <input type="text" name="model_xe" class="form-control form-control-sm" value="{{$v('model_xe')}}"/>
-                </div>
-                <div class="form-group col-md-4">
-                    <label class="small">Năm SX (gõ tay)</label>
-                    <input type="text" name="nam_sx" class="form-control form-control-sm" placeholder="VD: 2019" value="{{$v('nam_sx')}}"/>
-                    {!! !empty($errors['nam_sx'])?'<small class="text-danger">'.e($errors['nam_sx']).'</small>':false !!}
-                </div>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group col-md-4">
-                    <label>Phiên bản</label>
-                    <input type="text" name="phien_ban" class="form-control" placeholder="VD: 1.5G AT" value="{{$v('phien_ban')}}"/>
-                </div>
                 <div class="form-group col-md-4">
                     <label>Màu xe</label>
-                    <input type="text" name="mau_xe" class="form-control" value="{{$v('mau_xe')}}"/>
+                    <div class="input-group">
+                        <select name="color_id" class="form-control" data-xe="mau">
+                            <option value="">— Không chọn —</option>
+                            @if (!empty($mauDs))
+                            @foreach ($mauDs as $m)
+                            <option value="{{$m['id']}}" {{(int)$v('color_id')===(int)$m['id']?'selected':''}}>{{$m['name']}}</option>
+                            @endforeach
+                            @endif
+                        </select>
+                        <div class="input-group-append">
+                            {!! nut_them_nhanh('mau', 'color_id', ['nhan' => 'màu xe', 'vd' => 'VD: Vàng cát']) !!}
+                        </div>
+                    </div>
+                    {!! !empty($errors['color_id'])?'<small class="text-danger">'.e($errors['color_id']).'</small>':false !!}
                 </div>
-                <div class="form-group col-md-4 align-self-end">
+                <div class="form-group col-md-8 align-self-end">
                     <div class="custom-control custom-switch">
                         <input type="checkbox" class="custom-control-input" name="status" id="status" value="1" checked/>
                         <label class="custom-control-label" for="status">Đang dùng</label>
@@ -129,3 +138,4 @@
     </div>
 </form>
 <script src="{{asset('public/assets/js/xe-danh-muc.js')}}"></script>
+<script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>

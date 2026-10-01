@@ -615,16 +615,26 @@ $get("nhac-bao-tri/mark/$btA");
 ok($cot1('warranty_requests', 'reminded_at', $btA) === null, 'Danh dau "da nhac" phieu cua gara A: KHONG duoc');
 
 /* 4. Lưu chứng từ của B kèm ID của A — phải bị từ chối / không nối vào */
-$post('vehicles/add', ['partner_id' => $khA, 'bien_so' => 'ZZ8-222.22', 'status' => 1]);
+$hangDm  = (int) $pdo->query("SELECT id FROM car_brands WHERE status = 1 ORDER BY id LIMIT 1")->fetchColumn();
+$modelDm = (int) $pdo->query("SELECT id FROM car_models WHERE brand_id = $hangDm LIMIT 1")->fetchColumn();
+$post('vehicles/add', ['partner_id' => $khA, 'bien_so' => 'ZZ8-222.22', 'status' => 1,
+                       'brand_id' => $hangDm, 'model_id' => $modelDm]);
 ok($so("SELECT COUNT(*) FROM vehicles WHERE bien_so_chuan = 'ZZ822222'") === 0, 'Gara B khai xe gan cho khach cua gara A: bi tu choi');
 $post('receptions/add', ['vehicle_id' => $xeA, 'ngay_vao' => $homNay, 'status' => 'tiep_nhan']);
 ok($so("SELECT COUNT(*) FROM receptions WHERE vehicle_id = ? AND garage_id = ?", [$xeA, $GB]) === 0,
    'Gara B lap phieu tiep nhan cho xe cua gara A: bi tu choi');
-$post('warranty/add', ['loai' => 'bao_hanh', 'reception_id' => $tnA, 'partner_id' => $khA, 'customer_name' => 'ZZ Khach le B',
-                       'received_date' => $homNay, 'product_name' => 'ZZ may rua xe']);
-$w = $mot("SELECT * FROM warranty_requests WHERE customer_name = 'ZZ Khach le B'");
-ok(!empty($w) && (int) $w['garage_id'] === $GB && $w['reception_id'] === null && $w['partner_id'] === null && $w['vehicle_id'] === null,
-   'Phieu bao hanh cua gara B KHONG noi duoc vao phieu tiep nhan / khach / xe cua gara A', json_encode($w));
+/* Khách trên phiếu bảo hành là ô BẮT BUỘC CHỌN (không còn gõ tên). Gara B
+   chọn khách của gara A thì khách đó không tồn tại với B, nên phiếu KHÔNG lập
+   được — chặt hơn trước: trước đây phiếu vẫn ra đời, chỉ bỏ trống các mối nối. */
+$soBhTruoc = $so("SELECT COUNT(*) FROM warranty_requests WHERE garage_id = ?", [$GB]);
+$post('warranty/add', ['loai' => 'bao_hanh', 'reception_id' => $tnA, 'partner_id' => $khA,
+                       'received_date' => $homNay, 'bien_so' => 'ZZ8-777.77']);
+/* Khách $khA là của gara A và gara A có phiếu hợp lệ trỏ vào đó — nên chỉ
+   đếm trong phạm vi GARA B. */
+ok($so("SELECT COUNT(*) FROM warranty_requests WHERE garage_id = ?", [$GB]) === $soBhTruoc
+   && $so("SELECT COUNT(*) FROM warranty_requests WHERE garage_id = ? AND partner_id = ?", [$GB, $khA]) === 0,
+   'Phieu bao hanh cua gara B KHONG noi duoc vao khach / phieu tiep nhan cua gara A',
+   'truoc=' . $soBhTruoc . ' sau=' . $so("SELECT COUNT(*) FROM warranty_requests WHERE garage_id = ?", [$GB]));
 $post('customers/add', ['name' => 'ZZ Khach xep nhom A', 'phone' => '0933000333', 'group_id' => $nhomA]);
 ok($so("SELECT COUNT(*) FROM partners WHERE name = 'ZZ Khach xep nhom A'") === 0, 'Gara B xep khach vao nhom khach cua gara A: bi tu choi');
 
@@ -638,7 +648,8 @@ ok($so("SELECT COUNT(*) FROM partners WHERE name = 'ZZ Khach trung sdt A' AND ga
    'Trung SDT voi khach cua gara A: KHONG canh bao (khac gara, khong duoc lo ten khach A)');
 $khBId = !empty($khB) ? (int) $khB['id'] : 0;
 $r = $post('vehicles/add', ['partner_id' => $khBId, 'bien_so' => 'ZZ9-111.11', 'so_khung' => 'ZZVINGARAA000001',
-                            'status' => 1, 've' => 'customer']);
+                            'status' => 1, 've' => 'customer',
+                            'brand_id' => $hangDm, 'model_id' => $modelDm]);
 $xeB = $mot("SELECT * FROM vehicles WHERE bien_so_chuan = 'ZZ911111' AND garage_id = ?", [$GB]);
 ok(!empty($xeB) && (int) $xeB['partner_id'] === $khBId,
    'Gara B khai duoc xe TRUNG bien so + so khung voi xe cua gara A (hai ho so rieng)');

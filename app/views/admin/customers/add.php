@@ -59,14 +59,17 @@ $val = function ($key) use ($old) {
 
                     <div class="form-group">
                         <label>Nhóm khách</label>
-                        <select name="group_id" class="form-control">
-                            <option value="">— Chưa xếp nhóm —</option>
-                            @if (!empty($dsNhom))
-                            @foreach ($dsNhom as $g)
-                            <option value="{{$g['id']}}" {{(string)$val('group_id')===(string)$g['id']?'selected':''}}>{{$g['name']}}</option>
-                            @endforeach
-                            @endif
-                        </select>
+                        <div class="input-group">
+                            <select name="group_id" class="form-control">
+                                <option value="">— Chưa xếp nhóm —</option>
+                                @if (!empty($dsNhom))
+                                @foreach ($dsNhom as $g)
+                                <option value="{{$g['id']}}" {{(string)$val('group_id')===(string)$g['id']?'selected':''}}>{{$g['name']}}</option>
+                                @endforeach
+                                @endif
+                            </select>
+                            <div class="input-group-append">{!! nut_them_nhanh('kh-nhom', 'group_id', ['nhan' => 'nhóm khách', 'vd' => 'VD: Khách doanh nghiệp']) !!}</div>
+                        </div>
                         {!! !empty($errors['group_id'])?'<small class="text-danger">'.e($errors['group_id']).'</small>':false !!}
                     </div>
 
@@ -108,3 +111,4 @@ $val = function ($key) use ($old) {
         </div>
     </div>
 </div>
+<script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>

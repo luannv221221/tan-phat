@@ -140,7 +140,7 @@ $soCT  = count($chungTu['quotations']) + count($chungTu['sales_invoices']) + cou
             </div>
 
             <div class="form-row">
-                <div class="form-group col-md-4">
+                <div class="form-group col-md-8">
                     <label>Cố vấn dịch vụ</label>
                     <select name="co_van_id" class="form-control">
                         <option value="">— Chọn nhân viên —</option>
@@ -151,10 +151,7 @@ $soCT  = count($chungTu['quotations']) + count($chungTu['sales_invoices']) + cou
                         @endif
                     </select>
                     {!! !empty($errors['co_van_id'])?'<small class="text-danger">'.e($errors['co_van_id']).'</small>':false !!}
-                </div>
-                <div class="form-group col-md-4">
-                    <label>Hoặc gõ tên cố vấn</label>
-                    <input type="text" name="co_van" class="form-control" value="{{$v('co_van')}}"/>
+                    <small class="form-text text-muted">Chọn từ nhân viên của gara — người chưa có tài khoản thì thêm ở màn Người dùng.</small>
                 </div>
                 <div class="form-group col-md-4">
                     <label>Trạng thái</label>

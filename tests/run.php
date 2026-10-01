@@ -49,6 +49,8 @@ $tests = [
     'XeVaPhieuTest.php'           => 'CSKH — 1 khach nhieu xe, 1 xe nhieu phieu tiep nhan',
     'CollationTest.php'           => 'CSDL — moi bang cung utf8mb4_unicode_ci (chong loi #1273 khi deploy)',
     'CachLyGaraTest.php'          => 'HE THONG — gara doc lap: cach ly du lieu giua cac gara',
+    'ChiChonKhongGoTest.php'      => 'HE THONG — chi duoc chon tu danh muc, khong go tay',
+    'ThemNhanhTest.php'           => 'HE THONG — nut + canh o chon: them nhanh mot dong danh muc',
 ];
 
 $php      = PHP_BINARY;

@@ -126,6 +126,7 @@ foreach ($pdo->query("SELECT skey, svalue FROM site_settings WHERE skey IN
 $donSach = function() use ($pdo){
     $pdo->exec("DELETE h FROM warranty_handovers h JOIN warranty_requests w ON w.id = h.warranty_id WHERE w.customer_name LIKE 'ZZBT%'");
     $pdo->exec("DELETE FROM warranty_requests WHERE customer_name LIKE 'ZZBT%'");
+    $pdo->exec("DELETE FROM partners WHERE code LIKE 'ZZBTK-%'");
     $pdo->exec("DELETE t FROM login_tokens t JOIN users u ON u.id = t.user_id WHERE u.email LIKE 'zz-bt-%@local.test'");
     $pdo->exec("DELETE FROM users WHERE email LIKE 'zz-bt-%@local.test'");
 };
@@ -284,27 +285,50 @@ ok($r['code'] === 200 && strpos($r['body'], 'value="bao_tri" selected') !== fals
    'Form lap mo san loai Bao tri');
 $tk = $token($r['body']) ?: $tk;
 
-$lap = function(array $d) use ($http, $base, $jar, &$tk){
+/* Tên khách trên phiếu KHÔNG còn gõ tay: form chỉ cho CHỌN đối tượng, server
+   chép tên của đối tượng đó vào phiếu làm bản chụp. Nên muốn phiếu mang tên
+   nào thì phải có sẵn một đối tượng tên đó. */
+$khachId = function($ten) use ($pdo, $garaCuaPhieu){
+    $st = $pdo->prepare("SELECT id FROM partners WHERE name = ? AND garage_id = ? LIMIT 1");
+    $st->execute([$ten, $garaCuaPhieu]);
+    $co = $st->fetchColumn();
+    if ($co) return (int) $co;
+    $st = $pdo->prepare("INSERT INTO partners (code, name, type, garage_id, status, create_at)
+                         VALUES (?, ?, 'customer', ?, 1, NOW())");
+    $st->execute(['ZZBTK-' . substr(md5($ten), 0, 10), $ten, $garaCuaPhieu]);
+    return (int) $pdo->lastInsertId();
+};
+
+$lap = function(array $d) use ($http, $base, $jar, &$tk, $khachId){
+    // 'khach' => tên: đổi thành đối tượng thật rồi gửi partner_id
+    if (isset($d['khach'])){ $d['partner_id'] = $khachId($d['khach']); unset($d['khach']); }
     return $http('POST', "$base/admin/warranty/add", $jar, array_merge([
         '_token' => $tk, 'received_date' => date('Y-m-d'), 'fee' => 0,
     ], $d));
 };
 
-$lap(['loai' => 'bao_tri', 'customer_name' => 'ZZBT Chi co bien so', 'bien_so' => 'zz-12a.345', 'so_km' => '31.500']);
+$lap(['loai' => 'bao_tri', 'khach' => 'ZZBT Chi co bien so', 'bien_so' => 'zz-12a.345', 'so_km' => '31.500']);
 $p = $phieuTheoKhach('ZZBT Chi co bien so');
 ok(!empty($p), 'Bao duong xe: chi can bien so, KHONG bat chon san pham');
 ok(!empty($p) && strpos($p['request_no'], 'BT-') === 0 && $p['loai'] === 'bao_tri',
    'Phieu bao tri luu dung loai, so BT-', json_encode($p ? [$p['request_no'], $p['loai']] : null));
 ok(!empty($p) && $p['bien_so_chuan'] === 'ZZ12A345' && (int) $p['so_km'] === 31500, 'Luu bien so chuan hoa va so km');
 
-$lap(['loai' => 'hack', 'customer_name' => 'ZZBT Loai la', 'product_name' => 'ZZBT May']);
+$lap(['loai' => 'hack', 'khach' => 'ZZBT Loai la', 'bien_so' => 'zz-99x.999']);
 $p = $phieuTheoKhach('ZZBT Loai la');
 ok(!empty($p) && $p['loai'] === 'bao_hanh' && strpos($p['request_no'], 'BH-') === 0,
    'POST loai la -> luu thanh bao hanh');
 
-$lap(['loai' => 'bao_tri', 'customer_name' => 'ZZBT Thieu doi tuong']);
+$lap(['loai' => 'bao_tri', 'khach' => 'ZZBT Thieu doi tuong']);
 ok(empty($phieuTheoKhach('ZZBT Thieu doi tuong')),
-   'Khong co san pham, ten thiet bi lan bien so -> khong lap duoc');
+   'Khong co phu tung lan xe -> khong lap duoc');
+
+/* Khách là ô BẮT BUỘC CHỌN — không chọn thì không lập được phiếu, kể cả khi
+   đã có xe. Trước đây gõ tạm một cái tên là xong, nên 13/13 phiếu cũ không
+   gom được về khách nào. */
+$lap(['loai' => 'bao_tri', 'bien_so' => 'zz-77y.777']);
+ok((int) $pdo->query("SELECT COUNT(*) FROM warranty_requests WHERE bien_so_chuan = 'ZZ77Y777'")->fetchColumn() === 0,
+   'Khong chon khach -> khong lap duoc phieu');
 /* Mở lại form như trình duyệt tự làm sau khi bị đẩy về: dữ liệu cũ nằm tạm
    trong phiên đến lần mở form kế tiếp. Không mở thì lần "lập từ lời nhắc"
    ở dưới nhận nhầm dữ liệu cũ đó thay vì điền sẵn xe. */
@@ -345,7 +369,7 @@ $r = $http('GET', "$base/admin/warranty/add?loai=bao_tri&tu=$R1", $jar);
 ok(strpos($r['text'], 'Lập tiếp từ phiếu') !== false && strpos($r['body'], 'value="ZZ-11A.111"') !== false,
    'Lap tu loi nhac -> dien san bien so cua lan truoc');
 $tk = $token($r['body']) ?: $tk;
-$lap(['loai' => 'bao_tri', 'customer_name' => 'ZZBT Hen lai', 'bien_so' => 'ZZ-11A.111', 'appointment_date' => $ngay(2)]);
+$lap(['loai' => 'bao_tri', 'khach' => 'ZZBT Hen lai', 'bien_so' => 'ZZ-11A.111', 'appointment_date' => $ngay(2)]);
 $hen = $phieuTheoKhach('ZZBT Hen lai');
 ok(!empty($hen), 'Lap duoc phieu bao tri ke tiep');
 

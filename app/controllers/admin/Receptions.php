@@ -283,8 +283,11 @@ class Receptions extends Controller {
             'tinh_trang_xe' => !empty($f['tinh_trang_xe']) ? trim($f['tinh_trang_xe']) : null,
             'yeu_cau_khach' => !empty($f['yeu_cau_khach']) ? trim($f['yeu_cau_khach']) : null,
             'co_van_id'     => !empty($f['co_van_id']) ? (int) $f['co_van_id'] : null,
-            // Tên gõ tay chỉ dùng khi KHÔNG chọn được trong danh sách nhân viên
-            'co_van'        => empty($f['co_van_id']) && !empty($f['co_van']) ? trim($f['co_van']) : null,
+            /* Cố vấn CHỈ CHỌN từ nhân viên của gara. Ô gõ tên đã bỏ: 3/3 phiếu
+               cũ đều gõ tay và không phiếu nào dùng ô chọn, nên không gom được
+               "phiếu của cố vấn nào". Người chưa có tài khoản thì thêm ở màn
+               Người dùng — đằng nào cũng phải có tài khoản để làm việc. */
+            'co_van'        => null,
             'status'        => ReceptionsModel::statusHopLe($f['status'] ?? ''),
             'note'          => !empty($f['note']) ? trim($f['note']) : null,
         ];

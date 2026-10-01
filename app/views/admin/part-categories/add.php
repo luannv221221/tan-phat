@@ -14,20 +14,23 @@
 
                     <div class="form-group">
                         <label>Danh mục cha</label>
-                        <select name="parent_id" class="form-control">
-                            <option value="">— Danh mục gốc (không có cha) —</option>
-                            <?php
-                            if (!empty($tree)):
-                                foreach ($tree as $t):
-                                    if (in_array((int) $t['id'], $excludeIds, true)) continue;
-                                    $sel = (!empty($old['parent_id']) && $old['parent_id'] == $t['id']) ? 'selected' : '';
-                                    echo '<option value="' . (int) $t['id'] . '" ' . $sel . '>'
-                                       . str_repeat('— ', (int) $t['depth']) . e($t['name'])
-                                       . '</option>';
-                                endforeach;
-                            endif;
-                            ?>
-                        </select>
+                        <div class="input-group">
+                            <select name="parent_id" class="form-control">
+                                <option value="">— Danh mục gốc (không có cha) —</option>
+                                <?php
+                                if (!empty($tree)):
+                                    foreach ($tree as $t):
+                                        if (in_array((int) $t['id'], $excludeIds, true)) continue;
+                                        $sel = (!empty($old['parent_id']) && $old['parent_id'] == $t['id']) ? 'selected' : '';
+                                        echo '<option value="' . (int) $t['id'] . '" ' . $sel . '>'
+                                           . str_repeat('— ', (int) $t['depth']) . e($t['name'])
+                                           . '</option>';
+                                    endforeach;
+                                endif;
+                                ?>
+                            </select>
+                            <div class="input-group-append">{!! nut_them_nhanh('part-cat', 'parent_id', ['nhan' => 'danh mục cha', 'vd' => 'VD: Hệ thống phanh']) !!}</div>
+                        </div>
                         <small class="form-text text-muted">Bỏ trống để tạo danh mục gốc.</small>
                         {!! !empty($errors['parent_id'])?'<small class="text-danger d-block">'.e($errors['parent_id']).'</small>':false !!}
                     </div>
@@ -91,3 +94,4 @@ document.addEventListener('change', function (e) {
     }
 });
 </script>
+<script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>

@@ -14,7 +14,7 @@ use App\core\Session;
 class Warranty extends Controller {
 
     private $__data = [];
-    private $__model, $__partner, $__part, $__handover, $__request, $__response;
+    private $__model, $__partner, $__part, $__handover, $__user, $__request, $__response;
 
     private $routeBase = 'warranty';
     private $labelOne  = 'phiếu';
@@ -26,6 +26,7 @@ class Warranty extends Controller {
         $this->__partner  = $this->model('PartnersModel');
         $this->__part     = $this->model('PartsModel');
         $this->__handover = $this->model('WarrantyHandoversModel');
+        $this->__user     = $this->model('UsersModel');
         $this->__request  = new Request();
         $this->__response = new Response();
     }
@@ -46,6 +47,19 @@ class Warranty extends Controller {
         $this->__data['content']['partners'] = $this->__partner->getActive();
         // Kho tổng + danh mục của gara (hàng / thiết bị riêng của gara cũng bảo hành được)
         $this->__data['content']['parts']    = $this->__part->choGara();
+        // Kỹ thuật viên là nhân viên CỦA GARA NÀY — không liệt kê người gara khác
+        $this->__data['content']['ktvDs']    = $this->__user->getLists([
+            'users.status' => 1, 'users.garage_id' => gara_hien_tai_id()]);
+    }
+
+    /** Nhân viên thuộc gara làm việc — kỹ thuật viên gửi lên phải là người của gara mình */
+    private function laNhanVienGara($userId){
+        $u = $this->__user->getDetail((int) $userId);
+        return !empty($u) && (int) $u['garage_id'] === (int) gara_hien_tai_id();
+    }
+
+    private function nhanVien($userId){
+        return $this->__user->getDetail((int) $userId);
     }
 
     public function index(){
@@ -355,17 +369,29 @@ class Warranty extends Controller {
         $f = $this->__request->getFields();
         $errors = [];
         if (empty($f['received_date'])) $errors['received_date'] = 'Chọn ngày tiếp nhận';
-        $name = !empty($f['customer_name']) ? trim($f['customer_name']) : '';
-        $pid  = !empty($f['partner_id']) ? (int) $f['partner_id'] : 0;
-        if ($name === '' && $pid <= 0) $errors['customer_name'] = 'Chọn đối tượng hoặc nhập tên khách';
-        $prod = !empty($f['product_name']) ? trim($f['product_name']) : '';
+        /* Khách CHỈ CHỌN từ danh sách đối tượng — ô gõ tên đã bỏ. 13/13 phiếu
+           cũ đều gõ tay nên không gom được phiếu theo khách. Khách lẻ thì khai
+           ở màn Khách hàng trước, một lần, rồi dùng mãi. */
+        $pid = !empty($f['partner_id']) ? (int) $f['partner_id'] : 0;
+        if ($pid <= 0){
+            $errors['partner_id'] = 'Chọn khách hàng';
+        } elseif (empty($this->__partner->getDetail($pid))){
+            $errors['partner_id'] = 'Khách hàng không hợp lệ';
+        }
+
         $partId = !empty($f['part_id']) ? (int) $f['part_id'] : 0;
         /* Bảo dưỡng xe thì đối tượng là CHÍNH CHIẾC XE — không bắt chọn sản
-           phẩm. Chỉ cần một trong ba: sản phẩm, tên thiết bị, biển số. */
+           phẩm. Cần một trong hai: sản phẩm trong danh mục, hoặc chiếc xe. */
         $bienSo = !empty($f['bien_so']) ? chuan_hoa_bien_so($f['bien_so']) : '';
-        if ($prod === '' && $partId <= 0 && $bienSo === ''){
-            $errors['product_name'] = 'Chọn sản phẩm, nhập tên thiết bị, hoặc nhập biển số xe';
+        if ($partId <= 0 && $bienSo === ''){
+            $errors['part_id'] = 'Chọn phụ tùng trong danh mục, hoặc chọn xe';
         }
+
+        $ktv = !empty($f['technician_id']) ? (int) $f['technician_id'] : 0;
+        if ($ktv > 0 && !$this->laNhanVienGara($ktv)){
+            $errors['technician_id'] = 'Kỹ thuật viên không thuộc gara này';
+        }
+
         return $errors;
     }
 
@@ -374,12 +400,21 @@ class Warranty extends Controller {
         $xe = lien_ket_xe($f);   // xe + biển số + số km, dùng chung mọi chứng từ
         $pid  = !empty($f['partner_id']) ? (int) $f['partner_id'] : 0;
         $partId = !empty($f['part_id']) ? (int) $f['part_id'] : 0;
+        $ktv  = !empty($f['technician_id']) ? (int) $f['technician_id'] : 0;
+
+        /* Tên khách / tên hàng / tên kỹ thuật viên KHÔNG còn gõ tay: lấy từ
+           bản ghi đã chọn và lưu lại như một BẢN CHỤP lúc lập phiếu. Khách đổi
+           tên về sau thì phiếu cũ vẫn in ra đúng tên lúc đó. */
+        $khach = $pid > 0 ? $this->__partner->getDetail($pid) : null;
+        $hang  = $partId > 0 ? $this->__part->getDetail($partId) : null;
+        $nguoi = $ktv > 0 && $this->laNhanVienGara($ktv) ? $this->nhanVien($ktv) : null;
+
         return [
-            'partner_id'       => ($pid > 0 && !empty($this->__partner->getDetail($pid))) ? $pid : null,
-            'customer_name'    => !empty($f['customer_name']) ? trim($f['customer_name']) : null,
-            'phone'            => !empty($f['phone']) ? trim($f['phone']) : null,
-            'part_id'          => ($partId > 0 && !empty($this->__part->getDetail($partId))) ? $partId : null,
-            'product_name'     => !empty($f['product_name']) ? trim($f['product_name']) : null,
+            'partner_id'       => !empty($khach) ? $pid : null,
+            'customer_name'    => !empty($khach) ? $khach['name'] : null,
+            'phone'            => !empty($khach['phone']) ? $khach['phone'] : null,
+            'part_id'          => !empty($hang) ? $partId : null,
+            'product_name'     => !empty($hang) ? $hang['name'] : null,
             'serial_no'        => !empty($f['serial_no']) ? trim($f['serial_no']) : null,
             'received_date'    => $f['received_date'],
             'appointment_date' => !empty($f['appointment_date']) ? $f['appointment_date'] : null,
@@ -393,7 +428,8 @@ class Warranty extends Controller {
 
             'issue'            => !empty($f['issue']) ? trim($f['issue']) : null,
             'diagnosis'        => !empty($f['diagnosis']) ? trim($f['diagnosis']) : null,
-            'technician'       => !empty($f['technician']) ? trim($f['technician']) : null,
+            'technician_id'    => !empty($nguoi) ? $ktv : null,
+            'technician'       => !empty($nguoi) ? $nguoi['name'] : null,
             'fee'              => isset($f['fee']) ? (float) preg_replace('/[^\d]/', '', (string) $f['fee']) : 0,
             'note'             => !empty($f['note']) ? trim($f['note']) : null,
         ];

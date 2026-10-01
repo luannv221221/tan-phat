@@ -51,21 +51,27 @@ $tick = function($key) use ($old, $item){
                         </div>
                         <div class="form-group col-md-4">
                             <label>Nhóm dịch vụ</label>
-                            <select name="category_id" class="form-control">
-                                <option value="">— Không phân nhóm —</option>
-                                @foreach ($categories as $c)
-                                <option value="{{$c['id']}}" {{$v('category_id')==$c['id']?'selected':''}}>{{str_repeat('— ', (int)$c['depth']).$c['name']}}</option>
-                                @endforeach
-                            </select>
+                            <div class="input-group">
+                                <select name="category_id" class="form-control">
+                                    <option value="">— Không phân nhóm —</option>
+                                    @foreach ($categories as $c)
+                                    <option value="{{$c['id']}}" {{$v('category_id')==$c['id']?'selected':''}}>{{str_repeat('— ', (int)$c['depth']).$c['name']}}</option>
+                                    @endforeach
+                                </select>
+                                <div class="input-group-append">{!! nut_them_nhanh('part-cat', 'category_id', ['nhan' => 'danh mục', 'vd' => 'VD: Dịch vụ đồng sơn']) !!}</div>
+                            </div>
                         </div>
                         <div class="form-group col-md-4">
                             <label>Đơn vị tính</label>
-                            <select name="unit_id" class="form-control">
-                                <option value="">— Không có —</option>
-                                @foreach ($units as $u)
-                                <option value="{{$u['id']}}" {{$v('unit_id')==$u['id']?'selected':''}}>{{$u['name']}}</option>
-                                @endforeach
-                            </select>
+                            <div class="input-group">
+                                <select name="unit_id" class="form-control">
+                                    <option value="">— Không có —</option>
+                                    @foreach ($units as $u)
+                                    <option value="{{$u['id']}}" {{$v('unit_id')==$u['id']?'selected':''}}>{{$u['name']}}</option>
+                                    @endforeach
+                                </select>
+                                <div class="input-group-append">{!! nut_them_nhanh('part-unit', 'unit_id', ['nhan' => 'đơn vị tính', 'vd' => 'VD: Lần']) !!}</div>
+                            </div>
                         </div>
                     </div>
 
@@ -103,3 +109,4 @@ $tick = function($key) use ($old, $item){
         </div>
     </div>
 </div>
+<script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>

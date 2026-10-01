@@ -78,61 +78,76 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                         </div>
                         <div class="form-group col-md-8">
                             <label>Danh mục</label>
-                            <select name="category_id" class="form-control">
-                                <option value="">— Không phân loại —</option>
-                                @if (!empty($categories))
-                                    @foreach ($categories as $c)
-                                    <option value="{{$c['id']}}" {{$selCat==$c['id']?'selected':''}}>{!! str_repeat('— ', (int)$c['depth']).e($c['name']) !!}</option>
-                                    @endforeach
-                                @endif
-                            </select>
+                            <div class="input-group">
+                                <select name="category_id" class="form-control">
+                                    <option value="">— Không phân loại —</option>
+                                    @if (!empty($categories))
+                                        @foreach ($categories as $c)
+                                        <option value="{{$c['id']}}" {{$selCat==$c['id']?'selected':''}}>{!! str_repeat('— ', (int)$c['depth']).e($c['name']) !!}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                <div class="input-group-append">{!! nut_them_nhanh('part-cat', 'category_id', ['nhan' => 'danh mục phụ tùng', 'vd' => 'VD: Lọc gió']) !!}</div>
+                            </div>
                         </div>
                         <div class="form-group col-md-4">
                             <label>Đơn vị tính</label>
-                            <select name="unit_id" class="form-control">
-                                <option value="">—</option>
-                                @if (!empty($units))
-                                    @foreach ($units as $u)
-                                    <option value="{{$u['id']}}" {{$selUnit==$u['id']?'selected':''}}>{{$u['name']}}</option>
-                                    @endforeach
-                                @endif
-                            </select>
+                            <div class="input-group">
+                                <select name="unit_id" class="form-control">
+                                    <option value="">—</option>
+                                    @if (!empty($units))
+                                        @foreach ($units as $u)
+                                        <option value="{{$u['id']}}" {{$selUnit==$u['id']?'selected':''}}>{{$u['name']}}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                <div class="input-group-append">{!! nut_them_nhanh('part-unit', 'unit_id', ['nhan' => 'đơn vị tính', 'vd' => 'VD: Cái']) !!}</div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="form-row js-theo-loai" data-loai="part equipment">
                         <div class="form-group col-md-4">
                             <label>Thương hiệu</label>
-                            <select name="brand_id" class="form-control">
-                                <option value="">—</option>
-                                @if (!empty($brands))
-                                    @foreach ($brands as $b)
-                                    <option value="{{$b['id']}}" {{$selBrand==$b['id']?'selected':''}}>{{$b['name']}}</option>
-                                    @endforeach
-                                @endif
-                            </select>
+                            <div class="input-group">
+                                <select name="brand_id" class="form-control">
+                                    <option value="">—</option>
+                                    @if (!empty($brands))
+                                        @foreach ($brands as $b)
+                                        <option value="{{$b['id']}}" {{$selBrand==$b['id']?'selected':''}}>{{$b['name']}}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                <div class="input-group-append">{!! nut_them_nhanh('part-brand', 'brand_id', ['nhan' => 'thương hiệu', 'vd' => 'VD: Denso']) !!}</div>
+                            </div>
                         </div>
                         <div class="form-group col-md-4">
                             <label>Hãng sản xuất</label>
-                            <select name="manufacturer_id" class="form-control">
-                                <option value="">—</option>
-                                @if (!empty($manufacturers))
-                                    @foreach ($manufacturers as $m)
-                                    <option value="{{$m['id']}}" {{$selMnf==$m['id']?'selected':''}}>{{$m['name']}}</option>
-                                    @endforeach
-                                @endif
-                            </select>
+                            <div class="input-group">
+                                <select name="manufacturer_id" class="form-control">
+                                    <option value="">—</option>
+                                    @if (!empty($manufacturers))
+                                        @foreach ($manufacturers as $m)
+                                        <option value="{{$m['id']}}" {{$selMnf==$m['id']?'selected':''}}>{{$m['name']}}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                <div class="input-group-append">{!! nut_them_nhanh('part-mnf', 'manufacturer_id', ['nhan' => 'nhà sản xuất', 'vd' => 'VD: Denso Việt Nam']) !!}</div>
+                            </div>
                         </div>
                         <div class="form-group col-md-4">
                             <label>Xuất xứ</label>
-                            <select name="origin_id" class="form-control">
-                                <option value="">—</option>
-                                @if (!empty($origins))
-                                    @foreach ($origins as $o)
-                                    <option value="{{$o['id']}}" {{$selOrig==$o['id']?'selected':''}}>{{$o['name']}}</option>
-                                    @endforeach
-                                @endif
-                            </select>
+                            <div class="input-group">
+                                <select name="origin_id" class="form-control">
+                                    <option value="">—</option>
+                                    @if (!empty($origins))
+                                        @foreach ($origins as $o)
+                                        <option value="{{$o['id']}}" {{$selOrig==$o['id']?'selected':''}}>{{$o['name']}}</option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                <div class="input-group-append">{!! nut_them_nhanh('part-origin', 'origin_id', ['nhan' => 'xuất xứ', 'vd' => 'VD: Thái Lan']) !!}</div>
+                            </div>
                         </div>
                     </div>
 
@@ -403,3 +418,4 @@ document.addEventListener('change', function (e) {
     });
 })();
 </script>
+<script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>
