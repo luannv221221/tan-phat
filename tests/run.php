@@ -52,6 +52,7 @@ $tests = [
     'ChiChonKhongGoTest.php'      => 'HE THONG — chi duoc chon tu danh muc, khong go tay',
     'ThemNhanhTest.php'           => 'HE THONG — nut + canh o chon: them nhanh mot dong danh muc',
     'MenuKeToanTest.php'          => 'KE TOAN — nhom Phieu thu / Phieu chi tren menu admin',
+    'MotBanGhiHaiManTest.php'     => 'CSKH/BAN HANG — mot ban ghi `partners`, hai man khai du nhu nhau',
 ];
 
 $php      = PHP_BINARY;

@@ -84,10 +84,21 @@ $statusOn = isset($old['status']) ? (int) $old['status'] === 1 : (int) $item['st
                     <div class="alert alert-info py-2">{{$msg}}</div>
                     @endif
 
-                    <div class="form-group">
-                        <label>Họ tên <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control" value="{{$val('name')}}"/>
-                        {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
+                    <?php /* MÃ sửa được ở đây. Lúc THÊM thì mã tự cấp KH-xxxx nên
+                             form Thêm không có ô này — khách vãng lai ở quầy không
+                             phải nghĩ ra mã. Nhưng gõ nhầm một lần thì phải sửa lại
+                             được, không bắt chạy sang màn Đối tượng. */ ?>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>Mã <span class="text-danger">*</span></label>
+                            <input type="text" name="code" class="form-control" value="{{$val('code')}}"/>
+                            {!! !empty($errors['code'])?'<small class="text-danger">'.e($errors['code']).'</small>':false !!}
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label>Họ tên <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" value="{{$val('name')}}"/>
+                            {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -117,6 +128,15 @@ $statusOn = isset($old['status']) ? (int) $old['status'] === 1 : (int) $item['st
                             <div class="input-group-append">{!! nut_them_nhanh('kh-nhom', 'group_id', ['nhan' => 'nhóm khách', 'vd' => 'VD: Khách doanh nghiệp']) !!}</div>
                         </div>
                         {!! !empty($errors['group_id'])?'<small class="text-danger">'.e($errors['group_id']).'</small>':false !!}
+                    </div>
+
+                    <?php /* MST: hoá đơn cho khách doanh nghiệp cần ô này. Trước
+                             đây chỉ khai được ở màn Bán hàng › Đối tượng, dù hai
+                             màn cùng sửa MỘT bản ghi `partners`. */ ?>
+                    <div class="form-group">
+                        <label>Mã số thuế <span class="text-muted small">(khách doanh nghiệp)</span></label>
+                        <input type="text" name="tax_code" class="form-control" value="{{$val('tax_code')}}"/>
+                        {!! !empty($errors['tax_code'])?'<small class="text-danger">'.e($errors['tax_code']).'</small>':false !!}
                     </div>
 
                     <div class="form-row">

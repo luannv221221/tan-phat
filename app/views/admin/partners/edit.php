@@ -89,6 +89,36 @@
                             <input type="tel" class="form-control" name="phone" value="{{!empty($old['phone'])?$old['phone']:(!empty($item['phone'])?$item['phone']:'')}}"/>
                         </div>
                     </div>
+                    <?php /* Email + Nhóm khách: trước đây hai ô này CHỈ có ở màn
+                             CSKH › Khách hàng, dù hai màn cùng sửa MỘT bản ghi
+                             `partners`. Khai một khách doanh nghiệp cho đủ phải
+                             chạy qua cả hai màn. Nay form nào cũng khai đủ.
+
+                             Nhóm khách không áp cho nhà cung cấp: JS cuối file ẩn
+                             ô khi chọn loại "Nhà cung cấp", còn luật thật nằm ở
+                             Partners::buildData(). */ ?>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Email</label>
+                            <input type="email" class="form-control" name="email" value="{{!empty($old['email'])?$old['email']:(!empty($item['email'])?$item['email']:'')}}"/>
+                            {!! !empty($errors['email'])?'<small class="text-danger">'.e($errors['email']).'</small>':false !!}
+                        </div>
+                        <div class="form-group col-md-6" data-o-nhom-khach>
+                            <label>Nhóm khách <span class="text-muted small">(không áp cho NCC)</span></label>
+                            <div class="input-group">
+                                <select name="group_id" class="form-control">
+                                    <option value="">— Chưa xếp nhóm —</option>
+                                    @if (!empty($dsNhom))
+                                    @foreach ($dsNhom as $g)
+                                    <option value="{{$g['id']}}" {{(string)(!empty($old['group_id'])?$old['group_id']:(!empty($item['group_id'])?$item['group_id']:''))===(string)$g['id']?'selected':''}}>{{$g['name']}}</option>
+                                    @endforeach
+                                    @endif
+                                </select>
+                                <div class="input-group-append">{!! nut_them_nhanh('kh-nhom', 'group_id', ['nhan' => 'nhóm khách', 'vd' => 'VD: Khách doanh nghiệp']) !!}</div>
+                            </div>
+                            {!! !empty($errors['group_id'])?'<small class="text-danger">'.e($errors['group_id']).'</small>':false !!}
+                        </div>
+                    </div>
                     <?php /* Tỉnh / phường theo cơ cấu sau sáp nhập 2025: 34 tỉnh,
                              2 cấp, KHÔNG còn quận/huyện. Danh sách lấy qua
                              admin/dia-gioi (server gọi API ngoài, có nhớ tạm).
@@ -138,3 +168,18 @@
         </div>
     </div>
 </div>
+<?php /* Nhà cung cấp thuần thì không có "nhóm khách" — ẩn ô cho khỏi gây hiểu
+         nhầm. Chỉ là lớp che ngoài: luật thật ở Partners::buildData(), POST tay
+         vẫn không ghi nhóm cho NCC được. */ ?>
+<script>
+(function(){
+    var loai = document.querySelector('select[name="type"]');
+    var o    = document.querySelector('[data-o-nhom-khach]');
+    if (!loai || !o) return;
+    function doi(){ o.style.display = (loai.value === 'supplier') ? 'none' : ''; }
+    loai.addEventListener('change', doi);
+    doi();
+})();
+</script>
+<script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>
+

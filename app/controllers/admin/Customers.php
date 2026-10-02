@@ -194,9 +194,29 @@ class Customers extends Controller {
         $email   = isset($f['email']) ? trim((string) $f['email']) : '';
         $address = isset($f['address']) ? trim((string) $f['address']) : '';
         $nhomId  = !empty($f['group_id']) ? (int) $f['group_id'] : 0;
+        $mst     = isset($f['tax_code']) ? trim((string) $f['tax_code']) : '';
+        /* CÓ GỬI ô mã hay không, chứ không phải ô mã rỗng hay không. Bắt buộc
+           `code` cho MỌI POST sẽ chặn luôn những nơi gửi thiếu ô đó — đã làm
+           đỏ DiaGioiTest ngay lần chạy đầu. Không gửi = giữ nguyên mã cũ. */
+        $coOMa   = ($id !== null) && isset($f['code']);
+        $code    = isset($f['code']) ? trim((string) $f['code']) : '';
 
         $errors = [];
         if ($name === '') $errors['name'] = 'Nhập họ tên khách';
+
+        /* MÃ chỉ sửa được ở màn Sửa. Lúc THÊM mã tự cấp KH-xxxx (xem postAdd)
+           — khách vãng lai ở quầy không phải nghĩ ra mã. Nhưng gõ nhầm một lần
+           thì phải sửa lại được ngay đây, không bắt chạy sang màn Đối tượng. */
+        if ($coOMa){
+            if ($code === ''){
+                $errors['code'] = 'Mã khách không được để trống';
+            } else {
+                $trungMa = $this->__model->findByCode($code);
+                if (!empty($trungMa) && (int) $trungMa['id'] !== (int) $id){
+                    $errors['code'] = 'Mã này đã thuộc về "' . $trungMa['name'] . '"';
+                }
+            }
+        }
 
         /* Phải có ÍT NHẤT một cách liên lạc: không có thì hồ sơ này về sau không
            ai tra ra được là của ai — mà ở gara, số điện thoại mới là thứ nhận ra
@@ -238,7 +258,7 @@ class Customers extends Controller {
             if ($dg === null) $errors['province_code'] = 'Chọn lại tỉnh và phường/xã — phường phải thuộc tỉnh đã chọn';
         }
 
-        return [$errors, [
+        $data = [
             'name'          => $name,
             'phone'         => $phone !== '' ? $phone : null,
             'email'         => $email !== '' ? $email : null,
@@ -248,7 +268,12 @@ class Customers extends Controller {
             'province_name' => $dg !== null ? $dg['province'] : null,
             'ward_code'     => $dg !== null ? $xa : null,
             'ward_name'     => $dg !== null ? $dg['ward'] : null,
-        ]];
+            /* MST: hoá đơn cho khách doanh nghiệp cần, mà trước đây chỉ khai
+               được ở màn Đối tượng. */
+            'tax_code'      => $mst !== '' ? $mst : null,
+        ];
+        if ($coOMa) $data['code'] = $code;
+        return [$errors, $data];
     }
 
     private function quayLai($errors, $back){
@@ -260,6 +285,8 @@ class Customers extends Controller {
             'email'         => isset($f['email']) ? $f['email'] : '',
             'address'       => isset($f['address']) ? $f['address'] : '',
             'group_id'      => isset($f['group_id']) ? $f['group_id'] : '',
+            'tax_code'      => isset($f['tax_code']) ? $f['tax_code'] : '',
+            'code'          => isset($f['code']) ? $f['code'] : '',
             'status'        => !empty($f['status']) ? 1 : 0,
             'province_code' => !empty($f['province_code']) ? (int) $f['province_code'] : '',
             'ward_code'     => !empty($f['ward_code']) ? (int) $f['ward_code'] : '',

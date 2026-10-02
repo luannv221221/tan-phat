@@ -9,7 +9,7 @@ use App\core\Session;
 class Partners extends Controller {
 
     private $__data = [];
-    private $__model, $__vehicle, $__request, $__response;
+    private $__model, $__vehicle, $__nhom, $__request, $__response;
 
     private $routeBase = 'partners';
     private $labelOne  = 'đối tượng';
@@ -19,6 +19,7 @@ class Partners extends Controller {
     function __construct(){
         $this->__model    = $this->model('PartnersModel');
         $this->__vehicle  = $this->model('VehiclesModel');
+        $this->__nhom     = $this->model('CustomerGroupsModel');
         $this->__request  = new Request();
         $this->__response = new Response();
     }
@@ -27,6 +28,7 @@ class Partners extends Controller {
         $this->__data['content']['routeBase'] = $this->routeBase;
         $this->__data['content']['labelOne']  = $this->labelOne;
         $this->__data['content']['types']     = PartnersModel::$types;
+        $this->__data['content']['dsNhom']    = $this->__nhom->getActive();
     }
 
     public function index(){
@@ -54,7 +56,7 @@ class Partners extends Controller {
         $c['loc']          = $loc;
         $c['dangLoc']      = ($loc['q'] !== '' || $loc['type'] !== '' || $loc['group'] !== '' || $loc['status'] !== '');
         $c['tongTatCa']    = $this->__model->demTatCa();
-        $c['dsNhomKhach']  = $this->model('CustomerGroupsModel')->getActive();
+        $c['dsNhomKhach']  = $this->__nhom->getActive();
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['msgError']  = Session::flash('msgError');
         $this->render('layouts/admin/master_admin', $this->__data);
@@ -147,6 +149,21 @@ class Partners extends Controller {
         if (($tinh > 0 || $xa > 0) && dia_gioi_tra($tinh, $xa) === null){
             $errors['province_code'] = 'Chọn lại tỉnh và phường/xã — phường phải thuộc tỉnh đã chọn';
         }
+
+        /* Email + Nhóm khách: hai ô này trước đây CHỈ có ở màn CSKH › Khách
+           hàng, trong khi hai màn cùng sửa MỘT bản ghi `partners`. Khai một
+           khách doanh nghiệp phải chạy qua cả hai màn mới đủ. Nay form nào
+           cũng khai đủ. */
+        $email = isset($f['email']) ? trim((string) $f['email']) : '';
+        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)){
+            $errors['email'] = 'Email không đúng định dạng';
+        }
+        // Nhóm khách phải là nhóm CỦA GARA NÀY — getDetail() đã lọc theo gara
+        $nhomId = !empty($f['group_id']) ? (int) $f['group_id'] : 0;
+        if ($nhomId > 0 && empty($this->__nhom->getDetail($nhomId))){
+            $errors['group_id'] = 'Nhóm khách không hợp lệ';
+        }
+
         return $errors;
     }
 
@@ -162,6 +179,13 @@ class Partners extends Controller {
             'type'       => $type,
             'tax_code'   => !empty($f['tax_code']) ? trim($f['tax_code']) : null,
             'phone'      => !empty($f['phone']) ? trim($f['phone']) : null,
+            'email'      => !empty($f['email']) ? trim($f['email']) : null,
+            /* Nhóm khách chỉ có nghĩa với KHÁCH. Đối tượng thuần nhà cung cấp
+               mà nằm trong nhóm "Khách doanh nghiệp" là dữ liệu rác, nên bỏ
+               nhóm ngay ở ĐƯỜNG LƯU chứ không chỉ ẩn ô trên form — POST tay
+               cũng không ghi vào được. */
+            'group_id'   => (!empty($f['group_id']) && $type !== 'supplier')
+                            ? (int) $f['group_id'] : null,
             'address'    => !empty($f['address']) ? trim($f['address']) : null,
             /* Lưu cả MÃ và TÊN: đơn vị hành chính còn sáp nhập / đổi tên nữa,
                và API ngoài có thể chết — địa chỉ đã lưu vẫn phải đọc được. */

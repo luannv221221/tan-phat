@@ -73,6 +73,15 @@ $val = function ($key) use ($old) {
                         {!! !empty($errors['group_id'])?'<small class="text-danger">'.e($errors['group_id']).'</small>':false !!}
                     </div>
 
+                    <?php /* MST: hoá đơn cho khách doanh nghiệp cần ô này. Trước
+                             đây chỉ khai được ở màn Bán hàng › Đối tượng, dù hai
+                             màn cùng sửa MỘT bản ghi `partners`. */ ?>
+                    <div class="form-group">
+                        <label>Mã số thuế <span class="text-muted small">(khách doanh nghiệp)</span></label>
+                        <input type="text" name="tax_code" class="form-control" value="{{$val('tax_code')}}"/>
+                        {!! !empty($errors['tax_code'])?'<small class="text-danger">'.e($errors['tax_code']).'</small>':false !!}
+                    </div>
+
                     <?php /* Tỉnh / phường: 34 tỉnh, 2 cấp (sau sáp nhập 2025).
                              Danh sách lấy qua admin/dia-gioi. Không bắt buộc. */ ?>
                     <div class="form-row">
