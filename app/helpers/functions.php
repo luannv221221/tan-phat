@@ -1115,3 +1115,62 @@ function nut_them_nhanh($loai, $o, array $tuy = []){
 
     return '<button' . $chuoi . '><i class="fas fa-plus"></i></button>';
 }
+
+/**
+ * Số điện thoại rút về dạng bấm gọi / mở Zalo được: chỉ còn chữ số, và
+ * +84 / 84 đổi về 0.
+ *
+ * Người nhập mỗi người một kiểu: "0912 345 678", "+84912345678",
+ * "0912.345.678". Dán nguyên văn vào tel: hay zalo.me là hỏng link.
+ */
+function sdt_chuan($phone){
+    $so = preg_replace('/\D+/', '', (string) $phone);
+    if ($so === '') return '';
+    if (strpos($so, '84') === 0 && strlen($so) >= 11) $so = '0' . substr($so, 2);
+    return $so;
+}
+
+/**
+ * Nhóm nút LIÊN HỆ NHANH với khách: Zalo, gọi, nhắn tin, email.
+ *
+ * Tất cả dựng từ số điện thoại và email ĐÃ CÓ trong hồ sơ, không phải khai
+ * thêm gì. Thiếu số hoặc thiếu email thì nút tương ứng hiện MỜ và không bấm
+ * được — bỏ hẳn nút sẽ làm các dòng trong bảng so le nhau, nhìn rất khó dò.
+ *
+ * Zalo không có icon trong bộ Font Awesome nên dùng chữ "Zalo"; đoán vẽ lại
+ * logo thương hiệu thì vừa sai vừa không cần.
+ */
+function nut_lien_he($phone, $email = ''){
+    $so    = sdt_chuan($phone);
+    $email = trim((string) $email);
+    $eOk   = $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL);
+
+    $mo = function($url, $nhan, $title, $mau, $moTab = false){
+        return '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '"'
+             . ' class="btn ' . $mau . ' btn-sm" title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '"'
+             . ($moTab ? ' target="_blank" rel="noopener noreferrer"' : '') . '>' . $nhan . '</a>';
+    };
+    $tat = function($nhan, $title, $mau){
+        return '<span class="btn ' . $mau . ' btn-sm disabled" style="opacity:.4;cursor:not-allowed"'
+             . ' title="' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '">' . $nhan . '</span>';
+    };
+
+    $zalo = '<b style="font-size:11px;line-height:1">Zalo</b>';
+    $ra   = $so !== ''
+        ? $mo('https://zalo.me/' . $so, $zalo, 'Nhắn Zalo tới ' . $so, 'btn-primary', true)
+        : $tat($zalo, 'Chưa có số điện thoại', 'btn-primary');
+
+    $ra .= ' ' . ($so !== ''
+        ? $mo('tel:' . $so, '<i class="fas fa-phone"></i>', 'Gọi ' . $so, 'btn-success')
+        : $tat('<i class="fas fa-phone"></i>', 'Chưa có số điện thoại', 'btn-success'));
+
+    $ra .= ' ' . ($so !== ''
+        ? $mo('sms:' . $so, '<i class="fas fa-comment-dots"></i>', 'Nhắn tin tới ' . $so, 'btn-secondary')
+        : $tat('<i class="fas fa-comment-dots"></i>', 'Chưa có số điện thoại', 'btn-secondary'));
+
+    $ra .= ' ' . ($eOk
+        ? $mo('mailto:' . $email, '<i class="fas fa-envelope"></i>', 'Gửi email tới ' . $email, 'btn-light')
+        : $tat('<i class="fas fa-envelope"></i>', 'Chưa có email', 'btn-light'));
+
+    return $ra;
+}

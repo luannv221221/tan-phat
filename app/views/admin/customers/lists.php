@@ -22,11 +22,10 @@
                 {{(int)$tongTatCa}} khách hàng
                 @endif
             </span>
-            @if (route('admin/'.$routeBase.'/add'))
-            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/add'}}" class="btn btn-primary btn-sm">
-                <i class="fas fa-user-plus mr-1"></i> Thêm khách hàng
-            </a>
-            @endif
+            <?php /* KHÔNG có nút "Thêm khách hàng" ở đây — 02/10/2026.
+                     Khách và nhà cung cấp khai ở Bán hàng › Đối tượng; màn này là
+                     nơi CHĂM SÓC danh sách đó: xếp nhóm và liên hệ. Route
+                     customers/add vẫn còn, chỉ không bày nút ra nữa. */ ?>
         </div>
     </div>
 
@@ -64,7 +63,7 @@
                     <th style="width:24%">Xe</th>
                     <th style="width:12%">Nhóm</th>
                     <th style="width:110px" class="text-center">Trạng thái</th>
-                    <th style="width:120px" class="text-center">Thao tác</th>
+                    <th style="width:260px" class="text-center">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
@@ -99,6 +98,11 @@
                         @if (route('admin/vehicles/add'))
                         <a href="{{_WEB_URL.'/admin/vehicles/add?ve=customer&partner_id='.$item['id']}}" class="btn btn-info btn-sm" title="Thêm xe cho khách này"><i class="fas fa-car"></i></a>
                         @endif
+                        <?php /* Liên hệ nhanh: Zalo, gọi, nhắn tin, email — dựng
+                                 từ SĐT và email đã có trong hồ sơ. Thiếu thì nút
+                                 tương ứng hiện mờ, không bỏ hẳn, để các dòng
+                                 không so le nhau. */ ?>
+                        {!! nut_lien_he($item['phone'], $item['email']) !!}
                     </td>
                 </tr>
                 @endforeach

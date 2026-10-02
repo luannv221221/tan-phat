@@ -60,6 +60,41 @@ ok(strpos($v('customers/edit.php'), 'name="code"') !== false,
    'Form SUA khach CO o Ma');
 
 // ---------------------------------------------------------------------------
+section('Lien he nhanh voi khach (Zalo / goi / nhan tin / email)');
+
+/* Man CSKH la noi CHAM SOC. Nut lien he dung SDT va email DA CO trong ho so,
+   khong phai khai them gi.
+
+   CHO DE HONG: nguoi nhap moi nguoi mot kieu — "0912 345 678", "+84912345678",
+   "0912.345.678". Dan nguyen van vao tel: hay zalo.me/ la hong link, ma hong
+   kieu nay KHONG bao loi gi: nut van hien, bam vao moi biet. */
+ok(sdt_chuan('0912 345 678')   === '0912345678', 'sdt_chuan() bo khoang trang');
+ok(sdt_chuan('0912.345.678')   === '0912345678', 'sdt_chuan() bo dau cham');
+ok(sdt_chuan('+84912345678')   === '0912345678', 'sdt_chuan() doi +84 ve 0');
+ok(sdt_chuan('84912345678')    === '0912345678', 'sdt_chuan() doi 84 ve 0');
+ok(sdt_chuan('')               === '' && sdt_chuan('abc') === '',
+   'sdt_chuan() khong co chu so -> rong');
+
+$nut = nut_lien_he('0912 345 678', 'a@b.test');
+ok(strpos($nut, 'https://zalo.me/0912345678') !== false, 'Nut Zalo tro dung so da chuan hoa');
+ok(strpos($nut, 'href="tel:0912345678"') !== false,      'Co nut goi dien');
+ok(strpos($nut, 'href="sms:0912345678"') !== false,      'Co nut nhan tin');
+ok(strpos($nut, 'href="mailto:a@b.test"') !== false,     'Co nut gui email');
+ok(strpos($nut, 'target="_blank"') !== false && strpos($nut, 'rel="noopener') !== false,
+   'Zalo mo tab moi va co rel=noopener');
+
+/* Thieu du lieu thi nut MO chu khong bo han — bo han lam cac dong trong bang
+   so le nhau, nhin rat kho do. */
+$nutThieu = nut_lien_he('', '');
+ok(strpos($nutThieu, 'zalo.me') === false && strpos($nutThieu, 'href="tel:') === false,
+   'Khach chua co SDT -> khong sinh link zalo / tel nao');
+ok(substr_count($nutThieu, 'disabled') === 4,
+   'Va ca bon nut deu hien MO, khong bien mat',
+   'Dem duoc ' . substr_count($nutThieu, 'disabled'));
+ok(strpos(nut_lien_he('0912345678', 'khong-phai-email'), 'mailto:') === false,
+   'Email sai dinh dang -> khong sinh link mailto');
+
+// ---------------------------------------------------------------------------
 try {
     $pdo = new PDO('mysql:host=' . _HOST . ';port=' . _PORT . ';dbname=' . _DB . ';charset=utf8mb4',
                    _USER, _PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
@@ -265,16 +300,31 @@ foreach ($veRa as $u){
 }
 
 // ---------------------------------------------------------------------------
-section('Man Doi tuong AN khoi menu nhung van song va van duoc gac');
+section('Danh sach khach: co nut lien he, KHONG co nut Them');
 
-/* 02/10/2026: bỏ `partners` khỏi $menuGroups cho khỏi lẫn với CSKH › Khách
-   hàng. Nhưng KHÔNG xoá route, module hay quyền — đó vẫn là nơi DUY NHẤT khai
-   được nhà cung cấp, mà phiếu nhập kho cần. */
+$rDs = $http('GET', "$base/admin/customers", $jar);
+ok($rDs['code'] === 200 && strpos($rDs['body'], 'zalo.me/') !== false,
+   'Danh sach khach co nut Zalo tren dong khach',
+   'HTTP ' . $rDs['code']);
+ok(strpos($rDs['body'], 'href="tel:') !== false && strpos($rDs['body'], 'href="mailto:') !== false,
+   'Va co ca nut goi dien / gui email');
+/* Khai khach o Ban hang > Doi tuong, man nay chi cham soc. */
+ok(strpos($rDs['body'], '/admin/customers/add') === false,
+   'Danh sach khach KHONG con duong toi man Them');
+
+// ---------------------------------------------------------------------------
+section('Man Doi tuong co tren menu va duoc gac quyen');
+
+/* 02/10/2026 có một lượt ẩn `partners` khỏi menu rồi KHÔI PHỤC ngay trong ngày.
+   Phân vai: đây là nơi KHAI khách và nhà cung cấp (thêm / sửa / xoá / đặt mã /
+   MST); màn CSKH › Khách hàng là nơi CHĂM SÓC. Hai màn cùng sửa MỘT dòng
+   `partners` nhưng không trùng việc. */
 $sb = file_get_contents($goc . 'app/views/layouts/admin/sidebar.php');
 if (preg_match('~\$menuGroups\s*=\s*\[(.*?)\n\];~s', $sb, $mg)){
     $khongChuThich = preg_replace('~/\*.*?\*/|//[^\n]*~s', '', $mg[1]);
-    ok(strpos($khongChuThich, "'partners'") === false,
-       'sidebar.php KHONG con muc `partners` tren menu');
+    ok(strpos($khongChuThich, "'partners'") !== false,
+       'sidebar.php CO muc `partners` tren menu',
+       'Day la noi duy nhat khai duoc nha cung cap');
 }
 
 /* CHỖ HỎNG ÂM THẦM nếu sau này ai đó "dọn dẹp" nốt dòng `modules`:
@@ -284,7 +334,7 @@ if (preg_match('~\$menuGroups\s*=\s*\[(.*?)\n\];~s', $sb, $mg)){
    menu thì được, xoá dòng modules thì KHÔNG. */
 $mod = $pdo->query("SELECT id FROM `modules` WHERE link = 'partners'")->fetchColumn();
 ok(!empty($mod),
-   'Dong `modules` cua partners VAN CON (an khoi menu, khong phai xoa module)',
+   'Dong `modules` cua partners VAN CON',
    'Mat dong nay la man /admin/partners thanh man khong ai gac');
 
 $r = $http('GET', "$base/admin/partners", $jar);
@@ -310,8 +360,8 @@ ok($rKh['code'] === 200, 'Nhom hep vao duoc man duoc cap quyen (HTTP ' . $rKh['c
 
 $rDt = $http('GET', "$base/admin/partners", $jar2);
 ok($rDt['code'] !== 200,
-   'Nhom KHONG co quyen van bi chan o /admin/partners du man da an khoi menu',
-   'HTTP ' . $rDt['code'] . ' — an khoi menu KHONG duoc bien no thanh man tu do');
+   'Nhom KHONG co quyen bi chan o /admin/partners',
+   'HTTP ' . $rDt['code']);
 
 @unlink($jar2);
 $pdo->exec("DELETE FROM users WHERE email = 'zz2m-hep@local.test'");

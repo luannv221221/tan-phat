@@ -34,16 +34,14 @@ $isActive = function ($link) use ($currentUrl) {
  */
 $menuGroups = [
     // --- Khu 1: việc hằng ngày ở quầy ---
-    /* `partners` (Đối tượng khách/NCC) CỐ Ý KHÔNG có trên menu — 02/10/2026.
-       Màn đó và CSKH › Khách hàng cùng sửa MỘT dòng `partners`, nhìn như hai
-       nơi lưu khác nhau nên gây hiểu nhầm. Khách hàng nay khai đủ ở màn CSKH
-       (có cả mã và MST), nên màn Đối tượng thôi hiện ra.
+    /* `partners` (Đối tượng khách/NCC) ĐÃ ẩn khỏi menu 02/10/2026 rồi KHÔI PHỤC
+       ngay trong ngày. Đây là nơi KHAI khách và nhà cung cấp — thêm mới, sửa,
+       xoá, đặt mã và MST. Màn CSKH › Khách hàng là nơi CHĂM SÓC: xem lại danh
+       sách đó, xếp nhóm và liên hệ (Zalo, gọi, nhắn tin, email).
 
-       Route, module và quyền GIỮ NGUYÊN: /admin/partners vẫn vào được bằng
-       đường dẫn. Đây là nơi DUY NHẤT khai được NHÀ CUNG CẤP (phiếu nhập kho
-       cần), nên đừng xoá route hay dòng `modules` của nó. Muốn hiện lại chỉ
-       cần thêm 'partners' vào nhóm dưới đây. */
-    'Bán hàng'           => ['quotations', 'sales-invoices', 'orders', 'bao-cao-ban-hang'],
+       Hai màn cùng sửa MỘT dòng `partners`, nhưng phân vai rõ chứ không trùng
+       nhau: khai ở đây, chăm sóc ở kia. */
+    'Bán hàng'           => ['quotations', 'sales-invoices', 'orders', 'partners', 'bao-cao-ban-hang'],
     // Kế toán đứng NGAY SAU Bán hàng: phiếu thu sinh ra từ hoá đơn bán,
     // phiếu chi từ phiếu nhập — tiền vào tiền ra là bước kế tiếp của việc
     // bán hàng, chưa phải một khu quản trị riêng.

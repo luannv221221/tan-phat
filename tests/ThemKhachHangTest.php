@@ -39,10 +39,18 @@ $routes = file_get_contents($goc . 'routes/web.php');
 ok(strpos($routes, "'customers/add'") !== false, 'Co route customers/add');
 ok(is_file($goc . 'app/views/admin/customers/add.php'), 'Co view customers/add.php');
 
-$lists = file_get_contents($goc . 'app/views/admin/customers/lists.php');
-ok(strpos($lists, "route('admin/'.\$routeBase.'/add')") !== false,
-   'Nut Them an theo quyen `add`');
-ok(strpos($lists, 'Thêm khách hàng') !== false, 'Danh sach co nut Them khach hang');
+/* 02/10/2026: man CSKH BO nut "Them khach hang". Khach va nha cung cap khai o
+   Ban hang > Doi tuong; man nay la noi CHAM SOC (xep nhom + lien he). Route va
+   postAdd() GIU NGUYEN — chi thoi bay nut ra.
+
+   Doc qua codeOnly(): chu "Them khach hang" van nam trong CHU THICH giai thich
+   vi sao bo nut, grep thang vao van ban nguon se bao PASS oan. */
+$listsCode = codeOnly($goc . 'app/views/admin/customers/lists.php');
+ok(strpos($listsCode, 'Thêm khách hàng') === false,
+   'Danh sach KHONG con nut Them khach hang',
+   'Khai khach o Ban hang > Doi tuong');
+ok(strpos($listsCode, "\$routeBase.'/add'") === false,
+   'Va cung khong con duong dan toi man Them tren danh sach');
 
 $ctl = codeOnly($goc . 'app/controllers/admin/Customers.php');
 ok(strpos($ctl, 'public function postAdd') !== false, 'Controller co postAdd()');
