@@ -186,8 +186,11 @@ foreach (['hang_xe', 'model_xe', 'nam_sx', 'phien_ban', 'mau_xe'] as $o){
     ok(strpos($r['body'], 'name="' . $o . '"') === false, "Form Them xe KHONG con o go tay `$o`");
 }
 ok(strpos($r['body'], 'name="color_id"') !== false, 'Form Them xe co o CHON mau');
-ok(substr_count($r['body'], 'data-them-nhanh=') === 4,
-   'Bon o danh muc (hang / model / nam / mau) deu co nut + them nhanh',
+ok(strpos($r['body'], 'name="fuel_id"') !== false, 'Form Them xe co o CHON nhien lieu');
+/* 5 chu khong phai 4: nhien lieu them tu 02/10/2026 (migration 000083).
+   Danh muc car_fuels co tu lau nhung truoc do khong gan duoc vao xe. */
+ok(substr_count($r['body'], 'data-them-nhanh=') === 5,
+   'Nam o danh muc (hang / model / nam / mau / nhien lieu) deu co nut + them nhanh',
    'Dem duoc ' . substr_count($r['body'], 'data-them-nhanh='));
 
 // --- Khách để gắn xe ---
@@ -235,6 +238,46 @@ $lapXe('ZZCG-44.444', ['brand_id' => (int) $h1['c'], 'model_id' => (int) $m1['c'
 ok($so("SELECT COUNT(*) FROM vehicles WHERE bien_so_chuan = 'ZZCG44444'") === 0,
    'Mau khong co trong danh muc -> khong luu duoc');
 $tieuFlash();
+
+// ---------------------------------------------------------------------------
+section('Nhien lieu cua xe (02/10/2026 — migration 000083)');
+
+/* Danh muc car_fuels co tu lau va co man quan tri rieng, nhung KHONG cho nao
+   gan duoc nhien lieu vao mot chiec xe — danh muc dung khong. */
+$nl = $mot("SELECT id, name FROM car_fuels WHERE status = 1 ORDER BY id LIMIT 1");
+ok(!empty($nl), 'Danh muc nhien lieu co it nhat mot dong de chon');
+
+$lapXe('ZZCG-88.888', ['brand_id' => (int) $h1['c'], 'model_id' => (int) $m1['c'],
+                       'fuel_id' => (int) $nl['id']]);
+$xeNl = $mot("SELECT * FROM vehicles WHERE bien_so_chuan = 'ZZCG88888'");
+ok(!empty($xeNl) && (int) $xeNl['fuel_id'] === (int) $nl['id'],
+   'Nhien lieu chon tren form duoc LUU vao xe',
+   json_encode($xeNl['fuel_id'] ?? null));
+$tieuFlash();
+
+$lapXe('ZZCG-77.777', ['brand_id' => (int) $h1['c'], 'model_id' => (int) $m1['c'], 'fuel_id' => 999999]);
+ok($so("SELECT COUNT(*) FROM vehicles WHERE bien_so_chuan = 'ZZCG77777'") === 0,
+   'Nhien lieu khong co trong danh muc -> khong luu duoc');
+$tieuFlash();
+
+/* Xoa mot dong nhien lieu khoi danh muc KHONG duoc keo xe di theo:
+   khoa ngoai dat ON DELETE SET NULL. */
+$pdo->exec("INSERT INTO car_fuels (name, slug, sort_order, status, create_at)
+            VALUES ('ZZCG Nhien lieu tam', 'zzcg-nhien-lieu-tam', 0, 1, NOW())");
+$nlTam = (int) $pdo->lastInsertId();
+$pdo->exec("UPDATE vehicles SET fuel_id = $nlTam WHERE bien_so_chuan = 'ZZCG88888'");
+$pdo->exec("DELETE FROM car_fuels WHERE id = $nlTam");
+$xeSau = $mot("SELECT * FROM vehicles WHERE bien_so_chuan = 'ZZCG88888'");
+ok(!empty($xeSau) && $xeSau['fuel_id'] === null,
+   'Xoa dong nhien lieu khoi danh muc -> xe VAN CON, chi mat nhien lieu',
+   json_encode($xeSau ? $xeSau['fuel_id'] : 'mat luon chiec xe'));
+
+/* CHO HONG DA MAC: danh sach xe doc cot chu `mau_xe`, ma cot do thoi duoc ghi
+   tu khi bo o go tay — xe moi luu KHONG con hien mau. Phai doc qua danh muc. */
+$r = $http('GET', "$base/admin/vehicles?q=ZZCG-33.333", $jar);
+ok($r['code'] === 200 && strpos($r['body'], $c1['n']) !== false,
+   'Danh sach xe hien MAU lay tu danh muc (khong con dua vao cot chu cu)',
+   'Dang tim chu: ' . $c1['n']);
 
 // ---------------------------------------------------------------------------
 section('HTTP — them nhanh danh muc va them nhanh ca chiec xe');

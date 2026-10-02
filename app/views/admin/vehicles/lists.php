@@ -89,7 +89,7 @@
                 ?>
                 <tr>
                     <td><span class="font-weight-bold text-uppercase">{{$item['bien_so']}}</span></td>
-                    <td>{{$tenXe !== '' ? $tenXe : '—'}}<span class="text-muted small d-block">{{!empty($item['mau_xe']) ? $item['mau_xe'] : ''}}</span></td>
+                    <td>{{$tenXe !== '' ? $tenXe : '—'}}<span class="text-muted small d-block">{{trim(implode(' · ', array_filter([VehiclesModel::mauXe($item), VehiclesModel::nhienLieu($item)])))}}</span></td>
                     <td class="small text-muted">
                         {{!empty($item['so_khung']) ? $item['so_khung'] : '—'}}
                         <span class="d-block">{{!empty($item['so_may']) ? $item['so_may'] : ''}}</span>

@@ -234,7 +234,24 @@ $soPhieu = count((array) $phieuDs);
                     </div>
                     {!! !empty($errors['color_id'])?'<small class="text-danger">'.e($errors['color_id']).'</small>':false !!}
                 </div>
-                <div class="form-group col-md-8 align-self-end">
+                <div class="form-group col-md-4">
+                    <label>Nhiên liệu</label>
+                    <div class="input-group">
+                        <select name="fuel_id" class="form-control">
+                            <option value="">— Không chọn —</option>
+                            @if (!empty($nlDs))
+                            @foreach ($nlDs as $nl)
+                            <option value="{{$nl['id']}}" {{(int)$v('fuel_id')===(int)$nl['id']?'selected':''}}>{{$nl['name']}}</option>
+                            @endforeach
+                            @endif
+                        </select>
+                        <div class="input-group-append">
+                            {!! nut_them_nhanh('car-fuel', 'fuel_id', ['nhan' => 'nhiên liệu', 'vd' => 'VD: Xăng E5']) !!}
+                        </div>
+                    </div>
+                    {!! !empty($errors['fuel_id'])?'<small class="text-danger">'.e($errors['fuel_id']).'</small>':false !!}
+                </div>
+                <div class="form-group col-md-4 align-self-end">
                     <div class="custom-control custom-switch">
                         <input type="checkbox" class="custom-control-input" name="status" id="status" value="1" {{(int)$v('status', 1)===1?'checked':''}}/>
                         <label class="custom-control-label" for="status">Đang dùng</label>

@@ -25,14 +25,31 @@ class VehiclesModel extends Model {
     private function chonKemTen(){
         return '`vehicles`.*, '
              . '`partners`.`name` AS chu_ten, `partners`.`code` AS chu_ma, `partners`.`phone` AS chu_sdt, '
-             . '`car_brands`.`name` AS hang_dm, `car_models`.`name` AS model_dm, `car_years`.`name` AS nam_dm';
+             . '`car_brands`.`name` AS hang_dm, `car_models`.`name` AS model_dm, `car_years`.`name` AS nam_dm, '
+             /* Màu và nhiên liệu nay là KHOÁ NGOẠI. Thiếu hai join này thì
+                danh sách xe không còn chữ màu nào — cột chữ `mau_xe` cũ đã
+                thôi được ghi từ khi bỏ ô gõ tay. */
+             . '`car_colors`.`name` AS mau_dm, `car_fuels`.`name` AS nl_dm';
     }
 
     private function joinKemTen($q){
         return $q->leftJoinOn('partners', 'vehicles.partner_id', 'partners.id')
                  ->leftJoinOn('car_brands', 'vehicles.brand_id', 'car_brands.id')
                  ->leftJoinOn('car_models', 'vehicles.model_id', 'car_models.id')
-                 ->leftJoinOn('car_years', 'vehicles.car_year_id', 'car_years.id');
+                 ->leftJoinOn('car_years', 'vehicles.car_year_id', 'car_years.id')
+                 ->leftJoinOn('car_colors', 'vehicles.color_id', 'car_colors.id')
+                 ->leftJoinOn('car_fuels', 'vehicles.fuel_id', 'car_fuels.id');
+    }
+
+    /** Màu xe: ưu tiên danh mục, lùi về chữ gõ tay của dữ liệu cũ. */
+    public static function mauXe($r){
+        if (!empty($r['mau_dm'])) return $r['mau_dm'];
+        return !empty($r['mau_xe']) ? $r['mau_xe'] : '';
+    }
+
+    /** Nhiên liệu: chỉ có trong danh mục, không có cột chữ gõ tay nào. */
+    public static function nhienLieu($r){
+        return !empty($r['nl_dm']) ? $r['nl_dm'] : '';
     }
 
     /**
@@ -254,6 +271,18 @@ class VehiclesModel extends Model {
     public function mauDanhMuc(){
         return (array) $this->table('car_colors')->select('`id`, `name`')
             ->where('status', '=', 1)->orderBy('sort_order', 'ASC')->orderBy('name', 'ASC')->get();
+    }
+
+    public function nhienLieuDanhMuc(){
+        return (array) $this->table('car_fuels')->select('`id`, `name`')
+            ->where('status', '=', 1)->orderBy('sort_order', 'ASC')->orderBy('name', 'ASC')->get();
+    }
+
+    /** Để trống được; đã chọn thì phải là dòng CÓ THẬT trong danh mục. */
+    public function nhienLieuCoThat($fuelId){
+        $fuelId = (int) $fuelId;
+        if ($fuelId <= 0) return true;
+        return !empty($this->table('car_fuels')->select('`id`')->where('id', '=', $fuelId)->first());
     }
 
     public function mauCoThat($colorId){

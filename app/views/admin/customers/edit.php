@@ -45,7 +45,7 @@ $statusOn = isset($old['status']) ? (int) $old['status'] === 1 : (int) $item['st
                         @foreach ($dsXe as $x)
                         <tr>
                             <td><span class="font-weight-bold text-uppercase">{{$x['bien_so']}}</span></td>
-                            <td>{{VehiclesModel::tenXe($x) !== '' ? VehiclesModel::tenXe($x) : '—'}}{{!empty($x['mau_xe']) ? ' · '.$x['mau_xe'] : ''}}</td>
+                            <td>{{VehiclesModel::tenXe($x) !== '' ? VehiclesModel::tenXe($x) : '—'}}{{($pl = implode(' · ', array_filter([VehiclesModel::mauXe($x), VehiclesModel::nhienLieu($x)]))) !== '' ? ' · '.$pl : ''}}</td>
                             <td class="small text-muted">{{!empty($x['so_khung']) ? $x['so_khung'] : '—'}}{{!empty($x['so_may']) ? ' / '.$x['so_may'] : ''}}</td>
                             <td class="text-right">{!! $x['so_km'] !== null ? number_format($x['so_km'], 0, ',', '.') : '<span class="text-muted">—</span>' !!}</td>
                             <td class="text-center">{{isset($soPhieu[(int)$x['id']]) ? (int)$soPhieu[(int)$x['id']] : 0}}</td>

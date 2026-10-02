@@ -198,7 +198,7 @@ $man = [
     'news/add'            => 1,
     'car-models/add'      => 2,
     'part-categories/add' => 1,
-    'vehicles/add'        => 4,
+    'vehicles/add'        => 5,   // hang, model, nam, mau, nhien lieu
 ];
 foreach ($man as $duong => $soNut){
     $r = $http('GET', "$base/admin/$duong", $jarAd);

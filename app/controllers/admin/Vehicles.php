@@ -44,6 +44,7 @@ class Vehicles extends Controller {
         $c['partners'] = $this->__partner->getLists(['type' => 'customer', 'status' => '1']);
         $c['hangDs']   = $this->__model->hangDanhMuc();
         $c['mauDs']    = $this->__model->mauDanhMuc();
+        $c['nlDs']     = $this->__model->nhienLieuDanhMuc();
     }
 
     public function index(){
@@ -274,6 +275,7 @@ class Vehicles extends Controller {
         $modelId = !empty($f['model_id']) ? (int) $f['model_id'] : 0;
         $yearId  = !empty($f['car_year_id']) ? (int) $f['car_year_id'] : 0;
         $colorId = !empty($f['color_id']) ? (int) $f['color_id'] : 0;
+        $fuelId  = !empty($f['fuel_id']) ? (int) $f['fuel_id'] : 0;
 
         if ($brandId <= 0){
             $errors['brand_id'] = 'Chọn hãng xe — thiếu trong danh mục thì bấm dấu + để thêm';
@@ -292,6 +294,9 @@ class Vehicles extends Controller {
         if (!$this->__model->mauCoThat($colorId)){
             $errors['color_id'] = 'Màu xe không có trong danh mục';
         }
+        if (!$this->__model->nhienLieuCoThat($fuelId)){
+            $errors['fuel_id'] = 'Nhiên liệu không có trong danh mục';
+        }
 
         if (!empty($f['partner_id']) && empty($this->__partner->getDetail((int) $f['partner_id']))){
             $errors['partner_id'] = 'Chủ xe không hợp lệ';
@@ -308,6 +313,7 @@ class Vehicles extends Controller {
         $modelId = !empty($f['model_id']) ? (int) $f['model_id'] : null;
         $yearId  = !empty($f['car_year_id']) ? (int) $f['car_year_id'] : null;
         $colorId = !empty($f['color_id']) ? (int) $f['color_id'] : null;
+        $fuelId  = !empty($f['fuel_id']) ? (int) $f['fuel_id'] : null;
 
         return [
             'partner_id'    => !empty($f['partner_id']) ? (int) $f['partner_id'] : null,
@@ -321,6 +327,7 @@ class Vehicles extends Controller {
             'model_id'      => $modelId,
             'car_year_id'   => $yearId,
             'color_id'      => $colorId,
+            'fuel_id'       => $fuelId,
             /* Cột chữ gõ tay cũ (hang_xe, model_xe, nam_sx, phien_ban, mau_xe)
                không còn nhận gì từ form: xoá trắng khi lưu để không còn hai
                nguồn tên cho cùng một thứ. Xe cũ ghi bằng chữ đã được migration
