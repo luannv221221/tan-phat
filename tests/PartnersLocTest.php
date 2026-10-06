@@ -56,6 +56,28 @@ ok(strpos($v, 'Không có đối tượng nào khớp bộ lọc') !== false,
    'Cung mot cau thi nguoi dung tuong mat sach doi tuong');
 
 // ---------------------------------------------------------------------------
+section('Tab loc theo loai (06/10/2026)');
+
+/* Khach thi ban cho, NCC thi mua vao — hai viec khac han. Truoc day tron chung
+   mot danh sach, muon tach phai mo o chon "Loai" ra loc. Nay bay san thanh tab. */
+ok(strpos($v, 'nav-tabs') !== false, 'Co thanh tab tren man Doi tuong');
+ok(strpos($v, '$duongTab') !== false, 'Tab dung duong dan GET, khong phai JS');
+
+/* Tab chi doi URL chu khong gui form. Khong giu loai bang o an thi go tim mot
+   cai la van ve "Tat ca" — dang dung tab NCC bong nhay sang ca khach. */
+ok(preg_match('~<input type="hidden" name="type"~', $v) === 1,
+   'Form loc co o AN giu loai dang chon',
+   'Thieu thi bam Loc la mat tab dang dung');
+
+/* Sang tab khac phai BO `page`: dang o trang 3 cua khach ma sang NCC chi co 2
+   dong thi roi vao trang trong, nhin nhu mat du lieu. */
+ok(strpos($v, "'page'") === false || !preg_match("~\\$duongTab.*'page'~s", $v),
+   'Duong tab KHONG mang theo so trang');
+
+$ctlTab = file_get_contents($goc . 'app/controllers/admin/Partners.php');
+ok(strpos($ctlTab, 'demTheoLoai') !== false, 'Controller nap so dem cho tung tab');
+
+// ---------------------------------------------------------------------------
 section('Chay that tren MySQL');
 
 try {
@@ -121,6 +143,33 @@ ok($co($P->getLists(['status' => '0']), 'ZZL-AN') && !$co($P->getLists(['status'
 ok(!$co($P->getLists(['status' => '1']), 'ZZL-AN'), 'Loc "Dang dung" khong lot doi tuong bi an');
 
 /* --- Ket hop nhieu dieu kien la AND, khong phai OR --- */
+/* SO TREN TAB phai khop ĐÚNG so dong bam vao se thay. Dem bang mot bo dieu
+   kien viet rieng la hai ban se lech nhau: tab noi 5, bam vao ra 4, ma khong
+   co loi nao bao. Nen demTheoLoai() va getLists() dung chung apDungLoc(). */
+$dem = $P->demTheoLoai([]);
+ok($dem['customer'] === count($P->getLists(['type' => 'customer'])),
+   'So tren tab "Khach hang" khop so dong that',
+   'tab=' . $dem['customer'] . ' vs danh sach=' . count($P->getLists(['type' => 'customer'])));
+ok($dem['supplier'] === count($P->getLists(['type' => 'supplier'])),
+   'So tren tab "Nha cung cap" khop so dong that',
+   'tab=' . $dem['supplier'] . ' vs danh sach=' . count($P->getLists(['type' => 'supplier'])));
+ok($dem['both'] === count($P->getLists(['type' => 'both'])),
+   'So tren tab "Ca hai" khop so dong that');
+ok($dem[''] === count($P->getLists([])),
+   'So tren tab "Tat ca" khop so dong that');
+
+/* Nguoi vua mua vua ban dem vao CA HAI tab, dung nhu bo loc. */
+ok($dem['customer'] + $dem['supplier'] - $dem['both'] === $dem[''],
+   'Loai "Ca hai" dem vao ca hai tab, khong roi ra ngoai',
+   json_encode($dem));
+
+/* Dem phai theo cac bo loc KHAC dang bat. Neu khong, dang tim "ZZPL" ma tab
+   van hien tong so toan he thong thi con so vo nghia. */
+$demLoc = $P->demTheoLoai(['q' => 'ZZPL']);
+ok($demLoc[''] === count($P->getLists(['q' => 'ZZPL'])),
+   'So tren tab chay theo o Tim dang go',
+   'tab=' . $demLoc[''] . ' vs danh sach=' . count($P->getLists(['q' => 'ZZPL'])));
+
 $ketHop = $P->getLists(['type' => 'customer', 'status' => '0']);
 ok($co($ketHop, 'ZZL-AN') && !$co($ketHop, 'ZZL-KH') && !$co($ketHop, 'ZZL-BOTH'),
    'Ket hop "Khach hang" + "Da an" la AND',

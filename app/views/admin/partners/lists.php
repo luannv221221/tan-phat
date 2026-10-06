@@ -25,24 +25,63 @@
         </div>
     </div>
 
+    <?php
+    /* TAB LỌC THEO LOẠI — thay cho ô chọn "Loại" cũ.
+     *
+     * Hai loại này là hai việc khác hẳn nhau: khách thì bán cho, NCC thì mua
+     * vào. Trộn chung một danh sách rồi bắt mở ô chọn ra lọc thì ngày nào cũng
+     * phải thao tác thừa. Tab bày sẵn cả hai, bấm một cái là sang.
+     *
+     * Tab giữ nguyên các bộ lọc khác (tìm / nhóm / trạng thái) nhưng BỎ `page`:
+     * đang ở trang 3 của khách mà sang NCC chỉ có 2 dòng thì rơi vào trang
+     * trống, nhìn như mất dữ liệu.
+     *
+     * Loại "Cả hai" đếm vào CẢ hai tab — đối tác vừa mua vừa bán phải tìm thấy
+     * ở cả hai danh sách, không rơi ra ngoài. Tab "Cả hai" chỉ hiện khi thật sự
+     * có dòng nào như vậy, bày sẵn một tab luôn bằng 0 là tổ gây phân vân. */
+    $tabs = [
+        ''         => ['Tất cả',       'fa-address-book'],
+        'customer' => ['Khách hàng',   'fa-user'],
+        'supplier' => ['Nhà cung cấp', 'fa-truck'],
+        'both'     => ['Cả hai',       'fa-exchange-alt'],
+    ];
+    // Không có đối tượng nào "cả hai" thì bỏ hẳn tab đó đi
+    if (empty($demLoai['both']) && $loc['type'] !== 'both') unset($tabs['both']);
+    $duongTab = function ($loai) use ($loc, $routeBase) {
+        $qs = array_filter([
+            'q'      => $loc['q'],
+            'group'  => $loc['group'],
+            'status' => $loc['status'],
+            'type'   => $loai,
+        ], function ($v) { return $v !== '' && $v !== null; });
+        return _WEB_URL . '/admin/' . $routeBase . (!empty($qs) ? '?' . http_build_query($qs) : '');
+    };
+    ?>
+    <ul class="nav nav-tabs px-3 pt-2" style="border-bottom:1px solid #dee2e6">
+        @foreach ($tabs as $ma => $t)
+        <li class="nav-item">
+            <a class="nav-link {{$loc['type'] === $ma ? 'active' : ''}}" href="{{$duongTab($ma)}}">
+                <i class="fas {{$t[1]}} mr-1"></i>{{$t[0]}}
+                <span class="badge badge-{{$loc['type'] === $ma ? 'primary' : 'light'}} ml-1">{{(int)$demLoai[$ma]}}</span>
+            </a>
+        </li>
+        @endforeach
+    </ul>
+
     <?php /* BỘ LỌC. Dùng GET: dán link là người khác thấy đúng danh sách, và
              sang trang 2 không mất bộ lọc. Ô chọn tự gửi khi đổi; ô chữ thì
              bấm Lọc hoặc Enter. */ ?>
     <div class="card-body border-bottom">
         <form method="get" action="{{_WEB_URL.'/admin/'.$routeBase}}" class="form-row align-items-end">
-            <div class="form-group col-md-4 mb-2">
+            <?php /* Loại đã lên TAB phía trên, không còn ô chọn ở đây. Nhưng tab
+                     chỉ đổi URL chứ không gửi form, nên loại đang chọn phải đi
+                     kèm khi bấm Lọc — không thì gõ tìm một cái là văng về
+                     "Tất cả". */ ?>
+            <input type="hidden" name="type" value="{{$loc['type']}}"/>
+            <div class="form-group col-md-6 mb-2">
                 <label class="mb-1 small">Tìm (mã / tên / SĐT / MST)</label>
                 <input type="text" name="q" class="form-control form-control-sm"
                        placeholder="VD: Bosch, 0901..., KH-0001" value="{{$loc['q']}}"/>
-            </div>
-            <div class="form-group col-md-2 mb-2">
-                <label class="mb-1 small">Loại</label>
-                <select name="type" class="form-control form-control-sm" onchange="this.form.submit()">
-                    <option value="">— Tất cả —</option>
-                    <option value="customer" {{$loc['type']==='customer'?'selected':''}}>Khách hàng</option>
-                    <option value="supplier" {{$loc['type']==='supplier'?'selected':''}}>Nhà cung cấp</option>
-                    <option value="both"     {{$loc['type']==='both'?'selected':''}}>Chỉ loại "Cả hai"</option>
-                </select>
             </div>
             <div class="form-group col-md-2 mb-2">
                 <label class="mb-1 small">Nhóm khách</label>

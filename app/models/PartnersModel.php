@@ -41,8 +41,22 @@ class PartnersModel extends Model {
      * riêng nhóm đó.
      */
     public function getLists(array $loc = []){
-        $q = $this->bangGara();
+        return $this->apDungLoc($this->bangGara(), $loc)
+                    ->orderBy('sort_order', 'ASC')
+                    ->orderBy('name', 'ASC')
+                    ->get();
+    }
 
+    /**
+     * Áp bộ lọc lên một truy vấn.
+     *
+     * Tách riêng để demTheoLoai() dùng lại ĐÚNG bộ điều kiện của getLists().
+     * Viết lại điều kiện lần hai là hai bản sẽ lệch nhau: con số trên tab nói
+     * một đằng, danh sách bấm vào ra một nẻo — mà không có lỗi nào báo.
+     *
+     * @param bool $boQuaLoai true: bỏ qua điều kiện `type` (để đếm cho từng tab).
+     */
+    private function apDungLoc($q, array $loc, $boQuaLoai = false){
         $tu = isset($loc['q']) ? trim((string) $loc['q']) : '';
         if ($tu !== ''){
             $q = $q->where(function($sub) use ($tu){
@@ -54,10 +68,12 @@ class PartnersModel extends Model {
             });
         }
 
-        $loai = isset($loc['type']) ? (string) $loc['type'] : '';
-        if ($loai === 'customer')     $q = $q->whereIn('type', ['customer', 'both']);
-        elseif ($loai === 'supplier') $q = $q->whereIn('type', ['supplier', 'both']);
-        elseif ($loai === 'both')     $q = $q->where('type', '=', 'both');
+        if (!$boQuaLoai){
+            $loai = isset($loc['type']) ? (string) $loc['type'] : '';
+            if ($loai === 'customer')     $q = $q->whereIn('type', ['customer', 'both']);
+            elseif ($loai === 'supplier') $q = $q->whereIn('type', ['supplier', 'both']);
+            elseif ($loai === 'both')     $q = $q->where('type', '=', 'both');
+        }
 
         $nhom = isset($loc['group']) ? (string) $loc['group'] : '';
         if ($nhom === 'none')            $q = $q->whereNull('group_id');
@@ -66,9 +82,36 @@ class PartnersModel extends Model {
         $tt = isset($loc['status']) ? (string) $loc['status'] : '';
         if ($tt === '1' || $tt === '0')  $q = $q->where('status', '=', (int) $tt);
 
-        return $q->orderBy('sort_order', 'ASC')
-                 ->orderBy('name', 'ASC')
-                 ->get();
+        return $q;
+    }
+
+    /**
+     * Số đối tượng cho TỪNG TAB, theo các bộ lọc khác đang bật (tìm, nhóm,
+     * trạng thái) nhưng KHÔNG theo tab đang chọn — nếu không thì tab đang đứng
+     * hiện đúng số, mấy tab kia hiện 0 và không ai dám bấm sang.
+     *
+     * Trả ['' => tất cả, 'customer' => .., 'supplier' => .., 'both' => ..].
+     *
+     * Loại "Cả hai" ĐẾM VÀO CẢ hai tab, đúng như bộ lọc: đối tác vừa mua vừa
+     * bán phải tìm thấy ở cả danh sách khách lẫn danh sách NCC.
+     */
+    public function demTheoLoai(array $loc = []){
+        $rows = $this->apDungLoc($this->bangGara(), $loc, true)
+                     ->select('`type`, COUNT(*) AS `c`')
+                     ->groupBy('type')
+                     ->get();
+
+        $theo = ['customer' => 0, 'supplier' => 0, 'both' => 0];
+        foreach ((array) $rows as $r){
+            $k = (string) $r['type'];
+            if (isset($theo[$k])) $theo[$k] = (int) $r['c'];
+        }
+        return [
+            ''          => $theo['customer'] + $theo['supplier'] + $theo['both'],
+            'customer'  => $theo['customer'] + $theo['both'],
+            'supplier'  => $theo['supplier'] + $theo['both'],
+            'both'      => $theo['both'],
+        ];
     }
 
     /**

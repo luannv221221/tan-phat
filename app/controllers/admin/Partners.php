@@ -56,6 +56,7 @@ class Partners extends Controller {
         $c['loc']          = $loc;
         $c['dangLoc']      = ($loc['q'] !== '' || $loc['type'] !== '' || $loc['group'] !== '' || $loc['status'] !== '');
         $c['tongTatCa']    = $this->__model->demTatCa();
+        $c['demLoai']      = $this->__model->demTheoLoai($loc);
         $c['dsNhomKhach']  = $this->__nhom->getActive();
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['msgError']  = Session::flash('msgError');
