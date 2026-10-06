@@ -86,6 +86,15 @@ ok(strpos($v, '$__garaTrong') !== false && strpos($v, 'disabled') !== false,
    'Bien mat khong dau vet thi nguoi dung khong biet vi sao');
 ok(strpos($v, 'chưa có') !== false,
    'Nut gara rong ghi ro "chua co" thay vi so 0');
+
+/* Nhan nut la "Kho nha", KHONG phai ten gara. Dung o gara Tan Phat ma thay nut
+   "Tan Phat" canh nut "Kho tong" thi khong doan ra hai ben khac gi nhau — Tan
+   Phat vua la ten gara vua la ten cong ty. Da bi hoi dung cau do. */
+ok(strpos($v, 'Kho nhà') !== false,
+   'Nut nguon cua gara ghi "Kho nha"');
+ok(!preg_match('~>\s*<\?php echo e\(\$garaCuaPhieu\[.name.\]\); \?>~', $v),
+   'Khong con lay TEN GARA lam nhan nut',
+   'Ten gara van con o title khi re chuot va o goc tren ben phai');
 ok(strpos($v, 'var NGUON') !== false && strpos($v, 'var TEN_HANG') !== false,
    'JS co du lieu ca hai nguon + ten moi mat hang');
 ok(strpos($v, 'function doiNguon') !== false, 'taoBang() co ham doiNguon()');

@@ -187,11 +187,17 @@ $tabs = [
             <span class="text-muted"><i class="fas fa-list-ul mr-1"></i> Lấy hàng từ:</span>
 
             <div class="btn-group btn-group-sm" role="group" id="chon-nguon">
+                <?php /* "Kho nhà" chứ không phải tên gara. Đứng ở gara Tân Phát mà
+                         thấy nút "Tân Phát" cạnh nút "Kho tổng" thì không đoán ra
+                         hai bên khác gì nhau — Tân Phát vừa là tên gara vừa là tên
+                         công ty. "Kho nhà" nói thẳng: hàng của gara mình. Tên gara
+                         vẫn còn ở title khi rê chuột, và ở góc trên bên phải. */ ?>
                 <button type="button" data-nguon="gara"
                         class="btn btn-outline-primary <?php echo $nguonMacDinh === 'gara' ? 'active' : ''; ?>"
-                        <?php echo $__garaTrong ? 'disabled title="Gara này chưa chọn mặt hàng nào — vào Hàng hoá → Danh mục của gara để dựng"' : ''; ?>>
-                    <i class="fas fa-map-pin mr-1"></i>
-                    <?php echo e($garaCuaPhieu['name']); ?>
+                        <?php echo $__garaTrong
+                            ? 'disabled title="Gara này chưa chọn mặt hàng nào — vào Hàng hoá → Danh mục của gara để dựng"'
+                            : 'title="Hàng của ' . e($garaCuaPhieu['name']) . '"'; ?>>
+                    <i class="fas fa-home mr-1"></i> Kho nhà
                     <span class="badge badge-light ml-1"><?php echo $__garaTrong ? 'chưa có' : count($partsGara); ?></span>
                 </button>
                 <button type="button" data-nguon="tong"
@@ -575,7 +581,7 @@ $tabs = [
     function veMoTa(){
         if (!moTaEl) return;
         if (nguonDangDung === 'gara'){
-            moTaEl.textContent = 'Hàng riêng của gara và hàng gara đã chọn làm, theo giá riêng của gara.';
+            moTaEl.textContent = 'Kho nhà: hàng riêng của gara và hàng gara đã chọn làm, theo giá riêng của gara.';
         } else if (!NGUON.gara.hang.length && !NGUON.gara.dichvu.length){
             // Nói luôn đường đi tiếp, đừng để người dùng đoán vì sao nút kia mờ
             moTaEl.textContent = 'Kho tổng của Tân Phát, giá tham khảo (sửa được trên từng dòng). '
