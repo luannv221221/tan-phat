@@ -9,8 +9,13 @@ class ChatConversationsModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
+    /* Khách web và giao dịch web thuộc về MỘT gara — 07/10/2026, khi mỗi gara
+       có website riêng. Thiếu cờ này là đơn đặt trên trang gara A rơi vào hộp
+       đơn của gara B. */
+    protected $_theoGara = true;
+
     public function findBySession($key){
-        return $this->table($this->_table)->where('session_key', '=', $key)->first();
+        return $this->bangGara()->where('session_key', '=', $key)->first();
     }
 
     public function getDetail($id){ return $this->getFirst($id); }
@@ -27,7 +32,7 @@ class ChatConversationsModel extends Model {
 
     /** Danh sách hội thoại cho inbox admin (mới nhất trước) */
     public function getLists($status = ''){
-        $q = $this->table($this->_table)
+        $q = $this->bangGara()
             ->select('`chat_conversations`.*, `members`.`name` AS member_name')
             ->leftJoinOn('members', 'chat_conversations.member_id', 'members.id');
         if ($status === 'open' || $status === 'closed') $q = $q->where('chat_conversations.status', '=', $status);
@@ -35,7 +40,7 @@ class ChatConversationsModel extends Model {
     }
 
     public function countUnread(){
-        $r = $this->table($this->_table)->select('COUNT(*) AS c')->where('unread', '=', 1)->where('status', '=', 'open')->first();
+        $r = $this->bangGara()->select('COUNT(*) AS c')->where('unread', '=', 1)->where('status', '=', 'open')->first();
         return (int) ($r['c'] ?? 0);
     }
 

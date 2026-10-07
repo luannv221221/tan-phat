@@ -55,6 +55,7 @@ $tests = [
     'MotBanGhiHaiManTest.php'     => 'CSKH/BAN HANG — mot ban ghi `partners`, hai man khai du nhu nhau',
     'TenMienGaraTest.php'         => 'NEN TANG — nhan gara theo ten mien (buoc 1 nhieu gara)',
     'NoiDungWebGaraTest.php'      => 'NEN TANG — noi dung website theo tung gara (buoc 3)',
+    'KhachWebGaraTest.php'        => 'NEN TANG — khach web / don hang / lien he theo gara (buoc 4)',
 ];
 
 $php      = PHP_BINARY;

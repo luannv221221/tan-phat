@@ -155,7 +155,8 @@ if (count($mg) === 1){
        migration sau no. Khong lam thi chinh bo test tu tat tinh nang. */
     foreach (array_merge(
                 glob($goc . 'database/migrations/*_mo_cau_hinh_cho_gara.php'),
-                glob($goc . 'database/migrations/*_mo_man_noi_dung_cho_gara.php')
+                glob($goc . 'database/migrations/*_mo_man_noi_dung_cho_gara.php'),
+                glob($goc . 'database/migrations/*_mo_man_khach_web_cho_gara.php')
              ) as $sau){
         $ms = require $sau;
         $ms->setDb($db);
@@ -196,16 +197,20 @@ if (count($mg) === 1){
        gara mot website thi phai tu viet duoc noi dung len trang cua minh.
        Du lieu da tach theo gara o 000087 va model da bat $_theoGara, nen mo man
        KHONG cho ai thay noi dung cua ai. */
+    /* DANH SACH NAY NGAN DAN TRONG NGAY 07/10/2026 — moi gara mot website:
+         000086  bo `settings`        (tu dat ten, logo, hotline cua minh)
+         000088  bo 6 man NOI DUNG    (tin, danh muc tin, banner, menu, thu
+                                       vien anh, du an)
+         000090  bo 6 man KHACH WEB   (don hang, tai khoan website, hop thu
+                                       lien he, ban tin, danh gia, chat)
+       Con lai la nhung man that su dung CHUNG toan he thong: danh muc hang
+       hoa, danh muc xe, quan ly gara, nhom quyen, quan ly module, thong ke.
+       Mo mot trong so do ra la gara sua duoc du lieu cua moi gara. */
     $mongDoi = ['attributes', 'car-body-types', 'car-brands', 'car-colors', 'car-fuels', 'car-models',
-                'car-years', 'chat', 'contact-messages', 'garages', 'groups', 'modules',
-                'newsletter', 'orders', 'part-categories', 'product-brands',
-                'product-manufacturers', 'product-origins', 'product-units', 'products', 'reviews', 'services',
-                /* `settings` DA RA KHOI danh sach nay 07/10/2026 (migration
-                   000086): moi gara mot website thi phai tu dat duoc ten, logo,
-                   hotline cua minh. Man do nay lam hai viec tuy ai mo — gara
-                   tong sua mac dinh chung, gara khac sua rieng cua minh. */
-                'thong-ke',
-                'tai-khoan-web'];   // 000077 — tài khoản website tách khỏi màn Khách hàng
+                'car-years', 'garages', 'groups', 'modules',
+                'part-categories', 'product-brands',
+                'product-manufacturers', 'product-origins', 'product-units', 'products', 'services',
+                'thong-ke'];
     sort($dsCo); sort($mongDoi);
     ok($dsCo === $mongDoi, 'Dung ' . count($mongDoi) . ' man chi Tan Phat',
        'Thua: ' . implode(',', array_diff($dsCo, $mongDoi)) . ' | Thieu: ' . implode(',', array_diff($mongDoi, $dsCo)));
@@ -444,6 +449,10 @@ $manRiengGara = [
        NoiDungWebGaraTest. */
     'news' => 0, 'news-categories' => 0, 'banners' => 0,
     'menus' => 0, 'galleries' => 0, 'du-an' => 0,
+    /* Khach web / giao dich web, mo cho gara tu 07/10/2026 (000089 + 000090).
+       Co test rieng o KhachWebGaraTest. */
+    'orders' => 0, 'tai-khoan-web' => 0, 'contact-messages' => 0,
+    'newsletter' => 0, 'reviews' => 0, 'chat' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);
@@ -573,11 +582,20 @@ $mn = $menuTrai($r);
 ok(strpos($mn, "$base/admin/quotations\"") !== false, 'Menu gara B co Bao gia');
 ok(strpos($mn, "$base/admin/customers\"") !== false, 'Menu gara B co Khach hang');
 /* Chọn đúng những màn nhóm Manager ĐANG có quyền xem — không phải màn mà
-   Manager vốn không có quyền, kẻo test xanh vì lý do khác. */
-foreach (['orders', 'garages', 'products', 'reviews', 'part-categories', 'chat', 'contact-messages'] as $l){
-    ok(strpos($mn, "$base/admin/$l\"") === false, "Menu gara B KHONG co `$l` (chi Tan Phat)");
+   Manager vốn không có quyền, kẻo test xanh vì lý do khác.
+
+   07/10/2026: `orders`, `reviews`, `chat`, `contact-messages` ĐÃ RA KHỎI danh
+   sách này (migration 000090). Mỗi gara một website thì gara phải xem được ai
+   đặt hàng, ai đánh giá, ai nhắn tin trên chính trang của mình — và chỉ thấy
+   của mình, vì dữ liệu đã tách theo gara ở 000089. */
+foreach (['garages', 'products', 'part-categories'] as $l){
+    ok(strpos($mn, "$base/admin/$l\"") === false, "Menu gara B KHONG co `$l` (dung chung toan he thong)");
 }
-foreach (['orders', 'garages', 'products'] as $l){
+foreach (['orders', 'contact-messages'] as $l){
+    ok(strpos($mn, "$base/admin/$l\"") !== false,
+       "Menu gara B CO `$l` (website rieng thi phai xem duoc)");
+}
+foreach (['garages', 'products'] as $l){
     $r = $http('GET', "$base/admin/$l", $jarB);
     ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false,
        "Go thang /admin/$l tu gara B bi chan", 'HTTP ' . $r['code'] . ' ' . $r['loc']);
@@ -737,10 +755,13 @@ ok(strpos($get('customers?q=' . rawurlencode('zz9 11111'))['text'], 'ZZ Khach mo
 ok(strpos($get('partners?q=' . rawurlencode('ZZ Khach moi B'))['text'], 'ZZ Khach moi B') !== false,
    'Khach them o man Khach hang hien ngay o man Doi tuong (cung mot ban ghi)');
 
-/* 7. Tài khoản website là của Tân Phát */
+/* 7. Tài khoản website: tu 07/10/2026 moi gara co website rieng nen gara nao
+      cung xem duoc tai khoan dang ky TREN TRANG CUA MINH (migration 000090).
+      Cach ly nam o du lieu: `members` da co garage_id tu 000089. */
 $r = $get('tai-khoan-web');
-ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false, 'Gara B KHONG vao duoc man Tai khoan website');
-ok($http('GET', "$base/admin/tai-khoan-web", $jarTP)['code'] === 200, 'Tan Phat vao duoc man Tai khoan website');
+ok($r['code'] === 200, 'Gara B vao duoc man Tai khoan website cua chinh minh',
+   'HTTP ' . $r['code'] . ' ' . $r['loc']);
+ok($http('GET', "$base/admin/tai-khoan-web", $jarTP)['code'] === 200, 'Tan Phat cung vao duoc');
 
 /* 8. Chu kỳ bảo trì là cấu hình RIÊNG của gara */
 $truoc = $pdo->query("SELECT svalue FROM site_settings WHERE skey = 'maintenance_interval_km'")->fetchColumn();

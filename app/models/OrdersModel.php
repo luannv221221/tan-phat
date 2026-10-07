@@ -9,6 +9,11 @@ class OrdersModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
+    /* Khách web và giao dịch web thuộc về MỘT gara — 07/10/2026, khi mỗi gara
+       có website riêng. Thiếu cờ này là đơn đặt trên trang gara A rơi vào hộp
+       đơn của gara B. */
+    protected $_theoGara = true;
+
     /**
      * Mã trạng thái giữ nguyên như cũ (chỉ đổi nhãn hiển thị) để không phải
      * chuyển đổi dữ liệu đơn đang có. 'returned' là mã mới.
@@ -27,7 +32,7 @@ class OrdersModel extends Model {
     public static $payments = ['bank_transfer' => 'Chuyển khoản', 'cod' => 'Thanh toán khi nhận hàng (COD)'];
 
     public function getLists($status = '', $keyword = ''){
-        $q = $this->table($this->_table)->select('*');
+        $q = $this->bangGara()->select('*');
         if ($status !== '' && isset(self::$statuses[$status])) $q = $q->where('status', '=', $status);
         if ($keyword !== ''){
             $q = $q->where(function($sub) use ($keyword){
@@ -41,7 +46,7 @@ class OrdersModel extends Model {
     }
 
     public function countNew(){
-        $r = $this->table($this->_table)->select('COUNT(*) AS c')->where('status', '=', 'new')->first();
+        $r = $this->bangGara()->select('COUNT(*) AS c')->where('status', '=', 'new')->first();
         return (int) ($r['c'] ?? 0);
     }
 
@@ -75,7 +80,7 @@ class OrdersModel extends Model {
     public function getDetail($id){ return $this->getFirst($id); }
 
     public function nextNo(){
-        $row = $this->table($this->_table)->select('`order_no`')->orderBy('id', 'DESC')->first();
+        $row = $this->bangGara()->select('`order_no`')->orderBy('id', 'DESC')->first();
         $n = 0;
         if (!empty($row) && preg_match('/(\d+)$/', $row['order_no'], $m)){ $n = (int) $m[1]; }
         return 'DH-' . str_pad($n + 1, 6, '0', STR_PAD_LEFT);

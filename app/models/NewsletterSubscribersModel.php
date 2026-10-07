@@ -11,20 +11,25 @@ class NewsletterSubscribersModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
+    /* Khách web và giao dịch web thuộc về MỘT gara — 07/10/2026, khi mỗi gara
+       có website riêng. Thiếu cờ này là đơn đặt trên trang gara A rơi vào hộp
+       đơn của gara B. */
+    protected $_theoGara = true;
+
     public function getDetail($id){ return $this->getFirst($id); }
 
     public function findByEmail($email){
-        return $this->table($this->_table)->where('email', '=', $email)->first();
+        return $this->bangGara()->where('email', '=', $email)->first();
     }
 
     public function getLists($keyword = ''){
-        $q = $this->table($this->_table);
+        $q = $this->bangGara();
         if ($keyword !== '') $q = $q->whereLike('email', '%' . $keyword . '%');
         return $q->orderBy('id', 'DESC')->get();
     }
 
     public function countActive(){
-        $r = $this->table($this->_table)->select('COUNT(*) AS c')->where('status', '=', 1)->first();
+        $r = $this->bangGara()->select('COUNT(*) AS c')->where('status', '=', 1)->first();
         return (int) ($r['c'] ?? 0);
     }
 

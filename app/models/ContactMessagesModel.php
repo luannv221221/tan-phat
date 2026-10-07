@@ -11,6 +11,11 @@ class ContactMessagesModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
+    /* Khách web và giao dịch web thuộc về MỘT gara — 07/10/2026, khi mỗi gara
+       có website riêng. Thiếu cờ này là đơn đặt trên trang gara A rơi vào hộp
+       đơn của gara B. */
+    protected $_theoGara = true;
+
     public static $statuses = [
         'new'     => 'Mới',
         'handled' => 'Đã xử lý',
@@ -19,7 +24,7 @@ class ContactMessagesModel extends Model {
     public function getDetail($id){ return $this->getFirst($id); }
 
     public function getLists($status = '', $keyword = ''){
-        $q = $this->table($this->_table);
+        $q = $this->bangGara();
         if ($status !== '' && isset(self::$statuses[$status])) $q = $q->where('status', '=', $status);
         if ($keyword !== ''){
             $q = $q->where(function($sub) use ($keyword){
@@ -34,7 +39,7 @@ class ContactMessagesModel extends Model {
     }
 
     public function countNew(){
-        $r = $this->table($this->_table)->select('COUNT(*) AS c')->where('status', '=', 'new')->first();
+        $r = $this->bangGara()->select('COUNT(*) AS c')->where('status', '=', 'new')->first();
         return (int) ($r['c'] ?? 0);
     }
 

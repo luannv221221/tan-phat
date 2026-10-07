@@ -11,8 +11,13 @@ class MembersModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
+    /* Khách web và giao dịch web thuộc về MỘT gara — 07/10/2026, khi mỗi gara
+       có website riêng. Thiếu cờ này là đơn đặt trên trang gara A rơi vào hộp
+       đơn của gara B. */
+    protected $_theoGara = true;
+
     public function findByEmail($email){
-        return $this->table($this->_table)->where('email', '=', $email)->first();
+        return $this->bangGara()->where('email', '=', $email)->first();
     }
 
     public function getDetail($id){ return $this->getFirst($id); }
@@ -69,7 +74,7 @@ class MembersModel extends Model {
     public function findByPhone($phone){
         $phone = trim((string) $phone);
         if ($phone === '') return null;
-        return $this->table($this->_table)->where('phone', '=', $phone)->first();
+        return $this->bangGara()->where('phone', '=', $phone)->first();
     }
 
     /** Xác thực đăng nhập. @return array|null bản ghi thành viên nếu đúng */
