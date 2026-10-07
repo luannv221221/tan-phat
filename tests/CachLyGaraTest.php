@@ -402,7 +402,12 @@ section('Cho quen — bang co garage_id thi model phai bat _theoGara');
    `$chuaLam` ghi bước sẽ bật; bật rồi thì phải xoá khỏi danh sách (test bắt cả
    chiều đó), nên danh sách chỉ ngắn dần. */
 $ngoaiLe = ['users' => 'dang nhap tim khap cac gara; chan tay o Users::phamVi',
-            'parts' => 'NULL = kho tong, loc bang dieu kien rieng'];
+            'parts' => 'NULL = kho tong, loc bang dieu kien rieng',
+            /* Bang nay TRA LOI cau hoi "gara la ai" tu host. Luc tra con chua
+               biet gara, bat loc theo gara o day la tu khoa chinh minh. No chi
+               co ham DOC; them/sua ten mien lam o man Quan ly gara, noi da co
+               lop phan quyen gac. */
+            'garage_domains' => 'bang quyet dinh gara tu host; loc theo gara o day la tu khoa chinh minh'];
 $chuaLam = [];   // bước 4 xong: mọi bảng riêng gara đều đã bật chặn
 $modelCua = [];
 foreach (glob($goc . 'app/models/*.php') as $f){

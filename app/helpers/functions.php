@@ -689,12 +689,15 @@ function gara_hien_tai(){
     static $cache = false;
     if ($cache !== false) return $cache;
 
-    $model = \App\core\Load::model('GaragesModel');
+    $model       = \App\core\Load::model('GaragesModel');
+    $theoTenMien = gara_theo_ten_mien();
 
     if (PHP_SAPI === 'cli' || !la_request_quan_tri()){
-        $master = $model->getMaster();
-        if (!empty($master)) $cache = $master;
-        return !empty($master) ? $master : null;
+        /* Trang người dùng: gara của TÊN MIỀN đang mở. Host chưa khai (máy chạy
+           thử, dòng lệnh) thì về gara tổng như trước. */
+        $g = $theoTenMien !== null ? $theoTenMien : $model->getMaster();
+        if (!empty($g)) $cache = $g;
+        return !empty($g) ? $g : null;
     }
 
     $userId = nguoi_dang_nhap_id();
@@ -706,7 +709,54 @@ function gara_hien_tai(){
     $g = $model->getDetail((int) $u['garage_id']);
     if (empty($g) || (int) $g['status'] !== 1) return null;
 
+    /* TÊN MIỀN ĐÃ CHỈ ĐÍCH DANH MỘT GARA THÌ TÀI KHOẢN PHẢI THUỘC GARA ĐÓ.
+       Không chặn thì nhân viên gara A gõ địa chỉ quản trị của gara B là vào
+       được và làm việc trên dữ liệu gara B — mọi lớp lọc phía dưới đều tin vào
+       gara_hien_tai(), nên sai ở đây là sai toàn hệ thống.
+       Trả null, AuthMiddleware lo phần đá ra và báo lý do. */
+    if ($theoTenMien !== null && (int) $theoTenMien['id'] !== (int) $g['id']) return null;
+
     return $cache = $g;
+}
+
+/** Host của request này, nguyên văn trình duyệt gửi lên (chưa chuẩn hoá). */
+function host_hien_tai(){
+    return isset($_SERVER['HTTP_HOST']) ? (string) $_SERVER['HTTP_HOST'] : '';
+}
+
+/**
+ * Host của máy chạy thử — không phải tên miền thật của ai.
+ *
+ * Dùng để BIẾT KHI NÀO ĐƯỢC PHÉP bỏ qua luật tên miền: máy lập trình và bộ
+ * test chạy ở localhost, không có tên miền gara nào trỏ về đó.
+ */
+function la_host_noi_bo($host){
+    $host = GarageDomainsModel::chuanHoaHost($host);
+    if ($host === '') return true;                       // dòng lệnh, không có host
+    if ($host === 'localhost' || $host === '127.0.0.1' || $host === '[::1]') return true;
+    if (substr($host, -10) === '.localhost') return true;
+    if (substr($host, -5) === '.test') return true;
+    return strpos($host, '.') === false;                 // tên máy trong mạng nội bộ
+}
+
+/**
+ * Gara mà TÊN MIỀN đang mở trỏ tới, hoặc null khi host chưa khai.
+ *
+ * Nhớ kết quả cả khi là null: một request chỉ có đúng một host, hỏi lại cũng ra
+ * từng ấy — khác với gara_hien_tai() (phụ thuộc phiên đăng nhập, phiên có thể
+ * được khôi phục giữa chừng nên không được nhớ null).
+ */
+function gara_theo_ten_mien(){
+    static $cache = false;
+    if ($cache !== false) return $cache;
+
+    if (PHP_SAPI === 'cli') return $cache = null;
+
+    $host = host_hien_tai();
+    if ($host === '') return $cache = null;
+
+    $g = \App\core\Load::model('GarageDomainsModel')->theoHost($host);
+    return $cache = (!empty($g) ? $g : null);
 }
 
 /** Id của gara đang làm việc, hoặc null — dùng khi lưu chứng từ */

@@ -49,8 +49,27 @@ class AuthMiddleware extends Middleware {
                lớp Model gốc gặp null sẽ trả rỗng, người dùng chỉ thấy các màn
                trống trơn mà không hiểu vì sao. */
             if (empty(gara_hien_tai())){
+                /* Hai lý do khác hẳn nhau, phải nói đúng cái nào:
+                     - tài khoản không có gara / gara bị khoá;
+                     - tài khoản có gara, nhưng đang mở ĐỊA CHỈ CỦA GARA KHÁC.
+                   Báo chung một câu thì người dùng đi sửa nhầm chỗ: gọi quản
+                   trị đòi gán gara trong khi chỉ cần gõ đúng địa chỉ. */
+                $cuaTenMien = gara_theo_ten_mien();
+                $viSaiTenMien = false;
+                if ($cuaTenMien !== null){
+                    $u = Load::model('UsersModel')->getDetail(Session::get('dataUser'));
+                    $viSaiTenMien = !empty($u['garage_id'])
+                                 && (int) $u['garage_id'] !== (int) $cuaTenMien['id'];
+                }
+
+                /* ĐẶT LỜI NHẮN TRƯỚC khi huỷ phiên. huyPhien() xoá token và
+                   cookie ghi nhớ; ghi lời nhắn sau đó thì nó rơi vào phiên vừa
+                   bị bỏ, và người dùng bị đá ra mà không thấy lý do gì. */
+                Session::flash('msg', $viSaiTenMien
+                    ? 'Tài khoản này không thuộc gara "' . $cuaTenMien['name'] . '". '
+                      . 'Đăng nhập tại địa chỉ của gara mình.'
+                    : 'Tài khoản chưa được gán gara, hoặc gara đang bị khoá. Liên hệ quản trị Tân Phát.');
                 $this->huyPhien();
-                Session::flash('msg', 'Tài khoản chưa được gán gara, hoặc gara đang bị khoá. Liên hệ quản trị Tân Phát.');
                 $response->redirect('dang-nhap');
             }
 
