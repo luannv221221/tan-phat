@@ -146,15 +146,70 @@ class PartsModel extends Model {
      *   show_on_web — có đăng lên web không
      * Hàng ngừng đăng web vẫn phải xuất hoá đơn và nhập/xuất kho được.
      */
+    /**
+     * Mặt hàng được phép lên WEBSITE CỦA GARA ĐANG PHỤC VỤ.
+     *
+     * 07/10/2026 — mỗi gara một website riêng (nhận gara theo tên miền). Trước
+     * đó điều kiện ở đây là `parts.garage_id IS NULL`, nghĩa là web chỉ bán
+     * hàng kho tổng và HÀNG RIÊNG CỦA GARA KHÔNG BAO GIỜ LÊN WEB.
+     *
+     * Nay:
+     *   - Gara TỔNG: vẫn là toàn bộ danh mục kho tổng. Nó sở hữu danh mục đó,
+     *     và giữ nguyên để trang đang chạy thật không đổi mặt hàng nào.
+     *   - Gara KHÁC: hàng riêng của nó + hàng kho tổng nó ĐÃ CHỌN LÀM. Đúng
+     *     bằng danh sách ở màn Hàng hoá › Danh mục của gara, cũng là danh sách
+     *     dùng khi lập báo giá — web và báo giá phải nói cùng một thứ.
+     *
+     * Chốt ở đây chứ không chỉ dựa vào cờ `show_on_web`: cờ đó người dùng bật
+     * tắt được, còn điều kiện này thì không được phép quên. Và chốt một chỗ
+     * duy nhất — bảy nơi truy vấn storefront đều đi qua hàm này.
+     */
     private function chiHangLenWeb($q){
-        /* Hàng RIÊNG của một gara không lên website chung.
-           Website là một trang cho cả hệ thống; đăng hàng riêng của gara Sài
-           Gòn lên đó thì khách Hà Nội đặt mua một thứ chi nhánh mình không có.
-           Chốt ở đây chứ không chỉ dựa vào cờ `show_on_web`: cờ đó người dùng
-           bật tắt được, còn điều kiện này thì không được phép quên. */
-        return $q->where('parts.status', '=', 1)
-                 ->where('parts.show_on_web', '=', 1)
-                 ->whereNull('parts.garage_id');
+        $q = $q->where('parts.status', '=', 1)
+               ->where('parts.show_on_web', '=', 1);
+
+        /* LẤY GARA QUA self::garaLoc(), ĐỪNG gọi thẳng gara_hien_tai().
+           Hai đường này KHÔNG trả về cùng một thứ: garaLoc() tôn trọng
+           Model::epGara() — cách cả tầng Model (và bộ test) ép gara ở dòng
+           lệnh — còn gara_hien_tai() ở dòng lệnh luôn trả gara tổng. Dùng sai
+           đường là phần hiển thị hàng nói một gara, còn các bộ lọc khác của
+           cùng truy vấn nói một gara khác.
+
+           null = dòng lệnh chưa ép gara (migrate, gieo dữ liệu) -> giữ nguyên
+           nếp cũ là danh mục kho tổng. */
+        $gid = self::garaLoc();
+        if ($gid === null || (int) $gid <= 0){
+            return $q->whereNull('parts.garage_id');
+        }
+        $gid = (int) $gid;
+
+        $gara = \App\core\Load::model('GaragesModel')->getDetail($gid);
+        if (!empty($gara['is_master'])){
+            // Gara tổng sở hữu danh mục chung — gian hàng của nó là cả kho tổng
+            return $q->whereNull('parts.garage_id');
+        }
+
+        /* Hàng kho tổng mà gara này đã chọn làm. Lấy ra danh sách id rồi lọc,
+           thay vì join: hàm này chỉ nhận vào một truy vấn đã dựng sẵn ở nơi
+           khác, thêm join vào đây dễ đụng các join có sẵn. Danh mục một gara
+           cỡ vài trăm dòng nên danh sách id vẫn gọn. */
+        $daChon = [];
+        foreach ((array) $this->getRaw(
+            'SELECT `part_id` FROM `garage_part_prices` WHERE `garage_id` = ? AND `status` = 1',
+            [$gid]
+        ) as $r){
+            $daChon[] = (int) $r['part_id'];
+        }
+
+        if (empty($daChon)){
+            // Chưa chọn món nào từ kho tổng -> chỉ còn hàng riêng của gara
+            return $q->where('parts.garage_id', '=', $gid);
+        }
+
+        return $q->where(function ($sub) use ($gid, $daChon){
+            $sub->where('parts.garage_id', '=', $gid);
+            $sub->whereOrIn('parts.id', $daChon);
+        });
     }
 
     /** Chi tiết 1 phụ tùng kèm tên danh mục/thương hiệu/xuất xứ/đơn vị — cho storefront */

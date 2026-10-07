@@ -146,6 +146,55 @@ $r = $http("$base/", $hostTong);
 ok($r['code'] === 200 && strpos($r['body'], 'zznd.jpg') === false,
    'Banner cua gara phu khong hien tren trang chu gara tong');
 
+// ---------------------------------------------------------------------------
+section('Hang hoa tren web: moi gara mot gian hang');
+
+/* Truoc 07/10/2026 storefront khoa cung `parts.garage_id IS NULL`: web chi ban
+   hang kho tong, va HANG RIENG CUA GARA KHONG BAO GIO LEN WEB.
+
+   Nay:
+     gara TONG  -> toan bo danh muc kho tong (giu nguyen, trang dang chay that
+                   khong doi mat hang nao);
+     gara KHAC  -> hang rieng cua no + hang kho tong no DA CHON LAM, dung bang
+                   danh sach o man Danh muc cua gara. Web va bao gia phai noi
+                   cung mot thu. */
+$src = codeOnly($goc . 'app/models/PartsModel.php');
+ok(preg_match('~private function chiHangLenWeb~', $src) === 1,
+   'Van chot o MOT cho duy nhat (chiHangLenWeb)',
+   'Bay noi truy van storefront deu di qua ham nay');
+ok(strpos($src, 'garage_part_prices') !== false,
+   'chiHangLenWeb co tinh den hang kho tong gara da chon lam');
+
+$demWeb = function($garaId, $laTong) use ($pdo){
+    if ($laTong){
+        return (int) $pdo->query("SELECT COUNT(*) FROM parts
+                                  WHERE status = 1 AND show_on_web = 1 AND garage_id IS NULL")->fetchColumn();
+    }
+    return (int) $pdo->query("SELECT COUNT(*) FROM parts p
+                              LEFT JOIN garage_part_prices gpp
+                                     ON gpp.part_id = p.id AND gpp.garage_id = $garaId AND gpp.status = 1
+                              WHERE p.status = 1 AND p.show_on_web = 1
+                                AND (p.garage_id = $garaId OR (p.garage_id IS NULL AND gpp.id IS NOT NULL))")->fetchColumn();
+};
+
+require_once $goc . 'app/models/PartsModel.php';
+
+\App\core\Model::epGara($gTong);
+$soTong = count((array) (new PartsModel())->storefront([], 500));
+ok($soTong === $demWeb($gTong, true),
+   'Gian hang gara tong = toan bo danh muc kho tong',
+   'model tra ' . $soTong . ' / mong doi ' . $demWeb($gTong, true));
+
+\App\core\Model::epGara($gPhu);
+$soPhu = count((array) (new PartsModel())->storefront([], 500));
+ok($soPhu === $demWeb($gPhu, false),
+   'Gian hang gara phu = hang rieng + hang kho tong da chon',
+   'model tra ' . $soPhu . ' / mong doi ' . $demWeb($gPhu, false));
+ok($soPhu > 0 && $soPhu < $soTong,
+   'Hai gian hang KHAC nhau',
+   'gara tong ' . $soTong . ' mon, gara phu ' . $soPhu . ' mon');
+\App\core\Model::epGara(null);
+
 $donSach();
 ok((int) $pdo->query("SELECT COUNT(*) FROM news WHERE slug LIKE 'zznd-%'")->fetchColumn() === 0
    && (int) $pdo->query("SELECT COUNT(*) FROM banners WHERE title LIKE 'ZZND %'")->fetchColumn() === 0,
