@@ -334,6 +334,11 @@ Route::group('admin', function(){
     * hỏi), nên bỏ trống là nút hiện ra cho MỌI tài khoản, kể cả nhóm
     * chưa được cấp quyền. Có route thì RoleMiddleware mới gác được.
     * ========================================================= */
+   /* DAT HANG KHO TONG — man cua GARA. Mot lan dat sinh hai phieu nhap/xuat
+      o trang thai nhap (xem DatHangNoiBoModel). */
+   Route::get('dat-hang-kho-tong',       'admin/dathangkhotong');
+   Route::post('dat-hang-kho-tong/dat',  'admin/dathangkhotong/postDat');
+
    Route::get('phieu-thu', 'admin/phieuthu');
    Route::get('phieu-chi', 'admin/phieuchi');
 

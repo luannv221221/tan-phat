@@ -41,12 +41,50 @@ class Model extends Database {
     }
 
     /**
+     * Gara đang mượn trong một khối trongGara() — xem hàm đó.
+     * null = không mượn ai cả, tức gần như luôn luôn.
+     */
+    private static $__garaMuon = null;
+
+    /**
+     * LÀM MỘT VIỆC DƯỚI DANH NGHĨA GARA KHÁC, rồi trả lại ngay.
+     *
+     * Gần như mọi thứ trong hệ thống chỉ được đụng vào dữ liệu của gara đang
+     * làm việc. Nhưng có việc BẮT BUỘC đụng hai gara trong một giao dịch: gara
+     * đặt hàng kho tổng thì phải lập phiếu xuất BÊN KHO TỔNG và phiếu nhập bên
+     * gara, cả hai cùng thành công hoặc cùng không.
+     *
+     * VÌ SAO KHÔNG DÙNG epGara() CHO VIỆC NÀY: epGara() chỉ có tác dụng ở dòng
+     * lệnh — garaLoc() trên web luôn đọc gara của phiên đăng nhập và bỏ qua nó.
+     * Đã mắc đúng lỗi đó: chạy thử ở dòng lệnh thì hai phiếu vào đúng hai gara,
+     * nhưng qua web thì phiếu xuất rơi vào gara của người đang bấm, nghĩa là
+     * gara tự lập phiếu xuất trong kho của chính mình.
+     *
+     * HÀM NÀY AN TOÀN HƠN MỘT CÁI SETTER vì không có cách nào bật mà quên tắt:
+     * chỉ nhận một đoạn việc, và trả gara cũ về trong `finally` kể cả khi đoạn
+     * việc ném lỗi. Không có API nào đặt giá trị này từ dữ liệu người dùng gửi
+     * lên — chỉ mã nguồn gọi được, với một id lấy từ CSDL.
+     */
+    public static function trongGara($garaId, callable $viec){
+        $cu = self::$__garaMuon;
+        self::$__garaMuon = (int) $garaId;
+        try {
+            return $viec();
+        } finally {
+            self::$__garaMuon = $cu;
+        }
+    }
+
+    /**
      * Gara để lọc:
      *   > 0  -> lọc theo gara đó
      *   0    -> ĐÓNG: không khớp dòng nào (web mà không xác định được gara)
      *   null -> không lọc (dòng lệnh chưa ép gara: migrate, gieo dữ liệu, xuất SQL)
      */
     public static function garaLoc(){
+        // Đang mượn danh nghĩa gara khác -> tính theo gara đó, cả web lẫn dòng lệnh
+        if (self::$__garaMuon !== null) return self::$__garaMuon;
+
         if (PHP_SAPI === 'cli') return self::$__garaEp;
         $id = function_exists('gara_hien_tai_id') ? gara_hien_tai_id() : null;
         return $id ? (int) $id : 0;

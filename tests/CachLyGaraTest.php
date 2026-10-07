@@ -453,6 +453,9 @@ $manRiengGara = [
        Co test rieng o KhachWebGaraTest. */
     'orders' => 0, 'tai-khoan-web' => 0, 'contact-messages' => 0,
     'newsletter' => 0, 'reviews' => 0, 'chat' => 0,
+    /* Dat hang kho tong (000091) — man cua GARA: gara chon hang, he thong lap
+       phieu xuat ben kho tong va phieu nhap ben gara. Co test o DatHangNoiBoTest. */
+    'dat-hang-kho-tong' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);

@@ -46,7 +46,9 @@ $menuGroups = [
     // phiếu chi từ phiếu nhập — tiền vào tiền ra là bước kế tiếp của việc
     // bán hàng, chưa phải một khu quản trị riêng.
     'Kế toán'            => ['phieu-thu', 'phieu-chi'],
-    'Kho'                => ['goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
+    /* `dat-hang-kho-tong` dung TRUOC `goods-receipts`: dat hang xong moi co
+       phieu nhap de ghi so, di dung mot mach. */
+    'Kho'                => ['dat-hang-kho-tong', 'goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
     // `garage-catalog` đứng ngay sau `services`: nó là danh mục hàng hoá nhìn
     // từ phía một gara, nên thuộc nhóm Hàng hoá chứ không phải nhóm Hệ thống.
     'Hàng hoá'           => ['products', 'services', 'garage-catalog', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
