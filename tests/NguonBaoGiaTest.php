@@ -90,8 +90,21 @@ ok(strpos($v, 'chưa có') !== false,
 /* Nhan nut la "Kho nha", KHONG phai ten gara. Dung o gara Tan Phat ma thay nut
    "Tan Phat" canh nut "Kho tong" thi khong doan ra hai ben khac gi nhau — Tan
    Phat vua la ten gara vua la ten cong ty. Da bi hoi dung cau do. */
-ok(strpos($v, 'Kho nhà') !== false,
-   'Nut nguon cua gara ghi "Kho nha"');
+ok(strpos($v, 'Giá của gara') !== false && strpos($v, 'Giá công ty') !== false,
+   'Hai nut ghi "Gia cua gara" / "Gia cong ty"');
+/* KHONG dung chu "kho" o day: hai nut nay chon BANG GIA, khong phai chon kho
+   hang. Trung chu voi Kho > Danh muc kho (noi chua hang that, co so luong) da
+   gay hieu nham that — co nguoi di tim "Kho nha" trong o chon kho cua man Nhap
+   kho, khong thay, tuong he thong thieu. */
+if (preg_match('~id="chon-nguon".*?</div>\s*</div>~su', $v, $mNut)){
+    /* BO CHU THICH TRUOC KHI DO. Chinh doan chu thich giai thich "vi sao khong
+       dung chu kho" lai chua day chu "kho" — doc thang van ban nguon la bao do
+       oan. Da mac dung loi nay o ThemKhachHangTest. */
+    $nhan = preg_replace('~<\?php.*?\?>~su', '', $mNut[0]);
+    ok(mb_stripos($nhan, 'kho') === false,
+       'Nhan hai nut KHONG con chu "kho"',
+       'Trung nghia voi Kho > Danh muc kho (noi chua hang that, co so luong)');
+}
 ok(!preg_match('~>\s*<\?php echo e\(\$garaCuaPhieu\[.name.\]\); \?>~', $v),
    'Khong con lay TEN GARA lam nhan nut',
    'Ten gara van con o title khi re chuot va o goc tren ben phai');
