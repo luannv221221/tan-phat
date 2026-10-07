@@ -24,6 +24,34 @@ class GarageSettingsModel extends Model {
         return \App\core\Load::model('SettingsModel')->val($key, $default);
     }
 
+    /**
+     * TOÀN BỘ cấu hình của gara đang phục vụ: lấy cấu hình chung làm nền, rồi
+     * đè bằng giá trị riêng của gara.
+     *
+     * Đây là thứ trang người dùng đọc để biết tên, logo, hotline, địa chỉ,
+     * Zalo, Facebook… của gara. Chưa có bản đồ này thì mọi gara xài chung một
+     * bộ nhận diện — đúng cái phải bỏ khi mỗi gara có website riêng.
+     *
+     * GIÁ TRỊ RỖNG KHÔNG ĐÈ. Gara mới chưa khai gì thì hàng loạt ô là chuỗi
+     * rỗng; đè xuống là web trắng trơn, không tên không hotline. Rỗng = "chưa
+     * đặt" = dùng mặc định chung. Đổi lại, gara muốn XOÁ TRẮNG một ô (ví dụ
+     * không có Facebook) thì chưa làm được bằng cách để trống — sẽ cần một
+     * cách riêng khi có người thật sự cần.
+     */
+    public function map(){
+        $chung = \App\core\Load::model('SettingsModel')->map();
+
+        $rieng = [];
+        foreach ((array) $this->bangGara()->select('`skey`, `svalue`')->get() as $r){
+            if (!isset($r['skey'])) continue;
+            $v = $r['svalue'];
+            if ($v === null || $v === '') continue;
+            $rieng[$r['skey']] = $v;
+        }
+
+        return array_merge((array) $chung, $rieng);
+    }
+
     /** Lưu nhiều cặp key-value cho GARA LÀM VIỆC (upsert) */
     public function saveMany(array $kv){
         $gara = gara_hien_tai_id();

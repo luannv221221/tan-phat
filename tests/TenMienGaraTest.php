@@ -201,8 +201,79 @@ if (empty($taiKhoanSG)){
     @unlink($jar);
 }
 
+// ---------------------------------------------------------------------------
+section('Buoc 2 — moi gara mot bo nhan dien rieng');
+
+/* Truoc day `site_settings` dung CHUNG: moi gara xai chung mot ten, mot logo,
+   mot hotline. Nay gara tu dat cua minh, chua dat thi roi ve mac dinh chung. */
+require_once $goc . 'app/models/GarageSettingsModel.php';
+
+$mod = $pdo->query("SELECT chi_tan_phat FROM modules WHERE link = 'settings'")->fetchColumn();
+ok((int) $mod === 0,
+   'Man Cau hinh da mo cho moi gara (bo co chi_tan_phat)',
+   'Con co thi gara khac mo ra bi da ve "khong co quyen"');
+
+$ctl = file_get_contents($goc . 'app/controllers/admin/Settings.php');
+ok(strpos($ctl, 'la_gara_tong()') !== false && strpos($ctl, 'GarageSettingsModel') !== false,
+   'Settings ghi dung cho: gara tong -> chung, gara khac -> rieng',
+   'Ghi nham cho la mot gara bam Luu lam doi nhan dien cua TAT CA gara con lai');
+
+/* Tron: rieng de len chung, RONG thi khong de. */
+$gTong = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 1")->fetchColumn();
+$gPhu  = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 0 AND status = 1 ORDER BY id LIMIT 1")->fetchColumn();
+
+$datChung = function($k, $v) use ($pdo){
+    $st = $pdo->prepare("SELECT id FROM site_settings WHERE skey = ?"); $st->execute([$k]);
+    if ($id = $st->fetchColumn()) $pdo->prepare("UPDATE site_settings SET svalue = ? WHERE id = ?")->execute([$v, $id]);
+    else $pdo->prepare("INSERT INTO site_settings (skey, svalue, update_at) VALUES (?,?,NOW())")->execute([$k, $v]);
+};
+$datRieng = function($g, $k, $v) use ($pdo){
+    $st = $pdo->prepare("SELECT id FROM garage_settings WHERE garage_id = ? AND skey = ?"); $st->execute([$g, $k]);
+    if ($id = $st->fetchColumn()) $pdo->prepare("UPDATE garage_settings SET svalue = ? WHERE id = ?")->execute([$v, $id]);
+    else $pdo->prepare("INSERT INTO garage_settings (garage_id, skey, svalue, update_at) VALUES (?,?,?,NOW())")->execute([$g, $k, $v]);
+};
+
+$datChung('zztm_thu', 'CHUNG');
+$datRieng($gPhu, 'zztm_thu', 'RIENG');
+$datRieng($gPhu, 'zztm_rong', '');
+$datChung('zztm_rong', 'CHUNG');
+
+\App\core\Model::epGara($gPhu);
+$GS  = new GarageSettingsModel();
+$map = $GS->map();
+ok(($map['zztm_thu'] ?? '') === 'RIENG', 'Gia tri RIENG de len gia tri chung');
+ok(($map['zztm_rong'] ?? '') === 'CHUNG',
+   'Gia tri rieng de RONG thi KHONG de — roi ve mac dinh chung',
+   'De xuong la gara moi chua khai gi se co web trang tron, khong ten khong hotline');
+
+\App\core\Model::epGara($gTong);
+$mapTong = (new GarageSettingsModel())->map();
+ok(($mapTong['zztm_thu'] ?? '') === 'CHUNG', 'Gara tong van thay gia tri chung, khong bi gara khac lam anh huong');
+\App\core\Model::epGara(null);
+
+$pdo->exec("DELETE FROM site_settings WHERE skey LIKE 'zztm_%'");
+$pdo->exec("DELETE FROM garage_settings WHERE skey LIKE 'zztm_%'");
+
+/* Chay that: hai ten mien ra hai ten trang khac nhau. */
+$tenRieng = 'ZZTM Ten Rieng';
+$datRieng($gPhu, 'site_name', $tenRieng);
+$hostPhu = $pdo->query("SELECT host FROM garage_domains WHERE garage_id = $gPhu AND status = 1 LIMIT 1")->fetchColumn();
+
+$r = $http("$base/", $hostPhu);
+ok($r['code'] === 200 && strpos($r['body'], $tenRieng) !== false,
+   'Trang web cua gara hien TEN RIENG cua gara do',
+   'Host ' . $hostPhu . ' — HTTP ' . $r['code']);
+
+$r = $http("$base/", 'tp01.etek.rikkeiedu.org');
+ok($r['code'] === 200 && strpos($r['body'], $tenRieng) === false,
+   'Trang cua gara tong KHONG bi doi theo',
+   'Mot gara doi ten minh ma trang gara khac doi theo la dung chung mat roi');
+
+$pdo->exec("DELETE FROM garage_settings WHERE garage_id = $gPhu AND skey = 'site_name'");
+
 $donSach();
-ok((int) $pdo->query("SELECT COUNT(*) FROM garage_domains WHERE host LIKE 'zztm-%'")->fetchColumn() === 0,
+ok((int) $pdo->query("SELECT COUNT(*) FROM garage_domains WHERE host LIKE 'zztm-%'")->fetchColumn() === 0
+   && (int) $pdo->query("SELECT COUNT(*) FROM site_settings WHERE skey LIKE 'zztm_%'")->fetchColumn() === 0,
    'Da don sach du lieu test');
 
 exit(summary());

@@ -148,6 +148,17 @@ if (count($mg) === 1){
     ob_end_clean();
     ok($loi === '', 'Chay lai migration khong loi (chay nhieu lan duoc)', $loi);
 
+    /* 000076 bat co `chi_tan_phat` cho mot danh sach man, trong do co `settings`.
+       Migration 000086 (07/10/2026) da CO Y mo man Cau hinh cho moi gara — moi
+       gara mot website thi phai tu dat duoc ten, logo, hotline cua minh.
+       Chay lai migration cu o day keo CSDL ve qua khu, nen phai ap lai cac
+       migration sau no. Khong lam thi chinh bo test tu tat tinh nang. */
+    foreach (glob($goc . 'database/migrations/*_mo_cau_hinh_cho_gara.php') as $sau){
+        $ms = require $sau;
+        $ms->setDb($db);
+        ob_start(); try { $ms->up(); } catch (\Throwable $e){} ob_end_clean();
+    }
+
     foreach (array_merge(array_keys($bangMoi), $bangCu) as $b){
         $co = in_array('garage_id', $cot($b), true);
         ok($co, "`$b` co cot garage_id");
@@ -181,7 +192,11 @@ if (count($mg) === 1){
                 'car-years', 'chat', 'contact-messages', 'du-an', 'galleries', 'garages', 'groups', 'menus', 'modules',
                 'news', 'news-categories', 'newsletter', 'orders', 'part-categories', 'product-brands',
                 'product-manufacturers', 'product-origins', 'product-units', 'products', 'reviews', 'services',
-                'settings', 'thong-ke',
+                /* `settings` DA RA KHOI danh sach nay 07/10/2026 (migration
+                   000086): moi gara mot website thi phai tu dat duoc ten, logo,
+                   hotline cua minh. Man do nay lam hai viec tuy ai mo — gara
+                   tong sua mac dinh chung, gara khac sua rieng cua minh. */
+                'thong-ke',
                 'tai-khoan-web'];   // 000077 — tài khoản website tách khỏi màn Khách hàng
     sort($dsCo); sort($mongDoi);
     ok($dsCo === $mongDoi, 'Dung ' . count($mongDoi) . ' man chi Tan Phat',
@@ -386,6 +401,11 @@ $manRiengGara = [
        liệu riêng nên chưa có gì mà rò. Số 0 = CHƯA phủ test dò rò rỉ; dựng
        nghiệp vụ thật thì đổi sang bước tương ứng và viết test cách ly. */
     'phieu-thu' => 0, 'phieu-chi' => 0,
+    /* `settings` mo cho moi gara tu 07/10/2026 (migration 000086). Khong phai
+       man du lieu nen khong co gi ma ro giua cac gara: gara tong sua
+       `site_settings` (mac dinh chung), gara khac sua `garage_settings` cua
+       chinh no — cach ly nam o Settings controller, co test o TenMienGaraTest. */
+    'settings' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);

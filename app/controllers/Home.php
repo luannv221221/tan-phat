@@ -24,7 +24,14 @@ class Home extends Controller {
 
     public function index(){
         $this->__data['sub_content'] = 'storefront/home';
-        $this->__data['page_title']  = 'Tân Phát — Phụ tùng & thiết bị gara ô tô';
+        /* ĐỂ TRỐNG tiêu đề trang chủ — cố ý. Trước đây viết cứng "Tân Phát —
+           Phụ tùng & thiết bị gara ô tô", nên gara Sài Gòn mở web của mình mà
+           thanh tiêu đề trình duyệt vẫn ghi Tân Phát.
+
+           Bỏ trống thì master.php tự ghép "<tên gara> — <khẩu hiệu>" lấy từ cấu
+           hình của chính gara đó. Đặt thêm ở đây nữa là tên gara lặp hai lần
+           trong một dòng tiêu đề. */
+        $this->__data['page_title']  = '';
 
         $promo  = $this->__part->storefront(['promo' => true, 'sort' => 'new'], 8);
         $newest = $this->__part->storefront(['sort' => 'new'], 8);

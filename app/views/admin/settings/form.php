@@ -6,6 +6,23 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
     <div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fas fa-check-circle mr-1"></i> {{$msg}}</div>
     @endif
 
+    <?php /* Nói rõ đang sửa CÁI GÌ. Cùng một màn nhưng gara tổng sửa mặc định
+             chung cho mọi gara, còn gara khác chỉ sửa của riêng mình — không
+             nói ra thì người dùng không biết mình vừa đổi phạm vi nào. */ ?>
+    @if (!empty($laChung))
+    <div class="alert alert-warning py-2">
+        <i class="fas fa-globe mr-1"></i>
+        Đây là <b>cấu hình chung</b> — làm mặc định cho mọi gara chưa tự khai.
+        Gara nào đã tự đặt thì giữ giá trị của họ.
+    </div>
+    @else
+    <div class="alert alert-info py-2">
+        <i class="fas fa-store mr-1"></i>
+        Đây là cấu hình <b>riêng của gara {{$garaTen}}</b> — chỉ đổi trang web và
+        biểu mẫu của gara này. Ô nào để nguyên thì dùng mặc định chung.
+    </div>
+    @endif
+
     <form action="{{_WEB_URL.'/admin/settings/save'}}" method="post" enctype="multipart/form-data">
         <?php echo csrf_field(); ?>
 

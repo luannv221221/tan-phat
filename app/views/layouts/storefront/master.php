@@ -17,7 +17,10 @@ if (!empty($cart) && is_array($cart)){ foreach ($cart as $q){ $cartCount += (int
 $this->model('VisitsModel')->log($memberId);
 
 // ----- SEO / cấu hình site -----
-$settings = $this->model('SettingsModel')->map();
+/* Cấu hình CỦA GARA đang phục vụ — tên miền quyết định gara nào (xem
+   TenMienMiddleware). Gara chưa khai gì thì rơi hết về Cấu hình chung, nên
+   trang vẫn đầy đủ như trước. */
+$settings = $this->model('GarageSettingsModel')->map();
 $seo = (isset($content['seo']) && is_array($content['seo'])) ? $content['seo'] : [];
 $siteName = !empty($settings['site_name']) ? $settings['site_name'] : 'Tân Phát';
 $metaTitle = !empty($page_title) ? ($page_title . ' - ' . $siteName) : ($siteName . ' — ' . ($settings['site_slogan'] ?? ''));
