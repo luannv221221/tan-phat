@@ -9,9 +9,13 @@ class MenusModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
+    /* Nội dung website thuộc về MỘT gara — 07/10/2026, khi mỗi gara có trang
+       riêng. Thiếu cờ này là gara nào mở web cũng thấy bài của gara khác. */
+    protected $_theoGara = true;
+
     /** Phẳng theo thứ tự cây + depth (cho danh sách admin) */
     public function getTree(){
-        $all = $this->table($this->_table)->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->get();
+        $all = $this->bangGara()->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->get();
         $byParent = [];
         foreach ($all ?: [] as $r){
             $p = ($r['parent_id'] === null || $r['parent_id'] === '') ? 0 : (int) $r['parent_id'];
@@ -28,7 +32,7 @@ class MenusModel extends Model {
 
     /** Cây menu ĐANG BẬT cho storefront: [root => [...,'children'=>[...]]] */
     public function getActiveTree(){
-        $all = $this->table($this->_table)->where('status', '=', 1)
+        $all = $this->bangGara()->where('status', '=', 1)
                     ->orderBy('sort_order', 'ASC')->orderBy('id', 'ASC')->get();
         $byParent = [];
         foreach ($all ?: [] as $r){
@@ -44,7 +48,7 @@ class MenusModel extends Model {
 
     /** Menu gốc đang bật (cho dropdown chọn cha) */
     public function getRoots(){
-        return $this->table($this->_table)->whereNull('parent_id')
+        return $this->bangGara()->whereNull('parent_id')
                     ->orderBy('sort_order', 'ASC')->get();
     }
 

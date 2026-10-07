@@ -12,16 +12,20 @@ class BannersModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
+    /* Nội dung website thuộc về MỘT gara — 07/10/2026, khi mỗi gara có trang
+       riêng. Thiếu cờ này là gara nào mở web cũng thấy bài của gara khác. */
+    protected $_theoGara = true;
+
     /** Danh sách quản trị — theo thứ tự hiển thị */
     public function getLists(){
-        return $this->table($this->_table)
+        return $this->bangGara()
                     ->orderBy('sort_order', 'ASC')
                     ->orderBy('id', 'ASC')->get();
     }
 
     /** Banner đang bật cho storefront */
     public function getActive(){
-        return $this->table($this->_table)
+        return $this->bangGara()
                     ->where('status', '=', 1)
                     ->orderBy('sort_order', 'ASC')
                     ->orderBy('id', 'ASC')->get();

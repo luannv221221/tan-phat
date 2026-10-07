@@ -11,9 +11,13 @@ class NewsModel extends Model {
     protected $_fields  = '*';
     protected $_primary = 'id';
 
+    /* Nội dung website thuộc về MỘT gara — 07/10/2026, khi mỗi gara có trang
+       riêng. Thiếu cờ này là gara nào mở web cũng thấy bài của gara khác. */
+    protected $_theoGara = true;
+
     /** Danh sách quản trị: join tên danh mục, lọc trạng thái + từ khoá */
     public function getLists($status = '', $keyword = ''){
-        $q = $this->table($this->_table)
+        $q = $this->bangGara()
             ->select('`news`.*, `news_categories`.`name` AS category_name')
             ->leftJoinOn('news_categories', 'news.category_id', 'news_categories.id');
         if ($status === '0' || $status === '1') $q = $q->where('news.is_published', '=', (int) $status);
@@ -23,7 +27,7 @@ class NewsModel extends Model {
 
     /** Tin ĐÃ đăng cho storefront (lọc theo danh mục nếu có) */
     public function getPublished($categoryId = 0, $limit = 0, $offset = 0){
-        $q = $this->table($this->_table)
+        $q = $this->bangGara()
             ->select('`news`.*, `news_categories`.`name` AS category_name, `news_categories`.`slug` AS category_slug')
             ->leftJoinOn('news_categories', 'news.category_id', 'news_categories.id')
             ->where('news.is_published', '=', 1);
@@ -34,14 +38,14 @@ class NewsModel extends Model {
     }
 
     public function countPublished($categoryId = 0){
-        $q = $this->table($this->_table)->select('COUNT(*) AS total')->where('is_published', '=', 1);
+        $q = $this->bangGara()->select('COUNT(*) AS total')->where('is_published', '=', 1);
         if ($categoryId > 0) $q = $q->where('category_id', '=', (int) $categoryId);
         $r = $q->first();
         return (int) ($r['total'] ?? 0);
     }
 
     public function getBySlugPublished($slug){
-        return $this->table($this->_table)
+        return $this->bangGara()
             ->select('`news`.*, `news_categories`.`name` AS category_name, `news_categories`.`slug` AS category_slug')
             ->leftJoinOn('news_categories', 'news.category_id', 'news_categories.id')
             ->where('news.slug', '=', $slug)
@@ -55,7 +59,7 @@ class NewsModel extends Model {
 
     public function getDetail($id){ return $this->getFirst($id); }
     public function findBySlug($slug){
-        return $this->table($this->_table)->where('slug', '=', $slug)->first();
+        return $this->bangGara()->where('slug', '=', $slug)->first();
     }
     public function add($data){
         $data['create_at'] = date('Y-m-d H:i:s');

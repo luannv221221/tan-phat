@@ -153,7 +153,10 @@ if (count($mg) === 1){
        gara mot website thi phai tu dat duoc ten, logo, hotline cua minh.
        Chay lai migration cu o day keo CSDL ve qua khu, nen phai ap lai cac
        migration sau no. Khong lam thi chinh bo test tu tat tinh nang. */
-    foreach (glob($goc . 'database/migrations/*_mo_cau_hinh_cho_gara.php') as $sau){
+    foreach (array_merge(
+                glob($goc . 'database/migrations/*_mo_cau_hinh_cho_gara.php'),
+                glob($goc . 'database/migrations/*_mo_man_noi_dung_cho_gara.php')
+             ) as $sau){
         $ms = require $sau;
         $ms->setDb($db);
         ob_start(); try { $ms->up(); } catch (\Throwable $e){} ob_end_clean();
@@ -188,9 +191,14 @@ if (count($mg) === 1){
     $coCo = in_array('chi_tan_phat', $cot('modules'), true);
     ok($coCo, '`modules` co cot chi_tan_phat');
     $dsCo = $coCo ? $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 1")->fetchAll(PDO::FETCH_COLUMN) : [];
-    $mongDoi = ['attributes', 'banners', 'car-body-types', 'car-brands', 'car-colors', 'car-fuels', 'car-models',
-                'car-years', 'chat', 'contact-messages', 'du-an', 'galleries', 'garages', 'groups', 'menus', 'modules',
-                'news', 'news-categories', 'newsletter', 'orders', 'part-categories', 'product-brands',
+    /* SAU MAN NOI DUNG WEB da ra khoi danh sach nay 07/10/2026 (migration
+       000088): tin tuc, danh muc tin, banner, menu, thu vien anh, du an. Moi
+       gara mot website thi phai tu viet duoc noi dung len trang cua minh.
+       Du lieu da tach theo gara o 000087 va model da bat $_theoGara, nen mo man
+       KHONG cho ai thay noi dung cua ai. */
+    $mongDoi = ['attributes', 'car-body-types', 'car-brands', 'car-colors', 'car-fuels', 'car-models',
+                'car-years', 'chat', 'contact-messages', 'garages', 'groups', 'modules',
+                'newsletter', 'orders', 'part-categories', 'product-brands',
                 'product-manufacturers', 'product-origins', 'product-units', 'products', 'reviews', 'services',
                 /* `settings` DA RA KHOI danh sach nay 07/10/2026 (migration
                    000086): moi gara mot website thi phai tu dat duoc ten, logo,
@@ -385,6 +393,31 @@ if (method_exists('\App\core\Model', 'epGara')){
 }
 
 // ---------------------------------------------------------------------------
+section('Bat co _theoGara roi thi KHONG duoc truy van vong qua no');
+
+/* CHO HONG DA MAC THAT (07/10/2026, buoc 3 nen tang nhieu gara):
+   Bat $_theoGara = true cho NewsModel roi tuong la xong. Nhung co do chi tu
+   dong ap cho cac ham CO SAN cua lop Model (getFirst, updateById, addNew...).
+   Nam truy van tu viet trong NewsModel van dung $this->table($this->_table) —
+   khong qua bo loc. Ket qua: bai viet cua gara Sai Gon hien tren trang Tan
+   Phat, ma khong co loi nao bao, va chot chan cu van bao PASS vi no chi kiem
+   CO CO HAY KHONG.
+
+   Nay bat luon ca chuyen do: model da bat co thi moi truy van tu viet phai di
+   qua bangGara(). */
+$hoLot = [];
+foreach (glob($goc . 'app/models/*.php') as $f){
+    $src = codeOnly($f);
+    if (!preg_match('~\$_theoGara\s*=\s*true~', $src)) continue;
+    $n = substr_count($src, '$this->table($this->_table)');
+    if ($n > 0) $hoLot[] = basename($f) . " ($n cho)";
+}
+ok(empty($hoLot),
+   'Model bat _theoGara deu truy van qua bangGara()',
+   'Con dung table($this->_table): ' . implode(', ', $hoLot)
+   . ' — co bat nhung truy van di vong qua, du lieu van ro');
+
+// ---------------------------------------------------------------------------
 section('Man rieng gara — danh sach phai du');
 
 /* Mọi module KHÔNG có cờ chi_tan_phat là màn riêng của gara. Số bên phải là
@@ -406,6 +439,11 @@ $manRiengGara = [
        `site_settings` (mac dinh chung), gara khac sua `garage_settings` cua
        chinh no — cach ly nam o Settings controller, co test o TenMienGaraTest. */
     'settings' => 0,
+    /* Noi dung website, mo cho gara tu 07/10/2026 (migration 000087 + 000088).
+       Du lieu da co garage_id va model da bat $_theoGara — co test rieng o
+       NoiDungWebGaraTest. */
+    'news' => 0, 'news-categories' => 0, 'banners' => 0,
+    'menus' => 0, 'galleries' => 0, 'du-an' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);
