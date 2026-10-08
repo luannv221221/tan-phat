@@ -60,6 +60,7 @@ $tests = [
     'MoGaraTest.php'              => 'NEN TANG — mo gara moi: dung san ten mien/kho/tai khoan (buoc 7)',
     'NhomQuyenGaraTest.php'       => 'PHAN QUYEN — moi gara mot bo nhom rieng, chu gara tu phan quyen',
     'HangHoaGaraTest.php'         => 'HANG HOA — gara khai hang va danh muc cua chinh minh',
+    'TaiKhoanTatTest.php'         => 'BAO MAT — tat tai khoan thi phai khoa duoc nguoi do that',
 ];
 
 $php      = PHP_BINARY;

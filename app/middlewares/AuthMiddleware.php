@@ -44,6 +44,22 @@ class AuthMiddleware extends Middleware {
                 $response->redirect('dang-nhap');
             }
 
+            /* TÀI KHOẢN BỊ TẮT THÌ ĐÁ RA NGAY, kể cả đang có phiên.
+               Kiểm ở ĐÂY chứ không chỉ ở lúc đăng nhập: tắt một tài khoản mà
+               người đó đang mở máy thì họ vẫn làm việc tiếp cho tới khi phiên
+               hết — mà "Ghi nhớ đăng nhập" giữ phiên tới 30 ngày. Tắt tài khoản
+               của người vừa nghỉ việc mà họ còn vào được một tháng nữa thì cái
+               nút tắt đó không có nghĩa gì.
+
+               Dòng `users` cũng là thứ gara_hien_tai() cần, nên đọc qua
+               nguoi_dang_nhap() (nhớ trong request) để không thành hai truy vấn. */
+            if (!tai_khoan_dang_bat(nguoi_dang_nhap())){
+                /* Lời nhắn đặt TRƯỚC huyPhien() — xem ghi chú ở nhánh gara dưới. */
+                Session::flash('msg', 'Tài khoản của bạn đã bị tắt. Liên hệ quản trị Tân Phát.');
+                $this->huyPhien();
+                $response->redirect('dang-nhap');
+            }
+
             /* Đóng khi thiếu gara: tài khoản mất gara, hoặc gara bị khoá giữa
                chừng, thì đá ra ngay chứ không để đi tiếp với "gara = null" —
                lớp Model gốc gặp null sẽ trả rỗng, người dùng chỉ thấy các màn

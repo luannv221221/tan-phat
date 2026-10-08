@@ -669,6 +669,43 @@ function nguoi_dang_nhap_id(){
 }
 
 /**
+ * Tài khoản quản trị đang đăng nhập — cả dòng `users`, hoặc null.
+ *
+ * Nhớ kết quả TÌM ĐƯỢC trong request, vì ba nơi hỏi tới nó (AuthMiddleware,
+ * gara_hien_tai, màn hình) và mỗi lần hỏi là một truy vấn.
+ *
+ * KHÔNG nhớ null: ở request khôi phục phiên từ cookie "Ghi nhớ đăng nhập",
+ * lúc AppServiceProvider::boot() hỏi thì chưa có phiên, tới lúc AuthMiddleware
+ * hỏi thì đã có — nhớ null từ lần đầu là đá oan người dùng ra. Cùng lý do với
+ * gara_hien_tai().
+ */
+function nguoi_dang_nhap(){
+    static $cache = false;
+    if ($cache !== false) return $cache;
+
+    $id = nguoi_dang_nhap_id();
+    if (empty($id)) return null;
+
+    $u = \App\core\Load::model('UsersModel')->getDetail($id);
+    if (empty($u)) return null;
+    return $cache = $u;
+}
+
+/**
+ * Tài khoản $u có được vào trang quản trị không (CHƯA xét gara).
+ *
+ * `users`.`status` = 0 nghĩa là tài khoản đã bị tắt. Từ 08/10/2026 cờ này THẬT
+ * SỰ chặn: trước đó nó chỉ là một cột để hiển thị — checkLogin() chỉ verify mật
+ * khẩu, Auth::postLogin() chỉ kiểm gara, AuthMiddleware cũng vậy. Tắt một tài
+ * khoản ở màn Người dùng thì danh sách hiện "Ngừng" mà người đó vẫn đăng nhập
+ * và làm việc bình thường — đúng loại lỗi không ai phát hiện, vì màn hình nói
+ * rằng đã xong.
+ */
+function tai_khoan_dang_bat($u){
+    return !empty($u) && (int) $u['status'] === 1;
+}
+
+/**
  * Gara làm việc của request này — [id, code, name, is_master, ...] hoặc null.
  *
  * GARA ĐỘC LẬP (22/09/2026): mỗi tài khoản thuộc đúng MỘT gara và chỉ làm việc
@@ -700,10 +737,7 @@ function gara_hien_tai(){
         return !empty($g) ? $g : null;
     }
 
-    $userId = nguoi_dang_nhap_id();
-    if (empty($userId)) return null;
-
-    $u = \App\core\Load::model('UsersModel')->getDetail($userId);
+    $u = nguoi_dang_nhap();
     if (empty($u['garage_id'])) return null;
 
     $g = $model->getDetail((int) $u['garage_id']);

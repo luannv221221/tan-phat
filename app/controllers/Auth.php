@@ -55,6 +55,19 @@ class Auth extends Controller{
 
             $dataUser = $this->__userModel->checkLogin($email, $password);
 
+            /* TÀI KHOẢN BỊ TẮT (`status` = 0) thì không cho vào.
+               Trước 08/10/2026 không ai kiểm cờ này: checkLogin() chỉ verify
+               mật khẩu, chỗ này chỉ kiểm gara. Tắt tài khoản ở màn Người dùng
+               thì danh sách hiện "Ngừng" mà người đó vẫn đăng nhập bình thường.
+
+               Kiểm SAU khi đúng mật khẩu, và báo đúng lý do: người dùng thật
+               cần biết vì sao không vào được, mà kẻ đoán mò thì đã phải có mật
+               khẩu đúng mới tới được câu này. */
+            if (!empty($dataUser) && !tai_khoan_dang_bat($dataUser)){
+                Session::flash('msg', 'Tài khoản của bạn đã bị tắt. Liên hệ quản trị Tân Phát.');
+                $this->__response->redirect('dang-nhap');
+            }
+
             /* Gara độc lập: tài khoản chưa gán gara, hoặc gara đang khoá, thì
                không cho vào. Kiểm SAU khi đúng mật khẩu — kiểm trước là để lộ
                cho người đoán mò biết email nào có tồn tại. */
