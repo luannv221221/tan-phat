@@ -32,6 +32,15 @@ Thumbs.db
 
 # Ban dump DB va file cau hinh may dich khi deploy (nhay cam — khong commit)
 /deploy/*.sql
+
+# BAN DUMP CSDL O GOC REPO. Dump mang du lieu that: email, so dien thoai, dia
+# chi khach, va hash mat khau cua moi tai khoan. Day len git la nhung thu do
+# nam trong lich su mai mai, ke ca khi xoa file o commit sau.
+#
+# `tanphat_php.sql` tung duoc theo doi o goc repo (311 KB) roi bi xoa khoi dia —
+# ban moi hon nam o deploy/, da duoc bo qua boi luat tren, va tools/xuat-csdl.php
+# ghi vao dung duong do. Khong con gi tro vao ban o goc nua.
+/*.sql
 # Nhat ky cua tools/tao-du-lieu-gara.php — chi co nghia tren may da gieo
 /deploy/*.json
 /deploy/*.zip
