@@ -88,11 +88,21 @@ ok(empty($kq['thieu']), 'Dung duoc het, khong thieu gi', implode(' | ', $kq['thi
 $host = $pdo->query("SELECT host FROM garage_domains WHERE garage_id = $id")->fetchColumn();
 ok($host !== false && strpos($host, 'zzmg1.') === 0,
    'Co ten mien phu theo ma gara', (string) $host);
-/* Tên miền gốc SUY TỪ gara tổng, không viết cứng — đổi tên miền hệ thống thì
-   chỉ sửa dòng trong `garage_domains`, không phải sửa code. */
-$gocTong = $pdo->query("SELECT host FROM garage_domains d JOIN garages g ON g.id = d.garage_id
-                        WHERE g.is_master = 1 ORDER BY LENGTH(host) ASC LIMIT 1")->fetchColumn();
-ok($host === 'zzmg1.' . $gocTong, 'Ten mien goc suy tu gara tong', (string) $gocTong);
+/* Tên miền gốc SUY TỪ host CHÍNH của gara tổng, không viết cứng — đổi tên miền
+   hệ thống thì chỉ sửa dòng trong `garage_domains`, không phải sửa code.
+
+   KHÔNG lấy host ngắn nhất: thêm một host để chạy thử như `tp01.localhost` là
+   nó thắng `etek.rikkeiedu.org`, và gara mới nhận tên miền không ai vào được.
+   Lấy host CHÍNH rồi bỏ nhãn mã gara tổng ở đầu. */
+$hostChinhTong = $pdo->query("SELECT d.host FROM garage_domains d JOIN garages g ON g.id = d.garage_id
+                              WHERE g.is_master = 1
+                              ORDER BY d.is_primary DESC, d.id ASC LIMIT 1")->fetchColumn();
+$maTongA = strtolower((string) $pdo->query("SELECT code FROM garages WHERE is_master = 1")->fetchColumn());
+$gocTong = (strpos((string) $hostChinhTong, $maTongA . '.') === 0)
+         ? substr($hostChinhTong, strlen($maTongA) + 1)
+         : $hostChinhTong;
+ok($host === 'zzmg1.' . $gocTong, 'Ten mien goc suy tu host CHINH cua gara tong',
+   'host chinh: ' . var_export($hostChinhTong, true) . ' -> goc: ' . var_export($gocTong, true));
 
 ok((int) $pdo->query("SELECT COUNT(*) FROM warehouses WHERE garage_id = $id AND is_default = 1")->fetchColumn() === 1,
    'Co dung MOT kho mac dinh');
