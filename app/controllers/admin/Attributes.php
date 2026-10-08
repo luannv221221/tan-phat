@@ -73,6 +73,13 @@ class Attributes extends Controller {
             $this->flashOne(['slug' => 'Không tự sinh được đường dẫn từ tên. Vui lòng nhập slug thủ công.'], 'add');
             return;
         }
+        /* SLUG TỰ SINH THÌ TỰ NÉ TRÙNG. Danh mục chia theo gara từ 08/10/2026
+           (migration 000094) nên trùng tên giữa các gara là chuyện thường, mà
+           cột `slug` vẫn duy nhất TOÀN BẢNG. Người dùng GÕ TAY slug thì vẫn báo
+           trùng — đó là ý định rõ ràng, im lặng đổi là lừa họ. */
+        $f = $this->__request->getFields();
+        if (empty($f['slug'])) $data['slug'] = $this->__model->slugRanh($data['slug']);
+
         if (!empty($this->__model->findBySlug($data['slug']))){
             $this->flashOne(['slug' => 'Đường dẫn (slug) này đã tồn tại'], 'add');
             return;
@@ -123,6 +130,9 @@ class Attributes extends Controller {
             $this->flashOne(['slug' => 'Không tự sinh được đường dẫn từ tên. Vui lòng nhập slug thủ công.'], 'edit/' . $id);
             return;
         }
+        $f = $this->__request->getFields();
+        if (empty($f['slug'])) $data['slug'] = $this->__model->slugRanh($data['slug'], $id);
+
         $existing = $this->__model->findBySlug($data['slug']);
         if (!empty($existing) && $existing['id'] != $id){
             $this->flashOne(['slug' => 'Đường dẫn (slug) này đã thuộc về bản ghi khác'], 'edit/' . $id);

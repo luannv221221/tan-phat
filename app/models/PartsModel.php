@@ -4,12 +4,32 @@ use App\core\Model;
 
 /**
  * Phụ tùng — TASK_86, TASK_87, TASK_93.
+ *
+ * CHIA THEO GARA (`garage_id`, từ migration 000065):
+ *     NULL  -> hàng của KHO TỔNG. Mọi gara đều chọn được để bán, nhưng chỉ gara
+ *              tổng sửa được (chốt 07/10/2026).
+ *     = X   -> hàng riêng của gara X.
+ *
+ * Cờ `$_chungVaRieng` lo ba việc ở lớp cha:
+ *     addNew      -> gara nào thêm thì hàng thuộc gara đó. KHÔNG có nó thì gara
+ *                    thêm hàng ở màn Quản lý hàng hoá là hàng rơi vào kho tổng
+ *                    và cả hệ thống nhìn thấy.
+ *     updateById  -> chỉ sửa được hàng của chính mình.
+ *     deleteById  -> chỉ xoá được hàng của chính mình.
+ *
+ * Phần ĐỌC thì lớp này tự lo, vì luật đọc không giống các bảng danh mục:
+ *     getDetail / findByCode / dungDuoc  -> kho tổng + hàng riêng của gara
+ *                                           (locKhoTongVaGara)
+ *     getLists  (màn quản trị)           -> CHỈ hàng của gara đang làm việc
+ *                                           (applyFilters) — xem ghi chú ở đó
+ *     theoNguon / choGara / chiHangLenWeb -> danh mục gara đã chọn làm
  */
 class PartsModel extends Model {
 
     protected $_table   = 'parts';
     protected $_fields  = '*';
     protected $_primary = 'id';
+    protected $_chungVaRieng = true;
 
     /**
      * Phân loại hàng hoá (cột `item_type`) — chốt 05/08/2026.
@@ -107,10 +127,25 @@ class PartsModel extends Model {
 
     /** Áp bộ lọc + từ khoá (dùng chung cho getLists và countLists) */
     private function applyFilters($q, $filters, $keyword, $promoOnly = false){
-        /* Danh sách Hàng hoá / Dịch vụ là KHO TỔNG của Tân Phát. Hàng riêng
-           của các gara không được hiện ở đây — Tân Phát không xem dữ liệu
-           bên trong gara (gara độc lập, 22/09/2026). */
-        $q = $q->whereNull('parts.garage_id');
+        /* MÀN QUẢN LÝ HÀNG HOÁ / DỊCH VỤ CHỈ LIỆT KÊ HÀNG CỦA GARA ĐANG LÀM VIỆC.
+         *
+         *   gara tổng -> kho tổng (`garage_id IS NULL`). Hàng riêng của các gara
+         *                KHÔNG hiện ở đây: Tân Phát không xem dữ liệu bên trong
+         *                gara (gara độc lập, 22/09/2026).
+         *   gara khác -> đúng hàng của nó.
+         *
+         * KHÔNG kèm hàng kho tổng cho gara, dù gara vẫn BÁN được hàng kho tổng.
+         * Màn này là nơi KHAI / SỬA / XOÁ, mà hàng kho tổng gara không sửa được
+         * (chốt 07/10/2026). Bày ra một danh sách phần lớn là dòng chỉ đọc thì
+         * người dùng bấm Sửa rồi mới biết là không được. Hàng kho tổng gara
+         * nhận làm thì chọn và đặt giá ở màn "Danh mục của gara".
+         *
+         * Dòng lệnh chưa ép gara (migrate, gieo dữ liệu) giữ nếp cũ: kho tổng.
+         */
+        $so = $this->garaSoHuu();
+        if ($so === 0)         $q = $q->where('parts.id', '=', 0);   // không xác định được gara
+        elseif ($so === null)  $q = $q->whereNull('parts.garage_id');
+        else                   $q = $q->where('parts.garage_id', '=', $so);
 
         foreach ($filters as $field => $value){
             $q = $q->where($field, '=', $value);
@@ -702,6 +737,26 @@ class PartsModel extends Model {
      */
     public function findByCode($code){
         return $this->locKhoTongVaGara($this->table($this->_table)->where('code', '=', $code))->first();
+    }
+
+    /**
+     * Mặt hàng gara làm việc SỞ HỮU — tức sửa / xoá được.
+     *
+     *   gara tổng -> hàng kho tổng (`garage_id IS NULL`)
+     *   gara khác -> hàng riêng của chính nó
+     *
+     * KHÁC getDetail(): getDetail trả về cả hàng kho tổng cho một gara, vì gara
+     * cần ĐỌC để lập báo giá, in phiếu, kiểm tồn. Đọc được không có nghĩa là
+     * sửa được (chốt 07/10/2026: gara không sửa hàng của kho tổng).
+     *
+     * Dùng ở màn hình để nói đúng câu từ chối. Chốt THẬT nằm ở lớp cha —
+     * updateById/deleteById đã lọc theo sở hữu nhờ cờ $_chungVaRieng, nên quên
+     * gọi hàm này thì tệ nhất là lưu không ăn, không phải sửa trúng hàng kho tổng.
+     */
+    public function cuaToi($id){
+        list($dk, $bd) = $this->dkSoHuuRieng($this->_table);
+        return $this->firstRaw('SELECT * FROM `parts` WHERE `parts`.`id` = ? AND ' . $dk,
+                               array_merge([(int) $id], $bd));
     }
 
     /** Giới hạn truy vấn vào kho tổng (garage_id NULL) + hàng riêng của gara làm việc */

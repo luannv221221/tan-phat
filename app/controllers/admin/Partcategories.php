@@ -85,6 +85,13 @@ class Partcategories extends Controller {
             return;
         }
 
+        /* SLUG TỰ SINH THÌ TỰ NÉ TRÙNG. Danh mục chia theo gara từ 08/10/2026
+           (migration 000094) nên trùng tên giữa các gara là chuyện thường, mà
+           cột `slug` vẫn duy nhất TOÀN BẢNG. Người dùng GÕ TAY slug thì vẫn báo
+           trùng — đó là ý định rõ ràng, im lặng đổi là lừa họ. */
+        $f = $this->__request->getFields();
+        if (empty($f['slug'])) $data['slug'] = $this->__model->slugRanh($data['slug']);
+
         if (!empty($this->__model->findBySlug($data['slug']))){
             $this->flashOne(['slug' => 'Đường dẫn (slug) này đã tồn tại'], 'add');
             return;
@@ -175,6 +182,9 @@ class Partcategories extends Controller {
             return;
         }
 
+        $f = $this->__request->getFields();
+        if (empty($f['slug'])) $data['slug'] = $this->__model->slugRanh($data['slug'], $id);
+
         $existing = $this->__model->findBySlug($data['slug']);
         if (!empty($existing) && $existing['id'] != $id){
             $this->flashOne(['slug' => 'Đường dẫn (slug) này đã thuộc về bản ghi khác'], 'edit/' . $id);
@@ -241,13 +251,27 @@ class Partcategories extends Controller {
         $f = $this->__request->getFields();
 
         return [
-            'parent_id'   => !empty($f['parent_id']) ? (int) $f['parent_id'] : null,
+            'parent_id'   => $this->chaHopLe(isset($f['parent_id']) ? $f['parent_id'] : null),
             'name'        => trim($f['name']),
             'slug'        => slugify(!empty($f['slug']) ? $f['slug'] : $f['name']),
             'description' => !empty($f['description']) ? trim($f['description']) : null,
             'sort_order'  => isset($f['sort_order']) ? (int) $f['sort_order'] : 0,
             'status'      => !empty($f['status']) ? 1 : 0,
         ];
+    }
+
+    /**
+     * Danh mục cha phải là một dòng gara đang làm việc THẤY ĐƯỢC, không thì null.
+     *
+     * Từ 08/10/2026 bảng này chia theo gara (migration 000094). Nhận parent_id
+     * nguyên văn từ form là gara treo nhánh của mình vào danh mục nội bộ của
+     * gara khác: cây hiện ra thiếu một nhánh (cha không nằm trong tầm thấy), và
+     * đổi tên danh mục cha bên kia là nhánh bên này đổi theo.
+     */
+    private function chaHopLe($val){
+        $id = (int) $val;
+        if ($id <= 0) return null;
+        return !empty($this->__model->getDetail($id)) ? $id : null;
     }
 
     private function flashErrors(){

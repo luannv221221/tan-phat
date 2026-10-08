@@ -92,8 +92,18 @@ foreach (['news', 'news-categories', 'banners', 'menus', 'galleries', 'du-an'] a
        'Con co chi_tan_phat thi gara khac mo ra bi da ve "khong co quyen"');
 }
 
-/* Những màn này thì KHÔNG mở: dữ liệu dùng chung toàn hệ thống. */
-foreach (['products', 'services', 'part-categories', 'car-brands', 'garages', 'groups'] as $link){
+/* Những màn này thì KHÔNG mở: dữ liệu dùng chung toàn hệ thống.
+ *
+ * 08/10/2026 — `products`, `services`, `part-categories` và `groups` ĐÃ RA KHỎI
+ * danh sách này (migration 000093 + 000094). Chúng ra được vì dữ liệu đã chia
+ * theo gara, KHÔNG phải vì đổi ý về việc dùng chung:
+ *   `parts` + 6 bảng danh mục -> garage_id kiểu chung-và-riêng (NULL = kho
+ *       tổng, mọi gara đọc được, chỉ gara tổng sửa)
+ *   `groups`                  -> garage_id, mỗi gara một bộ nhóm riêng
+ * Danh sách còn lại là những bảng THẬT SỰ chưa chia được: danh mục xe (Toyota
+ * Camry 2020 là một với mọi gara) và `garages` (khai gara là việc của người
+ * vận hành nền tảng). Chốt đủ nằm ở CachLyGaraTest ($mongDoi). */
+foreach (['car-brands', 'car-models', 'car-years', 'garages', 'modules'] as $link){
     $co = $pdo->query("SELECT chi_tan_phat FROM modules WHERE link = " . $pdo->quote($link))->fetchColumn();
     ok((int) $co === 1, "Man `$link` VAN chi cua kho tong",
        'Mo ra la gara sua duoc du lieu dung chung cua moi gara');

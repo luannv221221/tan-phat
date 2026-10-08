@@ -192,6 +192,25 @@ HTTP, chỉ là không mã hoá.
 Việc cuối quan trọng nhất: nếu tài khoản đó vẫn vào được nghĩa là **chưa chạy
 bước dọn**, phải xoá ngay trên máy chủ.
 
+### Kiểm riêng cho đợt 08/10/2026 (gara chủ động việc của mình)
+
+Đăng nhập bằng **tài khoản chủ gara** (nhóm Manager, không phải Tân Phát):
+
+| Việc | Mong đợi |
+|---|---|
+| Hệ thống › Quản lý nhóm | Thấy **đúng hai nhóm của gara mình**, có cột Gara |
+| Nhóm của chính mình | **Không có** nút Phân quyền / Sửa / Xoá |
+| Lưu phân quyền nhóm Staff | Chỉ gara mình đổi — gara khác **không đổi gì** |
+| Hệ thống › Quản lý module | **Không có trên menu** |
+| Hàng hoá › Quản lý hàng hoá | Chỉ thấy **hàng của gara mình** |
+| Hàng hoá › Thương hiệu | Hàng kho tổng gắn nhãn **"Kho tổng"**, không có nút Sửa |
+| Gõ `/admin/products/edit/<id hàng kho tổng>` | **Bị từ chối**, nói rõ là hàng kho tổng |
+| Góc trên menu trái | Hiện **tên gara mình** |
+
+Hai việc giữa là quan trọng nhất: nếu lưu phân quyền ở gara này mà gara khác đổi
+theo, hoặc gara thêm hàng xong Tân Phát nhìn thấy, thì **CSDL nhập vào chưa có
+migration `000093` / `000094`** — xuất lại ở local rồi nhập lại.
+
 ---
 
 ## 8. Nếu hỏng

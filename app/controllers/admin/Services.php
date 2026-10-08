@@ -144,17 +144,27 @@ class Services extends Controller {
     // ================= Helper =================
 
     /**
-     * Lấy bản ghi và CHẶN nếu nó không phải dịch vụ.
+     * Lấy bản ghi và CHẶN nếu nó không phải dịch vụ, hoặc không phải của gara mình.
      *
      * Không kiểm tra item_type ở đây thì /admin/services/delete/<id của một
      * phụ tùng> vẫn xoá được, dù người dùng chỉ được cấp màn hình Dịch vụ.
-     * Trả về null kèm redirect sẵn; nơi gọi chỉ cần `if (empty(...)) return;`.
+     *
+     * Dùng cuaToi() chứ không getDetail(): getDetail trả về cả dịch vụ của KHO
+     * TỔNG — gara cần đọc để lập báo giá, nhưng không được sửa (chốt
+     * 07/10/2026). Trả về null kèm redirect sẵn; nơi gọi chỉ cần
+     * `if (empty(...)) return;`.
      */
     private function layDichVu($id){
-        $item = $this->__model->getDetail($id);
+        $item = $this->__model->cuaToi($id);
 
         if (empty($item) || $item['item_type'] !== PartsModel::LOAI_DICH_VU){
-            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            /* Phân biệt "không có" với "có nhưng là của kho tổng" — câu
+               "không tìm thấy" làm người dùng tưởng dữ liệu mất. */
+            $co = $this->__model->getDetail($id);
+            Session::flash('msgError', !empty($co) && $co['item_type'] === PartsModel::LOAI_DICH_VU
+                ? 'Dịch vụ "' . $co['name'] . '" thuộc kho tổng, gara không sửa được. '
+                . 'Muốn dùng thì chọn nó ở màn Hàng hoá › Danh mục của gara.'
+                : 'Không tìm thấy ' . $this->labelOne);
             $this->__response->redirect('admin/' . $this->routeBase);
             return null;
         }

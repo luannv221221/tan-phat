@@ -42,7 +42,7 @@
                 @foreach ($dataList as $key => $item)
                 <tr>
                     <td class="text-center text-muted">{{$key+1}}</td>
-                    <td class="font-weight-bold">{{$item['name']}}</td>
+                    <td class="font-weight-bold">{{$item['name']}}{!! nhan_kho_tong($item) !!}</td>
                     <td><code>{{$item['slug']}}</code></td>
                     <td>{!! !empty($item['unit']) ? e($item['unit']) : '<span class="text-muted">—</span>' !!}</td>
                     <td class="text-center">{{$item['sort_order']}}</td>
@@ -50,11 +50,18 @@
                         {!! $item['status']==1 ? '<span class="badge badge-success">Hiển thị</span>' : '<span class="badge badge-secondary">Ẩn</span>' !!}
                     </td>
                     <td class="text-center">
+                        <?php /* Dòng của kho tổng: gara đọc được để gán cho hàng của mình, nhưng
+                                 không sửa được (chốt 07/10/2026). Ẩn nút ở đây cho khỏi bấm vào
+                                 rồi mới nhận câu từ chối — chốt thật ở tầng Model. */ ?>
+                        @if (dong_cua_gara($item))
                         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-warning btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
                         @endif
                         @if (route('admin/'.$routeBase.'/delete/'.$item['id']))
                         <a onclick="return confirm('Xoá thông số này sẽ gỡ khỏi mọi hàng hoá. Chắc chắn?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
+                        @endif
+                        @else
+                        <span class="text-muted" title="Dòng của kho tổng — chỉ Tân Phát sửa được">—</span>
                         @endif
                     </td>
                 </tr>

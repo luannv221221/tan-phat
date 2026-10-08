@@ -201,6 +201,25 @@ trait QueryBuilder{
         return $this;
     }
 
+    /**
+     * Nối OR cho điều kiện IS NULL.
+     *
+     * Cần cho các bảng "chung và riêng" (danh mục hàng hoá, thương hiệu, đơn vị
+     * tính...): `garage_id = <gara> OR garage_id IS NULL` — NULL nghĩa là dòng
+     * của danh mục tổng, mọi gara đều thấy. Thiếu hàm này thì phải viết
+     * `orWhere('garage_id', 'IS', null)` — sinh ra `= ?` với bind NULL, mà
+     * `x = NULL` trong SQL không bao giờ đúng, nên lặng lẽ không khớp dòng nào.
+     */
+    public function whereOrNull($field){
+        $this->whereQuery .= $this->whereConnector(true) . $this->wrapField($field) . ' IS NULL';
+        return $this;
+    }
+
+    public function whereOrNotNull($field){
+        $this->whereQuery .= $this->whereConnector(true) . $this->wrapField($field) . ' IS NOT NULL';
+        return $this;
+    }
+
     /** Kiểu JOIN được phép */
     protected static $allowedJoins = ['INNER', 'LEFT', 'RIGHT'];
 

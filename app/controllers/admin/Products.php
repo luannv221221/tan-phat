@@ -219,12 +219,8 @@ class Products extends Controller {
     // ================= Sửa =================
 
     public function edit($id){
-        $item = $this->__model->getDetail($id);
-        if (empty($item)){
-            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
-            $this->__response->redirect('admin/' . $this->routeBase);
-            return;
-        }
+        $item = $this->layHangCuaToi($id);
+        if (empty($item)) return;
 
         $this->__data['sub_content'] = $this->viewDir . '/edit';
         $this->__data['page_title']  = 'Sửa ' . $this->labelOne;
@@ -245,11 +241,7 @@ class Products extends Controller {
     }
 
     public function postEdit($id){
-        if (empty($this->__model->getDetail($id))){
-            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
-            $this->__response->redirect('admin/' . $this->routeBase);
-            return;
-        }
+        if (empty($this->layHangCuaToi($id))) return;
 
         $errors = $this->validateInput($id);
         if (!empty($errors)){
@@ -269,11 +261,7 @@ class Products extends Controller {
     // ================= Xoá =================
 
     public function delete($id){
-        if (empty($this->__model->getDetail($id))){
-            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
-            $this->__response->redirect('admin/' . $this->routeBase);
-            return;
-        }
+        if (empty($this->layHangCuaToi($id))) return;
 
         // part_fitments ON DELETE CASCADE nên liên kết tự xoá theo.
         $this->__model->remove($id);
@@ -286,12 +274,8 @@ class Products extends Controller {
 
     /** Upload nhiều ảnh cho 1 hàng hoá */
     public function postImages($id){
-        $item = $this->__model->getDetail($id);
-        if (empty($item)){
-            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
-            $this->__response->redirect('admin/' . $this->routeBase);
-            return;
-        }
+        $item = $this->layHangCuaToi($id);
+        if (empty($item)) return;
 
         // Quản lý ảnh = sửa hàng hoá -> cần quyền edit
         if (!route('admin/' . $this->routeBase . '/edit/' . $id)){
@@ -571,6 +555,16 @@ class Products extends Controller {
             $slug = slugify($get($row, 'slug') ?: $name);
             if ($slug === ''){ $result['errors'][] = "Dòng $line ($code): không tạo được slug — bỏ qua."; continue; }
 
+            /* MÃ ĐANG THUỘC KHO TỔNG thì gara không ghi đè được (chốt
+               07/10/2026). Không chặn ở đây thì `edit()` lặng lẽ không ăn — lớp
+               Model lọc theo sở hữu — mà bản kết quả vẫn báo "đã cập nhật N
+               dòng", nên người nhập tưởng xong rồi. */
+            if (!empty($existing) && empty($this->__model->cuaToi($existing['id']))){
+                $result['errors'][] = "Dòng $line ($code): mã này đang là hàng của kho tổng, "
+                                    . "gara không sửa được — đổi mã khác hoặc bỏ dòng này.";
+                continue;
+            }
+
             if (!empty($existing)){
                 // cập nhật: né đụng slug với bản ghi KHÁC
                 $bySlug = $this->__model->findBySlug($slug);
@@ -670,15 +664,41 @@ class Products extends Controller {
         return in_array($v, ['0', 'no', 'off', 'an', 'ẩn', 'false'], true) ? 0 : 1;
     }
 
-    /** slug -> id (null nếu rỗng/không tìm thấy) */
+    /** slug -> id (null nếu rỗng/không tìm thấy/không thuộc danh mục gara được dùng) */
     private function fkBySlug($model, $slug){
         $slug = trim((string) $slug);
         if ($slug === '') return null;
         $row = $model->findBySlug($slug);
-        return !empty($row) ? $row['id'] : null;
+        if (empty($row['id'])) return null;
+
+        /* findBySlug() tra KHẮP BẢNG, vì `slug` là duy nhất toàn bảng. Phải lọc
+           lại bằng getDetail() (đã lọc theo gara): danh mục riêng của gara khác
+           thì gara này không được trỏ vào, không thì nhập Excel là đường mượn
+           danh mục nội bộ của gara kia. */
+        return !empty($model->getDetail((int) $row['id'])) ? $row['id'] : null;
     }
 
     // ================= Helper =================
+
+    /**
+     * Hàng hoá $id mà gara đang làm việc SỬA ĐƯỢC, hoặc null KÈM redirect sẵn.
+     * Nơi gọi chỉ cần `if (empty(...)) return;`.
+     */
+    private function layHangCuaToi($id){
+        $cua = $this->__model->cuaToi($id);
+        if (!empty($cua)) return $cua;
+
+        /* PHÂN BIỆT "không có" với "có nhưng là hàng kho tổng". Gara bấm Sửa từ
+           một màn khác, hoặc gõ thẳng URL, sẽ gặp trường hợp thứ hai — câu
+           "không tìm thấy" làm người ta tưởng dữ liệu mất và đi tìm. */
+        $co = $this->__model->getDetail($id);
+        Session::flash('msgError', !empty($co)
+            ? 'Mặt hàng "' . $co['name'] . '" thuộc kho tổng, gara không sửa được. '
+            . 'Muốn bán mặt hàng này thì chọn nó ở màn Hàng hoá › Danh mục của gara.'
+            : 'Không tìm thấy ' . $this->labelOne);
+        $this->__response->redirect('admin/' . $this->routeBase);
+        return null;
+    }
 
     /** @return array lỗi (rỗng nếu hợp lệ). $id = bản ghi đang sửa (null nếu thêm) */
     private function validateInput($id){

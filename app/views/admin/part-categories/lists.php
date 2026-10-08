@@ -49,6 +49,7 @@
                         <span style="padding-left:{{$item['depth']*22}}px">
                             {!! $item['depth']>0 ? '<i class="fas fa-level-up-alt fa-rotate-90 text-muted mr-1"></i>' : '<i class="fas fa-folder text-warning mr-1"></i>' !!}
                             {!! $item['depth']==0 ? '<strong>'.e($item['name']).'</strong>' : e($item['name']) !!}
+                            {!! nhan_kho_tong($item) !!}
                         </span>
                     </td>
                     <td><code>{{$item['slug']}}</code></td>
@@ -57,11 +58,18 @@
                         {!! $item['status']==1 ? '<span class="badge badge-success">Hiển thị</span>' : '<span class="badge badge-secondary">Ẩn</span>' !!}
                     </td>
                     <td class="text-center">
+                        <?php /* Danh mục của kho tổng: gara gán hàng của mình vào được, nhưng
+                                 không sửa / xoá được (chốt 07/10/2026). Ẩn nút ở đây cho khỏi
+                                 bấm vào rồi mới nhận câu từ chối — chốt thật ở tầng Model. */ ?>
+                        @if (dong_cua_gara($item))
                         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-warning btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
                         @endif
                         @if (route('admin/'.$routeBase.'/delete/'.$item['id']))
                         <a onclick="return confirm('Bạn có chắc chắn muốn xoá danh mục này?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
+                        @endif
+                        @else
+                        <span class="text-muted" title="Danh mục của kho tổng — chỉ Tân Phát sửa được">—</span>
                         @endif
                     </td>
                 </tr>

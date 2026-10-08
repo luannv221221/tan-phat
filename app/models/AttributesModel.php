@@ -11,6 +11,9 @@ require_once __DIR__ . '/LookupModel.php';
  */
 class AttributesModel extends LookupModel {
     protected $_table = 'part_attributes';
+    /* Danh mục chung-và-riêng (08/10/2026): NULL = danh mục tổng, mọi gara đều
+       thấy; có garage_id = riêng của gara đó. Xem Model::$_chungVaRieng. */
+    protected $_chungVaRieng = true;
 
     /** Chỉ các thông số đang bật — dùng khi gán giá trị cho phụ tùng */
     public function getActive(){
@@ -30,11 +33,16 @@ class AttributesModel extends LookupModel {
            whereRaw() vào builder chỉ vì một chỗ này — đó là cửa hậu để nối
            chuỗi vào SQL, mở ra là sớm muộn có người truyền dữ liệu người dùng
            vào. Ở đây giá trị vẫn đi qua placeholder. */
+        /* Điều kiện gara ghép bằng dkChungVaRieng() — truy vấn tự viết thì cờ
+           $_chungVaRieng ở lớp cha không với tới. Thiếu nó là form hàng hoá của
+           gara Sài Gòn hiện thông số kỹ thuật riêng của gara Đà Nẵng. */
+        list($dkGara, $bdGara) = $this->dkChungVaRieng();
+
         return $this->getRaw(
             'SELECT * FROM `part_attributes`
-             WHERE `status` = 1 AND FIND_IN_SET(?, `item_types`)
+             WHERE `status` = 1 AND FIND_IN_SET(?, `item_types`) AND ' . $dkGara . '
              ORDER BY `sort_order` ASC, `name` ASC',
-            [$itemType]
+            array_merge([$itemType], $bdGara)
         );
     }
 }

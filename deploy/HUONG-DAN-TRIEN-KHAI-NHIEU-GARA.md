@@ -1,11 +1,13 @@
 # Triển khai: mỗi gara một website riêng
 
 Hướng dẫn cho đợt thay đổi **nền tảng nhiều gara** (07/10/2026) — migration
-`000084` → `000091`.
+`000084` → `000091`, và đợt **gara chủ động việc của mình** (08/10/2026) —
+migration `000092` → `000094`.
 
 Sau đợt này, **tên miền quyết định đang phục vụ gara nào**. Mỗi gara có website
 riêng (logo, tên, hotline, tin tức, banner, gian hàng), khách web và đơn hàng
-riêng, và đặt được hàng từ kho tổng.
+riêng, đặt được hàng từ kho tổng, **tự phân quyền cho nhân viên của mình** và
+**tự khai hàng hoá của mình**.
 
 ---
 
@@ -117,11 +119,19 @@ Bốn cái này chỉ **thêm cột và dữ liệu**. Code cũ không biết t�
 | `000088` | Mở 6 màn nội dung web cho mọi gara |
 | `000090` | Mở 6 màn khách web cho mọi gara |
 | `000091` | Khai màn Đặt hàng kho tổng |
+| `000092` | Cấp quyền quản lý website cho nhóm Manager |
+| `000093` | Nhóm quyền theo gara + mở màn Quản lý nhóm |
+| `000094` | `garage_id` cho 6 bảng danh mục + mở 8 màn nhóm Hàng hoá |
 
 **Vì sao phải chờ:** `000086`, `000088`, `000090` **mở màn hình cho gara**. Chạy
 trước khi code lên thì gara mở màn đó ra bằng **code cũ** — code chưa biết lọc
 theo gara. Lúc đó một gara vào màn Cấu hình là sửa trúng cấu hình chung của cả
 hệ thống, vào màn Tin tức là thấy và sửa được bài của Tân Phát.
+
+`000093` và `000094` cũng vậy, và nặng hơn: `000093` mở màn **Quản lý nhóm**, mà
+code cũ chưa biết nhóm thuộc về gara nào — một gara vào đó là sửa bảng phân
+quyền của cả hệ thống. `000094` mở màn **Hàng hoá**, code cũ chưa gán gara khi
+thêm hàng nên hàng của gara rơi thẳng vào kho tổng.
 
 `000091` thì không nguy hiểm như vậy (code cũ chưa có màn đó nên không ai vào
 được), nhưng khai sớm cũng vô ích — để chung đợt 2 cho gọn.
@@ -139,7 +149,14 @@ move database\migrations\2026_10_07_000086_*.php database\cho-sau\
 move database\migrations\2026_10_07_000088_*.php database\cho-sau\
 move database\migrations\2026_10_07_000090_*.php database\cho-sau\
 move database\migrations\2026_10_07_000091_*.php database\cho-sau\
+move database\migrations\2026_10_08_000092_*.php database\cho-sau\
+move database\migrations\2026_10_08_000093_*.php database\cho-sau\
+move database\migrations\2026_10_08_000094_*.php database\cho-sau\
 ```
+
+> `000094` làm **hai việc**: thêm cột (an toàn, chạy sớm được) và mở màn (phải
+> chờ). Không tách được bằng cách di chuyển file, nên cả file về đợt 2 — thêm
+> cột muộn một chút không sao.
 
 ```bash
 C:\xampp\php\php.exe migrate.php
@@ -205,8 +222,26 @@ không tới được ứng dụng. Restart Apache sau khi sửa.
 | Menu nhóm Kho | Có mục **Đặt hàng kho tổng** |
 | Màn Quản lý gara › Thêm gara | Có khối **Tài khoản chủ gara** |
 
+### Kiểm riêng cho đợt 08/10/2026
+
+Đăng nhập bằng **tài khoản chủ gara** (nhóm Manager, không phải Tân Phát):
+
+| Việc | Mong đợi |
+|---|---|
+| Hệ thống › Quản lý nhóm | Thấy **đúng hai nhóm của gara mình**, có cột Gara |
+| Nhóm của chính mình | **Không có** nút Phân quyền / Sửa / Xoá |
+| Nhóm Staff › Phân quyền | Mở được; ô ngoài quyền của mình hiện **khoá** |
+| Lưu phân quyền Staff | Chỉ gara mình đổi — gara khác **không đổi gì** |
+| Hệ thống › Quản lý module | **Không có trên menu** |
+| Hàng hoá › Quản lý hàng hoá | Chỉ thấy **hàng của gara mình** |
+| Hàng hoá › Thương hiệu | Thấy cả hàng kho tổng, nhưng **gắn nhãn "Kho tổng"** và không có nút Sửa |
+| Thêm thương hiệu trùng tên kho tổng | **Lưu được**, slug tự thành `...-2` |
+| Gõ `/admin/products/edit/<id hàng kho tổng>` | **Bị từ chối**, nói rõ là hàng kho tổng |
+| Góc trên menu trái | Hiện **tên gara mình**, không phải "Tân Phát" |
+
 Việc cuối: thử **thêm một gara mới**. Hệ thống phải tự dựng tên miền, kho, nhóm
-khách, cấu hình web và tài khoản chủ — thông báo sau khi lưu sẽ liệt kê ra.
+khách, cấu hình web, **bộ nhóm quyền riêng** và tài khoản chủ — thông báo sau
+khi lưu sẽ liệt kê ra.
 
 ---
 
@@ -218,9 +253,11 @@ Mỗi migration đều có `down()`. Lùi lần lượt:
 C:\xampp\php\php.exe migrate.php rollback
 ```
 
-Chạy 8 lần để về trước `000084`. Lùi `000087` và `000089` sẽ **xoá cột
-`garage_id`** của các bảng nội dung và khách web — dữ liệu phân chia theo gara
-mất theo, nên **khôi phục từ bản sao lưu** vẫn là đường chắc chắn hơn.
+Chạy 11 lần để về trước `000084`. Lùi `000087`, `000089` và `000094` sẽ **xoá
+cột `garage_id`** của các bảng nội dung, khách web và danh mục hàng hoá — dữ
+liệu phân chia theo gara mất theo. Lùi `000093` còn **xoá các nhóm quyền đã
+nhân bản** (có trả người về nhóm mẫu trước, nhưng những quyền chủ gara tự sửa
+thì mất). Nên **khôi phục từ bản sao lưu** vẫn là đường chắc chắn hơn.
 
 ---
 

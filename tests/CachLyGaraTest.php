@@ -156,7 +156,14 @@ if (count($mg) === 1){
     foreach (array_merge(
                 glob($goc . 'database/migrations/*_mo_cau_hinh_cho_gara.php'),
                 glob($goc . 'database/migrations/*_mo_man_noi_dung_cho_gara.php'),
-                glob($goc . 'database/migrations/*_mo_man_khach_web_cho_gara.php')
+                glob($goc . 'database/migrations/*_mo_man_khach_web_cho_gara.php'),
+                /* DANH SACH NAY PHAI DAI THEO: moi migration sau nay go them co
+                   `chi_tan_phat` deu phai them vao day. Thieu mot cai thi
+                   000076 bat co lai va man do dong cua voi gara, ma hien tuong
+                   chi lo ra o khang dinh "Moi man rieng gara deu co ten trong
+                   danh sach test" phia duoi — nhin vao kho doan ra nguyen nhan. */
+                glob($goc . 'database/migrations/*_nhom_quyen_theo_gara.php'),
+                glob($goc . 'database/migrations/*_hang_hoa_day_du_cho_gara.php')
              ) as $sau){
         $ms = require $sau;
         $ms->setDb($db);
@@ -203,14 +210,25 @@ if (count($mg) === 1){
                                        vien anh, du an)
          000090  bo 6 man KHACH WEB   (don hang, tai khoan website, hop thu
                                        lien he, ban tin, danh gia, chat)
-       Con lai la nhung man that su dung CHUNG toan he thong: danh muc hang
-       hoa, danh muc xe, quan ly gara, nhom quyen, quan ly module, thong ke.
-       Mo mot trong so do ra la gara sua duoc du lieu cua moi gara. */
-    $mongDoi = ['attributes', 'car-body-types', 'car-brands', 'car-colors', 'car-fuels', 'car-models',
-                'car-years', 'garages', 'groups', 'modules',
-                'part-categories', 'product-brands',
-                'product-manufacturers', 'product-origins', 'product-units', 'products', 'services',
-                'thong-ke'];
+       Va ngan tiep 08/10/2026 — gara chu dong viec cua minh:
+         000093  bo `groups`          (moi gara mot bo nhom quyen rieng, chu
+                                       gara tu phan quyen cho nhan vien)
+         000094  bo 8 man HANG HOA    (hang hoa, dich vu, danh muc, thong so,
+                                       thuong hieu, xuat xu, hang san xuat,
+                                       don vi tinh — khai hang cua chinh minh)
+
+       CON LAI DUNG CHIN MAN, va moi man con lai o day deu co LY DO RIENG, khong
+       phai "chua kip mo":
+         6 danh muc XE  Toyota Camry 2020 la mot voi moi gara; khong ai can ban
+                        rieng, va Tan Phat giu danh muc do cho ca nen tang.
+         garages        khai gara la viec cua nguoi van hanh nen tang.
+         modules        chi DANG KY mot man hinh da co trong ma nguon vao bang
+                        phan quyen. Them o do khong sinh ra man hinh nao, ma xoa
+                        mot dong la go man do khoi phan quyen cua CA HE THONG.
+         thong-ke       `visits` chua co cot garage_id, nen so lieu la cua ca
+                        he thong. Mo ra la gara xem luu luong cua gara khac. */
+    $mongDoi = ['car-body-types', 'car-brands', 'car-colors', 'car-fuels', 'car-models',
+                'car-years', 'garages', 'modules', 'thong-ke'];
     sort($dsCo); sort($mongDoi);
     ok($dsCo === $mongDoi, 'Dung ' . count($mongDoi) . ' man chi Tan Phat',
        'Thua: ' . implode(',', array_diff($dsCo, $mongDoi)) . ' | Thieu: ' . implode(',', array_diff($mongDoi, $dsCo)));
@@ -456,6 +474,16 @@ $manRiengGara = [
     /* Dat hang kho tong (000091) — man cua GARA: gara chon hang, he thong lap
        phieu xuat ben kho tong va phieu nhap ben gara. Co test o DatHangNoiBoTest. */
     'dat-hang-kho-tong' => 0,
+    /* Quan ly nhom, mo cho gara tu 08/10/2026 (migration 000093). Moi gara co
+       bo nhom rieng (`groups`.`garage_id`); cach ly nam o GroupsModel va o
+       Groups controller, co test rieng o PhanQuyenNhomTest. */
+    'groups' => 0,
+    /* Nhom Hang hoa, mo cho gara tu 08/10/2026 (migration 000094). `parts` va
+       sau bang danh muc deu chia theo gara kieu chung-va-rieng; co test rieng
+       o HangHoaGaraTest. */
+    'products' => 0, 'services' => 0, 'part-categories' => 0, 'attributes' => 0,
+    'product-brands' => 0, 'product-origins' => 0, 'product-manufacturers' => 0,
+    'product-units' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);
@@ -479,31 +507,55 @@ section('Man da mo cho gara thi nhom Manager phai co quyen xem');
      - bang `permissions`: nhom nay duoc lam gi tren man do?
    Thieu ve nao cung ra cung mot hien tuong "khong thay man", nen luc thu de
    tuong da xong. Migration 000092 va 000091 va chot chan nay de khoi lap lai. */
+/* TU 08/10/2026 MOI GARA MOT NHOM MANAGER RIENG (migration 000093), nen phai
+   kiem TUNG nhom Manager chu khong lay nhom dau tien tim thay: cap quyen cho
+   nhom Manager cua Tan Phat ma quen cac gara khac thi dung hien tuong cu —
+   man da mo ma menu khong ve ra — chi xay ra o gara, va o may lap trinh (dang
+   nhap bang tai khoan Tan Phat) thi nhin dau cung thay du. */
 if (in_array('chi_tan_phat', $cot('modules'), true)){
-    $idManager = (int) $pdo->query("SELECT id FROM `groups` WHERE name = 'Manager'")->fetchColumn();
-    $thieuQuyen = $pdo->query(
-        "SELECT m.link FROM modules m
-          WHERE m.chi_tan_phat = 0
-            AND NOT EXISTS (SELECT 1 FROM permissions pe
-                             WHERE pe.module_id = m.id AND pe.group_id = $idManager
-                               AND pe.role = 'view')
-          ORDER BY m.link"
-    )->fetchAll(PDO::FETCH_COLUMN);
+    $dsManager = $pdo->query("SELECT g.id, COALESCE(ga.code, 'he-thong') AS ma
+                                FROM `groups` g LEFT JOIN garages ga ON ga.id = g.garage_id
+                               WHERE g.name = 'Manager' ORDER BY g.id")->fetchAll(PDO::FETCH_ASSOC);
+    ok(!empty($dsManager), 'Co it nhat mot nhom Manager de kiem');
 
-    ok(empty($thieuQuyen),
-       'Moi man mo cho gara deu co quyen `view` cho nhom Manager',
-       'Thieu: ' . implode(', ', $thieuQuyen)
-       . ' — go co chi_tan_phat xong phai cap quyen, khong thi man van khong hien');
+    foreach ($dsManager as $nq){
+        $idManager = (int) $nq['id'];
+        $thieuQuyen = $pdo->query(
+            "SELECT m.link FROM modules m
+              WHERE m.chi_tan_phat = 0
+                AND NOT EXISTS (SELECT 1 FROM permissions pe
+                                 WHERE pe.module_id = m.id AND pe.group_id = $idManager
+                                   AND pe.role = 'view')
+              ORDER BY m.link"
+        )->fetchAll(PDO::FETCH_COLUMN);
+
+        ok(empty($thieuQuyen),
+           "Moi man mo cho gara deu co quyen `view` cho nhom Manager cua {$nq['ma']}",
+           'Thieu: ' . implode(', ', $thieuQuyen)
+           . ' — go co chi_tan_phat xong phai cap quyen cho MOI nhom Manager,'
+           . ' khong thi man van khong hien o gara do');
+    }
 }
 
 // ---------------------------------------------------------------------------
-section('Cho quen — bang co garage_id thi model phai bat _theoGara');
+section('Cho quen — bang co garage_id thi model phai bat co loc gara');
 
 /* Bảng có cột `garage_id` mà model của nó chưa bật cờ là bảng KHÔNG được chặn.
    `$chuaLam` ghi bước sẽ bật; bật rồi thì phải xoá khỏi danh sách (test bắt cả
-   chiều đó), nên danh sách chỉ ngắn dần. */
+   chiều đó), nên danh sách chỉ ngắn dần.
+
+   HAI CỜ ĐỀU TÍNH LÀ ĐÃ CHẶN:
+     $_theoGara      — dữ liệu riêng hẳn: chỉ gara đó thấy (chứng từ, khách, xe)
+     $_chungVaRieng  — danh mục chung-và-riêng: garage_id NULL là của danh mục
+                       tổng, mọi gara đều thấy nhưng chỉ gara tổng sửa
+                       (08/10/2026, migration 000094)
+   Cái thứ hai KHÔNG phải nới luật: nó vẫn chặn gara A thấy dòng riêng của gara
+   B, chỉ khác là cho đọc phần chung. */
 $ngoaiLe = ['users' => 'dang nhap tim khap cac gara; chan tay o Users::phamVi',
-            'parts' => 'NULL = kho tong, loc bang dieu kien rieng',
+            /* Nhom quyen: gara tong phai thay CA nhom he thong (garage_id NULL)
+               lan nhom cua moi gara — no la nguoi van hanh nen tang. Loc tay o
+               GroupsModel::dkNhom / dkSoHuu, co test rieng o PhanQuyenNhomTest. */
+            'groups' => 'gara tong thay het; loc tay o GroupsModel::dkNhom',
             /* Bang nay TRA LOI cau hoi "gara la ai" tu host. Luc tra con chua
                biet gara, bat loc theo gara o day la tu khoa chinh minh. No chi
                co ham DOC; them/sua ten mien lam o man Quan ly gara, noi da co
@@ -514,7 +566,9 @@ $modelCua = [];
 foreach (glob($goc . 'app/models/*.php') as $f){
     $src = codeOnly($f);
     if (preg_match('~\$_table\s*=\s*[\'"]([a-z_]+)[\'"]~', $src, $mm)){
-        $modelCua[$mm[1]][] = ['file' => basename($f), 'bat' => (bool) preg_match('~\$_theoGara\s*=\s*true~', $src)];
+        $modelCua[$mm[1]][] = ['file' => basename($f),
+                               'bat'  => (bool) preg_match('~\$_theoGara\s*=\s*true~', $src)
+                                      || (bool) preg_match('~\$_chungVaRieng\s*=\s*true~', $src)];
     }
 }
 $bangCoGara = $pdo->query("SELECT TABLE_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE()
@@ -524,10 +578,10 @@ foreach ($bangCoGara as $b){
     $ms  = isset($modelCua[$b]) ? $modelCua[$b] : [];
     $bat = !empty($ms) && !in_array(false, array_column($ms, 'bat'), true);
     if (isset($chuaLam[$b])){
-        ok(!$bat, "`$b` chua bat _theoGara (buoc {$chuaLam[$b]}) — bat roi thi xoa khoi \$chuaLam");
+        ok(!$bat, "`$b` chua bat co loc gara (buoc {$chuaLam[$b]}) — bat roi thi xoa khoi \$chuaLam");
         continue;
     }
-    ok($bat, "Model cua `$b` bat _theoGara",
+    ok($bat, "Model cua `$b` bat co loc gara (_theoGara hoac _chungVaRieng)",
        empty($ms) ? 'Khong tim thay model nao co $_table = ' . $b : 'Chua bat: ' . implode(', ', array_column($ms, 'file')));
 }
 
@@ -622,14 +676,23 @@ ok(strpos($mn, "$base/admin/customers\"") !== false, 'Menu gara B co Khach hang'
    sách này (migration 000090). Mỗi gara một website thì gara phải xem được ai
    đặt hàng, ai đánh giá, ai nhắn tin trên chính trang của mình — và chỉ thấy
    của mình, vì dữ liệu đã tách theo gara ở 000089. */
-foreach (['garages', 'products', 'part-categories'] as $l){
+foreach (['garages', 'modules', 'car-brands'] as $l){
     ok(strpos($mn, "$base/admin/$l\"") === false, "Menu gara B KHONG co `$l` (dung chung toan he thong)");
 }
 foreach (['orders', 'contact-messages'] as $l){
     ok(strpos($mn, "$base/admin/$l\"") !== false,
        "Menu gara B CO `$l` (website rieng thi phai xem duoc)");
 }
-foreach (['garages', 'products'] as $l){
+/* 08/10/2026 — `products` va `part-categories` DA RA KHOI danh sach chan
+   (migration 000094): gara khai hang hoa cua chinh minh bang chinh man do.
+   Cach ly khong con nam o cho "dong man", ma o cho LOC THEO GARA — man chi
+   liet ke hang cua gara dang lam viec, va hang kho tong gara khong sua duoc.
+   Co test rieng o HangHoaGaraTest. */
+foreach (['products', 'part-categories', 'product-brands', 'services'] as $l){
+    ok(strpos($mn, "$base/admin/$l\"") !== false,
+       "Menu gara B CO `$l` (gara khai hang hoa cua chinh minh)");
+}
+foreach (['garages', 'modules'] as $l){
     $r = $http('GET', "$base/admin/$l", $jarB);
     ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false,
        "Go thang /admin/$l tu gara B bi chan", 'HTTP ' . $r['code'] . ' ' . $r['loc']);

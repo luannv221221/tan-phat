@@ -85,6 +85,18 @@ class Productmanufacturers extends Controller {
             return;
         }
 
+        /* SLUG TỰ SINH THÌ TỰ NÉ TRÙNG, không bắt người dùng nghĩ slug.
+           Từ 08/10/2026 danh mục chia theo gara (migration 000094) nên trùng
+           tên giữa các gara là chuyện thường — "Bosch" của kho tổng và
+           "Bosch" của gara Sài Gòn. Cột `slug` vẫn duy nhất TOÀN BẢNG (nó là
+           địa chỉ trên website), nên báo lỗi ở đây là chặn gara khai hàng
+           bình thường. Người dùng GÕ TAY slug thì vẫn báo trùng — đó là ý
+           định rõ ràng, im lặng đổi là lừa họ. */
+        $f = $this->__request->getFields();
+        if (empty($f['slug'])){
+            $data['slug'] = $this->__model->slugRanh($data['slug']);
+        }
+
         // slug phải duy nhất — kiểm tra trước để báo lỗi tử tế,
         // thay vì để UNIQUE KEY của MySQL ném exception ra trang trắng.
         if (!empty($this->__model->findBySlug($data['slug']))){
@@ -149,6 +161,11 @@ class Productmanufacturers extends Controller {
             Session::flash('msg', 'Vui lòng kiểm tra các lỗi bên dưới');
             $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
             return;
+        }
+
+        $f = $this->__request->getFields();
+        if (empty($f['slug'])){
+            $data['slug'] = $this->__model->slugRanh($data['slug'], $id);
         }
 
         // slug trùng với bản ghi KHÁC

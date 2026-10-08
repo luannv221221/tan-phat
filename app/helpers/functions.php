@@ -1224,3 +1224,40 @@ function nut_lien_he($phone, $email = ''){
 
     return $ra;
 }
+/**
+ * Dòng này có thuộc GARA ĐANG LÀM VIỆC không — cho các bảng "chung và riêng"
+ * (hàng hoá, danh mục hàng hoá, thương hiệu, xuất xứ, hãng sản xuất, đơn vị
+ * tính, thông số kỹ thuật). Xem Model::$_chungVaRieng.
+ *
+ *     gara tổng -> dòng của danh mục tổng (`garage_id` rỗng)
+ *     gara khác -> dòng có `garage_id` đúng bằng gara mình
+ *
+ * DÙNG ĐỂ ẨN NÚT, KHÔNG PHẢI ĐỂ CHẶN. Chốt thật nằm ở tầng Model
+ * (updateById / deleteById đã lọc theo sở hữu) và ở controller. Ẩn nút chỉ để
+ * người dùng khỏi bấm Sửa rồi mới nhận câu "hàng này của kho tổng".
+ *
+ * Trả về false khi không xác định được gara: thà ẩn nút còn hơn mời bấm vào một
+ * việc sẽ bị từ chối.
+ */
+function dong_cua_gara($row){
+    $g = gara_hien_tai();
+    if (empty($g['id'])) return false;
+
+    $cua = isset($row['garage_id']) && $row['garage_id'] !== null && $row['garage_id'] !== ''
+         ? (int) $row['garage_id'] : null;
+
+    return (int) $g['is_master'] === 1 ? $cua === null : $cua === (int) $g['id'];
+}
+
+/** Nhãn "Kho tổng" cho dòng của danh mục tổng khi gara (không phải gara tổng) đang xem */
+function nhan_kho_tong($row){
+    if (dong_cua_gara($row)) return '';
+    $cua = isset($row['garage_id']) && $row['garage_id'] !== null && $row['garage_id'] !== ''
+         ? (int) $row['garage_id'] : null;
+    /* Dòng của gara KHÁC thì lẽ ra không hiện ở đây (model đã lọc). Nếu lọt ra
+       thì nói đúng là "của gara khác" chứ không gán cho kho tổng — gán sai là
+       người dùng đi tìm nó trong kho tổng mà không có. */
+    return $cua === null
+        ? ' <span class="badge badge-info" title="Hàng của kho tổng — gara không sửa được">Kho tổng</span>'
+        : ' <span class="badge badge-secondary" title="Của gara khác">Gara khác</span>';
+}
