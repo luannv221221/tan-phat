@@ -697,6 +697,15 @@ foreach (['garages', 'modules'] as $l){
     ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false,
        "Go thang /admin/$l tu gara B bi chan", 'HTTP ' . $r['code'] . ' ' . $r['loc']);
 }
+/* MAN TEN MIEN (08/10/2026) nam DUOI `garages` nen cung bi co `chi_tan_phat`
+   chan — kiem that chu khong suy: day la man quyet dinh "dia chi nao phuc vu
+   gara nao", gara tu khai duoc host la no tu nhan request cua gara khac. */
+foreach (["garages/ten-mien/$GA", "garages/ten-mien-chinh/1",
+          "garages/ten-mien-tat/1", "garages/ten-mien-xoa/1"] as $l){
+    $r = $http('GET', "$base/admin/$l", $jarB);
+    ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false,
+       "Go thang /admin/$l tu gara B bi chan", 'HTTP ' . $r['code'] . ' ' . $r['loc']);
+}
 $r = $http('GET', "$base/admin/garages/edit/$GA", $jarB);
 ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false, 'Gara B KHONG mo duoc trang sua gara A');
 

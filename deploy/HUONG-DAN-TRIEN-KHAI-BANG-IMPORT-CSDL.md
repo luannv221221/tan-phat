@@ -128,6 +128,11 @@ Khoảng hở chỉ dài bằng thời gian `git pull`. Cứ làm ngoài giờ l
 
 Ba việc sau nhập CSDL không mang theo được, phải làm riêng trên máy chủ:
 
+> **Khai tên miền cho một gara thì dùng màn hình**, đừng gõ SQL: Hệ thống ›
+> Quản lý gara → nút 🌐. Màn đó hiện tên miền gốc của hệ thống, nhắc hai việc
+> dưới đây ngay cạnh, và chặn các thao tác dễ làm hỏng (tắt / xoá tên miền cuối
+> cùng của một gara).
+
 ### 6.1. DNS — một bản ghi là đủ
 
 ```

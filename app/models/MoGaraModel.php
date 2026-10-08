@@ -146,6 +146,11 @@ class MoGaraModel extends Model {
     /**
      * Tên miền gốc của hệ thống, suy từ TÊN MIỀN CHÍNH của gara tổng.
      *
+     * `public` vì màn Tên miền của gara hiển thị lại nó: "tên miền gốc hiện là
+     * X, gara mở mới sẽ nhận <mã>.X". Không bày ra thì không ai biết việc đổi
+     * tên miền chính của gara tổng lại đổi cả tên miền của những gara mở sau —
+     * đúng cái đã làm một gara thật nhận địa chỉ không ai vào được.
+     *
      * Gara tổng thường có hai host: tên miền gốc (`etek.rikkeiedu.org`) và tên
      * miền phụ theo mã (`tp01.etek.rikkeiedu.org`, đánh dấu là chính). Suy ra
      * thay vì viết cứng, để đổi tên miền hệ thống chỉ phải sửa dòng trong
@@ -162,7 +167,7 @@ class MoGaraModel extends Model {
      * chấm), và gara mới mở ra nhận tên miền `<mã>.tp01.localhost`. Nhìn thì
      * vẫn "thành công", chỉ có điều địa chỉ đó không ai vào được.
      */
-    private function tenMienGoc(){
+    public function tenMienGoc(){
         $tong = Load::model('GaragesModel')->getMaster();
         if (empty($tong['id'])) return '';
 

@@ -50,7 +50,15 @@ C:\xampp\php\php.exe migrate.php status
 ### 1.2. Cho xem được website của từng gara ở máy local
 
 Máy local không có tên miền thật. Nhưng `*.localhost` trỏ về `127.0.0.1` sẵn
-trên Windows, nên chỉ cần khai thêm host `.localhost` cho từng gara:
+trên Windows, nên chỉ cần khai thêm host `.localhost` cho từng gara.
+
+**Khai bằng màn hình** (từ 08/10/2026): Hệ thống › Quản lý gara → nút 🌐 ở cột
+Thao tác → nhập `<mã gara>.localhost` → Khai tên miền. Màn đó đánh dấu host của
+máy nội bộ để khỏi lẫn với tên miền thật, và tự chặn các việc dễ làm hỏng (tắt
+hoặc xoá tên miền cuối cùng của một gara).
+
+<details>
+<summary>Hoặc bằng SQL, nếu muốn khai một lượt cho mọi gara</summary>
 
 ```sql
 INSERT INTO garage_domains (garage_id, host, is_primary, status, create_at)
@@ -62,6 +70,7 @@ WHERE g.status = 1
         WHERE d.host = CONCAT(LOWER(g.code), '.localhost')
       );
 ```
+</details>
 
 Rồi mở:
 
@@ -169,7 +178,23 @@ move database\cho-sau\*.php database\migrations\
 C:\xampp\php\php.exe migrate.php
 ```
 
-### 2.3. DNS — một bản ghi là đủ
+### 2.3. Khai tên miền cho một gara — dùng màn hình, đừng gõ SQL
+
+Hệ thống › **Quản lý gara** → nút 🌐 ở cột Thao tác. Màn đó:
+
+- hiện **tên miền gốc** của hệ thống và địa chỉ mà gara mở sau sẽ nhận;
+- nhắc lại hai việc **ngoài hệ thống** (DNS + ServerAlias) ngay cạnh;
+- đánh dấu host của máy nội bộ (`.localhost`, `.test`) để khỏi đem lên máy chủ;
+- chặn tắt / xoá tên miền **cuối cùng** của một gara, và tự chuyển cờ "chính"
+  khi xoá host đang là chính.
+
+Gõ SQL tay vẫn được, nhưng đã hỏng một lần vì thứ tự hai câu lệnh (DELETE trước
+UPDATE nên UPDATE không khớp dòng nào, gara mở ra không có tên miền).
+
+Màn này của **riêng Tân Phát** — module `garages` mang cờ `chi_tan_phat`. Gara
+tự khai được host là nó tự nhận request của gara khác.
+
+### 2.4. DNS — một bản ghi là đủ
 
 Thêm **một** bản ghi wildcard:
 
@@ -182,7 +207,7 @@ tự cấp tên miền phụ theo mã gara.
 
 Giữ nguyên bản ghi của `etek.rikkeiedu.org` — đó là địa chỉ của gara tổng.
 
-### 2.4. Chứng chỉ HTTPS — phải là wildcard
+### 2.5. Chứng chỉ HTTPS — phải là wildcard
 
 Chứng chỉ cho riêng `etek.rikkeiedu.org` **không** phủ được `dmsg.etek...`.
 Trình duyệt sẽ báo lỗi bảo mật. Cần chứng chỉ phủ cả hai:
@@ -195,7 +220,7 @@ etek.rikkeiedu.org
 Let's Encrypt cấp wildcard miễn phí, nhưng **bắt buộc xác thực qua DNS**
 (`DNS-01`), không dùng được cách xác thực qua file như thường lệ.
 
-### 2.5. Apache — thêm ServerAlias
+### 2.6. Apache — thêm ServerAlias
 
 Trong `httpd-vhosts.conf` (xem `deploy/httpd-vhosts.conf.example`), thêm một
 dòng vào **cả khối cổng 80 lẫn 443**:

@@ -33,6 +33,7 @@
                     <th>Tên gara</th>
                     <th>Địa chỉ</th>
                     <th style="width:120px">Điện thoại</th>
+                    <th>Tên miền</th>
                     <th>Đang có</th>
                     <th style="width:110px" class="text-center">Gara tổng</th>
                     <th style="width:110px" class="text-center">Trạng thái</th>
@@ -48,6 +49,23 @@
                     <td class="font-weight-bold">{{$item['name']}}</td>
                     <td class="text-muted">{{!empty($item['address'])?$item['address']:'—'}}</td>
                     <td>{{!empty($item['phone'])?$item['phone']:'—'}}</td>
+                    <?php /* TÊN MIỀN: host chính trước, số host còn lại gộp thành một
+                             nhãn. Gara KHÔNG có tên miền nào thì website của nó không
+                             ai vào được — cột trống ở đây là chỗ duy nhất nói ra điều
+                             đó, nên tô đỏ chứ không để dấu gạch cho qua. */ ?>
+                    <td class="small">
+                        <?php
+                        $__tm = isset($tenMien[(int) $item['id']]) ? (array) $tenMien[(int) $item['id']] : [];
+                        if (empty($__tm)){
+                            echo '<span class="text-danger"><i class="fas fa-exclamation-triangle mr-1"></i>chưa khai</span>';
+                        } else {
+                            $__c = $__tm[0];
+                            echo '<code>' . e($__c['host']) . '</code>';
+                            if ((int) $__c['status'] !== 1) echo ' <span class="badge badge-secondary">tắt</span>';
+                            if (count($__tm) > 1) echo ' <span class="text-muted">+' . (count($__tm) - 1) . '</span>';
+                        }
+                        ?>
+                    </td>
                     <?php /* Cho thấy trước gara nào còn ràng buộc — người bấm Xoá
                              biết mình đang đụng vào cái gì, thay vì bấm xong mới
                              nhận thông báo từ chối. */ ?>
@@ -67,6 +85,7 @@
                     </td>
                     <td class="text-center">
                         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
+                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/ten-mien/'.$item['id']}}" class="btn btn-info btn-sm" title="Tên miền của gara này"><i class="fas fa-globe"></i></a>
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-warning btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
                         @endif
                         <?php /* Gara đã có dữ liệu thì chỉ KHOÁ được, không xoá: xoá đi là
@@ -87,7 +106,7 @@
                 @endforeach
             @else
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-4">
+                    <td colspan="10" class="text-center text-muted py-4">
                         <i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có gara nào
                     </td>
                 </tr>

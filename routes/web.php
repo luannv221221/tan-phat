@@ -56,6 +56,18 @@ Route::group('admin', function(){
    Route::get('garages/delete/(\d+)',    'admin/garages/delete/$1');
    // Gara đã có dữ liệu thì chỉ khoá / mở được, không xoá
    Route::get('garages/toggle/(\d+)',    'admin/garages/toggle/$1');
+
+   /* TÊN MIỀN CỦA GARA — địa chỉ nào phục vụ gara nào.
+      Nằm dưới `garages` chứ không thành module riêng: đây là một thuộc tính của
+      gara, và module riêng thì phải cấp quyền riêng cho một việc mà ai sửa được
+      gara đều phải làm được. Ba đường dưới nhận ID CỦA DÒNG TÊN MIỀN (không
+      phải id gara) — controller tự tra ra gara rồi kiểm quyền `edit` của gara
+      đó, vì RoleMiddleware chỉ gác được tới mức `garages/...` là quyền `view`. */
+   Route::get('garages/ten-mien/(\d+)',         'admin/garages/tenMien/$1');
+   Route::post('garages/ten-mien/(\d+)',        'admin/garages/postTenMien/$1');
+   Route::get('garages/ten-mien-chinh/(\d+)',   'admin/garages/tenMienChinh/$1');
+   Route::get('garages/ten-mien-tat/(\d+)',     'admin/garages/tenMienToggle/$1');
+   Route::get('garages/ten-mien-xoa/(\d+)',     'admin/garages/tenMienXoa/$1');
    /* Không còn route đổi gara (22/09/2026): các gara độc lập, gara làm việc
       luôn là gara của tài khoản — xem gara_hien_tai(). */
 

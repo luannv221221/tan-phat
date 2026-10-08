@@ -271,9 +271,176 @@ ok($r['code'] === 200 && strpos($r['body'], $tenRieng) === false,
 
 $pdo->exec("DELETE FROM garage_settings WHERE garage_id = $gPhu AND skey = 'site_name'");
 
+// ---------------------------------------------------------------------------
+section('Man quan ly ten mien (08/10/2026)');
+
+/* TRUOC DAY KHONG CO MAN NAO: khai ten mien phai go SQL tay vao CSDL that. Mo
+   mot gara moi la ba cau INSERT / UPDATE / DELETE go dung thu tu, va mot lan da
+   suyt hong vi dao thu tu (DELETE truoc UPDATE nen UPDATE khong khop dong nao,
+   gara mo ra khong co ten mien).
+
+   Moi luat nam o GarageDomainsModel — controller chi goi va bao lai. Nen kiem o
+   tang model, cong mot vai khang dinh nguon cho phan noi day. */
+
+$D = new GarageDomainsModel();
+
+// --- Kiem host nguoi dung go vao ---
+$hopLe = function($x) use ($D){ list($h, $l) = GarageDomainsModel::kiemHost($x); return $l === '' ? $h : false; };
+
+ok($hopLe('Gara-A.Etek.Rikkeiedu.org') === 'gara-a.etek.rikkeiedu.org', 'Ha chu thuong khi khai');
+ok($hopLe('https://gara-b.etek.vn:443/admin/x?y=1') === 'gara-b.etek.vn',
+   'Dan ca dia chi tu thanh trinh duyet -> tu cat giao thuc, cong, duong dan',
+   var_export($hopLe('https://gara-b.etek.vn:443/admin/x?y=1'), true));
+ok($hopLe('localhost') === 'localhost', 'Host khong co dau cham VAN hop le (localhost, ten may trong LAN)');
+
+/* Khong doi phai co dau cham, nhung moi NHAN phai dung ky tu hop le. Khong kiem
+   o day thi MySQL nhan het — chi mot thu duy nhat no chan la trung. Host co dau
+   cach hay dau tieng Viet luu vao trong nhu binh thuong, toi luc mo ten mien
+   moi ra "Khong tim thay gara", ma nhin vao dau cung khong ra ly do. Da mac dung
+   kieu do voi ma gara "Long Bien". */
+foreach ([''            => 'rong',
+          '   '         => 'toan khoang trang',
+          'gara a.vn'   => 'co dau cach',
+          'gará.etek.vn'=> 'co dau tieng Viet',
+          '-gara.vn'    => 'nhan mo dau bang gach noi',
+          'gara-.vn'    => 'nhan ket thuc bang gach noi',
+          'gara..vn'    => 'hai dau cham lien nhau',
+          '.gara.vn'    => 'dau cham o dau',
+          'a@b.vn'      => 'co ky tu @'] as $xau => $vi){
+    ok($hopLe($xau) === false, "Tu choi host $vi", 'Nhan vao: ' . var_export($hopLe($xau), true));
+}
+ok($hopLe(str_repeat('a', 64) . '.vn') === false, 'Tu choi nhan dai qua 63 ky tu');
+ok($hopLe(str_repeat('a.', 100) . 'vn') === false, 'Tu choi host dai qua 190 ky tu (gioi han cot)');
+
+// --- Thêm / trùng / chính / tắt / xoá, trên một gara tạm ---
+$pdo->exec("DELETE FROM garage_domains WHERE host LIKE 'zztm-%'");
+$pdo->exec("DELETE FROM garages WHERE code = 'ZZTMG'");
+$pdo->exec("INSERT INTO garages (code, name, is_master, sort_order, status, create_at)
+            VALUES ('ZZTMG', 'ZZ Gara ten mien', 0, 99, 1, NOW())");
+$gTmp = (int) $pdo->lastInsertId();
+
+register_shutdown_function(function() use ($pdo, $gTmp){
+    $pdo->exec("DELETE FROM garage_domains WHERE garage_id = $gTmp");
+    $pdo->exec("DELETE FROM garages WHERE id = $gTmp");
+});
+
+list($h1, $loi) = $D->them($gTmp, 'ZZTM-Mot.etek.vn');
+ok($loi === '' && $h1 === 'zztm-mot.etek.vn', 'Khai duoc ten mien dau tien', $loi);
+
+/* Ten mien DAU TIEN tu thanh ten mien CHINH, du khong tick: khong co host chinh
+   thi theoGara() tra ve host dau theo thu tu chu cai, va tenMienGoc() suy ra
+   ten mien goc khac nhau giua hai lan goi. */
+$d1 = $D->aiGiuHost($h1);
+ok((int) $d1['is_primary'] === 1, 'Ten mien DAU TIEN tu thanh ten mien chinh (du khong tick)');
+
+list($h2, $loi) = $D->them($gTmp, 'zztm-hai.etek.vn');
+ok($loi === '', 'Khai duoc ten mien thu hai', $loi);
+ok((int) $D->aiGiuHost($h2)['is_primary'] === 0, 'Ten mien thu hai KHONG tu thanh chinh');
+
+list(, $loi) = $D->them($gTmp, 'ZZTM-MOT.ETEK.VN');
+ok($loi !== '' && strpos($loi, 'đã khai') !== false,
+   'Khai lai cung host (khac kieu viet) -> bao da co', $loi);
+
+$gKhac = (int) $pdo->query("SELECT id FROM garages WHERE is_master = 1 ORDER BY id LIMIT 1")->fetchColumn();
+list(, $loi) = $D->them($gKhac, 'zztm-mot.etek.vn');
+ok($loi !== '' && strpos($loi, 'ZZ Gara ten mien') !== false,
+   'Host da thuoc gara khac -> bao RO la cua gara nao', $loi);
+
+// --- Đặt làm chính: gỡ cờ ở host cũ, trong một giao dịch ---
+$loi = $D->datLamChinh((int) $D->aiGiuHost($h2)['id']);
+ok($loi === '', 'Dat duoc ten mien thu hai lam chinh', $loi);
+$chinh = $pdo->query("SELECT host FROM garage_domains WHERE garage_id = $gTmp AND is_primary = 1")
+             ->fetchAll(PDO::FETCH_COLUMN);
+ok($chinh === [$h2], 'Chi CON MOT ten mien chinh sau khi doi',
+   'Dang co: ' . implode(', ', $chinh)
+   . ' — hai host cung mang co chinh thi tenMienGoc() suy ra khac nhau moi lan goi');
+
+// --- Tắt: không tắt cái bật cuối cùng ---
+list($moi, $loi) = $D->doiTrangThai((int) $D->aiGiuHost($h1)['id']);
+ok($loi === '' && $moi === 0, 'Tat duoc mot ten mien khi gara con host khac', $loi);
+
+list($moi, $loi) = $D->doiTrangThai((int) $D->aiGiuHost($h2)['id']);
+ok($moi === null && strpos($loi, 'DUY NHẤT') !== false,
+   'KHONG tat duoc ten mien bat CUOI CUNG cua mot gara',
+   'Tat het la website gara do khong ai vao duoc, ma man hinh chi thay mot dong doi mau: ' . $loi);
+
+$loi = $D->datLamChinh((int) $D->aiGiuHost($h1)['id']);
+ok($loi !== '', 'KHONG dat ten mien DANG TAT lam chinh', $loi);
+
+// --- Xoá: không xoá cái duy nhất; xoá host chính thì chuyển cờ ---
+$loi = $D->xoa((int) $D->aiGiuHost($h1)['id']);
+ok($loi === '', 'Xoa duoc ten mien khi gara con host khac', $loi);
+
+$loi = $D->xoa((int) $D->aiGiuHost($h2)['id']);
+ok($loi !== '' && strpos($loi, 'DUY NHẤT') !== false,
+   'KHONG xoa duoc ten mien DUY NHAT cua mot gara', $loi);
+
+$D->them($gTmp, 'zztm-ba.etek.vn');
+$loi = $D->xoa((int) $D->aiGiuHost($h2)['id']);   // $h2 dang la host chinh
+ok($loi === '', 'Xoa duoc host CHINH khi con host khac', $loi);
+$chinh = $pdo->query("SELECT host FROM garage_domains WHERE garage_id = $gTmp AND is_primary = 1")
+             ->fetchAll(PDO::FETCH_COLUMN);
+ok($chinh === ['zztm-ba.etek.vn'],
+   'Xoa host CHINH thi co chuyen sang host con lai',
+   'Dang co: ' . implode(', ', $chinh)
+   . ' — gara khong co host chinh thi gara mo sau nhan ten mien duoi mot host chay thu');
+
+// --- Nối dây: route, controller, view ---
+$rt = codeOnly($goc . 'routes/web.php');
+foreach (['garages/ten-mien/(\d+)', 'garages/ten-mien-chinh/(\d+)',
+          'garages/ten-mien-tat/(\d+)', 'garages/ten-mien-xoa/(\d+)'] as $r){
+    ok(strpos($rt, $r) !== false, "Co route `$r`");
+}
+/* Route la `garages/...` nen RoleMiddleware chi khop toi quyen `view` cua module
+   `garages`. Khai ten mien la SUA gara, nen controller phai tu kiem quyen
+   `edit` — khong thi ai xem duoc danh sach gara la doi duoc ten mien. */
+$gc = codeOnly($goc . 'app/controllers/admin/Garages.php');
+ok(strpos($gc, 'chanNeuKhongSuaDuoc') !== false
+   && preg_match("~route\('admin/' \. \\\$this->routeBase \. '/edit/'~", $gc) === 1,
+   'Bon duong ghi ten mien tu kiem quyen `edit` cua gara',
+   'Route la garages/... nen RoleMiddleware chi gac duoc quyen `view`');
+/* Cat than tung ham ra roi tim trong than do, khong dung mot regex "N ky tu
+   dau tien": ba ham sau tra dong ten mien va xu ly "khong tim thay" TRUOC khi
+   kiem quyen, nen cua so co dinh bao do oan. */
+$thanHam = function($ten) use ($gc){
+    $i = strpos($gc, 'function ' . $ten . '(');
+    if ($i === false) return '';
+    $j = strpos($gc, "\n    public function ", $i + 1);
+    $k = strpos($gc, "\n    private function ", $i + 1);
+    if ($j === false || ($k !== false && $k < $j)) $j = $k;
+    return $j === false ? substr($gc, $i) : substr($gc, $i, $j - $i);
+};
+foreach (['postTenMien', 'tenMienChinh', 'tenMienToggle', 'tenMienXoa'] as $ham){
+    $than = $thanHam($ham);
+    ok($than !== '' && strpos($than, 'chanNeuKhongSuaDuoc') !== false,
+       "Garages::$ham() di qua chanNeuKhongSuaDuoc()",
+       $than === '' ? 'Khong tim thay ham' : 'Than ham khong goi chot quyen');
+}
+
+$v = file_get_contents($goc . 'app/views/admin/garages/ten-mien.php');
+ok(strpos($v, 'tenMienGoc') !== false,
+   'Man hien TEN MIEN GOC cua he thong',
+   'Doi ten mien chinh cua gara tong la doi dia chi moi gara mo sau — khong noi thi khong ai doan ra');
+ok(strpos($v, 'ServerAlias') !== false && strpos($v, 'DNS') !== false,
+   'Man nhac hai viec NGOAI he thong: tro DNS va ServerAlias cua Apache',
+   'Khai o day chua du, ma bang du lieu thi noi rang da xong');
+ok(strpos($v, 'la_host_noi_bo') !== false,
+   'Man danh dau host cua may noi bo (chi dung de chay thu)');
+
+$lv = file_get_contents($goc . 'app/views/admin/garages/lists.php');
+ok(strpos($lv, 'ten-mien/') !== false, 'Danh sach gara co nut sang man Ten mien');
+ok(strpos($lv, 'chưa khai') !== false,
+   'Danh sach gara bao DO khi mot gara chua co ten mien nao',
+   'Cot trong la cho duy nhat noi ra rang website gara do chua ai vao duoc');
+
+$pdo->exec("DELETE FROM garage_domains WHERE garage_id = $gTmp");
+$pdo->exec("DELETE FROM garages WHERE id = $gTmp");
+
+// ---------------------------------------------------------------------------
 $donSach();
 ok((int) $pdo->query("SELECT COUNT(*) FROM garage_domains WHERE host LIKE 'zztm-%'")->fetchColumn() === 0
-   && (int) $pdo->query("SELECT COUNT(*) FROM site_settings WHERE skey LIKE 'zztm_%'")->fetchColumn() === 0,
+   && (int) $pdo->query("SELECT COUNT(*) FROM site_settings WHERE skey LIKE 'zztm_%'")->fetchColumn() === 0
+   && (int) $pdo->query("SELECT COUNT(*) FROM garages WHERE code = 'ZZTMG'")->fetchColumn() === 0,
    'Da don sach du lieu test');
 
 exit(summary());

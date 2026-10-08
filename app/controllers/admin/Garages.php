@@ -54,6 +54,16 @@ class Garages extends Controller {
             $c['dangDung'][(int) $g['id']] = $this->__model->dangDungODau((int) $g['id']);
         }
 
+        /* TÊN MIỀN CHÍNH của từng gara. Hiện ngay trên danh sách vì "gara này
+           mở ở địa chỉ nào" là câu hỏi hay phải trả lời nhất khi có sự cố, và
+           gara KHÔNG có tên miền nào thì website của nó không ai vào được — một
+           cột trống ở đây là thứ duy nhất nói ra điều đó. */
+        $D = $this->model('GarageDomainsModel');
+        $c['tenMien'] = [];
+        foreach ($c['dataList'] as $g){
+            $c['tenMien'][(int) $g['id']] = $D->theoGara((int) $g['id']);
+        }
+
         $c['msg']      = Session::flash('msg');
         $c['msgError'] = Session::flash('msgError');
 
@@ -245,6 +255,149 @@ class Garages extends Controller {
         Session::flash('msg', $moi === 1 ? 'Đã mở khoá gara ' . $item['name']
                                          : 'Đã khoá gara ' . $item['name'] . ' — nhân viên gara không đăng nhập được nữa.');
         $this->__response->redirect('admin/' . $this->routeBase);
+    }
+
+    // ===== Tên miền của gara =====
+
+    /**
+     * TÊN MIỀN CỦA MỘT GARA — nơi quyết định "địa chỉ nào phục vụ gara nào".
+     *
+     * Trước 08/10/2026 không có màn nào cả: phải gõ SQL tay vào CSDL thật. Mở
+     * một gara mới là ba câu INSERT / UPDATE / DELETE gõ đúng thứ tự, và một
+     * lần đã suýt hỏng vì đảo thứ tự (DELETE trước UPDATE nên UPDATE không khớp
+     * dòng nào, gara mở ra không có tên miền).
+     *
+     * Màn này của RIÊNG TÂN PHÁT (module `garages` mang cờ `chi_tan_phat`): gara
+     * tự khai được host là nó tự nhận request của gara khác.
+     */
+    public function tenMien($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            $this->__response->redirect('admin/' . $this->routeBase);
+            return;
+        }
+
+        $D = $this->model('GarageDomainsModel');
+
+        $this->__data['sub_content'] = $this->viewDir . '/ten-mien';
+        $this->__data['page_title']  = 'Tên miền của ' . $item['name'];
+
+        $this->baseData();
+        $c = &$this->__data['content'];
+        $c['page_name'] = 'Tên miền của ' . $item['name'];
+        $c['item']      = $item;
+        $c['dsTenMien'] = $D->theoGara((int) $id);
+
+        /* TÊN MIỀN GỐC + địa chỉ mà gara mở sau sẽ nhận. Bày ra ở đây vì chính
+           chỗ này là nơi người ta đổi tên miền chính của gara tổng, mà việc đó
+           đổi luôn tên miền của mọi gara mở sau — không nói thì không ai đoán ra. */
+        $goc = $this->model('MoGaraModel')->tenMienGoc();
+        $c['tenMienGoc'] = $goc;
+        $c['hostGoiY']   = $goc !== '' ? slugify((string) $item['code']) . '.' . $goc : '';
+
+        $c['msg']       = Session::flash('msg');
+        $c['msgError']  = Session::flash('msgError');
+        $c['old']       = Session::flash('old');
+
+        $this->render('layouts/admin/master_admin', $this->__data);
+    }
+
+    public function postTenMien($id){
+        $item = $this->chanNeuKhongSuaDuoc($id);
+        if (empty($item)) return;
+
+        $f = $this->__request->getFields();
+
+        /* Lấy HOST ĐÃ CHUẨN HOÁ từ model, đừng tự chuẩn hoá lại ở đây:
+           chuanHoaHost() không cắt giao thức, nên "https://a.etek.vn" ra
+           "https" — câu thông báo đọc sai host, và la_host_noi_bo("https") trả
+           về true nên nó còn báo thêm "đây là địa chỉ máy nội bộ". */
+        list($h, $loi) = $this->model('GarageDomainsModel')->them(
+            (int) $id,
+            isset($f['host']) ? $f['host'] : '',
+            !empty($f['is_primary'])
+        );
+
+        if ($loi !== ''){
+            Session::flash('msgError', $loi);
+            Session::flash('old', $f);
+        } else {
+            Session::flash('msg', 'Đã khai tên miền ' . $h . ' cho ' . $item['name'] . '.'
+                . (la_host_noi_bo($h)
+                    ? ' Lưu ý: đây là địa chỉ của máy nội bộ, chỉ dùng để chạy thử — trên máy chủ thật nó vô nghĩa.'
+                    : ' Còn hai việc ngoài hệ thống: trỏ DNS và thêm ServerAlias cho Apache.'));
+        }
+        $this->__response->redirect('admin/' . $this->routeBase . '/ten-mien/' . (int) $id);
+    }
+
+    public function tenMienChinh($domainId){
+        $D = $this->model('GarageDomainsModel');
+        $d = $D->theoId($domainId);
+        if (empty($d)){
+            Session::flash('msgError', 'Không tìm thấy tên miền.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (empty($this->chanNeuKhongSuaDuoc((int) $d['garage_id']))) return;
+
+        $loi = $D->datLamChinh((int) $domainId);
+        if ($loi !== '') Session::flash('msgError', $loi);
+        else             Session::flash('msg', 'Đã đặt ' . $d['host'] . ' làm tên miền chính của '
+                                             . $d['garage_name'] . '.');
+        $this->__response->redirect('admin/' . $this->routeBase . '/ten-mien/' . (int) $d['garage_id']);
+    }
+
+    public function tenMienToggle($domainId){
+        $D = $this->model('GarageDomainsModel');
+        $d = $D->theoId($domainId);
+        if (empty($d)){
+            Session::flash('msgError', 'Không tìm thấy tên miền.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (empty($this->chanNeuKhongSuaDuoc((int) $d['garage_id']))) return;
+
+        list($moi, $loi) = $D->doiTrangThai((int) $domainId);
+        if ($loi !== '') Session::flash('msgError', $loi);
+        else             Session::flash('msg', $moi === 1
+                            ? 'Đã bật tên miền ' . $d['host'] . '.'
+                            : 'Đã tắt tên miền ' . $d['host'] . ' — địa chỉ này không vào được nữa.');
+        $this->__response->redirect('admin/' . $this->routeBase . '/ten-mien/' . (int) $d['garage_id']);
+    }
+
+    public function tenMienXoa($domainId){
+        $D = $this->model('GarageDomainsModel');
+        $d = $D->theoId($domainId);
+        if (empty($d)){
+            Session::flash('msgError', 'Không tìm thấy tên miền.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if (empty($this->chanNeuKhongSuaDuoc((int) $d['garage_id']))) return;
+
+        $loi = $D->xoa((int) $domainId);
+        if ($loi !== '') Session::flash('msgError', $loi);
+        else             Session::flash('msg', 'Đã xoá tên miền ' . $d['host'] . '.');
+        $this->__response->redirect('admin/' . $this->routeBase . '/ten-mien/' . (int) $d['garage_id']);
+    }
+
+    /**
+     * Gara $id, hoặc null KÈM redirect khi không tìm thấy / không có quyền sửa.
+     *
+     * Khai tên miền là SỬA gara, nên dùng lại đúng quyền `edit` của màn này —
+     * không dựng một luật phân quyền thứ hai cho mấy đường này (route chúng là
+     * `garages/ten-mien/...` nên RoleMiddleware chỉ kiểm được quyền `view`).
+     */
+    private function chanNeuKhongSuaDuoc($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            $this->__response->redirect('admin/' . $this->routeBase);
+            return null;
+        }
+        if (!route('admin/' . $this->routeBase . '/edit/' . (int) $id)){
+            $this->__response->redirect('admin/khong-co-quyen');
+            return null;
+        }
+        return $item;
     }
 
     /**
