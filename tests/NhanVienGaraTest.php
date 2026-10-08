@@ -57,6 +57,18 @@ $idNhom = function($ten) use ($pdo){
 $A = $idNhom('Admin'); $M = $idNhom('Manager'); $S = $idNhom('Staff');
 if (!$A || !$M || !$S){ echo "\n[SKIP] Thieu nhom Admin/Manager/Staff.\n"; exit(summary()); }
 
+/* TU 08/10/2026 NHOM THUOC VE MOT GARA (migration 000093): idNhom('Manager')
+   tra ve nhom Manager DAU TIEN, tuc cua gara tong. Moi nhom tam dung trong file
+   nay phai thuoc CUNG gara do, khong thi nhomGiaoDuoc() loai no ra vi khac gara
+   — test do ma khong phai vi luat tap con. */
+$garaCuaNhom = function($id) use ($pdo){
+    $st = $pdo->prepare("SELECT garage_id FROM `groups` WHERE id = ?");
+    $st->execute([$id]);
+    $v = $st->fetchColumn();
+    return $v === null || $v === false ? null : (int) $v;
+};
+$garaM = $garaCuaNhom($M);
+
 $garaId = function($ma) use ($pdo){
     $st = $pdo->prepare("SELECT id FROM garages WHERE code = ?");
     $st->execute([$ma]);
@@ -101,9 +113,11 @@ $choA = $ids($GM->nhomGiaoDuoc($A));
 ok(!array_diff([$A, $M, $S], $choA), 'Admin gan duoc moi nhom');
 ok(!array_intersect([$A, $M, $S], $ids($GM->nhomGiaoDuoc($S))), 'Staff khong gan duoc nhom nao trong ba nhom');
 
-/* --- Nhom tam: rong / con / ngang quyen / vuot quyen --- */
-$taoNhom = function($ten) use ($pdo){
-    $pdo->prepare("INSERT INTO `groups` (name, create_at) VALUES (?, NOW())")->execute([$ten]);
+/* --- Nhom tam: rong / con / ngang quyen / vuot quyen / khac gara --- */
+$taoNhom = function($ten, $gara = false) use ($pdo, $garaM){
+    $g = $gara === false ? $garaM : $gara;
+    $pdo->prepare("INSERT INTO `groups` (name, garage_id, create_at) VALUES (?, ?, NOW())")
+        ->execute([$ten, $g]);
     return (int) $pdo->lastInsertId();
 };
 $chepQuyen = function($tu, $den, $gioiHan = null) use ($pdo){
@@ -126,6 +140,24 @@ ok(!in_array($zRong, $choM, true),
 ok(in_array($zCon, $choM, true),  'Manager gan duoc nhom co quyen la tap con cua minh');
 ok(!in_array($zBang, $choM, true), 'Manager KHONG gan duoc nhom ngang quyen minh');
 ok(!in_array($zVuot, $choM, true), 'Manager KHONG gan duoc nhom co du mot quyen minh khong co');
+
+/* NHOM CUA GARA KHAC: quyen la tap con thuc su cua minh, nhung thuoc gara khac
+   nen van khong gan duoc. Thieu chot nay thi chu gara Sai Gon gan duoc nhan
+   vien minh vao nhom cua gara Da Nang, va tu do mot nguoi cua gara nay chiu
+   bang quyen do gara kia sua. */
+$zKhacGara = $taoNhom('ZZNV-khac-gara', $G2 !== $garaM ? $G2 : $G3);
+$chepQuyen($M, $zKhacGara, 1);
+/* NHOM HE THONG (garage_id NULL): Admin la nhom nay. Mot nhom he thong co
+   quyen hep cung khong duoc gan — he thong khong phai gara nao. */
+$zHeThong = $taoNhom('ZZNV-he-thong', null);
+$chepQuyen($M, $zHeThong, 1);
+
+$choM = $ids($GM->nhomGiaoDuoc($M));
+ok(!in_array($zKhacGara, $choM, true),
+   'Manager KHONG gan duoc nhom cua GARA KHAC (du quyen la tap con)',
+   'Dang ra: ' . implode(',', $choM));
+ok(!in_array($zHeThong, $choM, true),
+   'Manager KHONG gan duoc nhom HE THONG (garage_id NULL)');
 
 // ---------------------------------------------------------------------------
 section('HTTP that — dang nhap bang tai khoan tam');

@@ -34,14 +34,18 @@ echo "PHP " . PHP_VERSION . " | model that cua app + sqlite\n";
 // Dung schema giong dump tanphat_php
 $boot = new App\core\Database();
 $pdo  = $boot->pdo();
-$pdo->exec("CREATE TABLE groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)");
+// groups.garage_id: them boi migration 000093 (nhom quyen theo gara). Tu do
+// GroupsModel::getLists() LEFT JOIN garages de hien cot Gara va lay ca `code` —
+// thieu cot la test chet voi "no such column: garages.code".
+$pdo->exec("CREATE TABLE groups (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, garage_id INTEGER)");
 // garage_id + bang garages: them boi migration 000063 (nhieu gara). Tu 000069
 // getLists() LEFT JOIN garages de hien cot Gara — thieu bang la test chet.
 $pdo->exec("CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT, password TEXT,
     status INTEGER, group_id INTEGER, current_activity TEXT, garage_id INTEGER
 )");
-$pdo->exec("CREATE TABLE garages (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)");
+$pdo->exec("CREATE TABLE garages (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, code TEXT, is_master INTEGER DEFAULT 0)");
+$pdo->exec("CREATE TABLE modules (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, link TEXT)");
 $pdo->exec("CREATE TABLE permissions (id INTEGER PRIMARY KEY AUTOINCREMENT, module_id INTEGER, group_id INTEGER, role TEXT)");
 // remember / remember_hash: them boi migration 000053 (ghi nho dang nhap admin).
 // Schema gia lap nay phai bam theo migration, khong thi removeExpired() vo.

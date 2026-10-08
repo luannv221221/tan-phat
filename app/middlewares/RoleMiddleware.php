@@ -55,12 +55,35 @@ class RoleMiddleware extends Middleware{
             return false;
         }
 
-        if (!empty($groupData)){
-            $groupId = $groupData['group_id'];
+        $groupId        = !empty($groupData['group_id']) ? (int) $groupData['group_id'] : 0;
+        $permissionData = $groupId > 0 ? (array) $permissionModel->getPermission($groupId) : [];
 
-            $permissionData = $permissionModel->getPermission($groupId);
+        /* KHÔNG CÓ NHÓM, HOẶC NHÓM KHÔNG CÓ DÒNG QUYỀN NÀO = KHÔNG CÓ QUYỀN.
+           Vá 08/10/2026, cùng lúc mở màn Quản lý nhóm cho gara.
 
+           Trước đó hai trường hợp này rơi ra khỏi MỌI nhánh kiểm tra bên dưới
+           và hàm kết thúc mà không chặn gì — với một request thật thì không ai
+           redirect, nên trang vẫn vẽ ra. Nghĩa là NHÓM RỖNG LÀ NHÓM MẠNH NHẤT:
+           vào được mọi màn hình, kể cả Quản lý gara và Người dùng.
 
+           Hai cửa vào có thật, không phải giả thiết:
+             - Tạo một nhóm mới ở màn Quản lý nhóm rồi chưa tick quyền nào.
+             - Xoá một nhóm: khoá ngoại `users.group_id` là ON DELETE SET NULL,
+               nên mọi người trong nhóm đó mất nhóm.
+           Mở màn Quản lý nhóm cho gara là mở cả hai cửa đó cho gara.
+
+           CHỈ chặn khi URL khớp một module. Không khớp thì giữ nguyên nếp cũ
+           (đi tiếp) — nhiều màn admin không phải module: Tổng quan, trang
+           "không có quyền", thêm nhanh, tra địa giới. Chặn ở đây là khoá cả
+           trang "không có quyền", tức vòng lặp chuyển trang vô tận. */
+        if (!empty($currentModuleId) && empty($permissionData)){
+            if (empty($this->path)){
+                $response->redirect('admin/khong-co-quyen');
+            }
+            return false;
+        }
+
+        if ($groupId > 0){
 
             if (!empty($currentModuleId) && !empty($permissionData)){
 

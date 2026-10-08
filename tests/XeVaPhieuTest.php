@@ -86,9 +86,13 @@ ok(in_array('partner_id', $pdo->query("SHOW COLUMNS FROM members")->fetchAll(PDO
    'Tai khoan web (`members`) noi duoc vao Doi tuong',
    'Mot nguoi la MOT khach — truoc day hai bang khach khong co duong noi nao');
 
+/* DISTINCT: tu 08/10/2026 moi gara co bo nhom rieng (migration 000093), nen co
+   ba nhom ten "Staff". Gom theo TEN nhom ma khong DISTINCT thi ra
+   "add,add,add,edit,edit,edit,view,view,view" — test do ma nhin vao tuong la
+   mat quyen. */
 $quyen = [];
 foreach ($pdo->query(
-    "SELECT m.link, g.name nhom, GROUP_CONCAT(p.role ORDER BY p.role) roles
+    "SELECT m.link, g.name nhom, GROUP_CONCAT(DISTINCT p.role ORDER BY p.role) roles
        FROM modules m JOIN permissions p ON p.module_id = m.id JOIN `groups` g ON g.id = p.group_id
       WHERE m.link IN ('vehicles','receptions') GROUP BY m.link, g.name") as $r){
     $quyen[$r['link'] . '|' . $r['nhom']] = $r['roles'];

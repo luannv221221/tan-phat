@@ -19,7 +19,8 @@ use App\core\Hash;
  *     2. Kho mặc định                      -> nhập / xuất hàng được
  *     3. Nhóm khách "Khách lẻ"             -> khai khách được ngay
  *     4. Cấu hình web (tên, hotline, địa chỉ) -> trang không còn mang tên Tân Phát
- *     5. Tài khoản chủ gara (nếu khai)     -> có người đăng nhập
+ *     5. Nhóm quyền riêng (Manager, Staff) -> chủ gara tự phân quyền nhân viên
+ *     6. Tài khoản chủ gara (nếu khai)     -> có người đăng nhập
  *
  * CHẠY LẠI KHÔNG SINH BẢN SAO: mỗi bước đều kiểm "đã có chưa" trước. Gara mở
  * dở dang rồi sửa tay thì gọi lại hàm này vẫn an toàn.
@@ -122,7 +123,12 @@ class MoGaraModel extends Model {
             $da[] = 'Cấu hình website mang tên gara';
         });
 
-        // --- 5. Tài khoản chủ gara ---
+        // --- 5. Nhóm quyền riêng của gara ---
+        $nhom = $this->nhanBanNhom($garaId);
+        foreach ($nhom['da'] as $x)    $da[] = $x;
+        foreach ($nhom['thieu'] as $x) $thieu[] = $x;
+
+        // --- 6. Tài khoản chủ gara ---
         $ten = isset($chu['name']) ? trim((string) $chu['name']) : '';
         $mail = isset($chu['email']) ? trim((string) $chu['email']) : '';
         $mk  = isset($chu['password']) ? (string) $chu['password'] : '';
@@ -173,7 +179,64 @@ class MoGaraModel extends Model {
         return $host;
     }
 
-    /** Tạo tài khoản chủ gara (nhóm Manager). Trả về '' nếu xong, hoặc câu báo lỗi. */
+    /**
+     * NHÂN BẢN BỘ NHÓM QUYỀN cho gara mới, kèm nguyên các dòng `permissions`.
+     *
+     * Từ 08/10/2026 nhóm quyền thuộc về một gara (migration 000093). Gara mở ra
+     * mà không có nhóm nào thì chủ gara vào màn Quản lý nhóm thấy bảng trống,
+     * và không gán được nhóm nào cho nhân viên mình.
+     *
+     * NHÓM MẪU LÀ NHÓM CÙNG TÊN CỦA GARA TỔNG, không phải một danh sách quyền
+     * viết cứng ở đây: Tân Phát sửa bộ quyền mặc định ở màn Quản lý nhóm là gara
+     * mở sau được theo, không phải viết thêm migration. Đổi lại, ĐỔI TÊN nhóm
+     * mẫu là lần mở gara sau nhân bản sai — nên màn Quản lý nhóm không cấp
+     * quyền `edit` (đổi tên) cho Manager.
+     *
+     * KHÔNG dùng Model::trongGara() ở đây: nhóm phải ghi `garage_id` tường minh
+     * cho gara mới, mà GroupsModel lọc theo gara làm việc — mượn danh nghĩa gara
+     * mới rồi đọc nhóm mẫu của gara tổng là không thấy gì.
+     */
+    private function nhanBanNhom($garaId){
+        $garaId = (int) $garaId;
+        $da = $thieu = [];
+
+        $tong = Load::model('GaragesModel')->getMaster();
+        if (empty($tong['id'])){
+            return ['da' => [], 'thieu' => ['Chưa dựng được nhóm quyền: hệ thống chưa có gara tổng.']];
+        }
+        $tongId = (int) $tong['id'];
+
+        $mau = (array) $this->getRaw(
+            'SELECT `id`, `name` FROM `groups` WHERE `garage_id` = ? ORDER BY `name` ASC', [$tongId]);
+        if (empty($mau)){
+            return ['da' => [], 'thieu' => ['Chưa dựng được nhóm quyền: gara tổng chưa có nhóm nào '
+                                          . 'để làm mẫu (chạy migration 000093).']];
+        }
+
+        foreach ($mau as $m){
+            $co = $this->firstRaw('SELECT `id` FROM `groups` WHERE `name` = ? AND `garage_id` = ? LIMIT 1',
+                                  [$m['name'], $garaId]);
+            if (!empty($co['id'])) continue;         // chạy lại: đã có, bỏ qua
+
+            $this->chen('groups', [
+                'name' => $m['name'], 'garage_id' => $garaId, 'create_at' => date('Y-m-d H:i:s'),
+            ]);
+            $moiId = (int) $this->lastId();
+
+            foreach ((array) $this->getRaw(
+                        'SELECT `module_id`, `role` FROM `permissions` WHERE `group_id` = ?',
+                        [(int) $m['id']]) as $p){
+                $this->chen('permissions', [
+                    'group_id' => $moiId, 'module_id' => (int) $p['module_id'], 'role' => $p['role'],
+                ]);
+            }
+            $da[] = 'Nhóm quyền "' . $m['name'] . '"';
+        }
+
+        return ['da' => $da, 'thieu' => $thieu];
+    }
+
+    /** Tạo tài khoản chủ gara (nhóm Manager CỦA GARA ĐÓ). Trả về '' nếu xong, hoặc câu báo lỗi. */
     private function taoChuGara($garaId, $ten, $mail, $mk){
         if ($ten === '' || $mail === '' || $mk === ''){
             return 'Chưa tạo tài khoản chủ gara: cần đủ họ tên, email và mật khẩu.';
@@ -190,7 +253,16 @@ class MoGaraModel extends Model {
         $co = $this->firstRaw('SELECT `id` FROM `users` WHERE `email` = ? LIMIT 1', [$mail]);
         if (!empty($co)) return 'Chưa tạo tài khoản chủ gara: email ' . $mail . ' đã có người dùng.';
 
-        $nhom = $this->firstRaw("SELECT `id` FROM `groups` WHERE `name` = 'Manager' LIMIT 1");
+        /* NHÓM MANAGER CỦA CHÍNH GARA NÀY, không phải nhóm Manager đầu tiên tìm
+           thấy. Từ migration 000093 mỗi gara có nhóm Manager riêng; lấy nhầm
+           nhóm của gara khác là chủ gara mới vào màn Quản lý nhóm không thấy
+           nhóm nào của mình, mà sửa quyền thì sửa trúng gara kia. */
+        $nhom = $this->firstRaw("SELECT `id` FROM `groups` WHERE `name` = 'Manager' AND `garage_id` = ? LIMIT 1",
+                                [(int) $garaId]);
+        if (empty($nhom['id'])){
+            // Chưa chạy migration 000093 (cột `garage_id` còn NULL hết) thì lùi về cách cũ
+            $nhom = $this->firstRaw("SELECT `id` FROM `groups` WHERE `name` = 'Manager' LIMIT 1");
+        }
         if (empty($nhom['id'])) return 'Chưa tạo tài khoản chủ gara: hệ thống chưa có nhóm Manager.';
 
         $this->chen('users', [

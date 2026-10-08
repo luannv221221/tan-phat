@@ -14,6 +14,20 @@
  *      mọi quyền. Ai sửa được bảng phân quyền thì mọi phân quyền khác chỉ còn
  *      là trang trí. Đây là khẳng định quan trọng nhất của file này.
  *
+ *      08/10/2026 — ĐỔI CÁCH CHẶN, KHÔNG BỎ CHẶN. Chủ gara phải tự phân quyền
+ *      cho nhân viên mình, nên Manager ĐƯỢC `view` + `permission` trên `groups`
+ *      (migration 000093). An toàn không còn nằm ở "không có quyền nào" mà ở
+ *      BỐN chốt, test đủ cả bốn bên dưới:
+ *        a. `groups`.`garage_id` — nhóm thuộc về một gara, Manager chỉ thấy và
+ *           sửa nhóm của gara mình (GroupsModel::dkNhom / dkSoHuu).
+ *        b. `laToanQuyen()` đòi THÊM điều kiện nhóm hệ thống (garage_id IS
+ *           NULL), nên Manager có `permission` vẫn KHÔNG phải toàn quyền —
+ *           không gán được nhóm Admin cho ai.
+ *        c. Manager KHÔNG sửa được nhóm của CHÍNH MÌNH (Groups::layNhom).
+ *        d. Manager chỉ tick được quyền nhóm mình ĐANG CÓ
+ *           (Groups::postPermission).
+ *      Manager vẫn KHÔNG có `add` / `edit` / `delete` trên `groups`.
+ *
  *   2. Thiếu `view` thì ba role kia vô nghĩa — RoleMiddleware chặn ngay ở
  *      cửa, không vào được màn hình thì add/edit/delete không bao giờ chạy tới.
  *
@@ -83,10 +97,28 @@ if (!$coNhom('Manager') || !$coNhom('Staff')){
 
 /* --- 1. LEO THANG ĐẶC QUYỀN — khẳng định quan trọng nhất --- */
 foreach (['Manager', 'Staff'] as $n){
-    ok(empty($quyen($n, 'groups')),
-       "$n KHONG co quyen nao tren man hinh Nhom (chong tu nang quyen)",
-       'Dang co: ' . implode(',', array_keys($quyen($n, 'groups')))
-       . ' — sua duoc bang phan quyen thi moi phan quyen khac la trang tri');
+    $qNhom = $quyen($n, 'groups');
+    if ($n === 'Manager'){
+        /* Chu gara phan quyen cho nhan vien minh: can `view` de mo man va
+           `permission` de luu bang tick. */
+        ok(isset($qNhom['view']) && isset($qNhom['permission']),
+           "$n phan quyen duoc cho nhan vien gara minh (000093)",
+           'Dang co: ' . implode(',', array_keys($qNhom)));
+        /* KHONG `add` / `edit` / `delete`:
+             add    -> sinh nhom rong, ma nhom rong tung la nhom vao duoc moi man
+             edit   -> doi TEN nhom, ma nhan ban nhom cho gara moi nhan nhau
+                       bang ten (MoGaraModel::nhanBanNhom)
+             delete -> xoa nhom la `users`.`group_id` SET NULL, nguoi mat nhom */
+        foreach (['add', 'edit', 'delete'] as $r){
+            ok(!isset($qNhom[$r]), "$n KHONG co `$r` tren man hinh Nhom",
+               'Hai nhom Manager/Staff cua gara da du; them hay xoa chi sinh nhom rong nguoi');
+        }
+    } else {
+        ok(empty($qNhom),
+           "$n KHONG co quyen nao tren man hinh Nhom (chong tu nang quyen)",
+           'Dang co: ' . implode(',', array_keys($qNhom))
+           . ' — sua duoc bang phan quyen thi moi phan quyen khac la trang tri');
+    }
     if ($n === 'Staff'){
         ok(empty($quyen($n, 'users')),
            "$n KHONG quan ly duoc nguoi dung",

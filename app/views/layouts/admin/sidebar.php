@@ -107,7 +107,12 @@ if (!empty($listModules)) {
 
     <a href="<?php echo _WEB_URL.'/admin'; ?>" class="adm-brand">
         <span class="adm-brand__tile"><?php echo icon('house'); ?></span>
-        <div class="adm-brand__name">Tân Phát</div>
+        <?php /* TÊN GARA ĐANG LÀM VIỆC, không viết cứng "Tân Phát": từ
+                 07/10/2026 mỗi gara có trang quản trị riêng theo tên miền, và
+                 chủ gara Sài Gòn mở admin của mình ra thấy chữ "Tân Phát" ở
+                 góc trên thì không hiểu mình đang ở đâu.
+                 $garaHienTai do AppServiceProvider::boot() chia sẻ. */ ?>
+        <div class="adm-brand__name"><?php echo e(!empty($garaHienTai['name']) ? $garaHienTai['name'] : 'Tân Phát'); ?></div>
         <div class="adm-brand__role"><?php echo e(!empty($infoUser['name']) ? $infoUser['name'] : 'Quản trị viên'); ?></div>
     </a>
 
