@@ -108,6 +108,54 @@ ok(!empty($u) && $u['email'] === 'zzmg-chu@local.test' && $u['name'] === 'Manage
    'Co tai khoan chu gara, nhom Manager', json_encode($u));
 
 // ---------------------------------------------------------------------------
+section('Ten mien sinh ra phai HOP LE va dung goc');
+
+/* HAI LOI DA MAC THAT, phat hien khi mo gara that tren may chu:
+
+   1. MA GARA KHONG DUOC GOT. Ban dau chi strtolower(trim()), nen ma co dau
+      cach / dau tieng Viet / gach duoi sinh ra host sai: "Long Biên" thanh
+      "long biên.etek..." — dia chi khong ton tai. Gara tao xong nhin nhu binh
+      thuong, toi luc mo ten mien moi thay "Khong tim thay gara".
+
+   2. CHON TEN MIEN GOC BANG "IT DAU CHAM NHAT". Them mot host de chay thu nhu
+      `tp01.localhost` (1 dau cham) la no thang `etek.rikkeiedu.org` (2 dau
+      cham), gara moi nhan ten mien `<ma>.tp01.localhost`. Van bao "thanh cong",
+      chi co dieu dia chi do khong ai vao duoc. */
+
+$gocThat = $pdo->query("SELECT d.host FROM garage_domains d JOIN garages g ON g.id = d.garage_id
+                        WHERE g.is_master = 1 ORDER BY d.is_primary DESC, d.id ASC LIMIT 1")->fetchColumn();
+$maTong  = $pdo->query("SELECT code FROM garages WHERE is_master = 1")->fetchColumn();
+$goc     = (strpos((string) $gocThat, strtolower($maTong) . '.') === 0)
+         ? substr($gocThat, strlen($maTong) + 1) : $gocThat;
+
+foreach ([
+    'ZZMG Long Biên' => 'zzmg-long-bien',
+    'ZZMG_LB'        => 'zzmglb',
+    'ZZMG-LB2'       => 'zzmg-lb2',
+] as $ma => $nhanMong){
+    $idT = $taoGara($ma, 'Gara ' . $ma);
+    $M->dungBoKhung($idT, []);
+    $h = $pdo->query("SELECT host FROM garage_domains WHERE garage_id = $idT")->fetchColumn();
+    ok($h === $nhanMong . '.' . $goc,
+       "Ma \"$ma\" -> ten mien hop le",
+       'thuc te: ' . var_export($h, true) . ' | mong doi: ' . $nhanMong . '.' . $goc);
+    /* Khong duoc co dau cach hay chu co dau trong host */
+    ok(is_string($h) && preg_match('~^[a-z0-9.-]+$~', $h) === 1,
+       "Ma \"$ma\" -> host chi gom chu thuong, so, gach noi, dau cham", (string) $h);
+}
+
+/* Them mot host NGAN HON cho gara tong roi mo gara moi: goc KHONG duoc doi. */
+$pdo->prepare("INSERT INTO garage_domains (garage_id, host, is_primary, status, create_at)
+               SELECT id, 'zzmg-ngan.test', 0, 1, NOW() FROM garages WHERE is_master = 1")->execute();
+$idN = $taoGara('ZZMG9', 'ZZMG Gara Chin');
+$M->dungBoKhung($idN, []);
+$hN = $pdo->query("SELECT host FROM garage_domains WHERE garage_id = $idN")->fetchColumn();
+ok($hN === 'zzmg9.' . $goc,
+   'Them host ngan hon cho gara tong KHONG cuop mat ten mien goc',
+   'thuc te: ' . var_export($hN, true));
+$pdo->exec("DELETE FROM garage_domains WHERE host = 'zzmg-ngan.test'");
+
+// ---------------------------------------------------------------------------
 section('Chay lai KHONG sinh ban sao');
 
 $M->dungBoKhung($id, ['name' => 'ZZMG Chu', 'email' => 'zzmg-chu@local.test', 'password' => 'MatKhau@123']);

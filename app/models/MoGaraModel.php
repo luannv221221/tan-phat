@@ -50,7 +50,23 @@ class MoGaraModel extends Model {
         if ($goc === ''){
             $thieu[] = 'Chưa đặt được tên miền: hệ thống chưa khai tên miền gốc.';
         } else {
-            $host = strtolower(trim((string) $gara['code'])) . '.' . $goc;
+            /* GỘT MÃ GARA THÀNH NHÃN TÊN MIỀN HỢP LỆ.
+               Trước đây chỉ `strtolower(trim())`, nên mã có dấu cách, dấu tiếng
+               Việt hay gạch dưới sinh ra host sai — "Long Biên" thành
+               "long biên.etek..." là địa chỉ không tồn tại. Gara tạo xong nhìn
+               như bình thường, tới lúc mở tên miền mới thấy "Không tìm thấy
+               gara", mà nhìn vào đâu cũng không ra lý do.
+               slugify(): bỏ dấu, hạ chữ thường, dấu cách thành gạch nối. */
+            $nhan = slugify((string) $gara['code']);
+            if ($nhan === ''){
+                $thieu[] = 'Chưa đặt được tên miền: mã gara "' . $gara['code']
+                         . '" không gột được thành tên miền (cần có chữ hoặc số).';
+                $goc = '';   // bỏ qua bước tên miền
+            }
+        }
+
+        if ($goc !== ''){
+            $host = $nhan . '.' . $goc;
             $D    = Load::model('GarageDomainsModel');
             if (empty($D->theoHost($host))){
                 $this->chen('garage_domains', [
@@ -122,24 +138,39 @@ class MoGaraModel extends Model {
     // ===== Helper =====
 
     /**
-     * Tên miền gốc của hệ thống, suy từ tên miền của GARA TỔNG.
+     * Tên miền gốc của hệ thống, suy từ TÊN MIỀN CHÍNH của gara tổng.
      *
-     * Gara tổng thường có hai host: tên miền gốc (etek.rikkeiedu.org) và tên
-     * miền phụ theo mã (tp01.etek.rikkeiedu.org). Cái nào ÍT DẤU CHẤM hơn là
-     * gốc. Suy ra thay vì viết cứng để đổi tên miền hệ thống không phải sửa
-     * code — chỉ sửa dòng trong `garage_domains`.
+     * Gara tổng thường có hai host: tên miền gốc (`etek.rikkeiedu.org`) và tên
+     * miền phụ theo mã (`tp01.etek.rikkeiedu.org`, đánh dấu là chính). Suy ra
+     * thay vì viết cứng, để đổi tên miền hệ thống chỉ phải sửa dòng trong
+     * `garage_domains` chứ không sửa code.
+     *
+     * CÁCH LÀM: lấy host CHÍNH của gara tổng; nếu nó bắt đầu bằng chính mã gara
+     * tổng thì bỏ nhãn đó đi, phần còn lại là gốc.
+     *
+     *     tp01.etek.rikkeiedu.org  (mã TP01)  ->  etek.rikkeiedu.org
+     *     etek.rikkeiedu.org       (không khớp mã) ->  etek.rikkeiedu.org
+     *
+     * BẢN ĐẦU CHỌN "HOST ÍT DẤU CHẤM NHẤT" — sai. Thêm một host để chạy thử như
+     * `tp01.localhost` (1 dấu chấm) là nó thắng `etek.rikkeiedu.org` (2 dấu
+     * chấm), và gara mới mở ra nhận tên miền `<mã>.tp01.localhost`. Nhìn thì
+     * vẫn "thành công", chỉ có điều địa chỉ đó không ai vào được.
      */
     private function tenMienGoc(){
         $tong = Load::model('GaragesModel')->getMaster();
         if (empty($tong['id'])) return '';
 
-        $ds = Load::model('GarageDomainsModel')->theoGara((int) $tong['id']);
-        $goc = '';
-        foreach ((array) $ds as $d){
-            $h = (string) $d['host'];
-            if ($goc === '' || substr_count($h, '.') < substr_count($goc, '.')) $goc = $h;
+        $ds = (array) Load::model('GarageDomainsModel')->theoGara((int) $tong['id']);
+        if (empty($ds)) return '';
+
+        // theoGara() đã sắp is_primary trước, nên dòng đầu là host chính
+        $host = (string) $ds[0]['host'];
+
+        $ma = slugify((string) $tong['code']);
+        if ($ma !== '' && strpos($host, $ma . '.') === 0){
+            return substr($host, strlen($ma) + 1);
         }
-        return $goc;
+        return $host;
     }
 
     /** Tạo tài khoản chủ gara (nhóm Manager). Trả về '' nếu xong, hoặc câu báo lỗi. */
