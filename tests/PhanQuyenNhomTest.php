@@ -94,8 +94,25 @@ foreach (['Manager', 'Staff'] as $n){
     }
     ok(empty($quyen($n, 'modules')),
        "$n KHONG vao duoc Quan ly module");
-    ok(empty($quyen($n, 'settings')),
-       "$n KHONG sua duoc cau hinh website");
+
+    /* MAN CAU HINH: 08/10/2026 doi y. Moi gara mot website rieng nen CHU GARA
+       (Manager) phai tu dat duoc ten, logo, hotline cua minh — truoc day man
+       nay chi cua Tan Phat.
+
+       Man do lam hai viec tuy ai mo: gara tong sua `site_settings` (mac dinh
+       chung), gara khac sua `garage_settings` cua chinh no. Nen cho Manager vao
+       KHONG phai la cho sua cau hinh cua he thong. Cach ly do CachLyGaraTest
+       gac ("Gara B luu chu ky bao tri: KHONG doi Cau hinh chung").
+
+       Staff thi van khong — doi logo, doi hotline la viec cua chu gara. */
+    if ($n === 'Manager'){
+        ok(!empty($quyen($n, 'settings')),
+           "$n sua duoc cau hinh CUA GARA MINH",
+           'Moi gara mot website thi chu gara phai tu dat duoc ten, logo, hotline');
+    } else {
+        ok(empty($quyen($n, 'settings')),
+           "$n KHONG sua duoc cau hinh");
+    }
 }
 
 /* Manager vao duoc man Nguoi dung tu 000069 — de tu them nhan vien cho gara

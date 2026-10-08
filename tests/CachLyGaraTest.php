@@ -466,6 +466,37 @@ if (in_array('chi_tan_phat', $cot('modules'), true)){
 }
 
 // ---------------------------------------------------------------------------
+section('Man da mo cho gara thi nhom Manager phai co quyen xem');
+
+/* CHO HONG DA MAC THAT (08/10/2026):
+   Migration 000086 + 000088 go co `chi_tan_phat` khoi tam man quan ly website,
+   nhung QUEN cap quyen cho nhom Manager. Man da mo o tang module ma nhom
+   Manager khong co dong `view` nao, nen menu trai khong ve ra — gara co website
+   rieng nhung khong vao dau sua duoc ten, logo, tin tuc, banner cua chinh minh.
+
+   Go co va cap quyen la HAI viec khac nhau, de tuong la mot:
+     - co `chi_tan_phat` : man nay co danh cho gara khong?
+     - bang `permissions`: nhom nay duoc lam gi tren man do?
+   Thieu ve nao cung ra cung mot hien tuong "khong thay man", nen luc thu de
+   tuong da xong. Migration 000092 va 000091 va chot chan nay de khoi lap lai. */
+if (in_array('chi_tan_phat', $cot('modules'), true)){
+    $idManager = (int) $pdo->query("SELECT id FROM `groups` WHERE name = 'Manager'")->fetchColumn();
+    $thieuQuyen = $pdo->query(
+        "SELECT m.link FROM modules m
+          WHERE m.chi_tan_phat = 0
+            AND NOT EXISTS (SELECT 1 FROM permissions pe
+                             WHERE pe.module_id = m.id AND pe.group_id = $idManager
+                               AND pe.role = 'view')
+          ORDER BY m.link"
+    )->fetchAll(PDO::FETCH_COLUMN);
+
+    ok(empty($thieuQuyen),
+       'Moi man mo cho gara deu co quyen `view` cho nhom Manager',
+       'Thieu: ' . implode(', ', $thieuQuyen)
+       . ' — go co chi_tan_phat xong phai cap quyen, khong thi man van khong hien');
+}
+
+// ---------------------------------------------------------------------------
 section('Cho quen — bang co garage_id thi model phai bat _theoGara');
 
 /* Bảng có cột `garage_id` mà model của nó chưa bật cờ là bảng KHÔNG được chặn.
