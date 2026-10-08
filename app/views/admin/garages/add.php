@@ -75,6 +75,33 @@
                     </div>
                 </div>
 
+                <?php /* TÀI KHOẢN CHỦ GARA — khai luôn ở đây thay vì bắt sang màn
+                         Người dùng. Tạo gara xong mà chưa có ai đăng nhập được thì
+                         gara vẫn chưa dùng được, và bước đó rất dễ quên. Để trống
+                         cũng được: gara vẫn tạo, cấp tài khoản sau ở màn Người dùng. */ ?>
+                <div class="card-body border-top bg-light">
+                    <h6 class="mb-1"><i class="fas fa-user-shield mr-1"></i> Tài khoản chủ gara
+                        <span class="text-muted small">(không bắt buộc)</span></h6>
+                    <p class="text-muted small mb-2">
+                        Tạo sẵn một tài khoản nhóm <b>Manager</b> thuộc gara này. Người đó đăng nhập
+                        tại địa chỉ riêng của gara.
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group col-md-4 mb-0">
+                            <label class="mb-1 small">Họ tên</label>
+                            <input type="text" class="form-control" name="chu_name" value="{{!empty($old['chu_name'])?$old['chu_name']:''}}"/>
+                        </div>
+                        <div class="form-group col-md-4 mb-0">
+                            <label class="mb-1 small">Email đăng nhập</label>
+                            <input type="email" class="form-control" name="chu_email" value="{{!empty($old['chu_email'])?$old['chu_email']:''}}"/>
+                        </div>
+                        <div class="form-group col-md-4 mb-0">
+                            <label class="mb-1 small">Mật khẩu <span class="text-muted">(từ 6 ký tự)</span></label>
+                            <input type="password" class="form-control" name="chu_password" autocomplete="new-password"/>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card-footer">
                     <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Thêm mới</button>
                     <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-default"><i class="fas fa-arrow-left mr-1"></i> Quay lại</a>

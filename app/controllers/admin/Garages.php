@@ -96,7 +96,26 @@ class Garages extends Controller {
         $id = $this->__model->add($data);
         if (!empty($data['is_master'])) $this->__model->clearMasterExcept($id);
 
-        Session::flash('msg', 'Thêm ' . $this->labelOne . ' thành công');
+        /* DỰNG BỘ KHUNG — tên miền, kho, nhóm khách, cấu hình web, tài khoản chủ.
+           Một dòng trong bảng `garages` thôi thì gara chưa làm được gì: chưa có
+           website, chưa nhập hàng được, chưa ai đăng nhập được. Trước đây phải
+           đi năm màn khác nhau để khai đủ, quên một thứ thì tới lúc dùng mới
+           biết. Gara tổng thì bỏ qua — nó đã có sẵn mọi thứ từ lâu. */
+        $them = '';
+        if (empty($data['is_master'])){
+            $f  = $this->__request->getFields();
+            $kq = $this->model('MoGaraModel')->dungBoKhung($id, [
+                'name'     => isset($f['chu_name']) ? $f['chu_name'] : '',
+                'email'    => isset($f['chu_email']) ? $f['chu_email'] : '',
+                'password' => isset($f['chu_password']) ? $f['chu_password'] : '',
+            ]);
+            if (!empty($kq['da']))    $them .= ' Đã dựng sẵn: ' . implode(', ', $kq['da']) . '.';
+            /* Việc phụ không dựng được KHÔNG làm hỏng việc tạo gara — nói ra để
+               người dùng biết mà làm nốt, chứ đừng im lặng. */
+            if (!empty($kq['thieu'])) $them .= ' CÒN THIẾU: ' . implode(' ', $kq['thieu']);
+        }
+
+        Session::flash('msg', 'Thêm ' . $this->labelOne . ' thành công.' . $them);
         $this->__response->redirect('admin/' . $this->routeBase);
     }
 

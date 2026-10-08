@@ -57,6 +57,7 @@ $tests = [
     'NoiDungWebGaraTest.php'      => 'NEN TANG — noi dung website theo tung gara (buoc 3)',
     'KhachWebGaraTest.php'        => 'NEN TANG — khach web / don hang / lien he theo gara (buoc 4)',
     'DatHangNoiBoTest.php'        => 'NEN TANG — gara dat hang kho tong, sinh 2 phieu (buoc 6)',
+    'MoGaraTest.php'              => 'NEN TANG — mo gara moi: dung san ten mien/kho/tai khoan (buoc 7)',
 ];
 
 $php      = PHP_BINARY;
