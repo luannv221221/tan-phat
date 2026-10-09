@@ -187,27 +187,38 @@ $tabs = [
             <span class="text-muted"><i class="fas fa-list-ul mr-1"></i> Lấy hàng từ:</span>
 
             <div class="btn-group btn-group-sm" role="group" id="chon-nguon">
-                <?php /* "Giá của gara" / "Giá công ty" — KHÔNG dùng chữ "kho".
-                         Hai nút này chọn BẢNG GIÁ, không phải chọn kho hàng. Dùng
-                         chữ "kho" thì nó trùng nghĩa với Kho › Danh mục kho (nơi
-                         chứa hàng thật, có số lượng) — đã gây hiểu nhầm thật: có
-                         người đi tìm "Kho nhà" trong ô chọn kho của màn Nhập kho,
-                         không thấy, tưởng hệ thống thiếu.
+                <?php /* "Kho nhà" / "Kho tổng" — chốt 09/10/2026, theo yêu cầu.
+                         Đây là từ người dùng đang dùng khi nói chuyện, và cũng là
+                         từ cả hệ thống dùng ở chỗ khác: màn Kho › Đặt hàng kho
+                         tổng, nhãn "Kho tổng" trên các màn danh mục hàng hoá, và
+                         toàn bộ tài liệu triển khai. Để riêng hai nút này nói
+                         "Giá của gara / Giá công ty" là bắt người dùng nhớ hai bộ
+                         từ cho cùng một thứ.
 
-                         Cũng không lấy TÊN GARA làm nhãn: đứng ở gara Tân Phát mà
+                         BẢN TRƯỚC CỐ Ý TRÁNH CHỮ "kho", vì nó trùng nghĩa với
+                         Kho › Danh mục kho (nơi chứa hàng thật, có số lượng) —
+                         đã có người đi tìm "Kho nhà" trong ô chọn kho của màn
+                         Nhập kho, không thấy, tưởng hệ thống thiếu. Chỗ hiểu
+                         nhầm đó là THẬT, nhưng cách chữa không phải là đặt một
+                         từ thứ hai: dòng mô tả ngay dưới hai nút mở đầu bằng
+                         "bảng giá" ở CẢ HAI nguồn (xem veMoTa()), nên nhìn một
+                         cái là biết đang chọn bảng giá chứ không phải chọn kho.
+
+                         Vẫn KHÔNG lấy TÊN GARA làm nhãn: đứng ở gara Tân Phát mà
                          thấy nút "Tân Phát" thì không đoán ra nó khác gì bên kia.
                          Tên gara vẫn còn ở title khi rê chuột. */ ?>
                 <button type="button" data-nguon="gara"
                         class="btn btn-outline-primary <?php echo $nguonMacDinh === 'gara' ? 'active' : ''; ?>"
                         <?php echo $__garaTrong
                             ? 'disabled title="Gara này chưa chọn mặt hàng nào — vào Hàng hoá → Danh mục của gara để dựng"'
-                            : 'title="Hàng của ' . e($garaCuaPhieu['name']) . '"'; ?>>
-                    <i class="fas fa-tags mr-1"></i> Giá của gara
+                            : 'title="Bảng giá của ' . e($garaCuaPhieu['name']) . '"'; ?>>
+                    <i class="fas fa-tags mr-1"></i> Kho nhà
                     <span class="badge badge-light ml-1"><?php echo $__garaTrong ? 'chưa có' : count($partsGara); ?></span>
                 </button>
                 <button type="button" data-nguon="tong"
-                        class="btn btn-outline-primary <?php echo $nguonMacDinh === 'tong' ? 'active' : ''; ?>">
-                    <i class="fas fa-building mr-1"></i> Giá công ty
+                        class="btn btn-outline-primary <?php echo $nguonMacDinh === 'tong' ? 'active' : ''; ?>"
+                        title="Bảng giá chung của công ty">
+                    <i class="fas fa-building mr-1"></i> Kho tổng
                     <span class="badge badge-light ml-1"><?php echo count($partsTong); ?></span>
                 </button>
             </div>
@@ -585,8 +596,13 @@ $tabs = [
 
     function veMoTa(){
         if (!moTaEl) return;
+        /* CẢ HAI CÂU ĐỀU MỞ ĐẦU BẰNG "Bảng giá". Hai nút trên mang chữ "kho",
+           mà "kho" ở đây KHÔNG phải kho chứa hàng (Kho › Danh mục kho, nơi có
+           số lượng tồn) — đã có người đi tìm "Kho nhà" trong ô chọn kho của màn
+           Nhập kho. Dòng này là chỗ nói ra điều đó, nên đừng rút gọn mất chữ
+           "bảng giá" ở một trong hai nhánh. */
         if (nguonDangDung === 'gara'){
-            moTaEl.textContent = 'Giá của gara: những món gara này làm, theo giá riêng của gara.';
+            moTaEl.textContent = 'Bảng giá của gara: những món gara này làm, theo giá riêng của gara.';
         } else if (!NGUON.gara.hang.length && !NGUON.gara.dichvu.length){
             // Nói luôn đường đi tiếp, đừng để người dùng đoán vì sao nút kia mờ
             moTaEl.textContent = 'Bảng giá chung của công ty, giá tham khảo (sửa được trên từng dòng). '
