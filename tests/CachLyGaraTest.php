@@ -484,6 +484,12 @@ $manRiengGara = [
     'products' => 0, 'services' => 0, 'part-categories' => 0, 'attributes' => 0,
     'product-brands' => 0, 'product-origins' => 0, 'product-manufacturers' => 0,
     'product-units' => 0,
+    /* Ton kho dau ky (migration 000095) — man cua GARA: chinh gara moi biet
+       minh dang co bao nhieu hang luc bat dau dung phan mem. Khong lam ro ri
+       gi moi: no chi lap PHIEU NHAP cho kho cua gara dang lam viec, ma
+       `goods_receipts` da bat $_theoGara va `warehouses` cung vay. Co test
+       rieng o TonKhoDauKyTest. */
+    'ton-kho-dau-ky' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);

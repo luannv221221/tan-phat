@@ -38,8 +38,13 @@ $selType = !empty($old['type']) ? $old['type'] : 'nhap_mua';
             <div class="form-row">
                 <div class="form-group col-md-3">
                     <label>Loại phiếu <span class="text-danger">*</span></label>
+                    <?php /* $typesChon, KHÔNG phải $types: loại "Tồn kho đầu kỳ" chỉ
+                             sinh ra từ màn Kho › Tồn kho đầu kỳ, nơi có chốt riêng
+                             (mặt hàng phải chưa có phát sinh ở kho đó). Cho chọn tay
+                             ở đây là đi vòng qua đúng chốt ấy, mà phiếu vẫn mang nhãn
+                             "Tồn kho đầu kỳ" nên nhìn vào tưởng đã qua. */ ?>
                     <select name="type" class="form-control">
-                        @foreach ($types as $k => $label)
+                        @foreach ($typesChon as $k => $label)
                         <option value="{{$k}}" {{$selType==$k?'selected':''}}>{{$label}}</option>
                         @endforeach
                     </select>

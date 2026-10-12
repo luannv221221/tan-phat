@@ -45,6 +45,10 @@ class Goodsreceipts extends Controller {
         $this->__data['content']['routeBase'] = $this->routeBase;
         $this->__data['content']['labelOne']  = $this->labelOne;
         $this->__data['content']['types']     = GoodsReceiptsModel::$types;
+        /* Ô chọn loại ở form THÊM dùng danh sách hẹp hơn: `ton_dau_ky` chỉ sinh
+           ra từ màn Tồn kho đầu kỳ, nơi có chốt riêng. Danh sách + bộ lọc vẫn
+           dùng $types đầy đủ để hiện đúng tên loại phiếu. */
+        $this->__data['content']['typesChon'] = GoodsReceiptsModel::loaiTuChon();
     }
 
     private function formData(){

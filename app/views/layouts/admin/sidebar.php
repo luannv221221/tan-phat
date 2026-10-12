@@ -48,7 +48,11 @@ $menuGroups = [
     'Kế toán'            => ['phieu-thu', 'phieu-chi'],
     /* `dat-hang-kho-tong` dung TRUOC `goods-receipts`: dat hang xong moi co
        phieu nhap de ghi so, di dung mot mach. */
-    'Kho'                => ['dat-hang-kho-tong', 'goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'warehouses', 'warehouse-locations'],
+    /* `ton-kho-dau-ky` xếp CUỐI nhóm Kho, cạnh Danh mục kho: nó là việc làm
+       đúng MỘT LẦN lúc mở sổ, không phải việc hằng ngày — mà menu này xếp theo
+       tần suất dùng thật. Đặt lên đầu thì ngày nào cũng phải đọc lướt qua một
+       mục không bao giờ bấm nữa. Đúng thứ tự khách vẽ trong cây Kho hàng. */
+    'Kho'                => ['dat-hang-kho-tong', 'goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'ton-kho-dau-ky', 'warehouses', 'warehouse-locations'],
     // `garage-catalog` đứng ngay sau `services`: nó là danh mục hàng hoá nhìn
     // từ phía một gara, nên thuộc nhóm Hàng hoá chứ không phải nhóm Hệ thống.
     'Hàng hoá'           => ['products', 'services', 'garage-catalog', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],

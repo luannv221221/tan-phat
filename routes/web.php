@@ -351,6 +351,13 @@ Route::group('admin', function(){
    Route::get('dat-hang-kho-tong',       'admin/dathangkhotong');
    Route::post('dat-hang-kho-tong/dat',  'admin/dathangkhotong/postDat');
 
+   /* TON KHO DAU KY — so gara dang co luc bat dau dung phan mem.
+      Khong co /edit, /delete: import ra PHIEU NHAP NHAP, moi viec soat / ghi
+      so / huy / xoa deu lam o man Phieu nhap kho, noi da co du chot. */
+   Route::get('ton-kho-dau-ky',          'admin/tonkhodauky');
+   Route::get('ton-kho-dau-ky/file-mau', 'admin/tonkhodauky/fileMau');
+   Route::post('ton-kho-dau-ky/import',  'admin/tonkhodauky/postImport');
+
    Route::get('phieu-thu', 'admin/phieuthu');
    Route::get('phieu-chi', 'admin/phieuchi');
 

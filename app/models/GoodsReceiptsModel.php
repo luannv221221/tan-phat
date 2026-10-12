@@ -16,10 +16,47 @@ class GoodsReceiptsModel extends Model {
     protected $_theoGara = true;   // RIÊNG từng gara; số phiếu đánh riêng trong mỗi gara
 
     public static $types = [
-        'nhap_mua'  => 'Nhập mua',
-        'nhap_khac' => 'Nhập khác',
-        'nhap_tra'  => 'Nhập trả lại',
+        'nhap_mua'   => 'Nhập mua',
+        'nhap_khac'  => 'Nhập khác',
+        'nhap_tra'   => 'Nhập trả lại',
+        /* TỒN KHO ĐẦU KỲ (12/10/2026) — số gara đang có lúc bắt đầu dùng phần
+           mềm. Là phiếu nhập để đi qua đúng bộ máy kho đang có, và để ĐẢO
+           NGƯỢC ĐƯỢC khi lỡ import hai lần. Xem controller Tonkhodauky. */
+        'ton_dau_ky' => 'Tồn kho đầu kỳ',
     ];
+
+    /**
+     * Loại phiếu người dùng TỰ CHỌN được ở form Thêm phiếu nhập.
+     *
+     * `ton_dau_ky` KHÔNG nằm trong này: nó chỉ sinh ra từ màn Tồn kho đầu kỳ,
+     * nơi có các chốt riêng (mỗi kho một lần, mặt hàng chưa có phát sinh). Cho
+     * chọn tay ở đây là đi vòng qua đúng những chốt đó — mà vẫn mang nhãn "Tồn
+     * kho đầu kỳ" nên nhìn vào tưởng là đã qua.
+     *
+     * Vẫn giữ trong $types để danh sách và bộ lọc hiện ĐÚNG TÊN loại phiếu.
+     */
+    public static function loaiTuChon(){
+        $r = self::$types;
+        unset($r['ton_dau_ky']);
+        return $r;
+    }
+
+    /** Phiếu tồn đầu kỳ của một kho (bất kể trạng thái) — để chặn lập hai lần */
+    public function tonDauKyCuaKho($warehouseId){
+        return $this->bangGara()
+                    ->where('receipt_type', '=', 'ton_dau_ky')
+                    ->where('warehouse_id', '=', (int) $warehouseId)
+                    ->orderBy('id', 'DESC')->first();
+    }
+
+    /** Mọi phiếu tồn đầu kỳ của gara, mới nhất trước */
+    public function dsTonDauKy(){
+        return $this->bangGara()
+            ->select('`goods_receipts`.*, `warehouses`.`name` AS warehouse_name')
+            ->joinOn('warehouses', 'goods_receipts.warehouse_id', 'warehouses.id')
+            ->where('goods_receipts.receipt_type', '=', 'ton_dau_ky')
+            ->orderBy('goods_receipts.id', 'DESC')->get();
+    }
 
     public function getLists($type = '', $from = '', $to = ''){
         $q = $this->bangGara()
