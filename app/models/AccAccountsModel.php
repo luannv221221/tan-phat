@@ -94,7 +94,11 @@ class AccAccountsModel extends Model {
         $gom = function($pid) use (&$gom, &$ids, &$theoCha){
             if (empty($theoCha[$pid])) return;
             foreach ($theoCha[$pid] as $cid){
-                if (in_array($cid, $ids, true)) return;   // dữ liệu lỗi -> chặn vòng lặp
+                /* `continue`, KHÔNG phải `return`: gặp một id đã duyệt thì bỏ
+                   qua ĐÚNG NÓ rồi đi tiếp, chứ `return` là bỏ luôn mọi anh em
+                   còn lại của nhánh — hậu duệ thiếu một nửa mà không báo gì,
+                   và ô chọn cha lại cho chọn đúng cái đáng ra phải loại. */
+                if (in_array($cid, $ids, true)) continue;   // dữ liệu lỗi -> chặn vòng lặp
                 $ids[] = $cid;
                 $gom($cid);
             }
@@ -120,7 +124,10 @@ class AccAccountsModel extends Model {
     public function add($data){
         $data['create_at'] = date('Y-m-d H:i:s');
         $this->addNew($data);
-        return $this->lastId();
+        /* ÉP INT: lastInsertId() cua PDO tra ve CHUOI. Tra chuoi ra ngoai thi
+           moi phep so sanh chat (in_array($id, $ids, true), $a === $b) deu
+           truot ma khong bao gi — da mat mot luot do test vi dung cho nay. */
+        return (int) $this->lastId();
     }
 
     public function edit($data, $id){

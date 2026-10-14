@@ -85,27 +85,42 @@ if (preg_match("~=>\s*'receipt',~", $sb)){
 section('Route da dang ky — de RoleMiddleware gac duoc');
 
 $rt = file_get_contents($goc . 'routes/web.php');
+/* Khop LONG hon ban dau ("Route::get('phieu-thu', 'admin/phieuthu');" nguyen
+   van): tu 14/10/2026 hai man co nghiep vu that nen khoi route dai ra va duoc
+   can le cho thang cot. Dieu can gac van nguyen — PHAI co route GET, khong thi
+   Route::is() tra TRUE cho duong chua khai va nut hien ra cho moi nhom. */
 foreach (array_keys(LINKS) as $link){
     $ctl = str_replace('-', '', $link);
-    ok(strpos($rt, "Route::get('$link', 'admin/$ctl');") !== false,
+    ok(preg_match("~Route::get\('" . preg_quote($link, '~') . "',\s*'admin/$ctl'\);~", $rt) === 1,
        "Co route GET /admin/$link",
        'Khong khai route thi Route::is() tra TRUE -> nut hien ra cho moi nhom');
 }
 
 // ---------------------------------------------------------------------------
-section('Controller + view giu cho');
+section('Hai man da co nghiep vu that (14/10/2026)');
 
+/* TRUOC 14/10/2026 muc nay kiem dieu NGUOC LAI: hai controller phai tro toi
+   view giu cho `admin/ke-toan/sap-co` va view do phai ton tai. Nay hai man da
+   co nghiep vu that theo tai lieu khach gui, nen lat lai: khong duoc con trang
+   "dang xay dung" nua — de lai la noi doi nguoi dung. */
 foreach (['Phieuthu', 'Phieuchi'] as $ctl){
     $f = $goc . 'app/controllers/admin/' . $ctl . '.php';
     ok(is_file($f), "Co controller $ctl.php");
-    if (is_file($f)){
-        ok(strpos(file_get_contents($f), 'admin/ke-toan/sap-co') !== false,
-           "$ctl tro toi view giu cho dung chung");
-    }
+    if (!is_file($f)) continue;
+    $src = file_get_contents($f);
+    ok(strpos($src, 'admin/ke-toan/sap-co') === false,
+       "$ctl KHONG con tro toi view giu cho");
+    ok(strpos($src, 'AccVoucherBase') !== false,
+       "$ctl dung nghiep vu that (AccVoucherBase)");
 }
-ok(is_file($goc . 'app/views/admin/ke-toan/sap-co.php'),
-   'Co view "dang xay dung"',
-   'Khai route ma khong co view thi bam vao ra 404 — trong nhu hong');
+ok(!is_file($goc . 'app/views/admin/ke-toan/sap-co.php'),
+   'Da bo view "dang xay dung"');
+
+/* Moi duong GHI deu phai co route, khong thi bam Luu ra 404. */
+foreach (['phieu-thu/add', 'phieu-chi/add', 'phieu-thu/in/(\d+)', 'phieu-chi/in/(\d+)',
+          'phieu-thu/huy/(\d+)', 'phieu-chi/huy/(\d+)'] as $d){
+    ok(strpos($rt, "'" . $d . "'") !== false, "Co route `$d`");
+}
 
 // ---------------------------------------------------------------------------
 section('Da khai module + phan quyen trong CSDL');

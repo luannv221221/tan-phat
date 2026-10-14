@@ -1,24 +1,21 @@
 <?php
 
-use App\core\Controller;
+require_once __DIR__ . '/AccVoucherBase.php';
 
 /**
- * KẾ TOÁN — PHIẾU THU. Mới là CHỖ ĐỨNG, chưa có nghiệp vụ.
+ * KẾ TOÁN — PHIẾU THU.
  *
- * Chưa có bảng số liệu, chưa có form: màn hình này chỉ để nút trên menu trái
- * bấm vào có chỗ đến. Khi dựng nghiệp vụ thật thì thay nội dung ở đây và bỏ
- * view admin/ke-toan/sap-co.
+ * Toàn bộ nghiệp vụ nằm ở AccVoucherBase; ở đây chỉ đặt chiều tiền và mấy nhãn
+ * chữ. Phiếu chi là lớp sinh đôi (Phieuchi) — xem ghi chú đầu AccVoucherBase
+ * về việc vì sao hai màn này dùng lớp nền còn mấy màn danh mục thì không.
  *
- * Quyền do RoleMiddleware gác theo module `phieu-thu` (migration 000082).
+ * Quyền do RoleMiddleware gác theo module `phieu-thu` (khai từ migration
+ * 000082, cấp quyền ghi ở 000096).
  */
-class Phieuthu extends Controller {
+class Phieuthu extends AccVoucherBase {
 
-    public function index(){
-        $data = [
-            'sub_content'          => 'admin/ke-toan/sap-co',
-            'page_title'           => 'Phiếu thu',
-            'content'              => ['page_name' => 'Phiếu thu'],
-        ];
-        $this->render('layouts/admin/master_admin', $data);
-    }
+    protected $loai      = 'thu';
+    protected $routeBase = 'phieu-thu';
+    protected $labelOne  = 'phiếu thu';
+    protected $labelMany = 'Phiếu thu';
 }

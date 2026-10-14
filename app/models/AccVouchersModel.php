@@ -117,7 +117,10 @@ class AccVouchersModel extends Model {
     public function add($data){
         $data['create_at'] = date('Y-m-d H:i:s');
         $this->addNew($data);
-        return $this->lastId();
+        /* ÉP INT: lastInsertId() cua PDO tra ve CHUOI. Tra chuoi ra ngoai thi
+           moi phep so sanh chat (in_array($id, $ids, true), $a === $b) deu
+           truot ma khong bao gi — da mat mot luot do test vi dung cho nay. */
+        return (int) $this->lastId();
     }
 
     public function edit($data, $id){

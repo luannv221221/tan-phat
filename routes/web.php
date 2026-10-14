@@ -375,8 +375,24 @@ Route::group('admin', function(){
    Route::post('acc-voucher-types/edit/(\d+)',  'admin/accvouchertypes/postEdit/$1');
    Route::get('acc-voucher-types/delete/(\d+)', 'admin/accvouchertypes/delete/$1');
 
-   Route::get('phieu-thu', 'admin/phieuthu');
-   Route::get('phieu-chi', 'admin/phieuchi');
+   /* PHIEU THU / PHIEU CHI — hai man sinh doi, nghiep vu chung o
+      AccVoucherBase. Khong co duong /delete: chung tu tien chi HUY duoc
+      (status 1 -> 0), xem ghi chu dau AccVouchersModel. */
+   Route::get('phieu-thu',                 'admin/phieuthu');
+   Route::get('phieu-thu/add',             'admin/phieuthu/add');
+   Route::post('phieu-thu/add',            'admin/phieuthu/postAdd');
+   Route::get('phieu-thu/edit/(\d+)',      'admin/phieuthu/edit/$1');
+   Route::post('phieu-thu/edit/(\d+)',     'admin/phieuthu/postEdit/$1');
+   Route::get('phieu-thu/huy/(\d+)',       'admin/phieuthu/huy/$1');
+   Route::get('phieu-thu/in/(\d+)',        'admin/phieuthu/in/$1');
+
+   Route::get('phieu-chi',                 'admin/phieuchi');
+   Route::get('phieu-chi/add',             'admin/phieuchi/add');
+   Route::post('phieu-chi/add',            'admin/phieuchi/postAdd');
+   Route::get('phieu-chi/edit/(\d+)',      'admin/phieuchi/edit/$1');
+   Route::post('phieu-chi/edit/(\d+)',     'admin/phieuchi/postEdit/$1');
+   Route::get('phieu-chi/huy/(\d+)',       'admin/phieuchi/huy/$1');
+   Route::get('phieu-chi/in/(\d+)',        'admin/phieuchi/in/$1');
 
    /* THEM NHANH MOT DONG DANH MUC — nut + canh moi o chon tren moi man.
       Mot duong dung chung; controller tu kiem quyen THEM o dung man danh muc

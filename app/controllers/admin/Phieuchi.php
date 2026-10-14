@@ -1,21 +1,20 @@
 <?php
 
-use App\core\Controller;
+require_once __DIR__ . '/AccVoucherBase.php';
 
 /**
- * KẾ TOÁN — PHIẾU CHI. Mới là CHỖ ĐỨNG, chưa có nghiệp vụ.
+ * KẾ TOÁN — PHIẾU CHI.
  *
- * Xem chú thích ở Phieuthu.php — hai màn này đi cùng một cặp và sẽ dựng chung
- * một đợt.
+ * Lớp sinh đôi của Phieuthu: toàn bộ nghiệp vụ nằm ở AccVoucherBase, ở đây chỉ
+ * đặt chiều tiền và mấy nhãn chữ.
+ *
+ * Quyền do RoleMiddleware gác theo module `phieu-chi` (khai từ migration
+ * 000082, cấp quyền ghi ở 000096).
  */
-class Phieuchi extends Controller {
+class Phieuchi extends AccVoucherBase {
 
-    public function index(){
-        $data = [
-            'sub_content'          => 'admin/ke-toan/sap-co',
-            'page_title'           => 'Phiếu chi',
-            'content'              => ['page_name' => 'Phiếu chi'],
-        ];
-        $this->render('layouts/admin/master_admin', $data);
-    }
+    protected $loai      = 'chi';
+    protected $routeBase = 'phieu-chi';
+    protected $labelOne  = 'phiếu chi';
+    protected $labelMany = 'Phiếu chi';
 }
