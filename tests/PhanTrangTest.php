@@ -147,12 +147,24 @@ section('Moi man hinh danh sach admin deu co phan trang');
 $views = glob($goc . 'app/views/admin/*/lists.php');
 ok(count($views) >= 35, 'Quet duoc >= 35 view danh sach', 'thay ' . count($views));
 
+/* MAN HINH CAY KHONG PHAN TRANG — co y, khong phai quen.
+   Cat trang mot cai cay thi tai khoan con roi sang trang sau, tach khoi cha, va
+   phan thut le mat het y nghia: nguoi doc thay "1111" thut vao ma khong thay
+   "111" dau ca. He thong tai khoan cua mot gara co vai chuc dong, xem mot luot
+   la dung. `part-categories` cung la cay nhung VAN phan trang duoc vi no co the
+   dai hang tram dong — khac nhau o do, nen chi mien cho dung man nay. */
+$mienPhanTrang = [
+    'acc-accounts' => 'cay tai khoan ke toan — cat trang thi con tach khoi cha',
+];
+
 $thieu = [];
 foreach ($views as $v){
+    $thuMuc = basename(dirname($v));
+    if (isset($mienPhanTrang[$thuMuc])) continue;
     $s = file_get_contents($v);
     // View khong dung $dataList (chat, groups, users) co cau truc rieng — bo qua
     if (strpos($s, 'dataList') === false) continue;
-    if (strpos($s, 'phan_trang') === false) $thieu[] = basename(dirname($v));
+    if (strpos($s, 'phan_trang') === false) $thieu[] = $thuMuc;
 }
 ok(empty($thieu), 'Khong view nao con thieu thanh phan trang',
    'thieu: ' . implode(', ', $thieu));

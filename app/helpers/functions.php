@@ -1283,15 +1283,24 @@ function dong_cua_gara($row){
     return (int) $g['is_master'] === 1 ? $cua === null : $cua === (int) $g['id'];
 }
 
-/** Nhãn "Kho tổng" cho dòng của danh mục tổng khi gara (không phải gara tổng) đang xem */
-function nhan_kho_tong($row){
+/**
+ * Nhãn cho dòng của DANH MỤC DÙNG CHUNG khi một gara (không phải gara tổng) xem.
+ *
+ * @param string $nhan  chữ hiện trên nhãn. Mặc định "Kho tổng" vì chỗ dùng đầu
+ *                      tiên là danh mục hàng hoá. Màn nào không nói về hàng thì
+ *                      PHẢI truyền chữ của mình: nhãn "Kho tổng" trên một dòng
+ *                      của danh mục tài khoản kế toán là vô nghĩa, và người đọc
+ *                      sẽ đi tìm xem nó liên quan gì tới kho.
+ * @param string $giaiThich chữ hiện khi rê chuột
+ */
+function nhan_kho_tong($row, $nhan = 'Kho tổng', $giaiThich = 'Của kho tổng — gara không sửa được'){
     if (dong_cua_gara($row)) return '';
     $cua = isset($row['garage_id']) && $row['garage_id'] !== null && $row['garage_id'] !== ''
          ? (int) $row['garage_id'] : null;
     /* Dòng của gara KHÁC thì lẽ ra không hiện ở đây (model đã lọc). Nếu lọt ra
-       thì nói đúng là "của gara khác" chứ không gán cho kho tổng — gán sai là
-       người dùng đi tìm nó trong kho tổng mà không có. */
+       thì nói đúng là "của gara khác" chứ không gán cho phần dùng chung — gán
+       sai là người dùng đi tìm nó ở chỗ không có. */
     return $cua === null
-        ? ' <span class="badge badge-info" title="Hàng của kho tổng — gara không sửa được">Kho tổng</span>'
+        ? ' <span class="badge badge-info" title="' . e($giaiThich) . '">' . e($nhan) . '</span>'
         : ' <span class="badge badge-secondary" title="Của gara khác">Gara khác</span>';
 }

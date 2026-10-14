@@ -37,7 +37,11 @@ section('Menu trai co nhom Ke toan');
    (NFC) — nhìn giống nhau nhưng khác byte, so thẳng là fail oan. */
 $sb = file_get_contents($goc . 'app/views/layouts/admin/sidebar.php');
 
-ok(preg_match("~=>\s*\['phieu-thu',\s*'phieu-chi'\]~", $sb) === 1,
+/* KHONG doi nhom Ke toan chi co DUNG hai link nay. Ban dau khang dinh
+   "=> ['phieu-thu', 'phieu-chi']" khop nguyen van ca mang — toi 14/10/2026 them
+   hai danh muc nen (acc-voucher-types, acc-accounts) la do ngay, trong khi
+   dieu can gac van nguyen: HAI MAN PHIEU PHAI NAM CUNG MOT NHOM. */
+ok(preg_match("~=>\s*\[[^\]]*'phieu-thu'[^\]]*'phieu-chi'[^\]]*\]~", $sb) === 1,
    'sidebar.php co mot nhom chua ca phieu-thu lan phieu-chi',
    'Menu trai dung tu $menuGroups; link nao khong nam trong do thi khong hien');
 

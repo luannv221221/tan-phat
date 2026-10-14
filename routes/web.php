@@ -358,6 +358,23 @@ Route::group('admin', function(){
    Route::get('ton-kho-dau-ky/file-mau', 'admin/tonkhodauky/fileMau');
    Route::post('ton-kho-dau-ky/import',  'admin/tonkhodauky/postImport');
 
+   /* KE TOAN — hai danh muc nen (tai lieu khach gui 14/10/2026).
+      `acc-accounts`      cay tai khoan (111 -> 1111 -> 111A)
+      `acc-voucher-types` loai phieu: ma, ten, thu/chi, cap tai khoan no–co */
+   Route::get('acc-accounts',                 'admin/accaccounts');
+   Route::get('acc-accounts/add',             'admin/accaccounts/add');
+   Route::post('acc-accounts/add',            'admin/accaccounts/postAdd');
+   Route::get('acc-accounts/edit/(\d+)',      'admin/accaccounts/edit/$1');
+   Route::post('acc-accounts/edit/(\d+)',     'admin/accaccounts/postEdit/$1');
+   Route::get('acc-accounts/delete/(\d+)',    'admin/accaccounts/delete/$1');
+
+   Route::get('acc-voucher-types',              'admin/accvouchertypes');
+   Route::get('acc-voucher-types/add',          'admin/accvouchertypes/add');
+   Route::post('acc-voucher-types/add',         'admin/accvouchertypes/postAdd');
+   Route::get('acc-voucher-types/edit/(\d+)',   'admin/accvouchertypes/edit/$1');
+   Route::post('acc-voucher-types/edit/(\d+)',  'admin/accvouchertypes/postEdit/$1');
+   Route::get('acc-voucher-types/delete/(\d+)', 'admin/accvouchertypes/delete/$1');
+
    Route::get('phieu-thu', 'admin/phieuthu');
    Route::get('phieu-chi', 'admin/phieuchi');
 

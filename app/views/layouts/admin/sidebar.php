@@ -45,7 +45,11 @@ $menuGroups = [
     // Kế toán đứng NGAY SAU Bán hàng: phiếu thu sinh ra từ hoá đơn bán,
     // phiếu chi từ phiếu nhập — tiền vào tiền ra là bước kế tiếp của việc
     // bán hàng, chưa phải một khu quản trị riêng.
-    'Kế toán'            => ['phieu-thu', 'phieu-chi'],
+    /* Hai danh mục nền (`acc-accounts`, `acc-voucher-types`) đứng SAU hai màn
+       phiếu, dù phải khai chúng trước mới lập được phiếu: khai một lần rồi
+       gần như không đụng nữa, còn phiếu thu / chi thì ngày nào cũng vào. Menu
+       này xếp theo tần suất dùng thật, không theo thứ tự cài đặt. */
+    'Kế toán'            => ['phieu-thu', 'phieu-chi', 'acc-voucher-types', 'acc-accounts'],
     /* `dat-hang-kho-tong` dung TRUOC `goods-receipts`: dat hang xong moi co
        phieu nhap de ghi so, di dung mot mach. */
     /* `ton-kho-dau-ky` xếp CUỐI nhóm Kho, cạnh Danh mục kho: nó là việc làm
