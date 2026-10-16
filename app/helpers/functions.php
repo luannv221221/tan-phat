@@ -631,6 +631,16 @@ function in_chung_tu(array $ct, $khach, array $dong, array $settings, $urlWord =
     $tong['tax']      = (float) $ct['tax'];
     $tong['total']    = (float) $ct['total'];
 
+    /* BẢO HIỂM: báo giá đi qua hãng bảo hiểm thì phần hãng trả và phần khách
+       trả là hai số khác nhau, khách chỉ phải xem số của mình. Chứng từ không
+       có bảo hiểm thì hai dòng này không in ra — mọi phiếu đều mang thêm một
+       dòng "Bảo hiểm trả 0" là rác giấy. Kẹp lại bằng tổng: gõ nhầm số bảo
+       hiểm vượt tổng mà in ra "khách trả -2.000.000" là nhìn như gara nợ khách.
+    */
+    $tong['baoHiem']  = isset($ct['baoHiem']) ? (float) $ct['baoHiem'] : 0.0;
+    if ($tong['baoHiem'] > $tong['total']) $tong['baoHiem'] = $tong['total'];
+    $tong['khachTra'] = $tong['total'] - $tong['baoHiem'];
+
     require __DIR__ . '/../views/admin/print/chung-tu.php';
 }
 

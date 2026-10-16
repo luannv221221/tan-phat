@@ -68,6 +68,8 @@ class Quotations extends Controller {
         $c['parts']            = $this->hopNhatHang($tong, $gara);
         $c['garaCuaPhieu']     = $garageId > 0 ? $this->__gara->getDetail($garageId) : null;
         $c['partnerDiscounts'] = $this->__partner->groupDiscountMap();
+        /* Hang bao hiem cho o chon "bao hiem tra" (tai lieu 14/10/2026). */
+        $c['insurers']         = $this->model('InsurersModel')->getActive();
     }
 
     /**
@@ -392,6 +394,13 @@ class Quotations extends Controller {
         // Khách vãng lai không có dòng trong `partners`, chỉ còn cái tên trên phiếu
         if (empty($khach) && !empty($item['customer_name'])) $khach = ['name' => $item['customer_name']];
 
+        /* Tên hãng bảo hiểm lấy từ danh mục chứ không chốt vào phiếu: hãng
+           đổi tên thì báo giá cũ in ra tên mới, mà đây là báo giá — chưa phải
+           chứng từ ghi sổ nên không cần đóng băng như số tiền. */
+        $hang = !empty($item['insurer_id'])
+              ? $this->model('InsurersModel')->getDetail((int) $item['insurer_id'])
+              : null;
+
         $ct = [
             'loai'         => 'BÁO GIÁ',
             'so'           => $item['quote_no'],
@@ -405,6 +414,10 @@ class Quotations extends Controller {
             'vatRate'      => $item['vat_rate'],
             'tax'          => $item['tax_amount'],
             'total'        => $item['total_amount'],
+            /* Bảo hiểm trả — in ra thì mẫu tự tách thêm dòng "khách hàng phải
+               trả"; báo giá không qua bảo hiểm thì cả hai dòng không in. */
+            'baoHiem'      => isset($item['bao_hiem_tra']) ? $item['bao_hiem_tra'] : 0,
+            'baoHiemTen'   => !empty($hang) ? $hang['name'] : null,
             // Báo giá chưa phải đòi tiền nên không in số tài khoản
             'hienNganHang' => false,
             'nhanKy'       => ['KHÁCH HÀNG', 'ĐẠI DIỆN BÊN BÁN'],
@@ -464,6 +477,13 @@ class Quotations extends Controller {
             'bien_so_chuan' => $xe['bien_so_chuan'],
             'so_km'         => $xe['so_km'],
             'vehicle_id'    => $xe['vehicle_id'],
+
+            /* BAO HIEM (tai lieu 14/10/2026). Chi luu so BAO HIEM TRA;
+               "khach tra" = tong cong - cot nay, tinh ra luc hien thi.
+               Luu ca hai la hai nguon su that cho cung mot con so: sua dong
+               hang lam tong doi ma "khach tra" da luu thi dung yen. */
+            'insurer_id'    => $this->insurerId($f),
+            'bao_hiem_tra'  => $this->parseTien(isset($f['bao_hiem_tra']) ? $f['bao_hiem_tra'] : 0),
         ];
     }
 
@@ -473,6 +493,23 @@ class Quotations extends Controller {
         $tax  = round($subtotal * $rate / 100, 2);
         $this->__model->edit(['subtotal' => $subtotal, 'tax_amount' => $tax,
             'total_amount' => $subtotal + $tax], $id);
+    }
+
+    /**
+     * Hang bao hiem: phai la dong gara dang lam viec THAY DUOC, khong thi null.
+     * Nhan id nguyen van tu form la gara gan bao gia vao hang noi bo cua gara
+     * khac — va danh muc bao hiem la chung-va-rieng nen chuyen do xay ra duoc.
+     */
+    private function insurerId($f){
+        $id = !empty($f['insurer_id']) ? (int) $f['insurer_id'] : 0;
+        if ($id <= 0) return null;
+        return !empty($this->model('InsurersModel')->getDetail($id)) ? $id : null;
+    }
+
+    /** "1.500.000" -> 1500000. O tien tren form la type=number nhung POST thi tu soan duoc. */
+    private function parseTien($v){
+        $d = preg_replace('/[^\d]/', '', (string) $v);
+        return $d === '' ? 0.0 : (float) $d;
     }
 
     private function customerId(){

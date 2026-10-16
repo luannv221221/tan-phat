@@ -41,7 +41,10 @@ $menuGroups = [
 
        Hai màn cùng sửa MỘT dòng `partners`, nhưng phân vai rõ chứ không trùng
        nhau: khai ở đây, chăm sóc ở kia. */
-    'Bán hàng'           => ['quotations', 'sales-invoices', 'orders', 'partners', 'bao-cao-ban-hang'],
+    /* `insurers` (danh muc bao hiem) dung trong nhom Ban hang, canh `partners`:
+       no la MOT DANH MUC DOI TAC nua, va cho duy nhat dung toi no la luc lap
+       bao gia. Dat thanh nhom rieng cho mot muc thi bam hai lan moi toi noi. */
+    'Bán hàng'           => ['quotations', 'sales-invoices', 'orders', 'partners', 'insurers', 'bao-cao-ban-hang'],
     // Kế toán đứng NGAY SAU Bán hàng: phiếu thu sinh ra từ hoá đơn bán,
     // phiếu chi từ phiếu nhập — tiền vào tiền ra là bước kế tiếp của việc
     // bán hàng, chưa phải một khu quản trị riêng.
@@ -49,7 +52,7 @@ $menuGroups = [
        phiếu, dù phải khai chúng trước mới lập được phiếu: khai một lần rồi
        gần như không đụng nữa, còn phiếu thu / chi thì ngày nào cũng vào. Menu
        này xếp theo tần suất dùng thật, không theo thứ tự cài đặt. */
-    'Kế toán'            => ['phieu-thu', 'phieu-chi', 'acc-voucher-types', 'acc-accounts'],
+    'Kế toán'            => ['phieu-thu', 'phieu-chi', 'bao-cao-ke-toan', 'acc-voucher-types', 'acc-accounts'],
     /* `dat-hang-kho-tong` dung TRUOC `goods-receipts`: dat hang xong moi co
        phieu nhap de ghi so, di dung mot mach. */
     /* `ton-kho-dau-ky` xếp CUỐI nhóm Kho, cạnh Danh mục kho: nó là việc làm

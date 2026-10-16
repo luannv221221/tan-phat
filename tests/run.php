@@ -63,6 +63,7 @@ $tests = [
     'TaiKhoanTatTest.php'         => 'BAO MAT — tat tai khoan thi phai khoa duoc nguoi do that',
     'TonKhoDauKyTest.php'         => 'KHO — nap ton kho dau ky tu file Excel cua khach',
     'KeToanTest.php'              => 'KE TOAN — danh muc tai khoan, loai phieu, phieu thu / chi',
+    'BaoCaoVaBaoHiemTest.php'     => 'KE TOAN — nam bao cao + bao hiem tra / khach tra tren bao gia',
 ];
 
 $php      = PHP_BINARY;

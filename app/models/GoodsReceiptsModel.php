@@ -49,6 +49,41 @@ class GoodsReceiptsModel extends Model {
                     ->orderBy('id', 'DESC')->first();
     }
 
+    /**
+     * TIỀN HÀNG ĐÃ NHẬP MUA từ từng nhà cung cấp, để tính "gara còn nợ nhà cung
+     * cấp bao nhiêu" (báo cáo kế toán, tài liệu 14/10/2026).
+     *
+     * CHỈ loại `nhap_mua` và CHỈ phiếu ĐÃ GHI SỔ. Hai điều kiện đều cần:
+     *   - Phiếu nháp chưa phải khoản phải trả — tính vào là gara tưởng mình nợ
+     *     một món chưa từng nhập.
+     *   - `nhap_khac` / `nhap_tra` / `ton_dau_ky` KHÔNG sinh công nợ: nhập khác
+     *     là điều chỉnh nội bộ, nhập trả là hàng trả lại, tồn đầu kỳ là số dư
+     *     lúc mở sổ. Gộp chúng vào là gara "nợ" chính mình.
+     *
+     * @return array [partner_id => ['ten' => , 'tien' => , 'so_pn' => ]]
+     */
+    public function tienMuaTheoNcc($den = null){
+        list($dkGara, $bd) = $this->dkGara('goods_receipts');
+        $sql = 'SELECT `goods_receipts`.`partner_id` AS `pid`,
+                       `partners`.`name` AS `ten`, `partners`.`code` AS `ma`,
+                       `partners`.`phone` AS `dt`,
+                       COALESCE(SUM(`goods_receipts`.`total_amount`), 0) AS `tien`,
+                       COUNT(*) AS `so_pn`
+                  FROM `goods_receipts`
+                  JOIN `partners` ON `partners`.`id` = `goods_receipts`.`partner_id`
+                 WHERE ' . $dkGara . ' AND `goods_receipts`.`status` = 1
+                   AND `goods_receipts`.`receipt_type` = ?';
+        $bd[] = 'nhap_mua';
+        if ($den !== null){ $sql .= ' AND `goods_receipts`.`receipt_date` <= ?'; $bd[] = $den; }
+
+        $ra = [];
+        foreach ((array) $this->getRaw($sql . ' GROUP BY `goods_receipts`.`partner_id`', $bd) as $r){
+            $ra[(int) $r['pid']] = ['ten' => $r['ten'], 'ma' => $r['ma'], 'dt' => $r['dt'],
+                                    'tien' => (float) $r['tien'], 'so_pn' => (int) $r['so_pn']];
+        }
+        return $ra;
+    }
+
     /** Mọi phiếu tồn đầu kỳ của gara, mới nhất trước */
     public function dsTonDauKy(){
         return $this->bangGara()

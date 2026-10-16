@@ -496,6 +496,15 @@ $manRiengGara = [
        phieu chi tiet cua minh thi chi gara do thay. Co test rieng o
        KeToanTest. */
     'acc-accounts' => 0, 'acc-voucher-types' => 0,
+    /* Bao cao ke toan (migration 000097) — CHI XEM, khong co bang rieng. Moi
+       con so no doc deu di qua model da bat $_theoGara (acc_vouchers,
+       sales_invoices, goods_receipts), nen khong co duong ro moi. */
+    'bao-cao-ke-toan' => 0,
+    /* Danh muc bao hiem (migration 000098) — CHUNG-VA-RIENG nhu danh muc tai
+       khoan: Bao Viet / PVI / PJICO la hang toan quoc, Tan Phat khai san
+       (garage_id NULL); gara them hang dia phuong thi chi gara do thay. Co
+       test rieng o BaoCaoVaBaoHiemTest. */
+    'insurers' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);

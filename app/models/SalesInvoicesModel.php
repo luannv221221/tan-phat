@@ -141,4 +141,39 @@ class SalesInvoicesModel extends Model {
         return $q->orderBy('sales_invoices.invoice_date', 'ASC')
                  ->orderBy('sales_invoices.id', 'ASC')->get();
     }
+
+    /**
+     * TIỀN HÀNG ĐÃ BÁN cho từng khách, để tính "khách còn nợ gara bao nhiêu"
+     * (báo cáo kế toán, tài liệu 14/10/2026).
+     *
+     * CHỈ HOÁ ĐƠN ĐÃ GHI SỔ (`status` = 1): hoá đơn nháp chưa phải là khoản
+     * phải thu — tính vào thì gara đi đòi một món khách chưa từng nợ.
+     *
+     * Dùng `total_amount` (đã gồm thuế) vì đó là số khách phải trả, cũng là số
+     * mà phiếu thu ghi nhận — hai vế phải cùng đơn vị thì trừ nhau mới ra đúng.
+     *
+     * Khách vãng lai (`customer_id` NULL) bị bỏ qua: không có ai để đi đòi, và
+     * gộp họ vào một dòng "không rõ" chỉ làm bảng công nợ nhiễu.
+     *
+     * @return array [partner_id => ['ten' => , 'tien' => , 'so_hd' => ]]
+     */
+    public function tienBanTheoKhach($den = null){
+        list($dkGara, $bd) = $this->dkGara('sales_invoices');
+        $sql = 'SELECT `sales_invoices`.`customer_id` AS `pid`,
+                       `partners`.`name` AS `ten`, `partners`.`code` AS `ma`,
+                       `partners`.`phone` AS `dt`,
+                       COALESCE(SUM(`sales_invoices`.`total_amount`), 0) AS `tien`,
+                       COUNT(*) AS `so_hd`
+                  FROM `sales_invoices`
+                  JOIN `partners` ON `partners`.`id` = `sales_invoices`.`customer_id`
+                 WHERE ' . $dkGara . ' AND `sales_invoices`.`status` = 1';
+        if ($den !== null){ $sql .= ' AND `sales_invoices`.`invoice_date` <= ?'; $bd[] = $den; }
+
+        $ra = [];
+        foreach ((array) $this->getRaw($sql . ' GROUP BY `sales_invoices`.`customer_id`', $bd) as $r){
+            $ra[(int) $r['pid']] = ['ten' => $r['ten'], 'ma' => $r['ma'], 'dt' => $r['dt'],
+                                    'tien' => (float) $r['tien'], 'so_hd' => (int) $r['so_hd']];
+        }
+        return $ra;
+    }
 }

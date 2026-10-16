@@ -394,6 +394,18 @@ Route::group('admin', function(){
    Route::get('phieu-chi/huy/(\d+)',       'admin/phieuchi/huy/$1');
    Route::get('phieu-chi/in/(\d+)',        'admin/phieuchi/in/$1');
 
+   /* BAO CAO KE TOAN — nam bao cao tai lieu yeu cau, gop vao mot man bon
+      the (?tab=). Chi xem, khong co duong ghi nao. */
+   Route::get('bao-cao-ke-toan', 'admin/baocaoketoan');
+
+   /* DANH MUC BAO HIEM — dung khi lap bao gia co phan "bao hiem tra". */
+   Route::get('insurers',              'admin/insurers');
+   Route::get('insurers/add',          'admin/insurers/add');
+   Route::post('insurers/add',         'admin/insurers/postAdd');
+   Route::get('insurers/edit/(\d+)',   'admin/insurers/edit/$1');
+   Route::post('insurers/edit/(\d+)',  'admin/insurers/postEdit/$1');
+   Route::get('insurers/delete/(\d+)', 'admin/insurers/delete/$1');
+
    /* THEM NHANH MOT DONG DANH MUC — nut + canh moi o chon tren moi man.
       Mot duong dung chung; controller tu kiem quyen THEM o dung man danh muc
       tuong ung, nen nut nay khong thanh duong vong qua phan quyen. */

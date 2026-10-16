@@ -151,7 +151,20 @@ section('HTTP that: khach -> xe -> phieu -> chung tu');
 if (!function_exists('curl_init')){ echo "\n[SKIP] PHP khong co curl.\n"; exit(summary()); }
 
 $donSach = function() use ($pdo){
+    /* DON THEO `bien_so_chuan` NUA, khong chi theo khach / xe / phieu.
+       Ba dieu kien duoi deu truot o mot truong hop that: bao gia "lap tay" o
+       cuoi file POST len customer_id + customer_name + bien so, nhung khi
+       controller khong nhan customer_id (khach khong thuoc gara dang dang
+       nhap) thi no luu ca ba cot customer_id / customer_name / vehicle_id la
+       NULL — dong con lai chi mang dau ZZXP o MOI `bien_so_chuan`, va bo don
+       nay khong he nhin vao cot do.
+
+       Hau qua: moi lan chay bo test de sot mot ban nhap trong CSDL that cua
+       nguoi dung. Toi 09/10/2026 da don lai 8 dong nhu vay (tu 16/09). Chinh
+       chu thich o dong 320 noi rang bang nay KHONG luu customer_name khi da
+       chon khach — khong ai noi hai dieu do voi nhau. */
     $pdo->exec("DELETE FROM quotations WHERE customer_name LIKE 'ZZXP%'
+                 OR bien_so_chuan LIKE 'ZZXP%'
                  OR reception_id IN (SELECT id FROM receptions WHERE note = 'ZZXP')
                  OR vehicle_id IN (SELECT id FROM vehicles WHERE bien_so_chuan LIKE 'ZZXP%')");
     $pdo->exec("DELETE FROM warranty_requests WHERE customer_name LIKE 'ZZXP%'");
@@ -388,5 +401,12 @@ $donSach();
 ok((int) $pdo->query("SELECT COUNT(*) FROM vehicles WHERE bien_so_chuan LIKE 'ZZXP%'")->fetchColumn() === 0
    && (int) $pdo->query("SELECT COUNT(*) FROM receptions WHERE note='ZZXP'")->fetchColumn() === 0,
    'Da don sach du lieu test');
+/* CHOT RIENG CHO BAO GIA. Khong gop vao khang dinh tren: bo don truot dung
+   bang nay suot ba tuan (16/09 -> 09/10) va de lai 8 ban nhap trong CSDL that
+   cua nguoi dung, vi khang dinh "da don sach" chi nhin `vehicles` va
+   `receptions`. Mot bang mot khang dinh thi cho nao truot se tu noi ra. */
+ok((int) $pdo->query("SELECT COUNT(*) FROM quotations WHERE bien_so_chuan LIKE 'ZZXP%'")->fetchColumn() === 0,
+   'Da don sach ca BAO GIA mang bien so test',
+   'Bao gia lap tay co the khong gan duoc khach/xe — luc do dau ZZXP chi con o `bien_so_chuan`');
 
 exit(summary());

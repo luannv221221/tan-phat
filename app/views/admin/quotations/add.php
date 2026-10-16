@@ -122,6 +122,35 @@ $tabs = [
                 </div>
             </div>
 
+<?php /* BAO HIEM — tai lieu khach gui 14/10/2026: "khi tao bao gia co muc:
+                     khach tra, bao hiem tra va load ten hang bao hiem".
+
+                     Chi nhap BAO HIEM TRA; "khach tra" = tong cong - so nay, hien
+                     o khoi tong cuoi bang hang. Nhap ca hai thi hai o chong nhau. */ ?>
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label>Hãng bảo hiểm</label>
+                    <select name="insurer_id" class="form-control">
+                        <option value="">— Không có bảo hiểm —</option>
+                        <?php foreach ((array) $insurers as $ins): ?>
+                        <option value="<?php echo (int) $ins['id']; ?>" <?php echo (!empty($old['insurer_id']) && $old['insurer_id'] == $ins['id']) ? 'selected' : ''; ?>>
+                            <?php echo e($ins['name']); ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="form-text text-muted">Khai thêm hãng ở <em>Bán hàng › Danh mục bảo hiểm</em>.</small>
+                </div>
+                <div class="form-group col-md-3">
+                    <label>Bảo hiểm trả</label>
+                    <div class="input-group">
+                        <input type="number" min="0" step="1" name="bao_hiem_tra" id="bao_hiem_tra"
+                               class="form-control text-right" value="{{!empty($old['bao_hiem_tra'])?$old['bao_hiem_tra']:'0'}}"/>
+                        <div class="input-group-append"><span class="input-group-text">₫</span></div>
+                    </div>
+                    <small class="form-text text-muted">Phần còn lại là khách trả.</small>
+                </div>
+            </div>
+
             <?php /* XE CỦA PHIẾU — gara sửa xe thì chứng từ phải nói rõ nó cho
                      chiếc xe nào. Để trống được: bán lẻ phụ tùng qua quầy thì
                      không có xe nào cả. */ ?>
@@ -290,6 +319,18 @@ $tabs = [
                         <tr><th colspan="4" class="text-right">Tổng cộng</th>
                             <th class="text-right text-danger"><span class="js-grand-total">0</span> ₫</th>
                             <th colspan="2"></th></tr>
+                        <?php /* BAO HIEM — anh minh hoa so 3 cua tai lieu. Hai dong nay
+                                 chi hien khi co so bao hiem tra: bao gia thuong (khong
+                                 qua bao hiem) ma bay ra "Bao hiem tra 0 / Khach tra =
+                                 tong cong" la hai dong thua o moi phieu. JS bat/tat. */ ?>
+                        <tr class="js-dong-bh" style="display:none">
+                            <th colspan="4" class="text-right font-weight-normal">Bảo hiểm trả</th>
+                            <th class="text-right font-weight-normal"><span class="js-bh-tra">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
+                        <tr class="js-dong-bh" style="display:none">
+                            <th colspan="4" class="text-right">Khách trả</th>
+                            <th class="text-right text-danger"><span class="js-khach-tra">0</span> ₫</th>
+                            <th colspan="2"></th></tr>
                     </tfoot>
                 </table>
             </div>
@@ -365,6 +406,7 @@ $tabs = [
     var DISC = {!! json_encode((object)$partnerDiscounts, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
 
     var vatEl   = document.getElementById('vat_rate');
+    var bhEl    = document.getElementById('bao_hiem_tra');
     var custSel = document.querySelector('select[name="customer_id"]');
 
     function fmt(n){ return (n || 0).toLocaleString('vi-VN'); }
@@ -390,6 +432,16 @@ $tabs = [
         dat('sub-total',   fmt(sub));
         dat('tax-total',   fmt(tax));
         dat('grand-total', fmt(sub + tax));
+
+        /* BAO HIEM: khach tra = tong cong − bao hiem tra.
+           Go bao hiem tra VUOT tong cong (them mot so 0) thi "khach tra" am,
+           nhin nhu gara no lai khach — kep lai bang tong thay vi de am. */
+        var bh = Math.min(money(bhEl ? bhEl.value : 0), sub + tax);
+        dat('bh-tra',    fmt(bh));
+        dat('khach-tra', fmt(sub + tax - bh));
+        document.querySelectorAll('.js-dong-bh').forEach(function (e){
+            e.style.display = bh > 0 ? '' : 'none';
+        });
 
         document.getElementById('dem-hang').textContent   = bang.hang.dem();
         document.getElementById('dem-dichvu').textContent = bang.dichvu.dem();
@@ -651,6 +703,7 @@ $tabs = [
         });
     }
     vatEl.addEventListener('input', recompute);
+    if (bhEl) bhEl.addEventListener('input', recompute);
 
     ['hang', 'dichvu'].forEach(function (ma){
         if (BAN_DAU[ma].length) BAN_DAU[ma].forEach(function (r){ bang[ma].addRow(r); });

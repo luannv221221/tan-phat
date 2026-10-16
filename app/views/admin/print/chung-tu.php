@@ -224,10 +224,17 @@ tr.tong-cuoi td { font-weight: bold; font-size: 13.5pt; }
         <tr class="tong"><td colspan="7" class="phai">Cộng tiền hàng chưa thuế</td><td class="phai"><?php echo e($tien($tong['subtotal'])); ?></td></tr>
         <tr class="tong"><td colspan="7" class="phai">Thuế GTGT (<?php echo e(rtrim(rtrim(number_format((float) $tong['vat_rate'], 2, '.', ''), '0'), '.')); ?>%)</td><td class="phai"><?php echo e($tien($tong['tax'])); ?></td></tr>
         <tr class="tong-cuoi"><td colspan="7" class="phai">TỔNG CỘNG THANH TOÁN</td><td class="phai"><?php echo e($tien($tong['total'])); ?></td></tr>
+        <?php /* Hai dòng dưới chỉ in khi chứng từ có bảo hiểm trả — xem in_chung_tu(). */ ?>
+        <?php if ($tong['baoHiem'] > 0): ?>
+        <tr class="tong"><td colspan="7" class="phai">Bảo hiểm trả<?php echo !empty($ct['baoHiemTen']) ? ' (' . e($ct['baoHiemTen']) . ')' : ''; ?></td><td class="phai"><?php echo e($tien($tong['baoHiem'])); ?></td></tr>
+        <tr class="tong-cuoi"><td colspan="7" class="phai">KHÁCH HÀNG PHẢI TRẢ</td><td class="phai"><?php echo e($tien($tong['khachTra'])); ?></td></tr>
+        <?php endif; ?>
         </tbody>
     </table>
 
-    <div class="bang-chu">Số tiền bằng chữ: <b><?php echo e(doc_so_tien($tong['total'])); ?></b></div>
+    <?php /* Có bảo hiểm thì đọc số KHÁCH phải trả — đó mới là số khách đưa;
+             đọc tổng cộng là khách tưởng mình phải trả cả phần hãng chịu. */ ?>
+    <div class="bang-chu">Số tiền bằng chữ: <b><?php echo e(doc_so_tien($tong['khachTra'])); ?></b></div>
 
     <?php if (!empty($ct['hienNganHang']) && $s('bank_account') !== ''): ?>
     <div class="khoi-nh">
