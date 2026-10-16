@@ -732,7 +732,19 @@ ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false, 'Gara B 
 
 list($jarTP) = $dangNhap('zz-cl-tp@local.test');
 $mn = $menuTrai($http('GET', "$base/admin", $jarTP));
-ok(strpos($mn, "$base/admin/orders\"") !== false, 'Manager cua Tan Phat VAN thay Don hang web');
+/* THU NGHIEM 16/10/2026 — _KHO_TONG_MENU_GON an nhom "Ban hang" (co `orders`)
+   khoi menu cua gara tong. Nen khang dinh "thay tren menu" chi con dung khi
+   cong tac TAT; tat cong tac la guard nay tu song lai, khong phai sua test.
+
+   Khang dinh THU HAI moi la cai gac chuyen cach ly gara that su: `orders` cua
+   Tan Phat van phai MO DUOC. Giu nguyen vo dieu kien — ban thu chi dong vao
+   menu, khong duoc dong vao quyen. */
+if (!defined('_KHO_TONG_MENU_GON') || !_KHO_TONG_MENU_GON){
+    ok(strpos($mn, "$base/admin/orders\"") !== false, 'Manager cua Tan Phat VAN thay Don hang web');
+} else {
+    ok(strpos($mn, "$base/admin/orders\"") === false,
+       'Menu gon dang bat: Tan Phat khong thay Don hang web tren menu (dung y do)');
+}
 ok($http('GET', "$base/admin/orders", $jarTP)['code'] === 200, 'Manager cua Tan Phat VAN mo duoc Don hang web');
 
 // ---------------------------------------------------------------------------

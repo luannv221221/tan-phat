@@ -64,6 +64,7 @@ $tests = [
     'TonKhoDauKyTest.php'         => 'KHO — nap ton kho dau ky tu file Excel cua khach',
     'KeToanTest.php'              => 'KE TOAN — danh muc tai khoan, loai phieu, phieu thu / chi',
     'BaoCaoVaBaoHiemTest.php'     => 'KE TOAN — nam bao cao + bao hiem tra / khach tra tren bao gia',
+    'MenuGonKhoTongTest.php'      => 'THU NGHIEM — menu gon cho kho tong (_KHO_TONG_MENU_GON)',
 ];
 
 $php      = PHP_BINARY;

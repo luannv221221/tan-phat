@@ -78,6 +78,34 @@ $menuGroups = [
     'Hệ thống'           => ['garages', 'users', 'groups', 'modules', 'settings', 'thong-ke'],
 ];
 
+/**
+ * THỬ NGHIỆM 16/10/2026 — MENU GỌN CHO KHO TỔNG (_KHO_TONG_MENU_GON).
+ *
+ * Kho tổng không bán lẻ, không thu chi với khách, không chăm sóc khách và
+ * không chạy trang web bán hàng — bốn nhóm đó là việc của GARA. Để nguyên
+ * trên menu của Tân Phát thì mỗi lần vào phải đọc lướt qua bốn nhóm không
+ * bao giờ bấm, và người mới nhìn vào không biết đâu mới là việc của mình.
+ *
+ * Đổi `_KHO_TONG_MENU_GON` về false ở config.php là trở lại menu cũ.
+ *
+ * CHỈ ẨN TRÊN MENU. Đường dẫn vẫn vào được — xem ghi chú ở config.php.
+ */
+$anNhom  = [];
+$menuDon = [];
+if (defined('_KHO_TONG_MENU_GON') && _KHO_TONG_MENU_GON && !empty($garaHienTai['is_master'])){
+    $anNhom = ['Bán hàng', 'Kế toán', 'CSKH', 'Quản lý website'];
+
+    /* "Quản lý các gara" ra MỘT MỤC RIÊNG ngoài menu, không nằm trong Hệ thống.
+       Với kho tổng thì đây là màn hình chính của họ — danh sách gara đang dùng
+       phần mềm — chứ không phải một mục cài đặt bấm vài tháng một lần.
+
+       Rút khỏi nhóm Hệ thống luôn: để cả hai chỗ thì cùng một màn hiện hai lần
+       trên một menu, người dùng tưởng là hai thứ khác nhau. */
+    $menuDon['garages'] = 'factory';
+    $menuGroups['Hệ thống'] = array_values(array_diff($menuGroups['Hệ thống'], ['garages']));
+}
+foreach ($anNhom as $g) unset($menuGroups[$g]);
+
 $groupIcons = [
     'Bán hàng'           => 'shopping-cart',
     'Kế toán'            => 'receipt',
@@ -139,6 +167,22 @@ if (!empty($listModules)) {
                 </a>
             </li>
 
+            <?php /* MỤC ĐƠN — màn hình đứng thẳng ngoài menu, không gói trong
+                     nhóm nào. Hiện chỉ dùng cho "Quản lý các gara" ở bản menu
+                     gọn của kho tổng; $menuDon rỗng thì khối này không vẽ gì. */ ?>
+            <?php $veDon = 0; ?>
+            <?php foreach ($menuDon as $link => $ic): if (!isset($allowed[$link])) continue; ?>
+            <?php $veDon++; ?>
+            <li>
+                <a href="<?php echo e(_WEB_URL.'/admin/'.$link); ?>"
+                   class="adm-nav__link <?php echo $isActive($link) ? 'is-active' : ''; ?>"
+                   title="<?php echo e($allowed[$link]['name']); ?>">
+                    <?php echo icon($ic); ?>
+                    <span class="adm-nav__text"><?php echo e($allowed[$link]['name']); ?></span>
+                </a>
+            </li>
+            <?php endforeach; ?>
+
             <?php $drawn = 0; ?>
             <?php foreach ($menuGroups as $groupName => $links): ?>
                 <?php
@@ -154,7 +198,10 @@ if (!empty($listModules)) {
                 // Vạch ngăn khu vực. Chỉ vẽ khi ĐÃ có nhóm nào hiện phía trên —
                 // user quyền hẹp có thể không thấy nhóm nào ở khu trước, lúc đó
                 // vạch sẽ nằm chỏng chơ trên đỉnh menu.
-                $sep = ($drawn > 0 && in_array($groupName, $groupSeparators, true));
+                /* Mục đơn vẽ ở trên thì nhóm ĐẦU TIÊN phải có vạch ngăn, nếu không
+                   "Quản lý các gara" dính liền vào nhóm Kho như thể là mục con. */
+                $sep = ($drawn > 0 && in_array($groupName, $groupSeparators, true))
+                    || ($drawn === 0 && $veDon > 0);
                 $drawn++;
                 ?>
                 <li class="adm-group <?php echo $groupActive ? 'is-open' : ''; ?> <?php echo $sep ? 'adm-group--sep' : ''; ?>">

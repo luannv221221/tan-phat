@@ -24,6 +24,24 @@ define('_DEBUG', Env::get('APP_DEBUG', false) === true);
 // Số phút không hoạt động thì token đăng nhập bị xoá (bản cũ hardcode 15 trong middleware)
 define('_SESSION_IDLE_MINUTES', (int) Env::get('SESSION_IDLE_MINUTES', 15));
 
+/*
+ * THỬ NGHIỆM 16/10/2026 — MENU GỌN CHO KHO TỔNG.
+ *
+ * Bật: trang quản trị của GARA TỔNG (Tân Phát) chỉ còn những nhóm liên quan
+ * tới việc kho tổng thật sự làm — Kho, Hàng hoá, Danh mục xe, Hệ thống — và
+ * "Quản lý các gara" được kéo ra thành mục riêng ngoài menu thay vì nằm trong
+ * Hệ thống. Bốn nhóm Bán hàng / Kế toán / CSKH / Quản lý website bị ẩn.
+ *
+ * CHỈ ẨN TRÊN MENU, không đụng tới phân quyền: gõ thẳng /admin/quotations thì
+ * vẫn vào được. Cố ý như vậy — phân quyền là thứ đang gác thật, sửa nó để thử
+ * một bố cục menu là đánh đổi sai chiều.
+ *
+ * KHÔNG ảnh hưởng gara thường: họ vẫn thấy đủ menu như cũ.
+ *
+ * ĐỔI VỀ false LÀ QUAY LẠI NGUYÊN TRẠNG, không cần chạy SQL hay migration gì.
+ */
+define('_KHO_TONG_MENU_GON', true);
+
 //--- URL ---
 // Bản cũ hardcode '/Unicode/2021/FRAMEWORK/framework_11_12_2021_fix/' theo máy local
 // => đổi máy là hỏng. Nay lấy từ .env, có fallback cho CLI (không có HTTP_HOST).
