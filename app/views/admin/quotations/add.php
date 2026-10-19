@@ -216,22 +216,26 @@ $tabs = [
             <span class="text-muted"><i class="fas fa-list-ul mr-1"></i> Lấy hàng từ:</span>
 
             <div class="btn-group btn-group-sm" role="group" id="chon-nguon">
-                <?php /* "Kho nhà" / "Kho tổng" — chốt 09/10/2026, theo yêu cầu.
-                         Đây là từ người dùng đang dùng khi nói chuyện, và cũng là
-                         từ cả hệ thống dùng ở chỗ khác: màn Kho › Đặt hàng kho
-                         tổng, nhãn "Kho tổng" trên các màn danh mục hàng hoá, và
-                         toàn bộ tài liệu triển khai. Để riêng hai nút này nói
-                         "Giá của gara / Giá công ty" là bắt người dùng nhớ hai bộ
-                         từ cho cùng một thứ.
+                <?php /* "Công ty" / "Kho tổng" — chốt 17/10/2026, theo yêu cầu.
+                         Nút đầu trước đây là "Kho nhà" (chốt 09/10), trước nữa là
+                         "Giá của gara". Đổi lần này là đi theo đúng cách người
+                         dùng nói: đứng ở gara thì hàng của mình là "hàng công ty
+                         mình", còn hàng lấy về từ Tân Phát là "kho tổng".
 
-                         BẢN TRƯỚC CỐ Ý TRÁNH CHỮ "kho", vì nó trùng nghĩa với
-                         Kho › Danh mục kho (nơi chứa hàng thật, có số lượng) —
-                         đã có người đi tìm "Kho nhà" trong ô chọn kho của màn
-                         Nhập kho, không thấy, tưởng hệ thống thiếu. Chỗ hiểu
-                         nhầm đó là THẬT, nhưng cách chữa không phải là đặt một
-                         từ thứ hai: dòng mô tả ngay dưới hai nút mở đầu bằng
-                         "bảng giá" ở CẢ HAI nguồn (xem veMoTa()), nên nhìn một
-                         cái là biết đang chọn bảng giá chứ không phải chọn kho.
+                         CHỮ "công ty" TỪNG CHỈ TÂN PHÁT ở ngay cạnh đây — title
+                         của nút kia và cả hai câu trong veMoTa() đều ghi "bảng
+                         giá chung của công ty". Để nguyên thì một màn hình có
+                         chữ "công ty" mang hai nghĩa ngược nhau, mà hai chỗ đó
+                         cách nhau đúng một con chuột. Đã đổi hết sang "kho
+                         tổng" — sửa nhãn nút mà quên mấy câu kia là tự dựng
+                         một cái bẫy đọc.
+
+                         BỎ CHỮ "kho" Ở NÚT ĐẦU LẠI HOÁ HAY: "kho" trùng nghĩa
+                         với Kho › Danh mục kho (nơi chứa hàng thật, có số
+                         lượng) — đã có người đi tìm "Kho nhà" trong ô chọn kho
+                         của màn Nhập kho, không thấy, tưởng hệ thống thiếu.
+                         Dòng mô tả dưới hai nút vẫn mở đầu bằng "bảng giá" ở
+                         CẢ HAI nguồn (xem veMoTa()), đừng rút gọn mất.
 
                          Vẫn KHÔNG lấy TÊN GARA làm nhãn: đứng ở gara Tân Phát mà
                          thấy nút "Tân Phát" thì không đoán ra nó khác gì bên kia.
@@ -241,12 +245,12 @@ $tabs = [
                         <?php echo $__garaTrong
                             ? 'disabled title="Gara này chưa chọn mặt hàng nào — vào Hàng hoá → Danh mục của gara để dựng"'
                             : 'title="Bảng giá của ' . e($garaCuaPhieu['name']) . '"'; ?>>
-                    <i class="fas fa-tags mr-1"></i> Kho nhà
+                    <i class="fas fa-tags mr-1"></i> Công ty
                     <span class="badge badge-light ml-1"><?php echo $__garaTrong ? 'chưa có' : count($partsGara); ?></span>
                 </button>
                 <button type="button" data-nguon="tong"
                         class="btn btn-outline-primary <?php echo $nguonMacDinh === 'tong' ? 'active' : ''; ?>"
-                        title="Bảng giá chung của công ty">
+                        title="Bảng giá chung của kho tổng (Tân Phát)">
                     <i class="fas fa-building mr-1"></i> Kho tổng
                     <span class="badge badge-light ml-1"><?php echo count($partsTong); ?></span>
                 </button>
@@ -280,7 +284,7 @@ $tabs = [
                 </button>
             </div>
             <div class="card-body table-responsive p-0">
-                <table class="table table-sm mb-0">
+                <table class="table table-sm mb-0 bang-dong-hang">
                     <thead><tr>
                         <th style="width:30%"><?php echo e($t['cot']); ?></th>
                         <th style="width:11%" class="text-right">Số lượng</th>
@@ -333,6 +337,31 @@ $tabs = [
                             <th colspan="2"></th></tr>
                     </tfoot>
                 </table>
+            </div>
+            <?php /* TỔNG TRÊN MÀN HẸP — nằm NGOÀI khung cuộn ngang.
+
+                     Khối <tfoot> ở trên chạy theo lưới cột của bảng: nhãn
+                     "Tổng cộng" gộp 4 cột đầu rồi canh phải, tức nó nằm ở mốc
+                     515px, còn điện thoại chỉ nhìn thấy 333px. Trên máy tính
+                     thì đẹp (cột tiền thẳng hàng với "Thành tiền"), nhưng trên
+                     điện thoại người dùng thấy năm dòng TRỐNG TRƠN dưới bảng
+                     và phải kéo sang phải mới đọc được tổng — mà tổng lại là
+                     con số họ cần nhất.
+
+                     Nên màn hẹp dùng khối này, màn rộng dùng <tfoot>; CSS bật
+                     tắt, chỉ một trong hai hiện (xem admin-theme.css mục 17).
+
+                     KHÔNG phải nguồn số thứ hai: recompute() ghi bằng
+                     querySelectorAll('.js-...') nên mọi ô cùng tên đều được
+                     cập nhật, y như cách hai tab dùng chung một bộ class. */ ?>
+            <div class="card-body py-2 tong-man-hep">
+                <div><span>Tiền hàng hoá</span><span><span class="js-tong-hang">0</span> ₫</span></div>
+                <div><span>Tiền dịch vụ</span><span><span class="js-tong-dichvu">0</span> ₫</span></div>
+                <div><span>Cộng chưa thuế</span><span><span class="js-sub-total">0</span> ₫</span></div>
+                <div><span>Thuế GTGT</span><span><span class="js-tax-total">0</span> ₫</span></div>
+                <div class="tong-man-hep__cuoi"><span>Tổng cộng</span><span class="text-danger"><span class="js-grand-total">0</span> ₫</span></div>
+                <div class="js-dong-bh" style="display:none"><span>Bảo hiểm trả</span><span><span class="js-bh-tra">0</span> ₫</span></div>
+                <div class="js-dong-bh tong-man-hep__cuoi" style="display:none"><span>Khách trả</span><span class="text-danger"><span class="js-khach-tra">0</span> ₫</span></div>
             </div>
         </div>
         <?php endforeach; ?>
@@ -648,19 +677,24 @@ $tabs = [
 
     function veMoTa(){
         if (!moTaEl) return;
-        /* CẢ HAI CÂU ĐỀU MỞ ĐẦU BẰNG "Bảng giá". Hai nút trên mang chữ "kho",
-           mà "kho" ở đây KHÔNG phải kho chứa hàng (Kho › Danh mục kho, nơi có
-           số lượng tồn) — đã có người đi tìm "Kho nhà" trong ô chọn kho của màn
-           Nhập kho. Dòng này là chỗ nói ra điều đó, nên đừng rút gọn mất chữ
-           "bảng giá" ở một trong hai nhánh. */
+        /* CẢ HAI CÂU ĐỀU MỞ ĐẦU BẰNG "Bảng giá". Nút "Kho tổng" mang chữ
+           "kho", mà "kho" ở đây KHÔNG phải kho chứa hàng (Kho › Danh mục kho,
+           nơi có số lượng tồn) — đã có người đi tìm "Kho nhà" (nhãn cũ của nút
+           đầu) trong ô chọn kho của màn Nhập kho, không thấy, tưởng hệ thống
+           thiếu. Dòng này là chỗ nói ra điều đó, nên đừng rút gọn mất chữ
+           "bảng giá" ở một trong hai nhánh.
+
+           "công ty" ở đây là TÂN PHÁT hay là GARA? Từ 17/10/2026 nút đầu tên
+           là "Công ty" (= gara đang lập phiếu), nên mấy câu dưới phải nói "kho
+           tổng", không được nói "công ty" — xem chú thích ở khối hai nút. */
         if (nguonDangDung === 'gara'){
             moTaEl.textContent = 'Bảng giá của gara: những món gara này làm, theo giá riêng của gara.';
         } else if (!NGUON.gara.hang.length && !NGUON.gara.dichvu.length){
             // Nói luôn đường đi tiếp, đừng để người dùng đoán vì sao nút kia mờ
-            moTaEl.textContent = 'Bảng giá chung của công ty, giá tham khảo (sửa được trên từng dòng). '
+            moTaEl.textContent = 'Bảng giá chung của kho tổng, giá tham khảo (sửa được trên từng dòng). '
                                + 'Gara này chưa có danh mục riêng — dựng ở Hàng hoá → Danh mục của gara.';
         } else {
-            moTaEl.textContent = 'Bảng giá chung của công ty, giá tham khảo (sửa được trên từng dòng).';
+            moTaEl.textContent = 'Bảng giá chung của kho tổng, giá tham khảo (sửa được trên từng dòng).';
         }
     }
 

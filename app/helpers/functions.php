@@ -530,6 +530,31 @@ function cau_hinh_in_an($garaId = null){
 
     $ra = ['khong_logo_mac_dinh' => 1];
     foreach ($tu as $k => $cot) $ra[$k] = isset($g[$cot]) && $g[$cot] !== null ? (string) $g[$cot] : '';
+
+    /* Ô GARA TỰ KHAI Ở MÀN CẤU HÌNH ĐÈ LÊN DÒNG `garages`.
+       Logo, tên, địa chỉ, số tài khoản của một gara đặt được ở HAI nơi: Tân
+       Phát khai hộ lúc mở gara (Quản lý gara → sửa, ghi vào `garages`), và
+       chính gara sửa sau đó (Cấu hình, ghi vào `garage_settings`). Chỉ đọc
+       chỗ đầu thì gara tải logo của mình lên ở màn Cấu hình xong giấy tờ in
+       ra vẫn trắng trơn, mà nhìn vào màn Cấu hình thì thấy logo nằm đó — chỗ
+       sai này im lặng, không báo gì.
+       Cái gara tự khai là cái mới hơn và do chính họ đặt, nên nó thắng.
+
+       rieng() CHỨ KHÔNG PHẢI map(): map() lấy Cấu hình chung làm nền, mà nền
+       đó là của Tân Phát — gara chưa điền tên thì tờ báo giá của họ mang tên
+       Tân Phát. Đúng cái $ra đang tránh. */
+    $khoa = ['site_name', 'address', 'hotline', 'email', 'tax_code', 'logo',
+             'bank_name', 'bank_account', 'bank_holder'];
+    /* trongGara(): rieng() lọc theo gara ĐANG LÀM VIỆC, mà hàm này in phiếu của
+       gara $g — hai cái đó khác nhau khi in lại phiếu cũ của gara đã chuyển. Gọi
+       thẳng là lấy nhầm nhận diện của gara đang mở màn hình dán lên phiếu người
+       khác, mà mọi ô đều có giá trị nên không chỗ nào vỡ ra để thấy. */
+    $rieng = \App\core\Model::trongGara((int) $g['id'], function(){
+        return \App\core\Load::model('GarageSettingsModel')->rieng();
+    });
+    foreach ($khoa as $k){
+        if (!empty($rieng[$k])) $ra[$k] = (string) $rieng[$k];
+    }
     return $ra;
 }
 

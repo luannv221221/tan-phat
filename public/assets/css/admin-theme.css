@@ -114,6 +114,44 @@ body.adm-collapsed .adm-brand__tile { width: 40px; height: 40px; border-radius: 
 }
 .adm-brand__tile .ic { width: 28px; height: 28px; stroke-width: 1.5; }
 
+/* Logo gara: contain chứ không cover — cover cắt mất mép logo, mà logo bị xén
+   một bên thì nhìn như ảnh hỏng. Nền trắng vì phần lớn logo là ảnh nền trong. */
+/*
+ * Ô CÓ LOGO THÌ CO THEO LOGO, không ép vào ô vuông 56x56.
+ * Phần lớn logo công ty là chữ nằm ngang (tỉ lệ 4:1 trở lên) — nhét vào ô
+ * vuông thì object-fit:contain tính theo bề ngang, logo chỉ còn cao 12px,
+ * nhìn như ảnh lỗi. Thả bề ngang ra tới gần hết sidebar thì logo chữ đọc
+ * được, mà logo vuông vẫn vừa đúng ô cũ (bề ngang tự dừng ở 56px).
+ *
+ * inline-flex để ô co lại ôm lấy ảnh; .adm-brand có text-align:center nên
+ * nó tự nằm giữa, không cần margin:auto.
+ */
+.adm-brand__tile--logo {
+    display: inline-flex;
+    width: auto; max-width: 100%;
+    height: 56px;
+    background: #fff;
+    border: 1px solid var(--border);
+    padding: 4px;
+}
+.adm-brand__tile--logo img {
+    max-width: 180px; max-height: 100%;
+    object-fit: contain;
+}
+/* Thu gọn: sidebar còn 64px, logo phải về lại cỡ ô vuông nhỏ.
+   Phải kẹp CẢ ảnh, không chỉ cái ô: max-width ở ô chỉ chặn ô, còn ảnh 180px
+   bên trong vẫn vẽ tràn ra ngoài — đo được 115px ảnh trong ô 48px. */
+body.adm-collapsed .adm-brand__tile--logo { width: auto; max-width: 48px; height: 40px; }
+body.adm-collapsed .adm-brand__tile--logo img { max-width: 38px; }
+
+/* Chưa có logo: chữ cái đầu của tên đơn vị */
+.adm-brand__tile--chu {
+    font-size: 24px; font-weight: 700;
+    color: #fff;
+    background: var(--brand-blue);
+}
+body.adm-collapsed .adm-brand__tile--chu { font-size: 18px; }
+
 .adm-brand__name { margin-top: 8px; font-size: 14px; font-weight: 700; color: #1f2937; }
 .adm-brand__role { font-size: 11px; color: var(--text-muted); }
 
@@ -666,4 +704,49 @@ body.adm-auth { background: var(--bg-page); }
     body.adm-collapsed .adm-nav__link { justify-content: flex-start; padding: 0 12px; }
     body.adm-collapsed .adm-sub { display: none; }
     body.adm-collapsed .adm-group.is-open > .adm-sub { display: block !important; }
+}
+
+/* ---------- 17. Bảng dòng hàng (báo giá) trên màn hẹp ---------- */
+/*
+ * Trên điện thoại, bảng nhập dòng hàng chia theo PHẦN TRĂM của màn hình: cột
+ * tên hàng hoá 30% của ~360px chỉ còn ~108px, đọc được vài chữ rồi "…". Mà
+ * tên hàng hoá chính là thứ người lập phiếu cần nhìn nhất để biết mình đang
+ * chọn đúng món.
+ *
+ * .table-responsive bọc ngoài đã cho cuộn ngang sẵn, nhưng cuộn không có tác
+ * dụng gì khi bảng vẫn vừa khít 100% bề ngang — không có gì để mà cuộn tới.
+ * Cho bảng một bề rộng tối thiểu LỚN HƠN màn hình thì cuộn mới thành thật,
+ * và phần trăm lúc này chia trên 760px chứ không phải trên 360px.
+ *
+ * Không ẩn và không xuống dòng cột nào: người dùng đã thử cuộn và thấy ổn,
+ * chỉ xin cột tên to ra (17/10/2026).
+ */
+/* Mặc định ẩn: màn rộng dùng <tfoot> của chính bảng dòng hàng, để cột tiền
+   thẳng hàng với cột "Thành tiền" ở trên. */
+.tong-man-hep { display: none; }
+.tong-man-hep > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+}
+.tong-man-hep > div + div { border-top: 1px solid var(--border); }
+.tong-man-hep__cuoi { font-weight: 700; }
+
+@media (max-width: 767.98px) {
+    .bang-dong-hang { min-width: 760px; }
+    /* Cột đầu = tên hàng hoá / dịch vụ. Đặt cả trên th lẫn td: ô chọn bên
+       trong là .form-control nên tự co theo ô, không tự giữ bề ngang. */
+    .bang-dong-hang > thead > tr > th:first-child,
+    .bang-dong-hang > tbody > tr > td:first-child { min-width: 260px; }
+    /* Số lượng — gõ 4 chữ số mà ô rộng 40px thì không đọc lại được số vừa gõ */
+    .bang-dong-hang > thead > tr > th:nth-child(2),
+    .bang-dong-hang > tbody > tr > td:nth-child(2) { min-width: 76px; }
+
+    /* Khối tổng đổi chỗ: <tfoot> chạy theo lưới cột nên nhãn "Tổng cộng"
+       nằm ở mốc 515px, ngoài vùng 333px nhìn thấy — người dùng thấy mấy
+       dòng trống trơn dưới bảng. Màn hẹp đổi sang khối xếp dọc nằm NGOÀI
+       khung cuộn (xem .tong-man-hep ngay trên). */
+    .bang-dong-hang > tfoot { display: none; }
+    .tong-man-hep { display: block; }
 }

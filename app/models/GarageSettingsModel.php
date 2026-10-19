@@ -18,6 +18,27 @@ class GarageSettingsModel extends Model {
     protected $_primary  = 'id';
     protected $_theoGara = true;
 
+    /**
+     * CHỈ những ô GARA NÀY TỰ KHAI — không trộn Cấu hình chung làm nền.
+     *
+     * map() trộn `site_settings` xuống dưới, tiện cho trang bán hàng (ô nào
+     * chưa khai thì thừa hưởng mặc định). Nhưng với GIẤY TỜ thì cái nền đó là
+     * sai: gara chưa điền tên mà thừa hưởng `site_name` của Tân Phát là tờ báo
+     * giá của gara mang tên Tân Phát — sai người bán. cau_hinh_in_an() vì vậy
+     * phải hỏi riêng cái này.
+     *
+     * Rỗng bị bỏ, cùng lý do với map(): rỗng = "chưa đặt", không phải "xoá".
+     */
+    public function rieng(){
+        $ra = [];
+        foreach ((array) $this->bangGara()->select('`skey`, `svalue`')->get() as $r){
+            if (!isset($r['skey'])) continue;
+            if ($r['svalue'] === null || $r['svalue'] === '') continue;
+            $ra[$r['skey']] = $r['svalue'];
+        }
+        return $ra;
+    }
+
     public function val($key, $default = ''){
         $r = $this->bangGara()->select('`svalue`')->where('skey', '=', $key)->first();
         if (!empty($r) && $r['svalue'] !== null) return (string) $r['svalue'];

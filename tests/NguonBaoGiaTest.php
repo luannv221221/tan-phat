@@ -87,26 +87,38 @@ ok(strpos($v, '$__garaTrong') !== false && strpos($v, 'disabled') !== false,
 ok(strpos($v, 'chưa có') !== false,
    'Nut gara rong ghi ro "chua co" thay vi so 0');
 
-/* NHAN HAI NUT LA "Kho nha" / "Kho tong" — chot 09/10/2026, theo yeu cau.
-   Day la tu nguoi dung dang dung khi noi chuyen, va cung la tu ca he thong dung
-   o cho khac: man Kho > Dat hang kho tong, nhan "Kho tong" tren cac man danh
-   muc hang hoa, va toan bo tai lieu trien khai. De rieng hai nut nay noi mot bo
-   tu khac la bat nguoi dung nho hai bo tu cho cung mot thu.
+/* NHAN HAI NUT LA "Cong ty" / "Kho tong" — chot 17/10/2026, theo yeu cau.
+   Nut dau truoc day la "Kho nha" (chot 09/10), truoc nua la "Gia cua gara". Doi
+   lan nay di theo dung cach nguoi dung noi: dung o gara thi hang cua minh la
+   "hang cong ty minh", con hang lay ve tu Tan Phat la "kho tong".
 
-   BAN TRUOC CO Y TRANH CHU "kho" (va test nay tung khang dinh dung dieu nguoc
-   lai): chu do trung nghia voi Kho > Danh muc kho, noi chua hang that co so
-   luong — da co nguoi di tim "Kho nha" trong o chon kho cua man Nhap kho,
-   khong thay, tuong he thong thieu. Cho hieu nham do la THAT va van con, nen
-   cach chua di xuong dong mo ta: xem khang dinh "Dong mo ta..." ngay duoi. */
+   BO CHU "kho" O NUT DAU LAI HOA HAY: chu do trung nghia voi Kho > Danh muc
+   kho, noi chua hang that co so luong — da co nguoi di tim "Kho nha" trong o
+   chon kho cua man Nhap kho, khong thay, tuong he thong thieu. Cho hieu nham do
+   van con o nut "Kho tong", nen cach chua van nam o dong mo ta: xem khang dinh
+   "Dong mo ta..." ngay duoi. */
 if (preg_match('~id="chon-nguon".*?</div>\s*</div>~su', $v, $mNut)){
     /* BO CHU THICH TRUOC KHI DO. Chinh doan chu thich giai thich lua chon tu
        ngu lai chua day ca hai bo tu — doc thang van ban nguon la bao xanh oan.
        Da mac dung loi nay o ThemKhachHangTest. */
     $nhan = preg_replace('~<\?php.*?\?>~su', '', $mNut[0]);
-    ok(strpos($nhan, 'Kho nhà') !== false && strpos($nhan, 'Kho tổng') !== false,
-       'Hai nut ghi "Kho nha" / "Kho tong"',
+    ok(strpos($nhan, 'Công ty') !== false && strpos($nhan, 'Kho tổng') !== false,
+       'Hai nut ghi "Cong ty" / "Kho tong"',
        'Nhan dang co: ' . trim(preg_replace('~\s+~u', ' ', strip_tags($nhan))));
 }
+
+/* "CONG TY" KHONG DUOC MANG HAI NGHIA TREN CUNG MOT MAN.
+   Nut dau ten la "Cong ty" (= gara dang lap phieu). Truoc 17/10/2026, title cua
+   nut kia va ca hai cau trong veMoTa() deu ghi "bang gia chung cua cong ty" —
+   "cong ty" o do la TAN PHAT. De nguyen thi hai cho cach nhau mot con chuot noi
+   nguoc nhau, va khong co gi vo ra de thay. Da doi het sang "kho tong". */
+$ngoaiNut = preg_replace('~<button\b.*?</button>~su', '', $v);
+$ngoaiNut = preg_replace('~<\?php\s*/\*.*?\*/\s*\?>~su', '', $ngoaiNut);
+preg_match_all('~(?:của|cua)\s+công\s+ty~ui', $ngoaiNut, $mCty);
+ok(empty($mCty[0]),
+   'Khong con cho nao goi kho tong la "cua cong ty"',
+   'Con ' . count($mCty[0]) . ' cho — nut dau da ten la "Cong ty" (gara), '
+   . 'dung chu do cho Tan Phat nua la mot man hinh hai nghia');
 
 /* CHOT CHUA CHO HIEU NHAM: dong mo ta duoi hai nut phai mo dau bang "Bang gia"
    o CA HAI nhanh. Hai nut mang chu "kho" ma khong cho nao noi ro day la bang

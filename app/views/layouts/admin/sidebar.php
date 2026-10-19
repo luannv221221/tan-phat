@@ -144,8 +144,32 @@ if (!empty($listModules)) {
 ?>
 <aside class="adm-sidebar">
 
+    <?php
+    /* NHẬN DIỆN CỦA GARA ĐANG LÀM VIỆC — logo khai ở màn Cấu hình.
+       Trước đây ô này là một cái nhà xám dùng chung cho mọi gara: chủ gara mở
+       trang quản trị của mình ra thấy một hình không phải của mình.
+
+       CHƯA CÓ LOGO thì lấy CHỮ CÁI ĐẦU của tên đơn vị, không để lại cái nhà.
+       Không bỏ trống ô: ở chế độ thu gọn, tên và chức danh bị ẩn (xem
+       .adm-collapsed) nên ô này là thứ DUY NHẤT còn lại trên đầu menu.
+
+       cau_hinh_in_an() chứ không phải $garaHienTai['logo']: gara đặt logo được
+       ở hai nơi (Tân Phát khai hộ ở Quản lý gara, gara tự sửa ở Cấu hình) và
+       hàm đó là chỗ đã gộp hai nguồn, dùng chung với biểu mẫu in — nhờ vậy
+       logo trên menu và logo trên tờ báo giá luôn là một. */
+    $__cf   = cau_hinh_in_an();
+    $__ten  = !empty($garaHienTai['name']) ? $garaHienTai['name']
+            : (!empty($__cf['site_name']) ? $__cf['site_name'] : 'Tân Phát');
+    $__logo = !empty($__cf['logo']) ? media_url($__cf['logo']) : '';
+    ?>
     <a href="<?php echo _WEB_URL.'/admin'; ?>" class="adm-brand">
-        <span class="adm-brand__tile"><?php echo icon('house'); ?></span>
+        <span class="adm-brand__tile <?php echo $__logo === '' ? 'adm-brand__tile--chu' : 'adm-brand__tile--logo'; ?>">
+            <?php if ($__logo !== ''): ?>
+            <img src="<?php echo e($__logo); ?>" alt="<?php echo e($__ten); ?>"/>
+            <?php else: ?>
+            <?php echo e(mb_strtoupper(mb_substr($__ten, 0, 1, 'UTF-8'), 'UTF-8')); ?>
+            <?php endif; ?>
+        </span>
         <?php /* TÊN GARA ĐANG LÀM VIỆC, không viết cứng "Tân Phát": từ
                  07/10/2026 mỗi gara có trang quản trị riêng theo tên miền, và
                  chủ gara Sài Gòn mở admin của mình ra thấy chữ "Tân Phát" ở
