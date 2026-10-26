@@ -8,6 +8,8 @@ foreach ($parts as $p){
         'id'    => (int) $p['id'],
         'label' => $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : ''),
         'price' => (int) (!empty($p['sale_price']) ? $p['sale_price'] : $p['price']),
+        // Ảnh phụ tùng trong ô chọn (26/10/2026) — xem chú thích ở add.php
+        'img'   => !empty($p['image']) ? _WEB_URL . '/public/assets/uploads/parts/' . $p['image'] : '',
     ];
     if ($p['item_type'] === PartsModel::LOAI_DICH_VU) $dichVuJs[] = $row;
     else                                              $hangJs[]   = $row;

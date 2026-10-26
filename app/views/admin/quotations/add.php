@@ -25,6 +25,15 @@ $chiaTab = function (array $ds){
             'id'    => (int) $p['id'],
             'label' => $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : ''),
             'price' => (int) (!empty($p['sale_price']) ? $p['sale_price'] : $p['price']),
+            /* ẢNH PHỤ TÙNG trong ô chọn — theo yêu cầu 26/10/2026. Màn Lập hoá
+               đơn vốn đã có, màn này thì không: cùng một ô chọn, cùng một danh
+               mục, mà bên thấy ảnh bên không.
+
+               theoNguon() đã kèm sẵn `image` (ảnh đại diện, lấy một lượt bằng
+               primaryImageMap() nên không sinh N+1), chỉ là chỗ này không
+               chuyển nó xuống JS. Mặt hàng chưa có ảnh thì để chuỗi rỗng —
+               admin.js vẫn chừa một ô trống cho các dòng thẳng hàng. */
+            'img'   => !empty($p['image']) ? _WEB_URL . '/public/assets/uploads/parts/' . $p['image'] : '',
         ];
         if ($p['item_type'] === PartsModel::LOAI_DICH_VU) $dv[]   = $row;
         else                                              $hang[] = $row;

@@ -295,4 +295,43 @@ ok(substr_count($js, "addEventListener('scroll'") === 1,
    'Chi MOT bo lang nghe cuon cho ca trang',
    'Dang co ' . substr_count($js, "addEventListener('scroll'") . ' bo');
 
+// ---------------------------------------------------------------------------
+section('Anh phu tung trong o chon bao gia (yeu cau 26/10/2026)');
+
+/* Man Lap hoa don von da co anh trong o chon, man Bao gia thi khong — cung mot
+   o chon, cung mot danh muc, ma ben thay anh ben khong.
+
+   Du lieu co san: theoNguon() da gan `image` cho tung dong (lay mot luot bang
+   primaryImageMap() nen khong sinh N+1). Chi la hai view bao gia khong chuyen
+   no xuong JS. */
+foreach (['add', 'edit'] as $man){
+    $v = file_get_contents($goc . 'app/views/admin/quotations/' . $man . '.php');
+    ok(preg_match("~'img'\s*=>~", $v) === 1,
+       "quotations/$man.php: o chon co truyen anh xuong JS");
+    /* Rong thi de CHUOI RONG chu dung bo han khoa: admin.js xet
+       option[data-img] de quyet dinh co chua cho anh hay khong, va mat hang
+       chua co anh van can mot o trong de cac dong thang hang. */
+    ok(preg_match("~'img'\s*=>\s*!empty\(\\\$p\['image'\]\)~", $v) === 1,
+       "quotations/$man.php: mat hang chua co anh thi de chuoi rong");
+}
+
+/* Hai man bao gia va hai man hoa don phai dung CUNG mot duong dan anh. Lech
+   nhau thi mot ben hien anh con mot ben ra o vo, va khong ai nhin ra vi sao. */
+$duong = [];
+foreach (['quotations/add', 'quotations/edit', 'sales-invoices/add', 'sales-invoices/edit'] as $m){
+    $v = file_get_contents($goc . 'app/views/admin/' . $m . '.php');
+    if (preg_match("~'img'\s*=>[^,]*?'(/public/[^']*)'~", $v, $mD)) $duong[$m] = $mD[1];
+}
+ok(count($duong) === 4 && count(array_unique($duong)) === 1,
+   'Bon man dung cung mot duong dan anh phu tung',
+   'Dang co: ' . json_encode($duong, JSON_UNESCAPED_SLASHES));
+
+/* O chua anh da co san trong CSS tu truoc (man hoa don dung) — kiem lai de
+   khong ai go nham khi don dep. */
+foreach (['.ss__thumb', 'span.ss__thumb'] as $c){
+    ok(strpos($css, $c) !== false, "CSS con lop `$c`");
+}
+ok(strpos($js, "option[data-img]") !== false,
+   'admin.js van xet option[data-img] de chua cho anh');
+
 exit(summary());
