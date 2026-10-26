@@ -145,37 +145,36 @@ if (!empty($listModules)) {
 <aside class="adm-sidebar">
 
     <?php
-    /* NHẬN DIỆN CỦA GARA ĐANG LÀM VIỆC — logo khai ở màn Cấu hình.
-       Trước đây ô này là một cái nhà xám dùng chung cho mọi gara: chủ gara mở
-       trang quản trị của mình ra thấy một hình không phải của mình.
+    /* NHẬN DIỆN CỦA ĐƠN VỊ ĐANG LÀM VIỆC — LOGO và TÊN CÔNG TY khai ở màn
+       Cấu hình (chốt 26/10/2026, theo yêu cầu).
 
-       CHƯA CÓ LOGO thì lấy CHỮ CÁI ĐẦU của tên đơn vị, không để lại cái nhà.
-       Không bỏ trống ô: ở chế độ thu gọn, tên và chức danh bị ẩn (xem
-       .adm-collapsed) nên ô này là thứ DUY NHẤT còn lại trên đầu menu.
+       Ô này từng là một cái nhà xám dùng chung, rồi là chữ cái đầu của tên
+       đơn vị. Cả hai đều bị bỏ: chúng là hình thay thế, mà chỗ này phải là
+       nhận diện thật của đơn vị. CHƯA KHAI LOGO thì KHÔNG VẼ Ô NÀO — chỉ còn
+       tên công ty, sạch hơn một chữ cái không mang thông tin gì.
 
-       cau_hinh_in_an() chứ không phải $garaHienTai['logo']: gara đặt logo được
-       ở hai nơi (Tân Phát khai hộ ở Quản lý gara, gara tự sửa ở Cấu hình) và
+       TÊN LẤY TỪ CẤU HÌNH chứ không lấy cột `name` của bảng `garages`: cột đó
+       là tên gara do Tân Phát đặt lúc mở ("Gara mẫu Sài Gòn"), còn ô Tên ở
+       màn Cấu hình là tên doanh nghiệp do chính họ khai ("Công ty TNHH…") —
+       đó mới là thứ chủ gara muốn thấy trên trang quản trị của mình. Chưa khai
+       thì vẫn rơi về tên gara, không để trống.
+
+       cau_hinh_in_an() chứ không đọc thẳng bảng: gara khai nhận diện được ở
+       hai nơi (Tân Phát khai hộ ở Quản lý gara, gara tự sửa ở Cấu hình) và
        hàm đó là chỗ đã gộp hai nguồn, dùng chung với biểu mẫu in — nhờ vậy
-       logo trên menu và logo trên tờ báo giá luôn là một. */
+       logo và tên trên menu luôn khớp với tờ báo giá in ra. */
     $__cf   = cau_hinh_in_an();
-    $__ten  = !empty($garaHienTai['name']) ? $garaHienTai['name']
-            : (!empty($__cf['site_name']) ? $__cf['site_name'] : 'Tân Phát');
+    $__ten  = !empty($__cf['site_name']) ? $__cf['site_name']
+            : (!empty($garaHienTai['name']) ? $garaHienTai['name'] : 'Tân Phát');
     $__logo = !empty($__cf['logo']) ? media_url($__cf['logo']) : '';
     ?>
-    <a href="<?php echo _WEB_URL.'/admin'; ?>" class="adm-brand">
-        <span class="adm-brand__tile <?php echo $__logo === '' ? 'adm-brand__tile--chu' : 'adm-brand__tile--logo'; ?>">
-            <?php if ($__logo !== ''): ?>
+    <a href="<?php echo _WEB_URL.'/admin'; ?>" class="adm-brand <?php echo $__logo === '' ? 'adm-brand--khong-logo' : ''; ?>">
+        <?php if ($__logo !== ''): ?>
+        <span class="adm-brand__tile adm-brand__tile--logo">
             <img src="<?php echo e($__logo); ?>" alt="<?php echo e($__ten); ?>"/>
-            <?php else: ?>
-            <?php echo e(mb_strtoupper(mb_substr($__ten, 0, 1, 'UTF-8'), 'UTF-8')); ?>
-            <?php endif; ?>
         </span>
-        <?php /* TÊN GARA ĐANG LÀM VIỆC, không viết cứng "Tân Phát": từ
-                 07/10/2026 mỗi gara có trang quản trị riêng theo tên miền, và
-                 chủ gara Sài Gòn mở admin của mình ra thấy chữ "Tân Phát" ở
-                 góc trên thì không hiểu mình đang ở đâu.
-                 $garaHienTai do AppServiceProvider::boot() chia sẻ. */ ?>
-        <div class="adm-brand__name"><?php echo e(!empty($garaHienTai['name']) ? $garaHienTai['name'] : 'Tân Phát'); ?></div>
+        <?php endif; ?>
+        <div class="adm-brand__name"><?php echo e($__ten); ?></div>
         <div class="adm-brand__role"><?php echo e(!empty($infoUser['name']) ? $infoUser['name'] : 'Quản trị viên'); ?></div>
     </a>
 

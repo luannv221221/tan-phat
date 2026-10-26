@@ -52,16 +52,38 @@ ok(strpos($sb, 'logo_in_an(') === false,
    'KHONG nhung base64 vao menu',
    'logo_in_an() la cho file Word; menu co o moi trang, nhung anh vao la phinh moi trang');
 
-/* Chua co logo thi phai con MOT THU GI DO trong o: o che do thu gon, ten va
-   chuc danh bi an (.adm-collapsed), o nay la thu duy nhat con lai tren dau menu. */
-ok(strpos($sb, 'adm-brand__tile--chu') !== false,
-   'Chua co logo thi o nhan dien hien chu cai dau cua ten don vi',
-   'De trong thi o che do thu gon dau menu khong con gi');
+/* CHUA KHAI LOGO THI KHONG VE O NAO — chot 26/10/2026, theo yeu cau.
+   Ban truoc do o nay hien CHU CAI DAU cua ten don vi; khach xem roi bao "bo
+   cai chu di, thay bang logo va ten cty trong cau hinh". Chu cai la hinh thay
+   the, ma cho nay phai la nhan dien that. */
+ok(strpos($sb, 'adm-brand__tile--chu') === false,
+   'KHONG con o chu cai dau',
+   'Khach da bao bo: chu cai la hinh thay the, khong mang thong tin gi');
+ok(preg_match('~if\s*\(\s*\$__logo\s*!==\s*\x27\x27\s*\)~', $sb) === 1,
+   'Chi ve o anh KHI CO logo');
+
+/* TEN LAY TU CAU HINH, khong phai cot `name` cua bang `garages`: cot do la ten
+   gara do Tan Phat dat luc mo ("Gara mau Sai Gon"), con o Ten o man Cau hinh
+   la ten doanh nghiep do chinh ho khai. Chua khai thi van roi ve ten gara. */
+ok(preg_match('~\$__ten\s*=\s*!empty\(\$__cf\[\x27site_name\x27\]\)~', $sb) === 1,
+   'Ten tren menu uu tien ten cong ty khai o Cau hinh');
+ok(preg_match('~adm-brand__name[^>]*>\s*<\?php echo e\(\$__ten\)~', $sb) === 1,
+   'Dong ten in bien da gop nguon, khong doc thang bang `garages`');
 
 $css = file_get_contents($goc . 'public/assets/css/admin-theme.css');
-foreach (['adm-brand__tile--chu', 'adm-brand__tile--logo'] as $c){
-    ok(strpos($css, '.' . $c) !== false, "CSS co lop .$c");
-}
+ok(strpos($css, '.adm-brand__tile--logo') !== false, 'CSS co lop .adm-brand__tile--logo');
+ok(strpos($css, '.adm-brand__tile--chu') === false,
+   'CSS khong con lop chu cai dau',
+   'Bo o chu cai thi don luon luat cua no, de lai la rac');
+
+/* TEN CONG TY CO THE DAI ("Cong ty TNHH Phu tung O to Tan Phat" 35 ky tu).
+   Khong kep lai thi ten bon dong day ca menu tut xuong. */
+ok(preg_match('~\.adm-brand__name\s*\{[^}]*line-clamp:\s*2~s', $css) === 1,
+   'Ten cong ty bi kep lai 2 dong');
+/* Chua co logo + thu gon = ca khoi khong con gi de hien -> phai bo khoang dem,
+   khong thi dau menu chua mot mang trang vo co. */
+ok(strpos($css, '.adm-brand--khong-logo') !== false,
+   'Co luat rieng cho truong hop chua khai logo luc thu gon');
 ok(preg_match('~\.adm-brand__tile--logo img\b[^}]*object-fit:\s*contain~s', $css) === 1,
    'Logo dung object-fit: contain',
    'cover cat mat mep logo — logo bi xen mot ben nhin nhu anh hong');

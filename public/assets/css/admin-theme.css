@@ -144,16 +144,26 @@ body.adm-collapsed .adm-brand__tile { width: 40px; height: 40px; border-radius: 
 body.adm-collapsed .adm-brand__tile--logo { width: auto; max-width: 48px; height: 40px; }
 body.adm-collapsed .adm-brand__tile--logo img { max-width: 38px; }
 
-/* Chưa có logo: chữ cái đầu của tên đơn vị */
-.adm-brand__tile--chu {
-    font-size: 24px; font-weight: 700;
-    color: #fff;
-    background: var(--brand-blue);
-}
-body.adm-collapsed .adm-brand__tile--chu { font-size: 18px; }
 
 .adm-brand__name { margin-top: 8px; font-size: 14px; font-weight: 700; color: #1f2937; }
 .adm-brand__role { font-size: 11px; color: var(--text-muted); }
+
+/* TÊN CÔNG TY khai ở Cấu hình có thể dài ("Công ty TNHH Phụ tùng Ô tô Tân
+   Phát" là 35 ký tự). Cho xuống dòng nhưng KẸP LẠI HAI DÒNG: để tự do thì
+   tên bốn dòng đẩy cả menu tụt xuống, mở trang ra không thấy mục nào. */
+.adm-brand__name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+/* CHƯA KHAI LOGO thì không vẽ ô nào — xem ghi chú ở sidebar.php. Lúc thu gọn,
+   tên và chức danh đều bị ẩn, nên cả khối nhận diện không còn gì để hiện:
+   bỏ luôn khoảng đệm, không thì đầu menu chừa một mảng trắng vô cớ. */
+body.adm-collapsed .adm-brand--khong-logo { padding: 0; }
 
 /* ---------- 5. Sidebar: menu ---------- */
 .adm-nav {
