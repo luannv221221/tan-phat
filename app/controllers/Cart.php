@@ -318,7 +318,14 @@ class Cart extends Controller {
         $order = $this->__order->getDetail($orderId);
         Session::flash('lastOrderNo', $order['order_no']);
         Session::flash('lastOrderPay', $pay);
-        Session::flash('lastOrderTotal', $total);
+        /* Lấy tổng từ CHÍNH DÒNG ĐƠN vừa ghi, không lấy biến trong closure.
+           `$total` được gán bên trong closure của transaction() mà không có
+           trong `use`, nên ở đây nó KHÔNG tồn tại: PHP 8 báo "Undefined
+           variable $total" và trang "Đặt hàng thành công" in ra "0 đ" — khách
+           vừa đặt xong nhìn thấy đơn 0 đồng.
+           Đọc `total_amount` của đơn còn đúng hơn cả việc kéo biến ra: đó là
+           con số đã nằm trong CSDL, cũng là con số đi vào hoá đơn sau này. */
+        Session::flash('lastOrderTotal', isset($order['total_amount']) ? $order['total_amount'] : 0);
         $this->__response->redirect('dat-hang/hoan-tat');
     }
 
