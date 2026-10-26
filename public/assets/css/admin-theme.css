@@ -458,15 +458,14 @@ select.form-control { padding-right: 32px; }
 }
 
 .ss__list {
+    /* fixed CHỨ KHÔNG PHẢI absolute: khung .table-responsive bao ngoài có
+       overflow-x:auto nên cắt cả chiều dọc, danh sách absolute bị xén —
+       xem ghi chú dài ở admin.js (ssDangMo). left / top / width / max-height
+       do datCho() trong admin.js đặt, đừng ghi cứng ở đây. */
     display: none;
-    position: absolute;
+    position: fixed;
     z-index: 1050;
-    top: 100%;
-    left: 0;
-    right: 0;
-    max-height: 280px;
-    overflow-y: auto;
-    margin-top: 2px;
+    overflow-y: auto;
     background: #fff;
     border: 1px solid var(--border);
     border-radius: var(--radius-ctl);

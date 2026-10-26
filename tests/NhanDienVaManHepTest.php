@@ -235,4 +235,64 @@ ok($viTriMacDinh !== false && $viTriMedia !== false && $viTriMacDinh < $viTriMed
    'Luat mac dinh (display:none) dung TRUOC @media',
    'Cung do cu the thi luat sau thang — de sau la khoi tong bien mat han');
 
+// ---------------------------------------------------------------------------
+section('O chon hang hoa khong bi khung cuon xen mat (bao 26/10/2026)');
+
+/* CHO HONG: .table-responsive co overflow-x:auto. Theo chuan CSS, overflow-y
+   "visible" dung canh mot overflow-x khac "visible" bi tinh thanh "auto" — tuc
+   khung do CAT CA CHIEU DOC. Danh sach position:absolute ben trong bi xen mat
+   phan thoi ra: do tren dien thoai duoc danh sach cao 233px / khung cuon cao
+   108px, chi con nhin thay 10px. Bam vao o chon ra mot vet trang, tuong hong.
+
+   Chua bang position:fixed — fixed tinh theo khung nhin, khong khung cha nao
+   cat duoc. Doi lai phai TU DAT CHO (datCho() trong admin.js). */
+$js = file_get_contents($goc . 'public/assets/js/admin.js');
+
+ok(preg_match('~\.ss__list\s*\{[^}]*position:\s*fixed~s', $css) === 1,
+   'Danh sach dung position: fixed',
+   'absolute thi bi .table-responsive xen mat');
+ok(!preg_match('~\.ss__list\s*\{[^}]*position:\s*absolute~s', $css),
+   'KHONG con position: absolute');
+
+/* CSS khong duoc ghi cung cho: fixed ma de top:100% / left:0 / right:0 thi
+   danh sach nhay ve goc khung nhin, khong dinh gi toi o nhap. */
+if (preg_match('~\.ss__list\s*\{(.*?)\n\}~s', $css, $mL)){
+    foreach (['top: 100%', 'left: 0', 'right: 0', 'margin-top'] as $cam){
+        ok(strpos($mL[1], $cam) === false,
+           "CSS .ss__list KHONG ghi cung `$cam`",
+           'fixed thi cho do datCho() dat; ghi cung o day la da nhau');
+    }
+}
+
+ok(strpos($js, 'function datCho(') !== false, 'admin.js co datCho() de tu dat cho');
+
+/* BA CHO PHAI GOI datCho(), thieu mot la danh sach dung mot noi o nhap mot neo:
+     - luc mo
+     - luc go (so dong doi -> chieu cao doi)
+     - luc cuon / doi co man hinh */
+ok(substr_count($js, 'datCho()') >= 4,
+   'datCho() duoc goi du o moi cho (mo / go / cuon / doi co): '
+   . substr_count($js, 'datCho()') . ' lan');
+
+/* CAI BAY TINH VI NHAT: scroll cua PHAN TU khong noi bot len window. Dang ky
+   khong co capture thi cuon NGANG trong chinh bang dong hang se khong bao gio
+   toi tay handler — ma do dung la kieu cuon man hep sinh ra nhieu nhat. */
+ok(preg_match('~addEventListener\(\s*.scroll.[\s\S]{0,200}?\}\s*,\s*true\s*\)~', $js) === 1,
+   'Bo lang nghe cuon dang ky o che do CAPTURE (true)',
+   'Khong capture thi cuon ngang trong .table-responsive khong toi duoc handler');
+ok(preg_match('~addEventListener\(\s*.resize.~', $js) === 1,
+   'Co dat lai cho khi doi co man hinh');
+
+/* LAT LEN TREN khi duoi khong du cho — dong hang cuoi cua phieu dai nam sat
+   day man hinh, mo xuong thi danh sach thoi khoi man. */
+ok(preg_match('~list\.style\.bottom\s*=\s*\(~', $js) === 1,
+   'Co nhanh lat danh sach len tren');
+
+/* MOT bo lang nghe cho CA TRANG, khong phai moi o mot bo: phieu hai chuc dong
+   la hai chuc o chon, gan listener cuon cho tung o thi moi lan cuon chay hai
+   chuc ham ma muoi chin cai dang dong. */
+ok(substr_count($js, "addEventListener('scroll'") === 1,
+   'Chi MOT bo lang nghe cuon cho ca trang',
+   'Dang co ' . substr_count($js, "addEventListener('scroll'") . ' bo');
+
 exit(summary());

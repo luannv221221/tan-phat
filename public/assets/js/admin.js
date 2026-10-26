@@ -167,8 +167,55 @@
             }
         }
 
-        function open() { render(''); input.select(); wrap.classList.add('is-open'); }
-        function close() { wrap.classList.remove('is-open'); showSelected(); }
+        /* ĐẶT CHỖ CHO DANH SÁCH — xem ghi chú về ssDangMo ở cuối khối này.
+           Danh sách dùng position:fixed nên KHÔNG tự bám theo ô nhập; mỗi lần
+           mở, mỗi lần gõ (số dòng đổi -> cao đổi) và mỗi lần cuộn đều phải
+           tính lại. Quên một trong ba chỗ là danh sách đứng lại một nơi còn ô
+           nhập đi một nẻo. */
+        function datCho() {
+            var r    = input.getBoundingClientRect();
+            var leVw = document.documentElement.clientWidth;
+            var le   = 8;  // chừa mép màn hình, không dán sát viền
+
+            /* Trên điện thoại, cột tên hàng hoá hẹp hơn tên hàng -> danh sách
+               rộng bằng ô nhập thì tên nào cũng "…". Nới tới 260px (hoặc hết
+               bề ngang màn hình nếu màn còn hẹp hơn thế). */
+            var rong = Math.max(r.width, Math.min(260, leVw - le * 2));
+            var trai = Math.min(r.left, leVw - rong - le);
+            if (trai < le) trai = le;
+
+            var duoi = window.innerHeight - r.bottom - le;
+            var tren = r.top - le;
+            var cao  = Math.min(280, Math.max(duoi, tren));
+
+            list.style.width     = rong + 'px';
+            list.style.left      = trai + 'px';
+            list.style.maxHeight = (cao > 80 ? cao : 80) + 'px';
+
+            /* LẬT LÊN TRÊN khi dưới không đủ chỗ. Dòng hàng cuối của một phiếu
+               dài nằm sát đáy màn hình: mở xuống thì danh sách thòi khỏi màn,
+               người dùng lại phải cuộn trang trong lúc danh sách đang mở. */
+            if (duoi >= cao || duoi >= tren) {
+                list.style.top    = (r.bottom + 2) + 'px';
+                list.style.bottom = 'auto';
+            } else {
+                list.style.top    = 'auto';
+                list.style.bottom = (window.innerHeight - r.top + 2) + 'px';
+            }
+        }
+
+        function open() {
+            render('');
+            input.select();
+            wrap.classList.add('is-open');
+            ssDangMo = { wrap: wrap, datCho: datCho };
+            datCho();
+        }
+        function close() {
+            wrap.classList.remove('is-open');
+            if (ssDangMo && ssDangMo.wrap === wrap) ssDangMo = null;
+            showSelected();
+        }
 
         function pick(i) {
             select.selectedIndex = parseInt(i, 10);
@@ -181,6 +228,7 @@
         input.addEventListener('input', function () {
             wrap.classList.add('is-open');
             render(input.value);
+            datCho();   // lọc xong số dòng đổi -> chiều cao đổi -> phải tính lại
         });
         input.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') { close(); input.blur(); }
@@ -199,6 +247,30 @@
 
         showSelected();
     }
+
+    /* Ô CHỌN ĐANG MỞ — nhiều nhất một ô tại một thời điểm.
+       Giữ ở đây để CẢ TRANG chỉ cần MỘT bộ lắng nghe cuộn/đổi cỡ, thay vì mỗi
+       dòng hàng một bộ. Phiếu hai chục dòng là hai chục ô chọn; gắn listener
+       cuộn cho từng ô thì mỗi lần cuộn chạy hai chục hàm, mà mười chín trong
+       số đó đang đóng. */
+    var ssDangMo = null;
+
+    /* DANH SÁCH DÙNG position:fixed CHỨ KHÔNG PHẢI absolute.
+       Bảng dòng hàng nằm trong .table-responsive, mà .table-responsive có
+       overflow-x:auto — theo chuẩn CSS, overflow-y "visible" đứng cạnh một
+       overflow-x khác "visible" sẽ bị tính thành "auto". Tức khung đó CẮT CẢ
+       CHIỀU DỌC, và danh sách absolute bên trong bị xén mất phần thòi ra.
+       Trên điện thoại đo được: danh sách cao 233px, khung cuộn cao 108px, chỉ
+       còn nhìn thấy 10px — bấm vào ô chọn ra một vệt trắng, tưởng hỏng.
+       (Báo 26/10/2026; chỗ này hỏng từ trước, màn hẹp chỉ làm nó lộ ra.)
+       fixed thì danh sách tính theo khung nhìn, không khung cha nào cắt được.
+       Đổi lại: phải tự đặt chỗ, xem datCho(). */
+    window.addEventListener('scroll', function () {
+        if (ssDangMo) ssDangMo.datCho();
+    }, true);   // capture: cuộn bên trong .table-responsive KHÔNG nổi bọt lên window
+    window.addEventListener('resize', function () {
+        if (ssDangMo) ssDangMo.datCho();
+    });
 
     function initSearchSelects(root) {
         (root || document).querySelectorAll('select.js-search').forEach(buildSearchSelect);
