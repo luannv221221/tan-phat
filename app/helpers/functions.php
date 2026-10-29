@@ -837,6 +837,33 @@ function gara_hien_tai_id(){
     return !empty($g['id']) ? (int) $g['id'] : null;
 }
 
+/**
+ * LĨNH VỰC của đơn vị đang làm việc — 'gara' hoặc 'phu_tung'.
+ *
+ * Yêu cầu 29/10/2026: "thiết kế trong cấu hình hệ thống, cho chọn là gara ô tô
+ * thì hiện ra báo giá hiện tại, nếu không thì coi như bán phụ tùng, thiết bị".
+ *
+ * MẶC ĐỊNH 'gara'. Chưa ai khai gì thì mọi màn giữ nguyên như trước — thêm một
+ * ô cấu hình mà làm biến mất mấy ô trên báo giá của người đang dùng là đổi
+ * hành vi sau lưng họ.
+ *
+ * ĐỌC QUA map() (có trộn Cấu hình chung làm nền), KHÁC với mấy ô nhận diện
+ * trong cau_hinh_in_an(): ở đây thừa hưởng là ĐÚNG — Tân Phát đặt một lần làm
+ * mặc định, gara nào khác ngành thì tự chọn lại. Nhận diện (tên, số tài khoản)
+ * thì ngược lại, thừa hưởng là in nhầm người bán.
+ */
+function linh_vuc_hien_tai(){
+    static $cache = null;
+    if ($cache !== null) return $cache;
+    $v = \App\core\Load::model('GarageSettingsModel')->val('linh_vuc', 'gara');
+    return $cache = ($v === 'phu_tung' ? 'phu_tung' : 'gara');
+}
+
+/** Đơn vị đang làm việc là GARA SỬA XE (không phải chỗ chỉ bán phụ tùng) */
+function la_linh_vuc_gara(){
+    return linh_vuc_hien_tai() === 'gara';
+}
+
 /** Gara làm việc là gara tổng (Tân Phát) — mở các màn "chỉ Tân Phát" */
 function la_gara_tong(){
     $g = gara_hien_tai();

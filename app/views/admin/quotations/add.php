@@ -131,6 +131,20 @@ $tabs = [
                 </div>
             </div>
 
+<?php /* ====================================================================
+                     KHỐI NÀY CHỈ HIỆN VỚI GARA Ô TÔ — yêu cầu 29/10/2026.
+
+                     Chỗ chỉ bán phụ tùng / thiết bị thì Hãng bảo hiểm, Bảo hiểm
+                     trả, Biển số xe và Số km vào là bốn ô thừa ở MỌI phiếu —
+                     khách ghi thẳng trên ảnh minh hoạ "khi bán phụ tùng, thiết
+                     bị không cần phần này". Lĩnh vực khai ở Cấu hình, mặc định
+                     là gara nên ai chưa đụng tới thì không thấy gì đổi.
+
+                     MÀN SỬA BÁO GIÁ CÒN MỘT ĐIỀU KIỆN NỮA, xem quotations/edit.php:
+                     phiếu cũ đã có bảo hiểm / biển số thì vẫn phải hiện, không
+                     thì mở ra sửa một dòng hàng là xoá trắng mấy ô đó.
+                     ==================================================================== */ ?>
+            <?php if (la_linh_vuc_gara()): ?>
 <?php /* BAO HIEM — tai lieu khach gui 14/10/2026: "khi tao bao gia co muc:
                      khach tra, bao hiem tra va load ten hang bao hiem".
 
@@ -189,6 +203,7 @@ $tabs = [
             <script src="{{asset('public/assets/js/xe-danh-muc.js')}}"></script>
             <script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>
             <script src="{{asset('public/assets/js/xe-cua-khach.js')}}"></script>
+            <?php endif; ?>
         </div>
     </div>
 

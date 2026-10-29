@@ -68,6 +68,7 @@ $tests = [
     'NhanDienVaManHepTest.php'    => 'GIAO DIEN — logo gara tren menu + cot ten hang hoa tren mobile',
     'SoChungTuTheoGaraTest.php'   => 'NGHIEP VU — so chung tu theo gara (don web cua gara khong luu duoc)',
     'LoaiPhieuNhapTest.php'       => 'NGHIEP VU — loai phieu nhap phai co ten trong $types',
+    'LinhVucBaoGiaTest.php'       => 'CAU HINH — linh vuc gara / ban phu tung doi khoi tren bao gia',
 ];
 
 $php      = PHP_BINARY;

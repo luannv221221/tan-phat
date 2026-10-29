@@ -38,6 +38,24 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                          mà tên đầy đủ ("Công ty TNHH Phụ tùng Ô tô Tân Phát" là
                          35 ký tự) trong sidebar 232px phải kẹp lại hai dòng mới
                          vừa. Tên viết tắt là chỗ để chủ gara tự chọn cái ngắn. */ ?>
+                <?php /* LĨNH VỰC — yêu cầu 29/10/2026, ảnh minh hoạ khoanh đúng
+                         chỗ này (cạnh Logo). Quyết định màn Lập báo giá có hiện
+                         khối Hãng bảo hiểm / Biển số xe / Số km hay không: chỗ
+                         chỉ bán phụ tùng thì bốn ô đó là ô thừa ở mọi phiếu.
+                         Mặc định "gara ô tô" — thêm một ô cấu hình mà làm biến
+                         mất mấy ô đang dùng là đổi hành vi sau lưng người ta. */ ?>
+                <div class="form-group">
+                    <label>Lĩnh vực</label>
+                    <?php $lv = $s('linh_vuc', 'gara'); ?>
+                    <select name="linh_vuc" class="form-control">
+                        <option value="gara" <?php echo $lv !== 'phu_tung' ? 'selected' : ''; ?>>Gara ô tô (sửa chữa, bảo dưỡng)</option>
+                        <option value="phu_tung" <?php echo $lv === 'phu_tung' ? 'selected' : ''; ?>>Bán phụ tùng, thiết bị</option>
+                    </select>
+                    <small class="form-text text-muted">
+                        Chọn <b>Gara ô tô</b> thì màn Lập báo giá có thêm Hãng bảo hiểm, Bảo hiểm trả,
+                        Biển số xe và Số km vào. Chọn <b>Bán phụ tùng</b> thì báo giá chỉ cần thông tin khách hàng.
+                    </small>
+                </div>
                 <div class="form-group">
                     <label>Tên viết tắt</label>
                     <input type="text" name="site_short_name" class="form-control"

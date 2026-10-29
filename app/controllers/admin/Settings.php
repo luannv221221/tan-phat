@@ -38,7 +38,10 @@ class Settings extends Controller {
                      'og_image', 'logo', 'hotline', 'email', 'address', 'tax_code',
                      'facebook', 'zalo',
                      'bank_name', 'bank_account', 'bank_holder',
-                     'show_car_filter', 'show_topbar'];
+                     'show_car_filter', 'show_topbar',
+                     /* Linh vuc (gara / phu_tung) — quyet dinh man Lap bao gia
+                        co hien khoi bao hiem + xe hay khong. Yeu cau 29/10/2026. */
+                     'linh_vuc'];
 
     function __construct(){
         $this->__model    = $this->model('SettingsModel');

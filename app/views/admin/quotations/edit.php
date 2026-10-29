@@ -118,6 +118,31 @@ $tabs = [
             </div>
         </div>
 
+        <?php
+        /* ====================================================================
+           KHỐI NÀY CHỈ HIỆN VỚI GARA Ô TÔ — yêu cầu 29/10/2026, xem add.php.
+
+           NHƯNG Ở MÀN SỬA CÒN MỘT ĐIỀU KIỆN THỨ HAI, và nó quan trọng hơn:
+           phiếu cũ ĐÃ CÓ bảo hiểm hoặc biển số thì vẫn phải hiện, kể cả khi
+           gara vừa đổi lĩnh vực sang "bán phụ tùng".
+
+           Ẩn vô điều kiện thì mấy ô đó không được gửi lên, mà headerData() đọc
+           `isset($f['bao_hiem_tra']) ? ... : 0` và lien_ket_xe() cũng coi
+           không gửi là để trống — nên chỉ cần mở phiếu cũ ra sửa một dòng hàng
+           rồi bấm Lưu là BẢO HIỂM VÀ BIỂN SỐ BỊ XOÁ TRẮNG, không lời cảnh báo
+           nào. Đổi một ô cấu hình mà làm mất dữ liệu của phiếu đã lập là cái
+           giá không ai chấp nhận được. */
+        $coXeBaoHiem = !empty($sel('insurer_id')) || (float) $sel('bao_hiem_tra', 0) > 0
+                    || trim((string) $sel('bien_so')) !== '' || trim((string) $sel('so_km')) !== '';
+        ?>
+        <?php if (la_linh_vuc_gara() || $coXeBaoHiem): ?>
+        <?php if (!la_linh_vuc_gara()): ?>
+        <div class="alert alert-info py-2 mx-3">
+            <i class="fas fa-info-circle mr-1"></i>
+            Đơn vị đang khai lĩnh vực <b>bán phụ tùng</b>, nhưng phiếu này đã có
+            bảo hiểm / xe nên vẫn hiện để không mất dữ liệu đã nhập.
+        </div>
+        <?php endif; ?>
         <?php /* BAO HIEM — tai lieu khach gui 14/10/2026: "khi tao bao gia co muc:
                      khach tra, bao hiem tra va load ten hang bao hiem".
 
@@ -173,6 +198,7 @@ $tabs = [
         <script src="{{asset('public/assets/js/xe-danh-muc.js')}}"></script>
             <script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>
             <script src="{{asset('public/assets/js/xe-cua-khach.js')}}"></script>
+        <?php endif; ?>
     </div></div>
 
     <div class="card card-outline card-info">
