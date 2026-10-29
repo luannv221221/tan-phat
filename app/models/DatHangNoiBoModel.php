@@ -179,7 +179,16 @@ class DatHangNoiBoModel extends Model {
                 $no  = $m->nextNo();
                 $id  = (int) $m->add([
                     'receipt_no'   => $no,
-                    'receipt_type' => 'mua',
+                    /* 'nhap_mua' CHỨ KHÔNG PHẢI 'mua'. Bản đầu ghi 'mua' — một
+                       giá trị KHÔNG CÓ trong GoodsReceiptsModel::$types, nên:
+                         - màn Phiếu nhập in ra chữ trần "mua" (view rơi về
+                           `?? $item['receipt_type']` nên không ai thấy nó vỡ)
+                         - báo cáo "Gara còn nợ NCC" lọc đúng 'nhap_mua' nên BỎ
+                           SÓT mấy phiếu này: gara nợ kho tổng thật mà báo cáo
+                           không thấy. Phát hiện 29/10/2026, lệch 3.460.000 đ.
+                       Gara mua của kho tổng ĐÚNG LÀ nhập mua — kho tổng là một
+                       nhà cung cấp của gara, xem ghi chú đầu lớp. */
+                    'receipt_type' => 'nhap_mua',
                     'warehouse_id' => (int) $khoNhap['id'],
                     'partner_id'   => (int) $nccTong['id'],
                     'partner_name' => $garaTong['name'],
