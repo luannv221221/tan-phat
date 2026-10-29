@@ -176,6 +176,26 @@ class PartnersModel extends Model {
                     ->get();
     }
 
+    /**
+     * Đang hoạt động, LỌC THEO VAI — cho ô chọn chỉ cần một phía.
+     *
+     * "Nhà cung cấp" = `supplier` + `both`, đúng quy ước của getLists() (xem
+     * ghi chú ở đó): ai được đánh dấu "Cả hai" thì vừa bán cho mình vừa mua
+     * của mình, nên phải có trong cả hai danh sách.
+     *
+     * TÁCH HẲN khỏi getActive() chứ không thêm tham số cho nó: getActive()
+     * đang được gọi ở nhiều màn, mà PHP cho phép truyền thừa tham số không báo
+     * gì — gọi nhầm getActive('supplier') sẽ lặng lẽ trả về CẢ KHÁCH HÀNG, màn
+     * đơn mua hiện ra danh sách chọn có cả khách lẫn nhà cung cấp mà không chỗ
+     * nào vỡ. (Đã viết nhầm đúng như vậy một lần, 29/10/2026.)
+     */
+    public function getActiveTheoLoai($loai){
+        $q = $this->bangGara()->where('status', '=', 1);
+        if ($loai === 'supplier')      $q = $q->whereIn('type', ['supplier', 'both']);
+        elseif ($loai === 'customer')  $q = $q->whereIn('type', ['customer', 'both']);
+        return $q->orderBy('name', 'ASC')->get();
+    }
+
     public function getDetail($id){ return $this->getFirst($id); }
 
     /** [partner_id => % chiết khấu nhóm KH] — cho auto-điền chiết khấu dòng */

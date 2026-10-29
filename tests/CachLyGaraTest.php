@@ -505,6 +505,12 @@ $manRiengGara = [
        (garage_id NULL); gara them hang dia phuong thi chi gara do thay. Co
        test rieng o BaoCaoVaBaoHiemTest. */
     'insurers' => 0,
+    /* Mua hang + serial (migration 000102) — man cua GARA: gara mua hang cua
+       nha cung cap nao, serial nao, la viec rieng cua ho. Ca ba bang deu co
+       garage_id va model deu bat $_theoGara; `purchase_order_items` khong co
+       garage_id nhung luon di qua `po_id` cua mot don DA LAY DUNG GARA. Co
+       test rieng o MuaHangSerialTest. */
+    'purchase-orders' => 0, 'serials' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);

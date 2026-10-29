@@ -133,6 +133,60 @@ function upload_image($key, $subDir, $baseName = 'img'){
     return ['status' => 'ok', 'path' => $dir . $name];
 }
 
+/**
+ * Tải lên BẢN CHỤP CHỨNG TỪ (hoá đơn nhà cung cấp…) — ảnh HOẶC PDF.
+ *
+ * Tách khỏi upload_image() chứ không nới danh sách đuôi của nó: upload_image()
+ * gác bằng getimagesize(), mà PDF thì getimagesize() trả false — nới đuôi
+ * không thôi là mọi PDF đều bị đá, còn bỏ getimagesize() đi là mất lớp gác của
+ * đường ảnh. Hai loại tệp, hai cách kiểm.
+ *
+ * THƯ MỤC NÀY ĐƯỢC WEB PHỤC VỤ nên đuôi tệp là thứ duy nhất ngăn người ta tải
+ * lên một tệp chạy được. Vì vậy:
+ *   - danh sách đuôi là DANH SÁCH TRẮNG, không phải danh sách đen
+ *   - tên tệp do mình đặt lại hoàn toàn (slug + 4 byte ngẫu nhiên), KHÔNG dùng
+ *     lại tên người dùng gửi lên — "hoadon.php.pdf" là một cái tên hợp lệ với
+ *     mắt người mà đổi nghĩa tuỳ cấu hình máy chủ
+ *   - ảnh vẫn phải qua getimagesize(), PDF phải bắt đầu bằng "%PDF-"
+ *
+ * @return array ['status' => none|ok|error, 'path' => ..., 'message' => ...]
+ */
+function upload_chung_tu($key, $subDir, $baseName = 'ct'){
+    $anh      = ['jpg', 'jpeg', 'png', 'webp'];
+    $maxBytes = 8 * 1024 * 1024;   // hoá đơn chụp bằng điện thoại dễ quá 3MB
+
+    if (empty($_FILES[$key]) || !isset($_FILES[$key]['error'])
+        || $_FILES[$key]['error'] === UPLOAD_ERR_NO_FILE){
+        return ['status' => 'none'];
+    }
+    $file = $_FILES[$key];
+    if ($file['error'] !== UPLOAD_ERR_OK){
+        return ['status' => 'error', 'message' => 'Tải file thất bại (mã ' . (int) $file['error'] . ')'];
+    }
+    if ($file['size'] > $maxBytes) return ['status' => 'error', 'message' => 'File vượt quá 8MB'];
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if ($ext !== 'pdf' && !in_array($ext, $anh, true)){
+        return ['status' => 'error', 'message' => 'Chỉ nhận PDF hoặc ảnh: ' . implode(', ', $anh)];
+    }
+
+    if ($ext === 'pdf'){
+        $dau = (string) @file_get_contents($file['tmp_name'], false, null, 0, 5);
+        if ($dau !== '%PDF-') return ['status' => 'error', 'message' => 'File không phải PDF hợp lệ'];
+    } elseif (@getimagesize($file['tmp_name']) === false){
+        return ['status' => 'error', 'message' => 'File không phải ảnh hợp lệ'];
+    }
+
+    $dir = 'public/assets/uploads/' . trim($subDir, '/') . '/';
+    if (!is_dir($dir)) @mkdir($dir, 0755, true);
+    $slug = slugify($baseName); if ($slug === '') $slug = 'ct';
+    $name = $slug . '-' . bin2hex(random_bytes(4)) . '.' . $ext;
+    if (!move_uploaded_file($file['tmp_name'], $dir . $name)){
+        return ['status' => 'error', 'message' => 'Không lưu được file'];
+    }
+    return ['status' => 'ok', 'path' => $dir . $name];
+}
+
 /** URL hiển thị ảnh: giữ nguyên nếu là URL ngoài (http), else ghép _WEB_URL */
 function media_url($path){
     if (empty($path)) return '';

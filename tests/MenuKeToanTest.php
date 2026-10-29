@@ -64,13 +64,17 @@ if (is_array($nhom) && is_array($icon)){
        'thieu icon: ' . implode(', ', $thieu)
        . ' — sidebar.php goi icon($groupIcons[$groupName]) khong co duong lui');
 
-    // Kế toán đứng ngay sau Bán hàng: phiếu thu sinh ra từ hoá đơn bán.
-    $viTriKT = null;
+    /* Kế toán đứng NGAY SAU Bán hàng: phiếu thu sinh ra từ hoá đơn bán.
+       Đo bằng KHOẢNG CÁCH giữa hai nhóm, không phải bằng vị trí tuyệt đối:
+       bản đầu chốt "Kế toán phải ở chỉ số 1" và đỏ ngay khi thêm nhóm Mua
+       hàng lên đầu (29/10/2026) — dù điều nó muốn canh vẫn đúng y nguyên. */
+    $viTriKT = $viTriBH = null;
     foreach ($nhom as $i => $g){
-        if (preg_match("~'" . preg_quote($g, '~') . "'\s*=>\s*\['phieu-thu'~", $sb)) { $viTriKT = $i; break; }
+        if ($viTriKT === null && preg_match("~'" . preg_quote($g, '~') . "'\s*=>\s*\['phieu-thu'~", $sb)) $viTriKT = $i;
+        if ($viTriBH === null && preg_match("~'" . preg_quote($g, '~') . "'\s*=>\s*\['quotations'~", $sb)) $viTriBH = $i;
     }
-    ok($viTriKT !== null && $viTriKT === 1,
-       'Nhom Ke toan dung thu hai, ngay sau Ban hang',
+    ok($viTriKT !== null && $viTriBH !== null && $viTriKT === $viTriBH + 1,
+       'Nhom Ke toan dung NGAY SAU nhom Ban hang',
        'thu tu thuc te: ' . implode(' | ', $nhom));
 }
 

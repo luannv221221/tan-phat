@@ -406,6 +406,25 @@ Route::group('admin', function(){
    Route::post('insurers/edit/(\d+)',  'admin/insurers/postEdit/$1');
    Route::get('insurers/delete/(\d+)', 'admin/insurers/delete/$1');
 
+   /* MUA HANG — don mua + serial (tai lieu 29/10/2026).
+      Don mua la buoc TRUOC phieu nhap kho: ghi mua gi cua ai, serial tung
+      chiec, hoa don NCC. Tu don mua bam mot nut de sinh phieu nhap. */
+   Route::get('purchase-orders',                    'admin/purchaseorders');
+   Route::get('purchase-orders/add',                'admin/purchaseorders/add');
+   Route::post('purchase-orders/add',               'admin/purchaseorders/postAdd');
+   Route::get('purchase-orders/edit/(\d+)',         'admin/purchaseorders/edit/$1');
+   Route::post('purchase-orders/edit/(\d+)',        'admin/purchaseorders/postEdit/$1');
+   Route::get('purchase-orders/delete/(\d+)',       'admin/purchaseorders/delete/$1');
+   Route::get('purchase-orders/chot/(\d+)',         'admin/purchaseorders/chot/$1');
+   Route::get('purchase-orders/mo-lai/(\d+)',       'admin/purchaseorders/moLai/$1');
+   /* POST: sinh ra mot phieu nhap kho that, khong duoc de GET go thang vao
+      dia chi la tao phieu. Chi tao duoc MOT lan — xem controller. */
+   Route::post('purchase-orders/tao-phieu-nhap/(\d+)', 'admin/purchaseorders/taoPhieuNhap/$1');
+
+   /* QUAN LY SERIAL — CHI DOC. Khong co duong ghi nao: serial khai o Don mua,
+      sua o day la tach serial khoi nguon mua. */
+   Route::get('serials', 'admin/serials');
+
    /* THEM NHANH MOT DONG DANH MUC — nut + canh moi o chon tren moi man.
       Mot duong dung chung; controller tu kiem quyen THEM o dung man danh muc
       tuong ung, nen nut nay khong thanh duong vong qua phan quyen. */

@@ -44,6 +44,12 @@ $menuGroups = [
     /* `insurers` (danh muc bao hiem) dung trong nhom Ban hang, canh `partners`:
        no la MOT DANH MUC DOI TAC nua, va cho duy nhat dung toi no la luc lap
        bao gia. Dat thanh nhom rieng cho mot muc thi bam hai lan moi toi noi. */
+    /* MUA HÀNG (29/10/2026) — đứng TRƯỚC Bán hàng, đúng thứ tự tài liệu vẽ và
+       đúng mạch việc: mua về rồi mới bán ra. `partners` có mặt ở CẢ HAI nhóm —
+       tài liệu ghi rõ "nhà cc (link của đối tượng)", tức cùng một màn Đối
+       tượng, vào từ hai lối. Menu chỉ vẽ link user có quyền nên không sinh
+       thêm quyền nào; đây là lối tắt, không phải màn thứ hai. */
+    'Mua hàng'           => ['purchase-orders', 'serials', 'partners'],
     'Bán hàng'           => ['quotations', 'sales-invoices', 'orders', 'partners', 'insurers', 'bao-cao-ban-hang'],
     // Kế toán đứng NGAY SAU Bán hàng: phiếu thu sinh ra từ hoá đơn bán,
     // phiếu chi từ phiếu nhập — tiền vào tiền ra là bước kế tiếp của việc
@@ -107,6 +113,7 @@ if (defined('_KHO_TONG_MENU_GON') && _KHO_TONG_MENU_GON && !empty($garaHienTai['
 foreach ($anNhom as $g) unset($menuGroups[$g]);
 
 $groupIcons = [
+    'Mua hàng'           => 'truck',
     'Bán hàng'           => 'shopping-cart',
     'Kế toán'            => 'receipt',
     'Kho'                => 'warehouse',

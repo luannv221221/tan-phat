@@ -72,6 +72,7 @@ $chungTu = [
     ['stock_takes',    'take_no',       'StockTakesModel'],
     ['receptions',     'reception_no',  'ReceptionsModel'],
     ['acc_vouchers',   'voucher_no',    'AccVouchersModel'],
+    ['purchase_orders', 'po_no',        'PurchaseOrdersModel'],
 ];
 
 foreach ($chungTu as $ct){

@@ -63,6 +63,13 @@ $dungMenu = function($laGaraTong) use ($dauFile){
 };
 
 // ---------------------------------------------------------------------------
+/* SO NHOM DEM TU CHINH $menuGroups, khong chot cung mot con so.
+   Ban dau chot "8 nhom" va do ngay khi them nhom Mua hang (29/10/2026) — mot
+   con so dung o thoi diem viet roi thanh sai, trong khi dieu can khang dinh
+   la "tat cong tac thi thay LAI DU cac nhom", bao nhieu cung duoc. */
+$SO_NHOM = preg_match_all("~^    '[^']+'\s*=>\s*\[~m", $sb);
+ok($SO_NHOM >= 8, "Doc duoc so nhom tu menuGroups ($SO_NHOM nhom)");
+
 section('Cong tac — tat la ve nhu cu (chot 1)');
 
 $cfg = file_get_contents($goc . 'config.php');
@@ -104,8 +111,8 @@ $ra = trim((string) shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg
 
 $dong = explode("\n", $ra);
 $nhomTat = isset($dong[0]) ? explode('|', $dong[0]) : [];
-ok(count($nhomTat) === 8,
-   'Tat cong tac: gara tong thay lai du 8 nhom (' . count($nhomTat) . ')',
+ok(count($nhomTat) === $SO_NHOM,
+   "Tat cong tac: gara tong thay lai DU $SO_NHOM nhom (" . count($nhomTat) . ")",
    'Ket qua tien trinh con: ' . $ra);
 ok(isset($dong[1]) && trim($dong[1]) === '0',
    'Tat cong tac: khong con muc don nao — `garages` ve lai trong nhom He thong');
@@ -136,8 +143,8 @@ if ($tong !== null){
 section('Gara thuong KHONG doi gi (chot 2)');
 
 $gara = $dungMenu(false);
-ok($gara !== null && count($gara['nhom']) === 8,
-   'Gara thuong van thay du 8 nhom (' . ($gara === null ? '?' : count($gara['nhom'])) . ')');
+ok($gara !== null && count($gara['nhom']) === $SO_NHOM,
+   "Gara thuong van thay DU $SO_NHOM nhom (" . ($gara === null ? "?" : count($gara['nhom'])) . ")");
 if ($gara !== null){
     foreach (['Bán hàng', 'Kế toán', 'CSKH', 'Quản lý website'] as $n){
         ok(in_array($n, $gara['nhom'], true), "Gara thuong VAN thay nhom \"$n\"");
