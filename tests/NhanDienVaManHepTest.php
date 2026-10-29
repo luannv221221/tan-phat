@@ -159,6 +159,11 @@ ok(strpos($stt, '->xoaKhoa(') !== false,
 ok(strpos(file_get_contents($goc . 'app/models/GarageSettingsModel.php'), 'function xoaKhoa(') !== false,
    'GarageSettingsModel co xoaKhoa()');
 
+/* Ban sua chi chan o nhiem MOI. Phai co migration don phan da chep truoc do,
+   khong thi gara nao lo bam Luu roi van in nham so tai khoan mai. */
+ok(count(glob($goc . 'database/migrations/*_don_cau_hinh_gara_chep_nham.php')) === 1,
+   'Co migration don cau hinh gara da bi chep nham');
+
 // ---------------------------------------------------------------------------
 section('cau_hinh_in_an() — o gara tu khai de len bang `garages` (chot 1 + 2)');
 
@@ -241,6 +246,36 @@ ok(isset($cf3['site_name']) && $cf3['site_name'] === DAU . ' Ten gara tu khai',
    'O de trong khong lam hong cac o khac');
 
 $donDep();
+
+// ---------------------------------------------------------------------------
+section('`garage_settings` chi giu phan KHAC mac dinh chung');
+
+/* BAT BIEN sau khi don (migration 000101) va sau khi sua Settings::save():
+   khong con dong rieng nao TRUNG y nguyen Cau hinh chung.
+
+   Dong trung nhu vay khong lam doi thu gara nhin thay (map() tron chung lam
+   nen), nhung no la DAU VET cua viec chep nham — va no lam gara dong bang o
+   mot ban chup: Tan Phat sua Cau hinh chung thi gara khong theo nua. */
+$trung = (array) $pdo->query(
+    "SELECT gs.garage_id, gs.skey FROM `garage_settings` gs
+       JOIN `site_settings` ss ON ss.`skey` = gs.`skey` AND ss.`svalue` = gs.`svalue`"
+)->fetchAll(PDO::FETCH_ASSOC);
+$mo = [];
+foreach ($trung as $r) $mo[] = 'gara ' . $r['garage_id'] . '/' . $r['skey'];
+ok(empty($trung),
+   'Khong con dong cau hinh gara nao trung y nguyen Cau hinh chung',
+   count($trung) . ' dong: ' . implode(', ', array_slice($mo, 0, 8))
+   . ' — chay migration 000101');
+
+/* CHOT NANG NHAT: khong gara nao dang mang so tai khoan / MST cua Tan Phat. */
+$nhay = (array) $pdo->query(
+    "SELECT gs.garage_id, gs.skey, gs.svalue FROM `garage_settings` gs
+       JOIN `site_settings` ss ON ss.`skey` = gs.`skey` AND ss.`svalue` = gs.`svalue`
+      WHERE gs.`skey` IN ('bank_account','bank_holder','bank_name','tax_code','site_name','email')"
+)->fetchAll(PDO::FETCH_ASSOC);
+ok(empty($nhay),
+   'Khong gara nao mang so tai khoan / MST / ten cua Tan Phat',
+   'Hoa don cua ho dang in nhan dien Tan Phat — khach chuyen tien nham nguoi');
 
 // ---------------------------------------------------------------------------
 section('Bang dong hang tren man hep (chot 3)');
