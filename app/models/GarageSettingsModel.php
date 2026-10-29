@@ -73,6 +73,23 @@ class GarageSettingsModel extends Model {
         return array_merge((array) $chung, $rieng);
     }
 
+    /**
+     * Xoá hẳn dòng riêng của mấy khoá này — gara "thôi không khai riêng nữa",
+     * từ đó về sau tự theo Cấu hình chung.
+     *
+     * Dùng khi người dùng gõ một ô về đúng bằng mặc định chung; xem
+     * Settings::chiKhacMacDinh() về việc vì sao phải xoá chứ không ghi đè.
+     */
+    public function xoaKhoa(array $khoa){
+        $gara = gara_hien_tai_id();
+        if (empty($gara) || empty($khoa)) return false;
+        foreach ($khoa as $k){
+            $r = $this->bangGara()->select('`id`')->where('skey', '=', $k)->first();
+            if (!empty($r['id'])) $this->deleteById((int) $r['id']);
+        }
+        return true;
+    }
+
     /** Lưu nhiều cặp key-value cho GARA LÀM VIỆC (upsert) */
     public function saveMany(array $kv){
         $gara = gara_hien_tai_id();

@@ -33,6 +33,20 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                     <div class="form-group col-md-6"><label>Tên website</label><input type="text" name="site_name" class="form-control" value="{{$s('site_name')}}"/></div>
                     <div class="form-group col-md-6"><label>Slogan</label><input type="text" name="site_slogan" class="form-control" value="{{$s('site_slogan')}}"/></div>
                 </div>
+                <?php /* TÊN VIẾT TẮT — yêu cầu 29/10/2026. Đặt NGAY TRÊN Logo vì
+                         hai ô này đi cùng nhau: menu trái hiện logo rồi tới tên,
+                         mà tên đầy đủ ("Công ty TNHH Phụ tùng Ô tô Tân Phát" là
+                         35 ký tự) trong sidebar 232px phải kẹp lại hai dòng mới
+                         vừa. Tên viết tắt là chỗ để chủ gara tự chọn cái ngắn. */ ?>
+                <div class="form-group">
+                    <label>Tên viết tắt</label>
+                    <input type="text" name="site_short_name" class="form-control"
+                           value="{{$s('site_short_name')}}" placeholder="VD: Tân Phát ETEK"/>
+                    <small class="form-text text-muted">
+                        Hiện ở <b>menu trái trang quản trị</b>, cạnh logo — thay cho tên đầy đủ.
+                        Bỏ trống thì vẫn lấy tên ở ô trên.
+                    </small>
+                </div>
                 <div class="form-group">
                     <label>Logo</label>
                     {!! !empty($settings['logo']) ? '<img src="'.e(media_url($settings['logo'])).'" style="height:48px;background:#fff;border:1px solid #ddd;border-radius:4px;padding:4px;display:block;margin-bottom:6px"/>' : '' !!}

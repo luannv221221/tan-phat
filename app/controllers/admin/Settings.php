@@ -34,7 +34,7 @@ class Settings extends Controller {
            giao diện. Nay biểu mẫu in cũng dùng logo -> phải đặt được.
          - tax_code: đã có sẵn trong CSDL và in trên đầu hoá đơn, nhưng muốn
            sửa thì phải vào thẳng CSDL. */
-    private $keys = ['site_name', 'site_slogan', 'meta_description', 'meta_keywords',
+    private $keys = ['site_name', 'site_short_name', 'site_slogan', 'meta_description', 'meta_keywords',
                      'og_image', 'logo', 'hotline', 'email', 'address', 'tax_code',
                      'facebook', 'zalo',
                      'bank_name', 'bank_account', 'bank_holder',
@@ -101,9 +101,54 @@ class Settings extends Controller {
             $this->__model->saveMany($kv);
             Session::flash('msg', 'Đã lưu cấu hình chung');
         } else {
-            $this->__gara->saveMany($kv);
+            /* GARA CHỈ LƯU NHỮNG Ô KHÁC MẶC ĐỊNH CHUNG — xem chiKhacMacDinh().
+               Ghi tất là chép nhận diện của Tân Phát thành của gara. */
+            $this->__gara->saveMany($this->chiKhacMacDinh($kv));
             Session::flash('msg', 'Đã lưu cấu hình của gara');
         }
         $this->__response->redirect('admin/settings');
+    }
+
+    /**
+     * Lọc ra những ô gara THỰC SỰ KHAI KHÁC với Cấu hình chung.
+     *
+     * ======================================================================
+     *  LỖI NÀY TỪNG XẢY RA THẬT VÀ NÓ LÀ LỖI MỨC TIỀN BẠC (29/10/2026).
+     * ======================================================================
+     *
+     * Form này CỐ Ý điền sẵn giá trị đã trộn (riêng đè lên chung) để gara nhìn
+     * là biết mình đang thừa hưởng gì — xem ghi chú đầu lớp. Nhưng lúc Lưu thì
+     * mọi ô đều được gửi lên, kể cả những ô gara chưa hề đụng tới. Ghi tất là
+     * CHÉP nguyên nhận diện của Tân Phát thành giá trị RIÊNG của gara: số tài
+     * khoản ngân hàng, chủ tài khoản, mã số thuế, email.
+     *
+     * Trước 26/10/2026 mấy dòng đó nằm im vì biểu mẫu in không đọc
+     * `garage_settings`. Từ khi cau_hinh_in_an() đọc nó, hậu quả là: GARA NÀO
+     * BẤM LƯU MỘT LẦN LÀ HOÁ ĐƠN CỦA HỌ BẮT ĐẦU IN SỐ TÀI KHOẢN CỦA TÂN PHÁT.
+     * Khách chuyển tiền theo tờ hoá đơn đó là chuyển nhầm người.
+     *
+     * Quy tắc: `garage_settings` CHỈ GIỮ phần khác mặc định chung. Đúng bằng
+     * ngữ nghĩa mà GarageSettingsModel::map() đang dùng để đọc (lấy chung làm
+     * nền rồi đè phần riêng), nên hai chiều đọc/ghi khớp nhau.
+     *
+     * Ô nào gõ về ĐÚNG BẰNG mặc định chung thì coi như "thôi không khai riêng
+     * nữa" — xoá dòng riêng đi, để từ đó về sau nó tự theo mặc định chung.
+     */
+    private function chiKhacMacDinh(array $kv){
+        $chung = $this->__model->map();
+        $luu   = [];
+        $boDi  = [];
+
+        foreach ($kv as $k => $v){
+            $mac = isset($chung[$k]) ? (string) $chung[$k] : '';
+            if ((string) $v === $mac) $boDi[] = $k;   // giống mặc định -> không khai riêng
+            else                      $luu[$k] = $v;
+        }
+
+        /* Xoá dòng riêng cũ của những khoá nay đã bằng mặc định. Không xoá thì
+           giá trị chép nhầm từ lần Lưu trước vẫn nằm đó mãi. */
+        if (!empty($boDi)) $this->__gara->xoaKhoa($boDi);
+
+        return $luu;
     }
 }

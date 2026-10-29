@@ -162,10 +162,16 @@ if (!empty($listModules)) {
        cau_hinh_in_an() chứ không đọc thẳng bảng: gara khai nhận diện được ở
        hai nơi (Tân Phát khai hộ ở Quản lý gara, gara tự sửa ở Cấu hình) và
        hàm đó là chỗ đã gộp hai nguồn, dùng chung với biểu mẫu in — nhờ vậy
-       logo và tên trên menu luôn khớp với tờ báo giá in ra. */
+       logo và tên trên menu luôn khớp với tờ báo giá in ra.
+
+       TÊN VIẾT TẮT ĐỨNG TRƯỚC TÊN ĐẦY ĐỦ (yêu cầu 29/10/2026). Tên đầy đủ
+       ("Công ty TNHH Phụ tùng Ô tô Tân Phát" — 35 ký tự) trong sidebar 232px
+       phải kẹp lại hai dòng mới vừa; ô Tên viết tắt ở Cấu hình là chỗ để chủ
+       gara tự chọn cái ngắn. Chưa khai thì vẫn lấy tên đầy đủ, không để trống. */
     $__cf   = cau_hinh_in_an();
-    $__ten  = !empty($__cf['site_name']) ? $__cf['site_name']
-            : (!empty($garaHienTai['name']) ? $garaHienTai['name'] : 'Tân Phát');
+    $__ten  = !empty($__cf['site_short_name']) ? $__cf['site_short_name']
+            : (!empty($__cf['site_name']) ? $__cf['site_name']
+            : (!empty($garaHienTai['name']) ? $garaHienTai['name'] : 'Tân Phát'));
     $__logo = !empty($__cf['logo']) ? media_url($__cf['logo']) : '';
     ?>
     <a href="<?php echo _WEB_URL.'/admin'; ?>" class="adm-brand <?php echo $__logo === '' ? 'adm-brand--khong-logo' : ''; ?>">

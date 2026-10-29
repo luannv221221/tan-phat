@@ -65,8 +65,19 @@ ok(preg_match('~if\s*\(\s*\$__logo\s*!==\s*\x27\x27\s*\)~', $sb) === 1,
 /* TEN LAY TU CAU HINH, khong phai cot `name` cua bang `garages`: cot do la ten
    gara do Tan Phat dat luc mo ("Gara mau Sai Gon"), con o Ten o man Cau hinh
    la ten doanh nghiep do chinh ho khai. Chua khai thi van roi ve ten gara. */
-ok(preg_match('~\$__ten\s*=\s*!empty\(\$__cf\[\x27site_name\x27\]\)~', $sb) === 1,
-   'Ten tren menu uu tien ten cong ty khai o Cau hinh');
+/* Chuoi roi lui cua ten tren menu, tu 29/10/2026:
+     ten viet tat -> ten cong ty (Cau hinh) -> ten gara (bang `garages`)
+   Khong khoa thu tu o day (viec do o muc "Ten viet tat" ben duoi), chi khoa
+   rang ten cong ty khai o Cau hinh CO trong chuoi — bo no di la gara khai ten
+   doanh nghiep xong van thay ten gara Tan Phat dat cho minh. */
+if (preg_match('~\$__ten\s*=(.*?);~s', $sb, $mTen)){
+    ok(strpos($mTen[1], "\$__cf['site_name']") !== false,
+       'Ten tren menu co lay ten cong ty khai o Cau hinh');
+    ok(strpos($mTen[1], "\$garaHienTai['name']") !== false,
+       'Chua khai gi thi van roi ve ten gara, khong de trong');
+} else {
+    ok(false, 'Doc duoc chuoi roi lui cua $__ten');
+}
 ok(preg_match('~adm-brand__name[^>]*>\s*<\?php echo e\(\$__ten\)~', $sb) === 1,
    'Dong ten in bien da gop nguon, khong doc thang bang `garages`');
 
@@ -92,6 +103,61 @@ ok(preg_match('~\.adm-brand__tile--logo img\b[^}]*object-fit:\s*contain~s', $css
 ok(strpos($css, ':has(img)') === false,
    'Khong dua vao :has() de biet co logo hay khong',
    'Lop dat tu PHP chac chan hon mot bo chon CSS moi');
+
+// ---------------------------------------------------------------------------
+section('Ten viet tat (yeu cau 29/10/2026)');
+
+$stt = file_get_contents($goc . 'app/controllers/admin/Settings.php');
+$frm = file_get_contents($goc . 'app/views/admin/settings/form.php');
+
+ok(strpos($frm, 'name="site_short_name"') !== false, 'Man Cau hinh co o Ten viet tat');
+ok(preg_match('~\$keys\s*=\s*\[[^\]]*\x27site_short_name\x27~s', $stt) === 1,
+   'site_short_name nam trong danh sach khoa duoc sua',
+   'Khong co trong whitelist thi go vao roi bam Luu cung khong luu');
+ok(preg_match('~\$khoa\s*=\s*\[[^\]]*\x27site_short_name\x27~s', $fn ?? file_get_contents($goc . 'app/helpers/functions.php')) === 1,
+   'cau_hinh_in_an() doc ca site_short_name (de gara tu khai duoc)');
+
+/* MENU uu tien ten viet tat, GIAY TO thi KHONG. */
+ok(preg_match('~\$__ten\s*=\s*!empty\(\$__cf\[\x27site_short_name\x27\]\)~', $sb) === 1,
+   'Menu trai uu tien ten viet tat');
+$inct = file_get_contents($goc . 'app/views/admin/print/chung-tu.php');
+ok(strpos($inct, 'site_short_name') === false,
+   'Bieu mau in KHONG dung ten viet tat',
+   'To bao gia / hoa don phai mang TEN DAY DU cua doanh nghiep');
+
+// ---------------------------------------------------------------------------
+section('Luu Cau hinh KHONG duoc chep nhan dien Tan Phat xuong gara');
+
+/* ===================================================================
+ *  LOI MUC TIEN BAC, gap that 29/10/2026.
+ * ===================================================================
+ * Form Cau hinh CO Y dien san gia tri da tron (rieng de len chung) de gara
+ * nhin la biet minh dang thua huong gi. Nhung luc Luu thi MOI o deu duoc gui
+ * len, ke ca o gara chua he dung toi. Ghi tat la chep nguyen nhan dien cua
+ * Tan Phat thanh gia tri RIENG cua gara: so tai khoan, chu tai khoan, MST.
+ *
+ * Truoc 26/10 may dong do nam im vi bieu mau in khong doc `garage_settings`.
+ * Tu khi cau_hinh_in_an() doc no: GARA NAO BAM LUU MOT LAN LA HOA DON CUA HO
+ * BAT DAU IN SO TAI KHOAN CUA TAN PHAT. Khach chuyen tien theo to do la
+ * chuyen nham nguoi. */
+ok(strpos($stt, 'chiKhacMacDinh') !== false,
+   'Settings co loc chiKhacMacDinh() truoc khi luu cho gara');
+/* Bo loc phai nam o nhanh ELSE (gara), KHONG phai nhanh gara tong: gara tong
+   ghi thang vao Cau hinh chung nen khong co "mac dinh" nao de so. */
+if (preg_match('~if \(la_gara_tong\(\)\)\{(.*?)\} else \{(.*?)\n        \}~s', $stt, $mG)){
+    ok(strpos($mG[2], 'chiKhacMacDinh') !== false,
+       'Nhanh GARA di qua bo loc',
+       'Nhanh gara dang la: ' . trim(preg_replace('~\s+~', ' ', $mG[2])));
+    ok(strpos($mG[1], 'chiKhacMacDinh') === false,
+       'Nhanh GARA TONG khong loc (ghi thang vao Cau hinh chung)');
+} else {
+    ok(false, 'Doc duoc hai nhanh gara tong / gara o Settings::save()');
+}
+ok(strpos($stt, '->xoaKhoa(') !== false,
+   'Go mot o ve bang mac dinh thi XOA dong rieng',
+   'Khong xoa thi gia tri chep nham tu lan Luu truoc nam do mai');
+ok(strpos(file_get_contents($goc . 'app/models/GarageSettingsModel.php'), 'function xoaKhoa(') !== false,
+   'GarageSettingsModel co xoaKhoa()');
 
 // ---------------------------------------------------------------------------
 section('cau_hinh_in_an() — o gara tu khai de len bang `garages` (chot 1 + 2)');

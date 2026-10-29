@@ -543,7 +543,10 @@ function cau_hinh_in_an($garaId = null){
        rieng() CHỨ KHÔNG PHẢI map(): map() lấy Cấu hình chung làm nền, mà nền
        đó là của Tân Phát — gara chưa điền tên thì tờ báo giá của họ mang tên
        Tân Phát. Đúng cái $ra đang tránh. */
-    $khoa = ['site_name', 'address', 'hotline', 'email', 'tax_code', 'logo',
+    /* `site_short_name` KHÔNG có cột tương ứng trong bảng `garages` — nó chỉ
+       tồn tại ở Cấu hình. Để trong danh sách này để gara tự khai được; chưa
+       khai thì rỗng, nơi dùng tự rơi về tên đầy đủ. */
+    $khoa = ['site_name', 'site_short_name', 'address', 'hotline', 'email', 'tax_code', 'logo',
              'bank_name', 'bank_account', 'bank_holder'];
     /* trongGara(): rieng() lọc theo gara ĐANG LÀM VIỆC, mà hàm này in phiếu của
        gara $g — hai cái đó khác nhau khi in lại phiếu cũ của gara đã chuyển. Gọi
