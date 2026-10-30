@@ -77,10 +77,24 @@ ok(strpos($v, 'data-nguon="gara"') !== false && strpos($v, 'data-nguon="tong"') 
    Ban dau an di trong truong hop do. Sai: gara vua mo, chua nhap gi, chinh la
    luc nguoi ta can bam "kho tong" nhat — an nut di thi ho khong biet la co
    duong lay hang tu danh muc chung, va tuong tinh nang chua duoc lam. Da bi
-   hoi dung cau do. */
-ok(strpos($v, 'if (!empty($garaCuaPhieu))') !== false,
+   hoi dung cau do.
+
+   30/10/2026 — dieu kien co them `is_master`: KHO TONG khong ve o nay vi no
+   chi co MOT nguon (danh muc chung la cua chinh no), hai nut giong het nhau
+   thi nguoi dung bam thu ca hai de tim khac biet khong co that. Dieu can gac
+   o day KHONG DOI: khong duoc an theo $partsGara.
+
+   Nen khang dinh DOC THANG dieu kien boc o chon nguon, thay vi khop mot chuoi
+   co dinh — chuoi co dinh thi them bat ky ve nao vao dieu kien cung do, ke ca
+   ve dung, con an theo $partsGara thi van xanh neu viet khac di mot chut. */
+$dkNguon = null;
+if (preg_match('~<\?php if \((.+?)\): \?>\s*<\?php \$__garaTrong~u', $v, $m)) $dkNguon = $m[1];
+ok($dkNguon !== null && strpos($dkNguon, '$garaCuaPhieu') !== false,
+   'Doc duoc dieu kien boc o chon nguon');
+ok($dkNguon !== null && strpos($dkNguon, '$partsGara') === false,
    'O chon nguon hien khi he thong da khai gara (khong phu thuoc danh muc rieng)',
-   'Dieu kien theo $partsGara se an nut dung luc nguoi dung can nhat');
+   'Dieu kien hien doc: ' . var_export($dkNguon, true)
+   . ' — theo $partsGara se an nut dung luc nguoi dung can nhat');
 ok(strpos($v, '$__garaTrong') !== false && strpos($v, 'disabled') !== false,
    'Nut cua gara khi rong thi MO va khong bam duoc, chu khong bien mat',
    'Bien mat khong dau vet thi nguoi dung khong biet vi sao');

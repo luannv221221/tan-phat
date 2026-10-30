@@ -22,6 +22,20 @@ $tien = function ($v){ return $v === null || $v === '' ? '' : number_format((flo
 </div>
 @else
 
+@if (!empty($laKhoTong))
+<div class="alert alert-info">
+    <i class="fas fa-info-circle mr-1"></i>
+    <b>Kho tổng không dùng màn này.</b>
+    Danh mục của một gara là <i>“trong hàng chung, gara tôi làm những món nào”</i> —
+    còn hàng chung thì chính kho tổng là chủ, nên không phải chọn lại của mình.
+    <div class="mt-2">
+        Thêm, sửa, đặt giá hàng của kho tổng ở
+        <b>Hàng hoá → Quản lý hàng hoá</b>.
+        Muốn dựng danh mục cho một gara thì đổi sang gara đó bằng ô chọn ở góc trên bên phải.
+    </div>
+</div>
+@else
+
 <div class="alert alert-info py-2">
     <i class="fas fa-map-pin mr-1"></i>
     Đang sửa danh mục của <b>{{$gara['name']}}</b>.
@@ -209,5 +223,7 @@ $tien = function ($v){ return $v === null || $v === '' ? '' : number_format((flo
         </div>
     </form>
 </div>
+
+@endif
 
 @endif

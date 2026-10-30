@@ -533,6 +533,24 @@ class PartsModel extends Model {
         if ($nguon === self::NGUON_GARA){
             if ($garageId <= 0) return [];
 
+            /* KHO TONG KHONG CO "DANH MUC CUA GARA" (30/10/2026).
+             *
+             * Danh muc cua mot gara la "trong hang chung, toi lam nhung mon
+             * nao". Cau hoi do vo nghia voi KHO TONG: danh muc chung CHINH LA
+             * cua no. Truoc day no van tick duoc vao `garage_part_prices` nhu
+             * mot gara thuong, va ket qua dung nhu da hong: 17/18 mon duoc
+             * tick, mon thu 18 bien mat khoi o chon hang cua chinh Tan Phat
+             * ma khong bao gi. Them mot mat hang moi vao kho tong thi no cung
+             * khong tu hien ra — phai nho tick lan nua.
+             *
+             * Tra ve rong de noi dung mot cau: kho tong khong co danh muc
+             * rieng. Cho goi (bao gia, don mua) deu da co duong lui ve danh
+             * muc tong khi rong, nen ca hai man deu hien DU hang chung.
+             *
+             * Khong doc `garage_part_prices` cua kho tong nua, ke ca khi bang
+             * do con dong cu. */
+            if ($this->laGaraTongTheoId($garageId)) return [];
+
             /* `sale_price` KHÔNG được COALESCE thẳng về giá khuyến mãi của danh
                mục tổng.
 

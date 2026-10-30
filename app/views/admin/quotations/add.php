@@ -233,7 +233,11 @@ $tabs = [
        Nút của gara khi rỗng thì mờ và không bấm được, kèm chữ "chưa có" —
        nói rõ vì sao thay vì biến mất không dấu vết.
        ----------------------------------------------------------------- */ ?>
-    <?php if (!empty($garaCuaPhieu)): ?>
+    <?php /* KHO TONG CHI CO MOT NGUON (30/10/2026) — khong ve o chon nay.
+             Danh muc chung la cua chinh no, nen "Cong ty" va "Kho tong" tro
+             thanh mot thu. Hai nut giong het nhau canh nhau thi nguoi dung
+             bam thu ca hai de tim khac biet khong co that. */ ?>
+    <?php if (!empty($garaCuaPhieu) && empty($garaCuaPhieu['is_master'])): ?>
     <?php $__garaTrong = empty($partsGara); ?>
     <div class="card card-outline card-secondary mb-2">
         <div class="card-body py-2 d-flex align-items-center flex-wrap" style="gap:.75rem">

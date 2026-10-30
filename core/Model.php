@@ -128,12 +128,27 @@ class Model extends Database {
         $g = self::garaLoc();
         if ($g === null) return true;
         if ($g === 0)    return false;
-        $g = (int) $g;
-        if (!array_key_exists($g, self::$__laTong)){
-            $r = $this->firstRaw('SELECT `is_master` FROM `garages` WHERE `id` = ?', [$g]);
-            self::$__laTong[$g] = !empty($r) && (int) $r['is_master'] === 1;
+        return $this->laGaraTongTheoId($g);
+    }
+
+    /**
+     * Gara mang id NAY co phai GARA TONG khong — hoi theo id, khong theo
+     * garaLoc().
+     *
+     * Can rieng ham nay vi co cho phai xet MOT GARA CU THE chu khong phai gara
+     * dang lam viec: sua bao gia cua chi nhanh khac, dung danh muc cua chi
+     * nhanh khac. Lay laGaraTongLoc() cho may cho do la hoi nham nguoi.
+     *
+     * Dung chung bo nho dem voi laGaraTongLoc() nen khong de ra them truy van.
+     */
+    protected function laGaraTongTheoId($id){
+        $id = (int) $id;
+        if ($id <= 0) return false;
+        if (!array_key_exists($id, self::$__laTong)){
+            $r = $this->firstRaw('SELECT `is_master` FROM `garages` WHERE `id` = ?', [$id]);
+            self::$__laTong[$id] = !empty($r) && (int) $r['is_master'] === 1;
         }
-        return self::$__laTong[$g];
+        return self::$__laTong[$id];
     }
 
     /**

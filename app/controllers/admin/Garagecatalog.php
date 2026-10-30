@@ -63,6 +63,12 @@ class Garagecatalog extends Controller {
         $c = &$this->__data['content'];
         $c['page_name'] = $this->labelMany;
 
+        /* KHO TONG KHONG DUNG MAN NAY (30/10/2026). Da an khoi menu; ai go
+           thang duong dan thi phai doc duoc LY DO chu khong gap mot danh sach
+           rong — PartsModel::theoNguon() tra rong cho gara tong, nen de nguyen
+           thi man hinh noi "0 mat hang" trong khi kho tong co du 18 mon. */
+        $c['laKhoTong'] = la_gara_tong();
+
         // Danh mục gara đang có (hàng riêng + hàng tổng đã chọn), giá đã tính sẵn
         $c['dsDanhMuc']    = $gid > 0 ? $this->__part->theoNguon(PartsModel::NGUON_GARA, $gid) : [];
         // Danh mục tổng để tick chọn thêm

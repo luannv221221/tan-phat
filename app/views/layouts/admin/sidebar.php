@@ -96,6 +96,24 @@ $menuGroups = [
  *
  * CHỈ ẨN TRÊN MENU. Đường dẫn vẫn vào được — xem ghi chú ở config.php.
  */
+/* DANH MUC CUA GARA — AN VOI KHO TONG (30/10/2026, theo yeu cau).
+ *
+ * Man do tra loi cau hoi "trong hang chung, gara toi lam nhung mon nao". Kho
+ * tong khong co cau hoi do: danh muc chung CHINH LA cua no. Dung o ghe Tan
+ * Phat thi man nay va man Quan ly hang hoa gan nhu trung nhau (17 dong / 18
+ * dong), nhin khong ra khac cho nao — chinh anh cung hoi.
+ *
+ * KHONG gan vao _KHO_TONG_MENU_GON. Cong tac do la mot BAN THU ve bo cuc
+ * menu, con day la mot su that ve nghiep vu: tat ban thu di thi su that do
+ * van dung. Gan chung thi tat mot cai hoa tat ca hai.
+ *
+ * Chi an tren menu, giong moi cho khac — duong dan van vao duoc, va man do
+ * tu noi ro vi sao kho tong khong dung no.
+ */
+if (!empty($garaHienTai['is_master'])){
+    $menuGroups['Hàng hoá'] = array_values(array_diff($menuGroups['Hàng hoá'], ['garage-catalog']));
+}
+
 $anNhom  = [];
 $menuDon = [];
 if (defined('_KHO_TONG_MENU_GON') && _KHO_TONG_MENU_GON && !empty($garaHienTai['is_master'])){
