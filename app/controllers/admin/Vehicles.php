@@ -298,8 +298,17 @@ class Vehicles extends Controller {
             $errors['fuel_id'] = 'Nhiên liệu không có trong danh mục';
         }
 
-        if (!empty($f['partner_id']) && empty($this->__partner->getDetail((int) $f['partner_id']))){
-            $errors['partner_id'] = 'Chủ xe không hợp lệ';
+        if (!empty($f['partner_id'])){
+            $chu = $this->__partner->getDetail((int) $f['partner_id']);
+            if (empty($chu)){
+                $errors['partner_id'] = 'Chủ xe không hợp lệ';
+            } elseif (!in_array($chu['type'], ['customer', 'both'], true)){
+                /* NCC thuần bán phụ tùng cho gara chứ không mang xe tới sửa. Ô chọn
+                   chủ xe đã lọc sẵn (type = customer), nhưng link
+                   vehicles/add?partner_id=... và POST tay thì không qua ô đó —
+                   chặn ở đây mới là luật thật. */
+                $errors['partner_id'] = 'Nhà cung cấp không phải chủ xe — đổi loại đối tượng sang "Khách hàng" hoặc "Cả hai" trước';
+            }
         }
         return $errors;
     }

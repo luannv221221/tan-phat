@@ -4,7 +4,20 @@
             <div class="card-header"><h3 class="card-title"><i class="fas fa-edit mr-2"></i>{{$page_name}}</h3></div>
             <?php /* XE CỦA KHÁCH — một khách nhiều xe. Khai ở đây thì mọi phiếu tiếp nhận,
          báo giá, hoá đơn, phiếu bảo hành của xe đó đều nối về một bản ghi, thay
-         vì gõ lại biển số trên từng chứng từ như trước. */ ?>
+         vì gõ lại biển số trên từng chứng từ như trước.
+
+         NHÀ CUNG CẤP THUẦN KHÔNG CÓ KHỐI NÀY: họ bán phụ tùng cho gara chứ
+         không mang xe tới sửa. Để nút "Thêm xe cho khách này" ở đây làm người
+         khai tưởng khai NCC thì phải khai cả xe. Ẩn theo loại, đổi loại là
+         hiện / ẩn ngay — xem JS cuối file.
+
+         ĐỐI TƯỢNG ĐÃ LỠ CÓ XE THÌ VẪN HIỆN: ẩn đi là giấu mất dữ liệu người
+         ta đã khai, không còn đường nào sửa. Đây chỉ là lớp che ngoài: luật
+         thật nằm ở Vehicles::validate() — NCC thuần không nhận làm chủ xe. */ ?>
+<?php $selType = isset($old['type']) ? $old['type'] : $item['type'];
+      $coXe    = !empty($xeDs);
+      $anXe    = ($selType === 'supplier' && !$coXe); ?>
+<div data-o-xe-khach data-co-xe="{{$coXe ? 1 : 0}}"{!! $anXe ? ' style="display:none"' : '' !!}>
 <div class="card card-outline card-info">
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-car mr-2"></i>Xe của khách
@@ -52,13 +65,18 @@
         </table>
     </div>
 </div>
+</div>
 <form action="" method="post">
                 <?php echo csrf_field(); ?>
                 <div class="card-body">
+                    <?php /* Một ô ${msg} dùng cho CẢ báo lỗi lẫn báo thành công, mà trước
+                             đây luôn vẽ màu đỏ: thêm đối tượng xong, lời báo thành công
+                             hiện ra như một lỗi. Đỏ chỉ khi thật sự có lỗi dưới form. */ ?>
                     @if (!empty($msg))
-                    <div class="alert alert-danger"><i class="fas fa-exclamation-circle mr-1"></i> {{$msg}}</div>
+                    <div class="alert {{!empty($errors) ? 'alert-danger' : 'alert-success'}}">
+                        <i class="fas {{!empty($errors) ? 'fa-exclamation-circle' : 'fa-check-circle'}} mr-1"></i> {{$msg}}
+                    </div>
                     @endif
-                    <?php $selType = isset($old['type']) ? $old['type'] : $item['type']; ?>
                     <div class="form-row">
                         <div class="form-group col-md-4">
                             <label>Mã <span class="text-danger">*</span></label>
@@ -168,15 +186,23 @@
         </div>
     </div>
 </div>
-<?php /* Nhà cung cấp thuần thì không có "nhóm khách" — ẩn ô cho khỏi gây hiểu
-         nhầm. Chỉ là lớp che ngoài: luật thật ở Partners::buildData(), POST tay
-         vẫn không ghi nhóm cho NCC được. */ ?>
+<?php /* Nhà cung cấp thuần không có "nhóm khách", cũng không có "xe của khách"
+         — ẩn cả hai cho khỏi gây hiểu nhầm. Chỉ là lớp che ngoài: luật thật ở
+         Partners::buildData() (nhóm) và Vehicles::validate() (chủ xe), POST tay
+         cũng không luồn qua được. */ ?>
 <script>
 (function(){
     var loai = document.querySelector('select[name="type"]');
-    var o    = document.querySelector('[data-o-nhom-khach]');
-    if (!loai || !o) return;
-    function doi(){ o.style.display = (loai.value === 'supplier') ? 'none' : ''; }
+    if (!loai) return;
+    var oNhom = document.querySelector('[data-o-nhom-khach]');
+    var oXe   = document.querySelector('[data-o-xe-khach]');
+    // Đã khai xe rồi thì không ẩn — ẩn là giấu mất dữ liệu đã nhập
+    var coXe  = (oXe && oXe.getAttribute('data-co-xe') === '1');
+    function doi(){
+        var ncc = (loai.value === 'supplier');
+        if (oNhom) oNhom.style.display = ncc ? 'none' : '';
+        if (oXe && !coXe) oXe.style.display = ncc ? 'none' : '';
+    }
     loai.addEventListener('change', doi);
     doi();
 })();

@@ -77,9 +77,17 @@ class Partners extends Controller {
     public function postAdd(){
         $errors = $this->validateInput(null);
         if (!empty($errors)){ $this->flash($errors, 'add'); return; }
-        $id = $this->__model->add($this->buildData());
-        /* Sang thẳng màn Sửa: gần như lần nào thêm khách ở gara cũng là để
-           khai luôn chiếc xe họ vừa mang tới, mà khối "Xe của khách" nằm ở đó. */
+        $dl = $this->buildData();
+        $id = $this->__model->add($dl);
+        /* Nhà cung cấp thuần bán phụ tùng cho gara, không mang xe tới sửa — khai
+           xong là về danh sách như mọi màn danh mục khác. Đẩy họ sang màn Sửa rồi
+           bảo "khai xe ngay bên dưới" là bắt làm việc không tồn tại. */
+        if ($dl['type'] === 'supplier'){
+            Session::flash('msg', 'Đã thêm ' . $this->labelOne . ' thành công');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        /* Khách thì sang thẳng màn Sửa: gần như lần nào thêm khách ở gara cũng là
+           để khai luôn chiếc xe họ vừa mang tới, mà khối "Xe của khách" nằm ở đó. */
         Session::flash('msg', 'Đã thêm ' . $this->labelOne . '. Khai xe của khách ngay bên dưới.');
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $id);
     }

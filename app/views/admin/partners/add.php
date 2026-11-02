@@ -5,8 +5,13 @@
             <form action="" method="post">
                 <?php echo csrf_field(); ?>
     <?php /* Một khách nhiều xe: xe khai ở màn Sửa (ngay sau khi lưu), vì xe
-             phải gắn vào một khách đã có mã. */ ?>
-    <div class="alert alert-info py-2"><i class="fas fa-car mr-1"></i>
+             phải gắn vào một khách đã có mã.
+
+             Nhà cung cấp thuần không khai xe nên lời nhắc này ẩn theo loại —
+             xem JS cuối file. Lưu xong, NCC về thẳng danh sách chứ không vào màn
+             Sửa (Partners::postAdd). */ ?>
+    <?php $selType = !empty($old['type']) ? $old['type'] : 'customer'; ?>
+    <div class="alert alert-info py-2" data-o-xe-khach{!! $selType === 'supplier' ? ' style="display:none"' : '' !!}><i class="fas fa-car mr-1"></i>
         Lưu khách xong sẽ mở ngay khối <b>Xe của khách</b> để khai biển số, số khung (VIN), số máy, hãng / model / năm.
     </div>
                 <div class="card-body">
@@ -122,15 +127,20 @@
         </div>
     </div>
 </div>
-<?php /* Nhà cung cấp thuần thì không có "nhóm khách" — ẩn ô cho khỏi gây hiểu
-         nhầm. Chỉ là lớp che ngoài: luật thật ở Partners::buildData(), POST tay
-         vẫn không ghi nhóm cho NCC được. */ ?>
+<?php /* Nhà cung cấp thuần không có "nhóm khách", cũng không khai xe — ẩn cả
+         hai cho khỏi gây hiểu nhầm. Chỉ là lớp che ngoài: luật thật ở
+         Partners::buildData() (nhóm) và Vehicles::validate() (chủ xe). */ ?>
 <script>
 (function(){
     var loai = document.querySelector('select[name="type"]');
-    var o    = document.querySelector('[data-o-nhom-khach]');
-    if (!loai || !o) return;
-    function doi(){ o.style.display = (loai.value === 'supplier') ? 'none' : ''; }
+    if (!loai) return;
+    var oNhom = document.querySelector('[data-o-nhom-khach]');
+    var oXe   = document.querySelector('[data-o-xe-khach]');
+    function doi(){
+        var ncc = (loai.value === 'supplier');
+        if (oNhom) oNhom.style.display = ncc ? 'none' : '';
+        if (oXe)   oXe.style.display   = ncc ? 'none' : '';
+    }
     loai.addEventListener('change', doi);
     doi();
 })();
