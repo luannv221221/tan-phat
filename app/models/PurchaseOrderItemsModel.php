@@ -47,15 +47,39 @@ class PurchaseOrderItemsModel extends Model {
             $qty    = isset($r['quantity']) ? (float) $r['quantity'] : 0;
             if ($partId <= 0 || $qty <= 0) continue;   // dòng trống thì bỏ
 
+            /* ÂM LÀ 0. Đơn giá âm không có nghĩa gì ở đây, mà nếu lọt xuống thì
+               tổng đơn bị trừ đi — một dòng âm đủ lớn là đơn triệu đồng thành
+               đơn vài nghìn, không ai nhìn ra trên màn danh sách. */
+            $gia = isset($r['unit_price']) ? (float) $r['unit_price'] : 0;
+            if ($gia < 0) $gia = 0;
+            $tt  = round($gia * $qty, 2);
+
             $this->insert($this->_table, [
-                'po_id'    => $poId,
-                'part_id'  => $partId,
-                'quantity' => $qty,
-                'note'     => isset($r['note']) && $r['note'] !== '' ? mb_substr($r['note'], 0, 255) : null,
+                'po_id'      => $poId,
+                'part_id'    => $partId,
+                'quantity'   => $qty,
+                'unit_price' => $gia,
+                'amount'     => $tt,
+                'note'       => isset($r['note']) && $r['note'] !== '' ? mb_substr($r['note'], 0, 255) : null,
             ]);
-            $ra[(int) $this->lastId()] = ['part_id' => $partId, 'quantity' => $qty];
+            $ra[(int) $this->lastId()] = ['part_id' => $partId, 'quantity' => $qty,
+                                          'unit_price' => $gia, 'amount' => $tt];
         }
         return $ra;
+    }
+
+    /**
+     * TỔNG TIỀN CỦA MỘT ĐƠN — cộng từ dòng hàng, không đọc
+     * `purchase_orders`.`total_amount`.
+     *
+     * Cột total_amount bên đơn chỉ là số chép lại cho màn danh sách khỏi cộng
+     * dồn từng đơn. Nguồn sự thật là ở đây, và controller gọi hàm này để
+     * ghi lại cột kia sau mỗi lần lưu.
+     */
+    public function tongTheoPo($poId){
+        $r = $this->firstRaw('SELECT COALESCE(SUM(`amount`), 0) AS t FROM `purchase_order_items` WHERE `po_id` = ?',
+                             [(int) $poId]);
+        return (float) (isset($r['t']) ? $r['t'] : 0);
     }
 
     public function demTheoPo($poId){

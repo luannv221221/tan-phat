@@ -103,18 +103,29 @@ foreach ((array) $parts as $p){
         <div class="card-body table-responsive p-0">
             <table class="table table-sm mb-0 bang-dong-mua">
                 <thead><tr>
-                    <th style="width:38%">Hàng hoá</th>
-                    <th style="width:110px" class="text-right">Số lượng</th>
+                    <th style="width:28%">Hàng hoá</th>
+                    <th style="width:90px" class="text-right">Số lượng</th>
+                    <th style="width:130px" class="text-right">Đơn giá</th>
+                    <th style="width:120px" class="text-right">Thành tiền</th>
                     <th>Serial từng chiếc</th>
                     <th style="width:44px"></th>
                 </tr></thead>
                 <tbody id="dong-mua"></tbody>
+                <tfoot><tr>
+                    <th colspan="3" class="text-right">Tổng cộng</th>
+                    <th class="text-right"><span id="tong-tien">0</span> đ</th>
+                    <th colspan="2"></th>
+                </tr></tfoot>
             </table>
         </div>
         <div class="card-footer text-muted small">
             Gõ <strong>số lượng</strong> thì ô serial tự mọc ra đúng bấy nhiêu dòng.
             Chưa có tem thì để trống — lưu được, bổ sung sau.
             Serial <strong>không được trùng</strong> trong cùng một gara.
+            <br>
+            <strong>Đơn giá</strong> để trống cũng lưu được — NCC chưa báo giá thì sau bổ sung.
+            Lúc tạo phiếu nhập kho, dòng đã khai giá lấy đúng giá đó, dòng để trống
+            lấy theo <strong>lần nhập gần nhất</strong> của mặt hàng.
         </div>
     </div>
 
@@ -130,6 +141,28 @@ foreach ((array) $parts as $p){
     var DS = {!! json_encode($dsHang, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
     var BAN_DAU = {!! json_encode(array_values((array) $lines), JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
     var tbody = document.getElementById('dong-mua');
+    var oTong = document.getElementById('tong-tien');
+
+    /* SỐ TIỀN ĐỌC TỪ Ô đúng kiểu màn Phiếu nhập kho đang làm: bỏ mọi ký tự
+       không phải chữ số. Tiền Việt tính theo đồng, không có phần lẻ. */
+    function soTien(v){ return parseInt(String(v || '').replace(/[^\d]/g, ''), 10) || 0; }
+    function soLuongO(v){ return parseFloat(String(v || '').replace(/[^\d.]/g, '')) || 0; }
+
+    /* Ô đơn giá TRỐNG khác hẳn đơn giá 0: trống là "NCC chưa báo giá" và luác
+       tạo phiếu nhập sẽ rơi về giá nhập gần nhất. Nên thành tiền hiện dấu —
+       chứ không hiện số 0, để người nhìn biết là chưa khai. */
+    function tinhLai(){
+        var t = 0;
+        Array.prototype.forEach.call(tbody.querySelectorAll('tr'), function (r){
+            var oSl = r.querySelector('.o-sl'), oGia = r.querySelector('.o-gia'), oTt = r.querySelector('.o-tt');
+            if (!oSl || !oGia || !oTt) return;
+            var g  = soTien(oGia.value);
+            var tt = Math.round(soLuongO(oSl.value) * g);
+            oTt.textContent = g > 0 ? tt.toLocaleString('vi-VN') : '—';
+            t += tt;
+        });
+        oTong.textContent = t.toLocaleString('vi-VN');
+    }
 
     /* Chỉ số dòng CHỈ TĂNG, không đánh lại sau khi xoá.
        Tên ô là `serial[<chỉ số>][]`, mà server gắn serial vào dòng hàng theo
@@ -192,9 +225,27 @@ foreach ((array) $parts as $p){
         var qty = document.createElement('input');
         qty.type = 'number'; qty.min = '0'; qty.step = '1';
         qty.name = 'qty[]';
-        qty.className = 'form-control form-control-sm text-right';
+        qty.className = 'form-control form-control-sm text-right o-sl';
         qty.value = r && r.quantity ? parseFloat(r.quantity) : 1;
         td2.appendChild(qty);
+
+        var tdG = document.createElement('td');
+        var gia = document.createElement('input');
+        gia.name = 'price[]';
+        gia.className = 'form-control form-control-sm text-right o-gia';
+        gia.placeholder = 'Chưa báo giá';
+        gia.value = (r && parseFloat(r.unit_price) > 0) ? parseInt(r.unit_price, 10) : '';
+        /* oTien() biến nó thành ô số không âm, bước 1 đồng, VẪN ĐỂ TRỐNG ĐƯỢC
+           — xem so-input.js, file đó nạp trong <head> nên luôn có sẵn. */
+        if (window.oTien) window.oTien(gia);
+        tdG.appendChild(gia);
+
+        var tdT = document.createElement('td');
+        tdT.className = 'text-right align-middle';
+        var oTt = document.createElement('span');
+        oTt.className = 'o-tt';
+        oTt.textContent = '—';
+        tdT.appendChild(oTt);
 
         var td3 = document.createElement('td');
         var boc = document.createElement('div');
@@ -207,14 +258,17 @@ foreach ((array) $parts as $p){
         xoa.className = 'btn btn-sm btn-outline-danger';
         xoa.innerHTML = '<i class="fas fa-times"></i>';
         xoa.title = 'Xoá dòng';
-        xoa.addEventListener('click', function (){ tr.remove(); });
+        xoa.addEventListener('click', function (){ tr.remove(); tinhLai(); });
         td4.appendChild(xoa);
 
-        tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+        tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(tdG);
+        tr.appendChild(tdT); tr.appendChild(td3); tr.appendChild(td4);
         tbody.appendChild(tr);
 
         veSerial(boc, chiSo, parseFloat(qty.value), r && r.serials);
-        qty.addEventListener('input', function (){ veSerial(boc, chiSo, parseFloat(qty.value), null); });
+        qty.addEventListener('input', function (){ veSerial(boc, chiSo, parseFloat(qty.value), null); tinhLai(); });
+        gia.addEventListener('input', tinhLai);
+        tinhLai();
 
         /* Ô chọn mới thêm phải được gắn ô tìm kiếm — admin.js theo dõi DOM nên
            tự lo, nhưng gọi thẳng cho chắc nếu hàm có sẵn. */

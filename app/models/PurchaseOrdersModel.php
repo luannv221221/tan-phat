@@ -14,8 +14,14 @@ use App\core\Load;
  *     đơn mua -> phiếu nhập kho        (có serial, có hoá đơn NCC)
  *     lập thẳng phiếu nhập kho          (cách đang dùng, giữ nguyên)
  *
- * ĐƠN MUA KHÔNG CÓ GIÁ — tài liệu ghi "không cần giá nhập". Giá chỉ xuất hiện
- * lúc chuyển thành phiếu nhập, lấy giá nhập gần nhất của mặt hàng rồi cho sửa.
+ * GIÁ (sửa 31/10/2026). Bản đầu không có giá — tài liệu 29/10 ghi "không cần
+ * giá nhập". Khách xem màn hình rồi hỏi lại, nên đơn mua giờ CÓ đơn giá và
+ * thành tiền (migration 000103). Giá KHÔNG BẮT BUỘC:
+ *
+ *     đơn giá > 0   ->  phiếu nhập lấy đúng giá này
+ *     đơn giá = 0   ->  rơi về giaNhapGanNhat(), y như bản cũ
+ *
+ * Nên đơn lập trước 31/10 (unit_price = 0) chạy không khác gì trước.
  */
 class PurchaseOrdersModel extends Model {
 
@@ -93,10 +99,13 @@ class PurchaseOrdersModel extends Model {
      * GIÁ NHẬP GẦN NHẤT của một mặt hàng trong gara này — dùng khi chuyển đơn
      * mua thành phiếu nhập kho.
      *
-     * Đơn mua không mang giá (tài liệu: "không cần giá nhập"), nhưng phiếu nhập
-     * thì cần: `goods_receipt_items`.`unit_cost` là cái cả bộ máy kho dùng để
-     * tính giá vốn. Để 0 thì hàng nhập đường này có giá vốn 0, bán ra là báo
-     * cáo lãi gộp thổi lên bằng đúng doanh thu — sai mà nhìn rất đẹp.
+     * Từ 31/10/2026 đơn mua CÓ ô đơn giá, nên hàm này chỉ còn là ĐƯỜNG RƠI khi
+     * người lập đơn để trống giá (NCC chưa báo giá) — và cho mọi đơn lập trước
+     * hôm đó.
+     *
+     * VẪN PHẢI CÓ ĐƯỜNG RƠI NÀY: `goods_receipt_items`.`unit_cost` là cái cả bộ
+     * máy kho dùng để tính giá vốn. Để 0 thì hàng nhập đường này có giá vốn 0,
+     * bán ra là báo cáo lãi gộp thổi lên bằng đúng doanh thu — sai mà nhìn rất đẹp.
      *
      * Lấy phiếu nhập ĐÃ GHI SỔ gần nhất có mặt hàng đó. Chưa từng nhập bao giờ
      * thì rơi về `parts`.`price`; vẫn không có thì 0 và người dùng tự điền.

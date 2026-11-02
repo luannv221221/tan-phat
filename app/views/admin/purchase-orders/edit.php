@@ -17,6 +17,9 @@ $sel = function($k, $mac = '') use ($old, $item){
 $daChot  = (int) $item['status'] === 1;
 $daNhap  = !empty($item['goods_receipt_id']);
 $khoaHet = $daChot || $daNhap;
+/* Số ô trống cần trải ở hàng Tổng cộng: đơn đã chốt không có cột "xoá
+   dòng" nên hụt một ô. Để cứng là hàng tổng lệch sang bên. */
+$oTrongCuoi = $khoaHet ? 1 : 2;
 
 /* Gom serial về từng dòng hàng để JS đổ sẵn */
 $snTheoDong = [];
@@ -27,9 +30,10 @@ foreach ((array) $serials as $s){
 $dongJs = [];
 foreach ((array) $lines as $l){
     $dongJs[] = [
-        'part_id'  => (int) $l['part_id'],
-        'quantity' => (float) $l['quantity'],
-        'serials'  => isset($snTheoDong[(int) $l['id']]) ? $snTheoDong[(int) $l['id']] : [],
+        'part_id'    => (int) $l['part_id'],
+        'quantity'   => (float) $l['quantity'],
+        'unit_price' => isset($l['unit_price']) ? (float) $l['unit_price'] : 0,
+        'serials'    => isset($snTheoDong[(int) $l['id']]) ? $snTheoDong[(int) $l['id']] : [],
     ];
 }
 
@@ -153,12 +157,19 @@ foreach ((array) $parts as $p){
         <div class="card-body table-responsive p-0">
             <table class="table table-sm mb-0 bang-dong-mua">
                 <thead><tr>
-                    <th style="width:38%">Hàng hoá</th>
-                    <th style="width:110px" class="text-right">Số lượng</th>
+                    <th style="width:28%">Hàng hoá</th>
+                    <th style="width:90px" class="text-right">Số lượng</th>
+                    <th style="width:130px" class="text-right">Đơn giá</th>
+                    <th style="width:120px" class="text-right">Thành tiền</th>
                     <th>Serial từng chiếc</th>
                     <?php if (!$khoaHet): ?><th style="width:44px"></th><?php endif; ?>
                 </tr></thead>
                 <tbody id="dong-mua"></tbody>
+                <tfoot><tr>
+                    <th colspan="3" class="text-right">Tổng cộng</th>
+                    <th class="text-right"><span id="tong-tien">0</span> đ</th>
+                    <th colspan="{{$oTrongCuoi}}"></th>
+                </tr></tfoot>
             </table>
         </div>
     </div>
@@ -217,8 +228,8 @@ foreach ((array) $parts as $p){
         </div>
         <div class="card-footer text-muted small">
             Phiếu nhập sinh ra ở trạng thái <strong>nháp</strong> — tồn kho chỉ đổi khi phiếu đó được ghi sổ.
-            <strong>Giá nhập</strong> lấy theo lần nhập gần nhất của từng mặt hàng (đơn mua không có giá);
-            soát lại trên phiếu nhập rồi hãy ghi sổ.
+            <strong>Giá nhập</strong> lấy đúng đơn giá đã khai trên đơn mua; dòng nào để trống giá thì
+            lấy theo lần nhập gần nhất của mặt hàng đó. Soát lại trên phiếu nhập rồi hãy ghi sổ.
         </div>
     </form>
 </div>
@@ -231,6 +242,28 @@ foreach ((array) $parts as $p){
     var BAN_DAU = {!! json_encode($dongJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
     var KHOA = {!! json_encode((bool) $khoaHet) !!};
     var tbody = document.getElementById('dong-mua');
+    var oTong = document.getElementById('tong-tien');
+
+    /* Tiền Việt tính theo đồng, không phần lẻ — bỏ mọi ký tự không phải chữ số,
+       đúng kiểu màn Phiếu nhập kho đang làm. */
+    function soTien(v){ return parseInt(String(v || '').replace(/[^\d]/g, ''), 10) || 0; }
+    function soLuongO(v){ return parseFloat(String(v || '').replace(/[^\d.]/g, '')) || 0; }
+
+    /* Ô đơn giá TRỐNG khác hẳn đơn giá 0: trống là "NCC chưa báo giá", và lúc
+       tạo phiếu nhập dòng đó mới rơi về giá nhập gần nhất. Nên thành tiền hiện
+       dấu — chứ không hiện 0, để người đọc biết là chưa khai. */
+    function tinhLai(){
+        var t = 0;
+        Array.prototype.forEach.call(tbody.querySelectorAll('tr'), function (r){
+            var oSl = r.querySelector('.o-sl'), oGia = r.querySelector('.o-gia'), oTt = r.querySelector('.o-tt');
+            if (!oSl || !oGia || !oTt) return;
+            var g  = soTien(oGia.value);
+            var tt = Math.round(soLuongO(oSl.value) * g);
+            oTt.textContent = g > 0 ? tt.toLocaleString('vi-VN') : '—';
+            t += tt;
+        });
+        oTong.textContent = t.toLocaleString('vi-VN');
+    }
     var soDong = 0;   // chỉ tăng — xem ghi chú ở add.php
 
     function oChon(chon){
@@ -285,17 +318,37 @@ foreach ((array) $parts as $p){
         var qty = document.createElement('input');
         qty.type = 'number'; qty.min = '0'; qty.step = '1';
         qty.name = 'qty[]';
-        qty.className = 'form-control form-control-sm text-right';
+        qty.className = 'form-control form-control-sm text-right o-sl';
         qty.value = r && r.quantity ? parseFloat(r.quantity) : 1;
         if (KHOA) qty.readOnly = true;
         td2.appendChild(qty);
+
+        var tdG = document.createElement('td');
+        var gia = document.createElement('input');
+        gia.name = 'price[]';
+        gia.className = 'form-control form-control-sm text-right o-gia';
+        gia.placeholder = 'Chưa báo giá';
+        gia.value = (r && parseFloat(r.unit_price) > 0) ? parseInt(r.unit_price, 10) : '';
+        /* oTien() biến ô này thành ô số không âm, bước 1 đồng, VẪN ĐỂ TRỐNG
+           ĐƯỢC — xem so-input.js, nạp trong <head> nên luôn có sẵn. */
+        if (window.oTien) window.oTien(gia);
+        if (KHOA) gia.readOnly = true;
+        tdG.appendChild(gia);
+
+        var tdT = document.createElement('td');
+        tdT.className = 'text-right align-middle';
+        var oTt = document.createElement('span');
+        oTt.className = 'o-tt';
+        oTt.textContent = '—';
+        tdT.appendChild(oTt);
 
         var td3 = document.createElement('td');
         var boc = document.createElement('div');
         boc.className = 'o-boc-serial';
         td3.appendChild(boc);
 
-        tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+        tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(tdG);
+        tr.appendChild(tdT); tr.appendChild(td3);
 
         if (!KHOA){
             var td4 = document.createElement('td');
@@ -304,14 +357,18 @@ foreach ((array) $parts as $p){
             xoa.className = 'btn btn-sm btn-outline-danger';
             xoa.innerHTML = '<i class="fas fa-times"></i>';
             xoa.title = 'Xoá dòng';
-            xoa.addEventListener('click', function (){ tr.remove(); });
+            xoa.addEventListener('click', function (){ tr.remove(); tinhLai(); });
             td4.appendChild(xoa);
             tr.appendChild(td4);
         }
         tbody.appendChild(tr);
 
         veSerial(boc, chiSo, parseFloat(qty.value), r && r.serials);
-        if (!KHOA) qty.addEventListener('input', function (){ veSerial(boc, chiSo, parseFloat(qty.value), null); });
+        if (!KHOA){
+            qty.addEventListener('input', function (){ veSerial(boc, chiSo, parseFloat(qty.value), null); tinhLai(); });
+            gia.addEventListener('input', tinhLai);
+        }
+        tinhLai();
         if (window.initSearchSelects) window.initSearchSelects(tr);
     }
 

@@ -61,6 +61,7 @@ $pg = phan_trang((array) $dataList); $rows = $pg['rows'];
                     <th style="width:110px">Ngày mua</th>
                     <th>Nhà cung cấp</th>
                     <th style="width:16%">HĐ nhà cung cấp</th>
+                    <th style="width:130px" class="text-right">Tổng tiền</th>
                     <th style="width:110px" class="text-center">Trạng thái</th>
                     <th style="width:150px">Phiếu nhập kho</th>
                     <th style="width:110px" class="text-center">Thao tác</th>
@@ -90,6 +91,14 @@ $pg = phan_trang((array) $dataList); $rows = $pg['rows'];
                         <?php if (empty($item['invoice_no']) && empty($item['invoice_url']) && empty($item['invoice_file'])): ?>
                         <span class="text-muted">—</span>
                         <?php endif; ?>
+                    </td>
+                    <?php /* 0 đồng ở đây hầu như luôn là "chưa khai giá" chứ không phải
+                             "mua không mất tiền" — mọi đơn lập trước 31/10/2026 đều
+                             như vậy. Hiện dấu — cho khỏi đọc nhầm thành đơn 0 đồng. */ ?>
+                    <td class="text-right">
+                        {!! (float)$item['total_amount'] > 0
+                            ? number_format((float)$item['total_amount'], 0, ',', '.')
+                            : '<span class="text-muted" title="Chưa khai đơn giá">—</span>' !!}
                     </td>
                     <td class="text-center">
                         {!! (int)$item['status'] === 1
@@ -121,7 +130,7 @@ $pg = phan_trang((array) $dataList); $rows = $pg['rows'];
                 </tr>
                 @endforeach
             @else
-                <tr><td colspan="7" class="text-center text-muted py-4">
+                <tr><td colspan="8" class="text-center text-muted py-4">
                     <i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có đơn mua nào
                 </td></tr>
             @endif
@@ -134,7 +143,7 @@ $pg = phan_trang((array) $dataList); $rows = $pg['rows'];
     </div>
 <?php endif; ?>
     <div class="card-footer text-muted small">
-        Đơn mua ghi lại <strong>mua gì của ai</strong>, kèm serial từng chiếc và hoá đơn nhà cung cấp.
+        Đơn mua ghi lại <strong>mua gì của ai, hết bao nhiêu</strong>, kèm serial từng chiếc và hoá đơn nhà cung cấp.
         Hàng về tới nơi thì mở đơn ra bấm <em>Tạo phiếu nhập kho</em> — tồn kho đổi ở bước đó,
         không phải lúc khai đơn.
     </div>

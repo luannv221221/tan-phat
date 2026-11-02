@@ -24,11 +24,19 @@ use App\core\Session;
  * hàng kho tổng: ghi sổ là lúc tồn thật sự đổi, phải do người ở kho bấm khi
  * hàng về tới nơi, không phải hệ quả ngầm của việc khai đơn mua.
  *
- * GIÁ: đơn mua không có giá (tài liệu: "không cần giá nhập"). Lúc tạo phiếu
- * nhập thì lấy GIÁ NHẬP GẦN NHẤT của từng mặt hàng
- * (PurchaseOrdersModel::giaNhapGanNhat) rồi người dùng sửa lại trên phiếu nhập
- * trước khi ghi sổ. Để 0 thì hàng này có giá vốn 0, bán ra là báo cáo lãi gộp
- * thổi lên bằng đúng doanh thu.
+ * GIÁ — SỬA 31/10/2026. Bản đầu không có ô giá nào, theo tài liệu 29/10 ("không
+ * cần giá nhập"). Khách xem màn hình rồi hỏi lại "đơn mua sao không có giá" —
+ * đúng, vì không có tiền thì không duyệt được mua bao nhiêu, cũng không đối
+ * chiếu được với chính tờ hoá đơn NCC dán ngay bên trên. Giờ có đơn giá +
+ * thành tiền + tổng cộng (migration 000103).
+ *
+ * GIÁ KHÔNG BẮT BUỘC — NCC chưa báo giá lúc lập đơn là chuyện thường:
+ *
+ *     đơn giá > 0   ->  phiếu nhập lấy ĐÚNG giá đã khai trên đơn mua
+ *     đơn giá = 0   ->  rơi về GIÁ NHẬP GẦN NHẤT (giaNhapGanNhat), như bản cũ
+ *
+ * Hai đường này để đơn lập trước 31/10 không đơn nào hỏng. Dù đi đường nào
+ * thì người ở kho vẫn soát lại giá trên phiếu nhập trước khi ghi sổ.
  */
 class Purchaseorders extends Controller {
 
@@ -131,6 +139,7 @@ class Purchaseorders extends Controller {
         ]);
 
         $tuChoi = $this->ghiDongVaSerial($id, $f);
+        $this->chotTong($id);
         $this->bao('Đã lập ' . $this->labelOne . ' ' . $this->__model->getDetail($id)['po_no'], $tuChoi);
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
@@ -179,6 +188,7 @@ class Purchaseorders extends Controller {
 
         $this->__model->edit($data, $id);
         $tuChoi = $this->ghiDongVaSerial($id, $f);
+        $this->chotTong($id);
         $this->bao('Đã lưu đơn mua ' . $item['po_no'], $tuChoi);
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $id);
     }
@@ -263,7 +273,11 @@ class Purchaseorders extends Controller {
             $tong  = 0.0;
             $rows  = [];
             foreach ($dong as $d){
-                $gia = $this->__model->giaNhapGanNhat((int) $d['part_id']);
+                /* GIÁ TRÊN ĐƠN ĐI TRƯỚC. Người lập đơn gõ đúng giá NCC báo mà
+                   phiếu nhập vẫn lấy giá lần trước thì họ gõ để làm gì. Để trống
+                   (= 0) mới rơi về giá nhập gần nhất — đơn cũ đều đi đường này. */
+                $gia = (float) (isset($d['unit_price']) ? $d['unit_price'] : 0);
+                if ($gia <= 0) $gia = $this->__model->giaNhapGanNhat((int) $d['part_id']);
                 $tt  = round($gia * (float) $d['quantity'], 2);
                 $tong += $tt;
                 $rows[] = ['part_id' => (int) $d['part_id'], 'quantity' => (float) $d['quantity'],
@@ -292,7 +306,8 @@ class Purchaseorders extends Controller {
         });
 
         Session::flash('msg', 'Đã tạo phiếu nhập kho ' . $pnkNo . ' từ đơn mua ' . $item['po_no']
-            . '. Giá nhập lấy theo lần nhập gần nhất — soát lại rồi ghi sổ ở màn Phiếu nhập kho.');
+            . '. Dòng đã khai đơn giá thì lấy đúng giá đó, dòng để trống lấy theo lần nhập '
+            . 'gần nhất — soát lại rồi ghi sổ ở màn Phiếu nhập kho.');
         $this->__response->redirect('admin/goods-receipts/edit/' . $pnkId);
     }
 
@@ -327,9 +342,15 @@ class Purchaseorders extends Controller {
         $rows = [];
         $parts = isset($f['part']) && is_array($f['part']) ? $f['part'] : [];
         foreach ($parts as $i => $p){
-            $rows[] = ['part_id'  => (int) $p,
-                       'quantity' => isset($f['qty'][$i]) ? (float) preg_replace('/[^\d.]/', '', (string) $f['qty'][$i]) : 0,
-                       'note'     => isset($f['line_note'][$i]) ? trim((string) $f['line_note'][$i]) : ''];
+            $rows[] = ['part_id'    => (int) $p,
+                       'quantity'   => isset($f['qty'][$i]) ? (float) preg_replace('/[^\d.]/', '', (string) $f['qty'][$i]) : 0,
+                       /* Ô giá gõ "1.450.000" hay "1450000" đều phải ra một số, nên
+                          bỏ MỌI ký tự không phải chữ số — tiền Việt tính theo đồng,
+                          không có phần lẻ. Giữ lại dấu chấm như ô số lượng ở trên
+                          thì "1.450.000" thành 1.45: sai một triệu lần, không báo gì. */
+                       'unit_price' => isset($f['price'][$i])
+                            ? (float) preg_replace('/[^\d]/', '', (string) $f['price'][$i]) : 0,
+                       'note'       => isset($f['line_note'][$i]) ? trim((string) $f['line_note'][$i]) : ''];
         }
         $daGhi = $this->__item->syncForPo($id, $rows);
 
@@ -356,6 +377,16 @@ class Purchaseorders extends Controller {
             }
         }
         return $this->__serial->syncForPo($id, $sn);
+    }
+
+    /**
+     * Ghi lại tổng tiền của đơn sau mỗi lần lưu dòng hàng.
+     *
+     * ĐỌC LẠI TỪ CSDL chứ không cộng từ mảng vừa gửi lên: syncForPo() bỏ qua
+     * dòng trống và làm tròn thành tiền, nên cộng ở hai nơi là có ngày lệch.
+     */
+    private function chotTong($id){
+        $this->__model->edit(['total_amount' => $this->__item->tongTheoPo($id)], $id);
     }
 
     private function bao($thanhCong, array $tuChoi){
