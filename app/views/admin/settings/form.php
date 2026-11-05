@@ -142,9 +142,22 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                     </div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group col-md-6"><label>Facebook (URL)</label><input type="text" name="facebook" class="form-control" value="{{$s('facebook')}}"/></div>
-                    <div class="form-group col-md-6"><label>Zalo (URL/SĐT)</label><input type="text" name="zalo" class="form-control" value="{{$s('zalo')}}"/></div>
+                    <div class="form-group col-md-4"><label>Facebook (URL)</label><input type="text" name="facebook" class="form-control" value="{{$s('facebook')}}"/></div>
+                    <div class="form-group col-md-4">
+                        <label>Zalo (URL/SĐT)</label>
+                        <input type="text" name="zalo" class="form-control" value="{{$s('zalo')}}"/>
+                        <small class="form-text text-muted">Gõ số điện thoại cũng được.</small>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Messenger (URL/tên trang)</label>
+                        <input type="text" name="messenger" class="form-control" placeholder="vd: m.me/garaabc hoặc garaabc" value="{{$s('messenger')}}"/>
+                    </div>
                 </div>
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Ba ô Zalo / Hotline / Messenger cũng là ba <strong>nút hỗ trợ trực tuyến</strong>
+                    nổi ở góc trang khách. Ô nào để trống thì nút đó không hiện.
+                </p>
             </div>
         </div>
 

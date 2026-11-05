@@ -761,6 +761,17 @@ class Products extends Controller {
             'sale_price'      => (isset($f['sale_price']) && $f['sale_price'] !== '') ? $this->parseMoney($f['sale_price']) : null,
             'warranty_month'  => (isset($f['warranty_month']) && $f['warranty_month'] !== '') ? (int) $f['warranty_month'] : null,
             'description'     => !empty($f['description']) ? trim($f['description']) : null,
+            /* META SEO — tài liệu khách 05/11/2026, Frontend mục 5: "chọn sửa
+               để bổ sung thêm các trường meta seo".
+
+               ĐỂ TRỐNG THÀNH NULL chứ không thành chuỗi rỗng: trang chi tiết
+               sản phẩm hỏi `!empty()` để biết có nên rơi về tên hàng và mô tả
+               chung hay không. Chuỗi rỗng và NULL đều empty() nên vẫn chạy,
+               nhưng NULL nói đúng chuyện "chưa khai" khi nhìn thẳng vào CSDL. */
+            'meta_title'       => !empty($f['meta_title'])
+                                  ? mb_substr(trim($f['meta_title']), 0, 255) : null,
+            'meta_description' => !empty($f['meta_description'])
+                                  ? mb_substr(trim($f['meta_description']), 0, 500) : null,
             // Hai cờ ĐỘC LẬP: ngừng đăng web không đồng nghĩa ngừng kinh doanh.
             // Hàng tắt show_on_web vẫn phải xuất hoá đơn và nhập/xuất kho được.
             'status'          => !empty($f['status']) ? 1 : 0,

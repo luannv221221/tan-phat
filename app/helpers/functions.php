@@ -1423,3 +1423,193 @@ function nhan_kho_tong($row, $nhan = 'Kho tổng', $giaiThich = 'Của kho tổn
         ? ' <span class="badge badge-info" title="' . e($giaiThich) . '">' . e($nhan) . '</span>'
         : ' <span class="badge badge-secondary" title="Của gara khác">Gara khác</span>';
 }
+
+/* ==========================================================================
+ * LỌC HTML TRƯỚC KHI LƯU — đi kèm trình soạn thảo có định dạng (05/11/2026).
+ *
+ * VÌ SAO PHẢI CÓ. Nội dung bài viết được in ra trang khách bằng `{!! !!}`,
+ * tức là KHÔNG escape — bắt buộc phải thế, nếu escape thì <strong> hiện ra
+ * thành chữ "<strong>" chứ không in đậm. Nghĩa là mọi thứ lưu được vào cột
+ * `content` đều chạy thật trên trình duyệt người xem.
+ *
+ * Trước khi có trình soạn thảo, ô nội dung là textarea HTML trần và chỉ quản
+ * trị viên đụng tới. Thêm trình soạn thảo không làm lỗ hổng này to ra, nhưng
+ * nó mở cửa cho dán nội dung từ web khác vào — mà dán từ web khác là đường
+ * phổ biến nhất để một đoạn <script> lọt vào mà người dán không hề biết.
+ *
+ * CÁCH LÀM: DANH SÁCH CHO PHÉP, không phải danh sách cấm. Danh sách cấm bao
+ * giờ cũng thiếu — bỏ <script> thì còn <iframe>, bỏ <iframe> thì còn
+ * onerror=, bỏ onerror= thì còn href="javascript:". Cho phép thì ngược lại:
+ * thứ gì không có tên trong bảng dưới đây đều không qua được, kể cả thứ chưa
+ * ai nghĩ ra.
+ *
+ * BA MỨC XỬ LÝ, khác nhau có chủ ý:
+ *   - thẻ nguy hiểm (script, iframe, form...) -> XOÁ CẢ NỘI DUNG BÊN TRONG
+ *   - thẻ lạ (marquee, custom-tag...)         -> BỎ THẺ, GIỮ CHỮ bên trong
+ *   - thẻ cho phép                            -> giữ, nhưng lọc thuộc tính
+ *
+ * Giữ chữ của thẻ lạ vì phần lớn chúng vô hại và người viết sẽ mất nguyên
+ * đoạn văn nếu xoá sạch. Thẻ nguy hiểm thì ngược lại: "nội dung" của
+ * <script> chính là mã.
+ * ========================================================================== */
+
+/** Thẻ được giữ => danh sách thuộc tính được giữ của thẻ đó */
+function html_the_cho_phep(){
+    return [
+        'p' => [], 'br' => [], 'hr' => [],
+        'strong' => [], 'b' => [], 'em' => [], 'i' => [], 'u' => [], 's' => [],
+        'sub' => [], 'sup' => [], 'mark' => [],
+        'h2' => [], 'h3' => [], 'h4' => [], 'h5' => [],
+        'ul' => [], 'ol' => ['start'], 'li' => [],
+        'blockquote' => [], 'pre' => [], 'code' => [],
+        'a'   => ['href', 'title', 'target', 'rel'],
+        'img' => ['src', 'alt', 'title', 'width', 'height'],
+        'figure' => [], 'figcaption' => [],
+        'table' => [], 'thead' => [], 'tbody' => [], 'tfoot' => [], 'caption' => [],
+        'tr' => [], 'th' => ['colspan', 'rowspan'], 'td' => ['colspan', 'rowspan'],
+        /* span/div giữ được `class` để đoạn văn dán vào không vỡ bố cục, nhưng
+           KHÔNG giữ `style`: style nhận url(), expression() và position:fixed —
+           đủ để phủ một lớp trong suốt lên cả trang và ăn mọi cú bấm. */
+        'span' => ['class'], 'div' => ['class'],
+    ];
+}
+
+/** Thẻ bị xoá CẢ NỘI DUNG bên trong */
+function html_the_cam(){
+    return ['script', 'style', 'iframe', 'frame', 'frameset', 'object', 'embed',
+            'applet', 'form', 'input', 'button', 'select', 'option', 'textarea',
+            'link', 'meta', 'base', 'svg', 'math', 'template', 'noscript'];
+}
+
+/**
+ * Địa chỉ có an toàn để đặt vào href/src không.
+ *
+ * CHẶN THEO GIAO THỨC. `javascript:alert(1)` là một URL hợp lệ về mặt cú pháp;
+ * thứ phân biệt nó với một đường dẫn bình thường chỉ có mỗi phần giao thức.
+ *
+ * `data:` bị chặn cả ở ảnh. Ảnh data: thì vô hại, nhưng `data:text/html` thì
+ * không, và phân biệt hai cái đó bằng chuỗi người dùng gửi lên là trò đuổi bắt.
+ * Ảnh thật thì tải lên, có đường dẫn đàng hoàng.
+ */
+function html_url_an_toan($url){
+    $u = trim((string) $url);
+    if ($u === '') return false;
+
+    /* Bỏ ký tự điều khiển và khoảng trắng TRƯỚC khi xét giao thức:
+       "java\nscript:" và "java\tscript:" đều được trình duyệt hiểu là
+       javascript:, nhưng nhìn thì không khớp chuỗi "javascript:". */
+    $sach = preg_replace('/[\x00-\x20]+/', '', $u);
+    $sach = strtolower($sach);
+
+    foreach (['javascript:', 'vbscript:', 'data:', 'file:', 'about:'] as $xau){
+        if (strpos($sach, $xau) === 0) return false;
+    }
+
+    // Đường dẫn tương đối, neo trong trang, mailto, tel, http(s) — đều nhận
+    return true;
+}
+
+/**
+ * Lọc một đoạn HTML người dùng gửi lên, trả về HTML đã sạch.
+ *
+ * Chuỗi rỗng vào thì chuỗi rỗng ra. Không bao giờ ném lỗi: nội dung hỏng tới
+ * đâu cũng chỉ mất phần hỏng, vì ném lỗi ở đây nghĩa là người viết bấm Lưu
+ * và mất cả bài.
+ */
+function loc_html_an_toan($html){
+    $html = (string) $html;
+    if (trim($html) === '') return '';
+    if (!class_exists('DOMDocument')) return strip_tags($html);   // không có ext-dom
+
+    $cho = html_the_cho_phep();
+    $cam = array_flip(html_the_cam());
+
+    $doc = new DOMDocument();
+    $cu  = libxml_use_internal_errors(true);
+
+    /* Tiền tố XML báo bảng mã: không có nó, DOMDocument đoán là ISO-8859-1 và
+       mọi chữ tiếng Việt thành ký tự lạ. Bọc trong <div id="goc-loc"> để lấy
+       lại đúng phần bên trong, không dính <html><body> do DOM tự thêm. */
+    $ok = $doc->loadHTML(
+        '<?xml encoding="utf-8" ?><div id="goc-loc">' . $html . '</div>',
+        LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING
+    );
+    libxml_clear_errors();
+    libxml_use_internal_errors($cu);
+    if (!$ok) return strip_tags($html);
+
+    $goc = $doc->getElementById('goc-loc');
+    if ($goc === null) return strip_tags($html);
+
+    html_don_nut($goc, $cho, $cam);
+
+    $ra = '';
+    foreach ($goc->childNodes as $con){
+        $ra .= $doc->saveHTML($con);
+    }
+    return trim($ra);
+}
+
+/**
+ * Dọn đệ quy các con của một nút.
+ *
+ * DUYỆT NGƯỢC TỪ CUỐI LÊN ĐẦU. `childNodes` là danh sách SỐNG: xoá hay thay
+ * một nút là các chỉ số phía sau tụt xuống một bậc, nên duyệt xuôi sẽ nhảy
+ * cóc qua đúng nút nằm ngay sau nút vừa xoá. Đã là chỗ sai kinh điển của mọi
+ * bộ lọc viết bằng DOM.
+ */
+function html_don_nut($nut, array $cho, array $cam){
+    for ($i = $nut->childNodes->length - 1; $i >= 0; $i--){
+        $con = $nut->childNodes->item($i);
+        if ($con === null) continue;
+
+        // Chú thích HTML: bỏ. Có thể chứa cả đoạn mã người ta "tạm tắt".
+        if ($con->nodeType === XML_COMMENT_NODE){
+            $nut->removeChild($con);
+            continue;
+        }
+        if ($con->nodeType !== XML_ELEMENT_NODE) continue;   // chữ thường: giữ
+
+        $ten = strtolower($con->nodeName);
+
+        if (isset($cam[$ten])){
+            $nut->removeChild($con);                          // xoá cả bên trong
+            continue;
+        }
+
+        if (!isset($cho[$ten])){
+            // Thẻ lạ: dọn bên trong trước, rồi nhấc các con ra thay chỗ thẻ này
+            html_don_nut($con, $cho, $cam);
+            while ($con->firstChild !== null){
+                $nut->insertBefore($con->firstChild, $con);
+            }
+            $nut->removeChild($con);
+            continue;
+        }
+
+        html_don_thuoc_tinh($con, $cho[$ten]);
+        html_don_nut($con, $cho, $cam);
+    }
+}
+
+/** Bỏ mọi thuộc tính không có tên trong danh sách cho phép của thẻ đó */
+function html_don_thuoc_tinh($el, array $choPhep){
+    $bo = [];
+    foreach ($el->attributes as $tt){
+        $ten = strtolower($tt->nodeName);
+
+        if (!in_array($ten, $choPhep, true)){ $bo[] = $tt->nodeName; continue; }
+
+        if (($ten === 'href' || $ten === 'src') && !html_url_an_toan($tt->nodeValue)){
+            $bo[] = $tt->nodeName;
+        }
+    }
+    foreach ($bo as $ten) $el->removeAttribute($ten);
+
+    /* Link mở tab mới PHẢI có rel="noopener": thiếu nó thì trang được mở ra
+       giữ được tham chiếu window.opener và tự đổi địa chỉ trang gốc sang một
+       trang giả — người dùng quay lại tab cũ thì đang ở trang đăng nhập giả. */
+    if (strtolower($el->nodeName) === 'a' && $el->getAttribute('target') === '_blank'){
+        $el->setAttribute('rel', 'noopener noreferrer');
+    }
+}

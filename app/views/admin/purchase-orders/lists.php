@@ -64,7 +64,7 @@ $pg = phan_trang((array) $dataList); $rows = $pg['rows'];
                     <th style="width:130px" class="text-right">Tổng tiền</th>
                     <th style="width:110px" class="text-center">Trạng thái</th>
                     <th style="width:150px">Phiếu nhập kho</th>
-                    <th style="width:110px" class="text-center">Thao tác</th>
+                    <th style="width:150px" class="text-center">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
@@ -117,6 +117,15 @@ $pg = phan_trang((array) $dataList); $rows = $pg['rows'];
                         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}"
                            class="btn btn-warning btn-sm" title="Mở đơn"><i class="fas fa-edit"></i></a>
+                        @endif
+                        <?php /* KHAI SERIAL — đường vào chính, ngay cạnh nút mở đơn.
+                                 Khách yêu cầu khai serial "theo phiếu mua", nên chỗ
+                                 bắt đầu phải là danh sách đơn mua. Hiện ở MỌI trạng
+                                 thái: serial chỉ đọc được khi hàng đã về, tức là sau
+                                 khi đơn chốt. */ ?>
+                        @if (route('admin/'.$routeBase.'/serial/'.$item['id']))
+                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/serial/'.$item['id']}}"
+                           class="btn btn-outline-primary btn-sm" title="Khai serial"><i class="fas fa-barcode"></i></a>
                         @endif
                         <?php /* Xoá CHỈ khi chưa sinh phiếu nhập — controller chặn lần
                                  nữa, nhưng ẩn nút đi thì người dùng không phải thử rồi

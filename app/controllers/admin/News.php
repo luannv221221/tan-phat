@@ -131,8 +131,17 @@ class News extends Controller {
             'slug'         => slugify(!empty($f['slug']) ? $f['slug'] : $f['title']),
             'meta_title'   => !empty($f['meta_title']) ? trim($f['meta_title']) : null,
             'meta_description' => !empty($f['meta_description']) ? trim($f['meta_description']) : null,
+            /* TỪ KHOÁ — ô "Tags" trong ảnh mẫu khách gửi 05/11/2026. Chuỗi
+               ngăn bằng dấu phẩy, không dựng bảng riêng: chưa có màn nào lọc
+               hay gộp theo từ khoá, dựng bảng bây giờ là dựng thứ chưa ai đọc. */
+            'tags'         => !empty($f['tags']) ? mb_substr(trim($f['tags']), 0, 255) : null,
             'summary'      => !empty($f['summary']) ? trim($f['summary']) : null,
-            'content'      => isset($f['content']) ? $f['content'] : null,
+            /* NỘI DUNG PHẢI QUA BỘ LỌC. Cột này được in ra trang khách bằng
+               `{!! !!}` (không escape — có escape thì <strong> hiện thành chữ),
+               nên mọi thứ lưu được vào đây đều chạy thật trên máy người xem.
+               Lọc Ở ĐÂY chứ không ở lúc hiện ra: hiện ra có nhiều chỗ (trang
+               tin, trang chủ, RSS, sitemap), quên một chỗ là thủng. */
+            'content'      => isset($f['content']) ? loc_html_an_toan($f['content']) : null,
             'thumbnail'    => !empty($f['thumbnail']) ? trim($f['thumbnail']) : null,
             'is_published' => $pub,
             'published_at' => $pub ? date('Y-m-d H:i:s') : null,

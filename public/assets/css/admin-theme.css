@@ -759,3 +759,142 @@ body.adm-auth { background: var(--bg-page); }
     .bang-dong-hang > tfoot { display: none; }
     .tong-man-hep { display: block; }
 }
+
+/* ==========================================================================
+   THANH MÀU ĐỘ DÀI SEO — tài liệu khách 05/11/2026:
+   "Check seo theo tiêu chuẩn (màu sắc xanh và đỏ)".
+
+   Gắn bằng window.oDoDaiSeo() trong public/assets/js/seo-slug.js.
+   Ba trạng thái, vì "để trống" khác "sai": trống thì xám và im lặng, trang
+   vẫn tự lấy tiêu đề làm thẻ meta.
+   ========================================================================== */
+.seo-do-dai { margin-top: 4px; }
+.seo-do-dai__vach {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border, #dee2e6);
+    overflow: hidden;
+}
+.seo-do-dai__vach > i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 2px;
+    background: #adb5bd;
+    transition: width .15s linear, background-color .15s linear;
+}
+.seo-do-dai__chu { display: block; margin-top: 2px; font-size: 11px; }
+.seo-do-dai.la-xanh  .seo-do-dai__vach > i { background: #28a745; }
+.seo-do-dai.la-xanh  .seo-do-dai__chu     { color: #28a745 !important; }
+.seo-do-dai.la-do    .seo-do-dai__vach > i { background: #dc3545; }
+.seo-do-dai.la-do    .seo-do-dai__chu     { color: #dc3545 !important; }
+
+/* ==========================================================================
+   NÚT XOÁ DÒNG TRONG BẢNG CHỨNG TỪ — khách 05/11/2026: "icon to hơn".
+
+   Nút cũ là .btn-sm mặc định: vùng bấm 24x24, trên màn cảm ứng thì bấm ba
+   lần mới trúng. 34x34 là mức nhỏ nhất còn bấm được bằng ngón tay.
+   ========================================================================== */
+.bang-dong-mua .nut-xoa-dong,
+.bang-dong-hang .nut-xoa-dong {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    line-height: 32px;
+    font-size: 15px;
+}
+
+/* ==========================================================================
+   THAO TÁC NHANH TRÊN THANH TRÊN — khách 05/11/2026 (ảnh mẫu trong tài liệu:
+   "Bán hàng -- mua hàng -- chăm sóc"), kèm CRM mục 5 "gắn link của báo giá,
+   đơn mua, danh sách khách hàng".
+
+   Ẩn dưới 992px: thanh trên ở màn hẹp đã có nút menu + tên trang + avatar,
+   nhét thêm ba link nữa là tên trang bị đẩy mất.
+   ========================================================================== */
+.adm-topbar__nhanh { display: none; gap: 2px; margin-left: 18px; }
+@media (min-width: 992px) { .adm-topbar__nhanh { display: inline-flex; } }
+.adm-topbar__nhanh a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: inherit;
+    opacity: .78;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.adm-topbar__nhanh a:hover { opacity: 1; background: rgba(0, 0, 0, .06); text-decoration: none; }
+.adm-topbar__nhanh a > svg { width: 16px; height: 16px; }
+
+/* ==========================================================================
+   TRÌNH SOẠN THẢO CÓ ĐỊNH DẠNG (public/assets/js/soan-thao.js)
+   Tài liệu khách 05/11/2026 — ảnh mẫu màn "Sửa bài viết".
+   ========================================================================== */
+.soan-thao {
+    border: 1px solid var(--border, #ced4da);
+    border-radius: .25rem;
+    background: #fff;
+}
+.soan-thao__thanh {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
+    padding: 5px 6px;
+    border-bottom: 1px solid var(--border, #ced4da);
+    background: #f6f7f9;
+    border-radius: .25rem .25rem 0 0;
+}
+.soan-thao__nut {
+    min-width: 30px;
+    height: 28px;
+    padding: 0 7px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    color: #333;
+    cursor: pointer;
+}
+.soan-thao__nut:hover { background: #e4e7eb; border-color: #d3d7dd; }
+.soan-thao__vach { width: 1px; height: 18px; margin: 0 4px; background: #d3d7dd; }
+.soan-thao__khung {
+    min-height: 240px;
+    max-height: 560px;
+    overflow-y: auto;
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.65;
+    outline: none;
+}
+.soan-thao__khung:focus { box-shadow: inset 0 0 0 2px rgba(0, 123, 255, .18); }
+.soan-thao__khung img { max-width: 100%; height: auto; }
+.soan-thao__khung blockquote {
+    margin: .6rem 0;
+    padding: .2rem 0 .2rem .9rem;
+    border-left: 3px solid #ced4da;
+    color: #555;
+}
+.soan-thao__khung table { width: 100%; margin: .6rem 0; border-collapse: collapse; }
+.soan-thao__khung th,
+.soan-thao__khung td { padding: 5px 8px; border: 1px solid #dee2e6; }
+
+/* Chế độ xem mã: textarea thế chỗ khung, bỏ viền kép */
+.soan-thao .soan-thao__nguon {
+    width: 100%;
+    min-height: 240px;
+    padding: 12px 14px;
+    border: 0;
+    outline: none;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12.5px;
+    line-height: 1.5;
+    resize: vertical;
+}
+.soan-thao.dang-xem-ma .soan-thao__thanh { background: #fff6e5; }

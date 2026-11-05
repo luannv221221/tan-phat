@@ -22,7 +22,13 @@
                 <?php $pad = (int) $item['depth'] * 24; ?>
                 <tr>
                     <td style="padding-left:{{$pad+12}}px">{!! $item['depth']>0 ? '<i class="fas fa-level-up-alt fa-rotate-90 text-muted mr-1"></i>' : '' !!}<b>{{$item['label']}}</b></td>
-                    <td class="text-muted"><code>{{!empty($item['url'])?$item['url']:'/'}}</code>{!! $item['target']==='_blank' ? ' <span class="badge badge-light">tab mới</span>' : '' !!}</td>
+                    <?php /* Hiện ĐÍCH đã chọn, không phải cột `url` thô: mục kiểu
+                             "danh mục bài viết" có `url` rỗng nên trước đây hiện ra
+                             dấu "/" — nhìn như mục trỏ về trang chủ. nhanDich() cũng
+                             là chỗ báo khi đích đã bị xoá. */ ?>
+                    <td class="text-muted">
+                        <code>{{$item['nhan_dich']}}</code>{!! $item['target']==='_blank' ? ' <span class="badge badge-light">tab mới</span>' : '' !!}
+                    </td>
                     <td class="text-center">{{$item['sort_order']}}</td>
                     <td class="text-center">{!! $item['status']==1 ? '<span class="badge badge-success">Bật</span>' : '<span class="badge badge-secondary">Ẩn</span>' !!}</td>
                     <td class="text-center">

@@ -152,6 +152,107 @@ class PurchaseSerialsModel extends Model {
         return $tuChoi;
     }
 
+    /* ======================================================================
+     * KHAI SERIAL SAU — tài liệu khách 05/11/2026, CRM mục 2: "Thêm serial
+     * theo phiếu mua (chọn phiếu mua) tránh làm từ lúc tạo đơn mua".
+     *
+     * Khác syncForPo() ở một điểm quyết định: mấy hàm dưới đây làm việc TRÊN
+     * TỪNG DÒNG HÀNG (`poi_id`), không xoá cả đơn. Màn khai serial mở ra khi
+     * đơn đã lưu xong và hàng đã về — lúc đó dòng hàng đã có id ổn định, nên
+     * neo vào id là chắc chắn, không phải đoán theo thứ tự như lúc lưu form.
+     * ====================================================================== */
+
+    /**
+     * Serial của một đơn, gom theo dòng hàng: [poi_id => ['SN1','SN2', ...]].
+     *
+     * Dòng nào chưa khai thì KHÔNG có khoá trong mảng — nơi gọi dùng ?? [].
+     */
+    public function theoDong($poId){
+        $ra = [];
+        foreach ((array) $this->getByPo($poId) as $r){
+            $k = !empty($r['poi_id']) ? (int) $r['poi_id'] : 0;
+            $ra[$k][] = $r['serial'];
+        }
+        return $ra;
+    }
+
+    /**
+     * Serial của một đơn gom theo MẶT HÀNG: [part_id => ['SN1', ...]].
+     *
+     * Dùng để giữ lại serial khi lưu lại đơn mua. Lưu đơn là xoá sạch dòng
+     * hàng rồi ghi lại (PurchaseOrderItemsModel::syncForPo), mà serial neo
+     * vào dòng hàng với ràng buộc CASCADE — nên chúng bị xoá theo. Gom theo
+     * part_id vì id dòng cũ không còn tồn tại sau khi ghi lại.
+     */
+    public function theoHang($poId){
+        $ra = [];
+        foreach ((array) $this->getByPo($poId) as $r){
+            $ra[(int) $r['part_id']][] = $r['serial'];
+        }
+        return $ra;
+    }
+
+    /**
+     * Thay toàn bộ serial của MỘT dòng hàng.
+     *
+     * @return array serial bị từ chối, kèm lý do (giống syncForPo)
+     *
+     * Xoá theo `poi_id` rồi ghi lại, nằm trong một giao dịch: nửa chừng mà
+     * hỏng thì dòng đó mất sạch serial cũ lẫn mới, và người dùng không có
+     * cách nào biết trừ khi mở lại từng dòng ra đếm.
+     */
+    public function ghiChoDong($poId, $poiId, $partId, array $serials){
+        $poId   = (int) $poId;
+        $poiId  = (int) $poiId;
+        $partId = (int) $partId;
+        $gara   = self::garaLoc();
+        $now    = date('Y-m-d H:i:s');
+        $tuChoi = [];
+
+        $this->transaction(function ($db) use ($poId, $poiId, $partId, $serials, $gara, $now, &$tuChoi){
+            $db->delete('purchase_serials', '`po_id` = ? AND `poi_id` = ?', [$poId, $poiId]);
+
+            $daGhi = [];
+            foreach ($serials as $s){
+                $sn = trim((string) $s);
+                if ($sn === '') continue;                   // chưa có tem — bỏ qua, không báo lỗi
+                $sn = mb_substr($sn, 0, 100);
+
+                $khoa = mb_strtoupper($sn, 'UTF-8');
+                if (isset($daGhi[$khoa])){
+                    $tuChoi[] = ['serial' => $sn, 'ly_do' => 'trùng ngay trong dòng này'];
+                    continue;
+                }
+
+                /* Trùng với chỗ khác trong cùng gara. Hỏi trước để báo được TÊN
+                   ĐƠN kia thay vì để chỉ mục uq_serial_gara ném ra một dòng
+                   "Duplicate entry" mà người ở quầy không hiểu. */
+                $co = $db->firstRaw(
+                    'SELECT `po`.`po_no` FROM `purchase_serials` `ps`
+                       JOIN `purchase_orders` `po` ON `po`.`id` = `ps`.`po_id`
+                      WHERE `ps`.`garage_id` <=> ? AND `ps`.`serial` = ? LIMIT 1',
+                    [$gara, $sn]);
+                if (!empty($co['po_no'])){
+                    $tuChoi[] = ['serial' => $sn, 'ly_do' => 'đã có ở đơn ' . $co['po_no']];
+                    continue;
+                }
+
+                $db->insert('purchase_serials', [
+                    'po_id'     => $poId,
+                    'poi_id'    => $poiId,
+                    'part_id'   => $partId,
+                    'serial'    => $sn,
+                    'garage_id' => $gara,
+                    'create_at' => $now,
+                ]);
+                $daGhi[$khoa] = true;
+            }
+            return true;
+        });
+
+        return $tuChoi;
+    }
+
     public function demTheoPo($poId){
         $r = $this->firstRaw('SELECT COUNT(*) AS c FROM `purchase_serials` WHERE `po_id` = ?',
                              [(int) $poId]);

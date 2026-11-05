@@ -6,10 +6,18 @@
  * file_get_contents() rồi eval(), nên `__DIR__` bên trong trỏ về core/ chứ
  * không phải thư mục view — tách partial rồi include là không tìm thấy file.
  *
- * SERIAL MỌC THEO SỐ LƯỢNG: gõ số lượng 5 thì dòng đó hiện ra 5 ô serial, đúng
- * như tài liệu ("dựa vào số lượng sẽ cho phép thêm số serial tương ứng"). Việc
- * này làm bằng JS ở cuối file; ô serial đặt tên `serial[<chỉ số dòng>][]` để
- * server gắn đúng serial vào đúng dòng hàng.
+ * KHÔNG CÒN Ô SERIAL Ở ĐÂY (05/11/2026). Bản đầu cho serial mọc theo số lượng
+ * ngay trong bảng này. Khách xem màn hình rồi yêu cầu đổi:
+ *
+ *     "Thêm serial theo phiếu mua (chọn phiếu mua) tránh làm từ lúc tạo đơn mua"
+ *     "serial cho nhập là kiểu model popup tránh hiển thị nhiều dòng"
+ *
+ * Khách đúng ở chỗ căn bản: lúc lập đơn hàng chưa về, chưa ai cầm được cái tem
+ * để đọc số. Ô serial lúc đó hoặc bỏ trống, hoặc chép từ giấy báo giá — mà số
+ * chép sai thì tới lúc bảo hành mới lòi ra.
+ *
+ * Serial nay khai ở màn riêng: admin/purchase-orders/serial/<id>, mở bằng nút
+ * trên danh sách đơn mua và ở màn Sửa đơn.
  */
 $gt = function($k, $mac = '') use ($old){ return isset($old[$k]) ? $old[$k] : $mac; };
 
@@ -93,7 +101,7 @@ foreach ((array) $parts as $p){
 
     <div class="card card-outline card-info">
         <div class="card-header">
-            <h3 class="card-title"><i class="fas fa-boxes mr-2"></i>Hàng hoá &amp; serial</h3>
+            <h3 class="card-title"><i class="fas fa-boxes mr-2"></i>Hàng hoá</h3>
             <div class="card-tools">
                 <button type="button" class="btn btn-sm btn-info" id="them-dong">
                     <i class="fas fa-plus mr-1"></i> Thêm dòng
@@ -103,25 +111,27 @@ foreach ((array) $parts as $p){
         <div class="card-body table-responsive p-0">
             <table class="table table-sm mb-0 bang-dong-mua">
                 <thead><tr>
-                    <th style="width:28%">Hàng hoá</th>
-                    <th style="width:90px" class="text-right">Số lượng</th>
-                    <th style="width:130px" class="text-right">Đơn giá</th>
-                    <th style="width:120px" class="text-right">Thành tiền</th>
-                    <th>Serial từng chiếc</th>
-                    <th style="width:44px"></th>
+                    <?php /* Ô hàng hoá rộng hẳn ra sau khi bỏ cột serial — khách 05/11/2026:
+                             "Tăng chiều dài hàng hóa, icon to hơn". Ảnh khách chụp có dòng
+                             "— Chọn hàng ho" bị cắt giữa chữ. */ ?>
+                    <th>Hàng hoá</th>
+                    <th style="width:110px" class="text-right">Số lượng</th>
+                    <th style="width:150px" class="text-right">Đơn giá</th>
+                    <th style="width:140px" class="text-right">Thành tiền</th>
+                    <th style="width:56px"></th>
                 </tr></thead>
                 <tbody id="dong-mua"></tbody>
                 <tfoot><tr>
                     <th colspan="3" class="text-right">Tổng cộng</th>
                     <th class="text-right"><span id="tong-tien">0</span> đ</th>
-                    <th colspan="2"></th>
+                    <th></th>
                 </tr></tfoot>
             </table>
         </div>
         <div class="card-footer text-muted small">
-            Gõ <strong>số lượng</strong> thì ô serial tự mọc ra đúng bấy nhiêu dòng.
-            Chưa có tem thì để trống — lưu được, bổ sung sau.
-            Serial <strong>không được trùng</strong> trong cùng một gara.
+            <i class="fas fa-barcode mr-1"></i>
+            <strong>Serial khai sau</strong>, ở màn riêng — lưu đơn xong là có nút
+            “Khai serial”. Lúc lập đơn hàng chưa về, chưa ai cầm được cái tem để đọc số.
             <br>
             <strong>Đơn giá</strong> để trống cũng lưu được — NCC chưa báo giá thì sau bổ sung.
             Lúc tạo phiếu nhập kho, dòng đã khai giá lấy đúng giá đó, dòng để trống
@@ -164,13 +174,6 @@ foreach ((array) $parts as $p){
         oTong.textContent = t.toLocaleString('vi-VN');
     }
 
-    /* Chỉ số dòng CHỈ TĂNG, không đánh lại sau khi xoá.
-       Tên ô là `serial[<chỉ số>][]`, mà server gắn serial vào dòng hàng theo
-       THỨ TỰ các dòng còn lại. Đánh lại số sau mỗi lần xoá thì hai dòng có thể
-       cùng mang một chỉ số trong chớp mắt giữa hai thao tác, và serial nhảy
-       sang mặt hàng khác — không có lỗi nào báo. */
-    var soDong = 0;
-
     function oChon(chon){
         var s = document.createElement('select');
         s.name = 'part[]';
@@ -189,33 +192,7 @@ foreach ((array) $parts as $p){
         return s;
     }
 
-    /* Số ô serial phải KHỚP số lượng. Giảm số lượng thì bỏ bớt ô TỪ CUỐI lên,
-       giữ nguyên những tem đã gõ ở trên — xoá từ đầu là mất đúng cái vừa nhập. */
-    function veSerial(oBoc, chiSo, soLuong, dsCo){
-        var n = Math.max(0, Math.floor(soLuong || 0));
-        var dangCo = oBoc.querySelectorAll('input.o-serial');
-
-        for (var i = dangCo.length; i > n; i--) dangCo[i - 1].parentNode.remove();
-
-        for (var j = dangCo.length; j < n; j++){
-            var cum = document.createElement('div');
-            cum.className = 'input-group input-group-sm mb-1';
-            var pre = document.createElement('div');
-            pre.className = 'input-group-prepend';
-            pre.innerHTML = '<span class="input-group-text">' + (j + 1) + '</span>';
-            var inp = document.createElement('input');
-            inp.type = 'text';
-            inp.name = 'serial[' + chiSo + '][]';
-            inp.className = 'form-control o-serial';
-            inp.placeholder = 'Số serial chiếc thứ ' + (j + 1);
-            if (dsCo && dsCo[j]) inp.value = dsCo[j];
-            cum.appendChild(pre); cum.appendChild(inp);
-            oBoc.appendChild(cum);
-        }
-    }
-
     function themDong(r){
-        var chiSo = soDong++;
         var tr = document.createElement('tr');
 
         var td1 = document.createElement('td');
@@ -247,26 +224,20 @@ foreach ((array) $parts as $p){
         oTt.textContent = '—';
         tdT.appendChild(oTt);
 
-        var td3 = document.createElement('td');
-        var boc = document.createElement('div');
-        boc.className = 'o-boc-serial';
-        td3.appendChild(boc);
-
         var td4 = document.createElement('td');
         var xoa = document.createElement('button');
         xoa.type = 'button';
-        xoa.className = 'btn btn-sm btn-outline-danger';
+        xoa.className = 'btn btn-sm btn-outline-danger nut-xoa-dong';
         xoa.innerHTML = '<i class="fas fa-times"></i>';
         xoa.title = 'Xoá dòng';
         xoa.addEventListener('click', function (){ tr.remove(); tinhLai(); });
         td4.appendChild(xoa);
 
         tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(tdG);
-        tr.appendChild(tdT); tr.appendChild(td3); tr.appendChild(td4);
+        tr.appendChild(tdT); tr.appendChild(td4);
         tbody.appendChild(tr);
 
-        veSerial(boc, chiSo, parseFloat(qty.value), r && r.serials);
-        qty.addEventListener('input', function (){ veSerial(boc, chiSo, parseFloat(qty.value), null); tinhLai(); });
+        qty.addEventListener('input', tinhLai);
         gia.addEventListener('input', tinhLai);
         tinhLai();
 

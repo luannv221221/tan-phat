@@ -633,3 +633,71 @@ a:hover{ color:var(--tp-xanh); }
   /* Xuống một cột thì danh sách nằm dưới khung video, cho cuộn gọn lại */
   .videos__ds{ max-height:340px; margin-top:16px; }
 }
+
+/* ==========================================================================
+   HỖ TRỢ TRỰC TUYẾN — ba nút tròn nổi góc trái dưới.
+   Tài liệu khách 05/11/2026, Frontend mục 9: "Cho hiệu ứng nháy nháy".
+
+   GÓC TRÁI, không phải góc phải: góc phải đã có khung chat onsite và nút
+   "lên đầu trang". Ba nút nữa chồng lên là che mất cả hai.
+
+   Vòng sóng lan ra là phần "nháy nháy". Dừng lại khi hệ điều hành báo người
+   dùng không muốn chuyển động (prefers-reduced-motion) — với một số người,
+   thứ nhấp nháy liên tục ở mép mắt gây chóng mặt hoặc co giật.
+   ========================================================================== */
+.ho-tro-noi {
+    position: fixed;
+    left: 16px;
+    bottom: 18px;
+    z-index: 1040;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ho-tro-noi__nut {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .28);
+}
+.ho-tro-noi__nut:hover,
+.ho-tro-noi__nut:focus { color: #fff; text-decoration: none; transform: scale(1.06); }
+.ho-tro-noi__chu { font-size: 14px; letter-spacing: .3px; }
+.ho-tro-noi .la-zalo { background: #0068ff; }
+.ho-tro-noi .la-goi  { background: #22a447; }
+.ho-tro-noi .la-mess { background: #a033ff; }
+
+/* Vòng sóng — nằm DƯỚI nội dung nút (z-index âm) để không nuốt cú bấm. */
+.ho-tro-noi__song {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: inherit;
+    opacity: .55;
+    z-index: -1;
+    animation: ho-tro-song 1.8s ease-out infinite;
+}
+@keyframes ho-tro-song {
+    0%   { transform: scale(1);   opacity: .55; }
+    70%  { transform: scale(1.7); opacity: 0; }
+    100% { transform: scale(1.7); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ho-tro-noi__song { animation: none; opacity: 0; }
+    .ho-tro-noi__nut:hover { transform: none; }
+}
+
+/* Màn hẹp: nhỏ lại và nhích lên cho khỏi đè thanh điều hướng dưới cùng */
+@media (max-width: 575.98px) {
+    .ho-tro-noi { left: 10px; bottom: 12px; gap: 9px; }
+    .ho-tro-noi__nut { width: 42px; height: 42px; font-size: 17px; }
+    .ho-tro-noi__chu { font-size: 12px; }
+}

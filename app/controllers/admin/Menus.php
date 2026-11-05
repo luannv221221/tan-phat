@@ -43,6 +43,7 @@ class Menus extends Controller {
         $this->baseData();
         $this->__data['content']['page_name'] = 'Thêm ' . $this->labelOne;
         $this->__data['content']['roots']     = $this->__model->getRoots();
+        foreach ($this->dsDich() as $k => $v) $this->__data['content'][$k] = $v;
         $this->__data['content']['item']      = null;
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['errors']    = Session::flash('errors');
@@ -70,6 +71,7 @@ class Menus extends Controller {
         $roots = [];
         foreach ($this->__model->getRoots() as $r){ if ((int) $r['id'] !== (int) $id) $roots[] = $r; }
         $this->__data['content']['roots']  = $roots;
+        foreach ($this->dsDich() as $k => $v) $this->__data['content'][$k] = $v;
         $this->__data['content']['item']   = $item;
         $this->__data['content']['msg']    = Session::flash('msg');
         $this->__data['content']['errors'] = Session::flash('errors');
@@ -94,6 +96,23 @@ class Menus extends Controller {
         $this->__response->redirect('admin/' . $this->routeBase);
     }
 
+    /**
+     * Ba danh sách để chọn đích — tài liệu khách 05/11/2026, Frontend mục 6.
+     *
+     * Nạp cả ba cho mọi lần mở form, kể cả khi người dùng đang chọn kiểu
+     * "đường dẫn tự gõ": ô chọn đổi theo kiểu bằng JS ngay trên trình duyệt,
+     * nạp sau theo từng kiểu thì phải thêm một đường API và một nhịp chờ cho
+     * ba danh sách mà gara nào cũng chỉ có vài chục dòng.
+     */
+    private function dsDich(){
+        return [
+            'dsTin'      => $this->model('NewsCategoriesModel')->getLists(),
+            'dsSanPham'  => $this->model('PartCategoriesModel')->getLists(),
+            'dsThuVien'  => $this->model('GalleriesModel')->getLists(),
+            'kieuDs'     => MenusModel::$kieuLienKet,
+        ];
+    }
+
     private function buildData($selfId){
         $f = $this->__request->getFields();
         $parentId = !empty($f['parent_id']) ? (int) $f['parent_id'] : 0;
@@ -104,10 +123,35 @@ class Menus extends Controller {
         } else {
             $parent = null;
         }
+        /* KIỂU LIÊN KẾT. Kiểu lạ -> về 'url' (xem MenusModel::kieuHopLe) chứ
+           không từ chối: giá trị lạ chỉ tới được từ POST gửi tay, mà lúc đó
+           từ chối hay nhận cũng không ai đọc câu lỗi. */
+        $kieu = MenusModel::kieuHopLe(isset($f['link_type']) ? $f['link_type'] : '');
+
+        /* ĐÍCH PHẢI CÓ THẬT. Không kiểm thì id gõ bừa vẫn lưu được, và mục
+           menu đó im lặng trỏ về trang chủ — không màn nào nói vì sao.
+           Đích không hợp lệ thì hạ về kiểu 'url': ít nhất người quản lý mở ra
+           sẽ thấy ô đường dẫn trống và hiểu là chưa chọn được gì. */
+        $dichId = null;
+        if ($kieu !== MenusModel::KIEU_URL){
+            $id = !empty($f['target_id']) ? (int) $f['target_id'] : 0;
+            if ($id > 0 && !empty($this->__model->dich($kieu, $id))){
+                $dichId = $id;
+            } else {
+                $kieu = MenusModel::KIEU_URL;
+            }
+        }
+
         return [
             'parent_id'  => $parent,
             'label'      => trim($f['label']),
-            'url'        => isset($f['url']) ? trim($f['url']) : '',
+            'link_type'  => $kieu,
+            'target_id'  => $dichId,
+            /* Kiểu khác 'url' thì XOÁ cột url. Giữ lại là có hai nguồn sự thật:
+               đổi đích xong mà cột url cũ còn nằm đó, lần sau ai sửa code đọc
+               nhầm cột là menu trỏ về chỗ của tháng trước. */
+            'url'        => $kieu === MenusModel::KIEU_URL
+                            ? (isset($f['url']) ? trim($f['url']) : '') : '',
             'target'     => (!empty($f['target']) && $f['target'] === '_blank') ? '_blank' : '_self',
             'sort_order' => isset($f['sort_order']) ? (int) $f['sort_order'] : 0,
             'status'     => !empty($f['status']) ? 1 : 0,

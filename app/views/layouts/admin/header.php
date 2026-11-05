@@ -20,6 +20,37 @@ elseif (!empty($page_title))  { $__pageLabel = $page_title; }
         <span class="adm-topbar__sep"><?php echo e($__pageLabel); ?></span>
     <?php endif; ?>
 
+    <?php
+    /* THAO TÁC NHANH — tài liệu khách 05/11/2026, CRM mục 5: "Thao tác nhanh,
+       gắn link của báo giá, đơn mua, danh sách khách hàng", kèm ảnh mẫu thanh
+       trên ghi "Bán hang -- mua hang --chăm sóc".
+
+       Ba việc mở đầu ba luồng chính của một gara. Trỏ thẳng vào màn LẬP mới
+       chứ không vào danh sách: vào danh sách thì vẫn phải tìm nút "Thêm", mà
+       nút đó nằm ở chỗ khác nhau trên từng màn.
+
+       LỌC THEO QUYỀN bằng route(). Thiếu bước này thì nhân viên kho vẫn thấy
+       "Bán hàng" trên thanh trên, bấm vào ăn trang từ chối — một cái bẫy bày
+       ngay chỗ dễ bấm nhất. CSKH trỏ vào danh sách (không phải màn thêm) vì
+       chăm sóc là xem lại khách đã có; khai khách mới là màn Đối tượng. */
+    $__nhanh = [];
+    foreach ([['admin/quotations/add',      'shopping-cart', 'Bán hàng'],
+              ['admin/purchase-orders/add', 'truck',         'Mua hàng'],
+              ['admin/customers',           'headset',       'Chăm sóc']] as $__m){
+        $__u = route($__m[0]);              // false nếu không có quyền
+        if ($__u) $__nhanh[] = [$__u, $__m[1], $__m[2]];
+    }
+    ?>
+    <?php if (!empty($__nhanh)): ?>
+    <nav class="adm-topbar__nhanh" aria-label="Thao tác nhanh">
+        <?php foreach ($__nhanh as $__n): ?>
+            <a href="<?php echo e($__n[0]); ?>" title="<?php echo e($__n[2]); ?>">
+                <?php echo icon($__n[1]); ?><span><?php echo e($__n[2]); ?></span>
+            </a>
+        <?php endforeach; ?>
+    </nav>
+    <?php endif; ?>
+
     <div class="adm-topbar__right">
 
         <?php

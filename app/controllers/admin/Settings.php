@@ -36,7 +36,11 @@ class Settings extends Controller {
            sửa thì phải vào thẳng CSDL. */
     private $keys = ['site_name', 'site_short_name', 'site_slogan', 'meta_description', 'meta_keywords',
                      'og_image', 'logo', 'hotline', 'email', 'address', 'tax_code',
-                     'facebook', 'zalo',
+                     /* `messenger` tách riêng khỏi `facebook` — link trang
+                        (facebook.com/<ten>) và link nhắn tin (m.me/<ten>) không
+                        phải lúc nào cũng suy ra được nhau. Dùng cho ba nút nổi
+                        "Hỗ trợ trực tuyến" ở trang khách (tài liệu 05/11/2026). */
+                     'facebook', 'zalo', 'messenger',
                      'bank_name', 'bank_account', 'bank_holder',
                      'show_car_filter', 'show_topbar',
                      /* Linh vuc (gara / phu_tung) — quyet dinh man Lap bao gia

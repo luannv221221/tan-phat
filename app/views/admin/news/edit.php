@@ -49,12 +49,18 @@ $isPub = isset($old['is_published']) ? !empty($old['is_published']) : ((int) $it
                     <textarea name="summary" class="form-control" rows="2">{{$v('summary')}}</textarea>
                 </div>
                 <div class="form-group">
-                    <label>Nội dung (cho phép HTML)</label>
+                    <label>Nội dung</label>
                     <textarea name="content" class="form-control" rows="10">{{$v('content')}}</textarea>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-5"><label class="small text-muted">SEO — Meta title</label><input type="text" name="meta_title" class="form-control form-control-sm" value="{{$v('meta_title')}}"/></div>
                     <div class="form-group col-md-7"><label class="small text-muted">SEO — Meta description</label><input type="text" name="meta_description" class="form-control form-control-sm" value="{{$v('meta_description')}}"/></div>
+                </div>
+                <div class="form-group">
+                    <label class="small text-muted">Từ khoá</label>
+                    <input type="text" name="tags" class="form-control form-control-sm"
+                           placeholder="ngăn bằng dấu phẩy — vd: lọc gió, bảo dưỡng, Toyota"
+                           value="{{$v('tags')}}"/>
                 </div>
                 <div class="form-group mb-0"><div class="custom-control custom-switch">
                     <input type="checkbox" class="custom-control-input" name="is_published" id="is_published" value="1" {{$isPub?'checked':''}}/>
@@ -71,4 +77,18 @@ $isPub = isset($old['is_published']) ? !empty($old['is_published']) : ((int) $it
         </form>
     </div>
 </div></div>
+<script src="{{asset('public/assets/js/seo-slug.js')}}"></script>
+<script src="{{asset('public/assets/js/soan-thao.js')}}"></script>
+<script>
+/* Ô nội dung thành trình soạn thảo có định dạng; hai ô meta có thanh màu.
+   Mức 50–70 và 120–160 là khoảng Google hay cắt chuỗi — hai số khách ghi
+   trong tài liệu (65–70 và 150) nằm gọn bên trong. */
+(function(){
+    if (window.oSoanThao) window.oSoanThao(document.querySelector('[name="content"]'));
+    if (window.oDoDaiSeo){
+        window.oDoDaiSeo(document.querySelector('[name="meta_title"]'), 50, 70);
+        window.oDoDaiSeo(document.querySelector('[name="meta_description"]'), 120, 160);
+    }
+})();
+</script>
 <script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>

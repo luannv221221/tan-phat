@@ -157,6 +157,20 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                         <textarea class="form-control" name="description" rows="3">{{!empty($old['description'])?$old['description']:''}}</textarea>
                     </div>
 
+
+                    <?php /* META SEO — tài liệu khách 05/11/2026, Frontend mục 5:
+                             "chọn sửa để bổ sung thêm các trường meta seo".
+                             Để trống vẫn đúng: trang chi tiết tự lấy tên hàng và mô tả. */ ?>
+                    <div class="form-row">
+                        <div class="form-group col-md-5">
+                            <label class="small text-muted">SEO — Thẻ meta tiêu đề</label>
+                            <input type="text" id="o-meta-title" name="meta_title" class="form-control form-control-sm" value="{{!empty($old['meta_title'])?$old['meta_title']:''}}"/>
+                        </div>
+                        <div class="form-group col-md-7">
+                            <label class="small text-muted">SEO — Thẻ meta mô tả</label>
+                            <input type="text" id="o-meta-desc" name="meta_description" class="form-control form-control-sm" value="{{!empty($old['meta_description'])?$old['meta_description']:''}}"/>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label>Ảnh sản phẩm</label>
                         <div class="custom-file">
@@ -379,5 +393,20 @@ document.addEventListener('change', function (e) {
         if (lbl) lbl.textContent = n > 0 ? (n + ' ảnh đã chọn') : 'Chọn ảnh (có thể nhiều)...';
     }
 });
+</script>
+<script src="{{asset('public/assets/js/seo-slug.js')}}"></script>
+<script>
+/* Tự điền đường dẫn theo tên hàng + thanh màu độ dài SEO.
+   Mức 50–70 / 120–160 là khoảng Google hay cắt chuỗi; số khách ghi trong
+   tài liệu (65–70 và 150) nằm gọn trong hai khoảng này. */
+(function(){
+    var ten  = document.querySelector('[name="name"]');
+    var slug = document.querySelector('[name="slug"]');
+    if (window.oSlugTuTieuDe) window.oSlugTuTieuDe(ten, slug);
+    if (window.oDoDaiSeo){
+        window.oDoDaiSeo(document.getElementById('o-meta-title'), 50, 70);
+        window.oDoDaiSeo(document.getElementById('o-meta-desc'), 120, 160);
+    }
+})();
 </script>
 <script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>

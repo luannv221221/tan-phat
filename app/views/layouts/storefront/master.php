@@ -398,6 +398,67 @@ $this->render($sub_content, $content);
     </div>
 </div>
 
+<?php
+/* ==========================================================================
+   HỖ TRỢ TRỰC TUYẾN — tài liệu khách 05/11/2026, Frontend mục 9:
+   "Hỗ trợ trực tuyến — Cho hiệu ứng nháy nháy", kèm ảnh ba nút tròn Zalo,
+   gọi điện, Messenger xếp dọc.
+
+   LẤY TỪ CẤU HÌNH CỦA GARA, không viết cứng. Mỗi gara một số điện thoại, một
+   Zalo, một trang Facebook — viết cứng là mọi gara đổ cuộc gọi về Tân Phát.
+
+   KHÔNG KHAI THÌ KHÔNG HIỆN. Ba nút tròn luôn đè lên góc màn hình; hiện một
+   nút Zalo trỏ vào trang trống thì thà đừng hiện.
+   ========================================================================== */
+$hoTro = [];
+
+/* Zalo nhận cả hai kiểu người dùng hay gõ: dán link zalo.me, hoặc chỉ gõ số
+   điện thoại. Bắt họ nhớ đúng dạng link là một ô cấu hình luôn sai. */
+if (!empty($settings['zalo'])){
+    $z = trim($settings['zalo']);
+    if (!preg_match('~^https?://~i', $z)){
+        $so = preg_replace('/[^0-9]/', '', $z);
+        $z  = $so !== '' ? 'https://zalo.me/' . $so : '';
+    }
+    /* Zalo không có icon trong Font Awesome 4.7 (bộ của giao diện này), nên
+       nút Zalo hiện CHỮ. Mượn icon khác cho nó là người dùng không nhận ra. */
+    if ($z !== '') $hoTro[] = ['url' => $z, 'ten' => 'Chat Zalo', 'lop' => 'la-zalo',
+                               'icon' => '', 'chu' => 'Zalo'];
+}
+
+if ($hotlineTel !== ''){
+    $hoTro[] = ['url' => 'tel:' . $hotlineTel, 'ten' => 'Gọi ' . $hotline,
+                'lop' => 'la-goi', 'icon' => 'fa-phone', 'chu' => ''];
+}
+
+/* Messenger: ô riêng, KHÔNG suy từ ô Facebook. Link trang facebook.com/<ten>
+   và link nhắn tin m.me/<ten> trông giống nhau nhưng không phải lúc nào cũng
+   đổi được cho nhau (trang có đổi tên, có trang tắt nhắn tin). */
+if (!empty($settings['messenger'])){
+    $m = trim($settings['messenger']);
+    if (!preg_match('~^https?://~i', $m)) $m = 'https://m.me/' . ltrim($m, '/@');
+    $hoTro[] = ['url' => $m, 'ten' => 'Nhắn Messenger', 'lop' => 'la-mess',
+                'icon' => 'fa-comments', 'chu' => ''];
+}
+?>
+<?php if (!empty($hoTro)): ?>
+<div class="ho-tro-noi" aria-label="Hỗ trợ trực tuyến">
+    <?php foreach ($hoTro as $h): ?>
+    <a class="ho-tro-noi__nut <?php echo e($h['lop']); ?>" href="<?php echo e($h['url']); ?>"
+       <?php echo $h['lop'] === 'la-goi' ? '' : 'target="_blank" rel="noopener"'; ?>
+       title="<?php echo e($h['ten']); ?>">
+        <span class="ho-tro-noi__song" aria-hidden="true"></span>
+        <?php if ($h['icon'] !== ''): ?>
+            <i class="fa <?php echo e($h['icon']); ?>" aria-hidden="true"></i>
+        <?php else: ?>
+            <span class="ho-tro-noi__chu"><?php echo e($h['chu']); ?></span>
+        <?php endif; ?>
+        <span class="sr-only"><?php echo e($h['ten']); ?></span>
+    </a>
+    <?php endforeach; ?>
+</div>
+<?php endif; ?>
+
 <!-- Back to top -->
 <a id="button" href="#"></a>
 

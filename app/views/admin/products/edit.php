@@ -21,6 +21,8 @@ $vPrice   = isset($old['price'])    ? $old['price']    : (int) $item['price'];
 $vSale    = isset($old['sale_price']) ? $old['sale_price'] : ($item['sale_price'] !== null ? (int) $item['sale_price'] : '');
 $vWar     = isset($old['warranty_month']) ? $old['warranty_month'] : $item['warranty_month'];
 $vDesc    = isset($old['description']) ? $old['description'] : $item['description'];
+$vMetaT   = isset($old['meta_title'])       ? $old['meta_title']       : $item['meta_title'];
+$vMetaD   = isset($old['meta_description']) ? $old['meta_description'] : $item['meta_description'];
 $selCat   = isset($old['category_id'])     ? $old['category_id']     : $item['category_id'];
 $selLoai  = isset($old['item_type'])       ? $old['item_type']       : $item['item_type'];
 $selUnit  = isset($old['unit_id'])         ? $old['unit_id']         : $item['unit_id'];
@@ -170,6 +172,20 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                     <div class="form-group">
                         <label>Mô tả</label>
                         <textarea class="form-control" name="description" rows="3">{{!empty($vDesc)?$vDesc:''}}</textarea>
+                    </div>
+
+                    <?php /* META SEO — tài liệu khách 05/11/2026, Frontend mục 5:
+                             "chọn sửa để bổ sung thêm các trường meta seo".
+                             Để trống vẫn đúng: trang chi tiết tự lấy tên hàng và mô tả. */ ?>
+                    <div class="form-row">
+                        <div class="form-group col-md-5">
+                            <label class="small text-muted">SEO — Thẻ meta tiêu đề</label>
+                            <input type="text" id="o-meta-title" name="meta_title" class="form-control form-control-sm" value="{{!empty($vMetaT)?$vMetaT:''}}"/>
+                        </div>
+                        <div class="form-group col-md-7">
+                            <label class="small text-muted">SEO — Thẻ meta mô tả</label>
+                            <input type="text" id="o-meta-desc" name="meta_description" class="form-control form-control-sm" value="{{!empty($vMetaD)?$vMetaD:''}}"/>
+                        </div>
                     </div>
 
                     <div class="form-group mb-0">
@@ -416,6 +432,17 @@ document.addEventListener('change', function (e) {
     document.addEventListener('click', function (e) {
         if (e.target !== input && !results.contains(e.target)) hideResults();
     });
+})();
+</script>
+<script src="{{asset('public/assets/js/seo-slug.js')}}"></script>
+<script>
+/* Thanh màu độ dài SEO. KHÔNG gắn tự điền đường dẫn ở màn Sửa: hàng đã
+   đăng web rồi, đổi đường dẫn theo tên là link cũ chết. (oSlugTuTieuDe cũng
+   tự bỏ qua khi ô đã có chữ, nhưng không gọi thì rõ ý hơn.) */
+(function(){
+    if (!window.oDoDaiSeo) return;
+    window.oDoDaiSeo(document.getElementById('o-meta-title'), 50, 70);
+    window.oDoDaiSeo(document.getElementById('o-meta-desc'), 120, 160);
 })();
 </script>
 <script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>

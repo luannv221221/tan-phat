@@ -220,11 +220,29 @@ class Shop extends Controller {
         }
         $c['imgMap']   = $imgMap;
         $c['stockMap'] = $stockMap;
+        /* THẺ META — tài liệu khách 05/11/2026, Frontend mục 5: "chọn sửa để bổ
+           sung thêm các trường meta seo".
+
+           Thứ tự rơi, giống hệt trang tin tức: meta khai tay -> mô tả hàng ->
+           câu tự dựng. Người viết khai meta là để thay cái tự dựng, nên nó
+           phải đứng trước, không phải thêm vào sau.
+
+           TÊN CỬA HÀNG LẤY TỪ CẤU HÌNH GARA. Trước đây câu tự dựng ghi cứng
+           "tại Tân Phát", nên mọi gara trên nền tảng đều chào hàng dưới tên
+           Tân Phát ở kết quả tìm kiếm Google. */
         $descParts = array_filter([$part['name'], $part['brand_name'] ?? '', $part['category_name'] ?? '']);
+        $tenShop   = $this->model('GarageSettingsModel')->val('site_name', '');
+        $tuDung    = 'Mua ' . implode(' - ', $descParts) . ' chính hãng'
+                   . ($tenShop !== '' ? ' tại ' . $tenShop : '') . '.';
         $c['seo'] = [
-            'description' => !empty($part['description']) ? mb_substr(strip_tags($part['description']), 0, 300) : ('Mua ' . implode(' - ', $descParts) . ' chính hãng tại Tân Phát.'),
+            'description' => !empty($part['meta_description'])
+                             ? $part['meta_description']
+                             : (!empty($part['description'])
+                                ? mb_substr(strip_tags($part['description']), 0, 300)
+                                : $tuDung),
             'type'        => 'product',
         ];
+        if (!empty($part['meta_title'])) $this->__data['page_title'] = $part['meta_title'];
 
         $this->render('layouts/storefront/master', $this->__data);
     }

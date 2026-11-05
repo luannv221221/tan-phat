@@ -421,6 +421,13 @@ Route::group('admin', function(){
       dia chi la tao phieu. Chi tao duoc MOT lan — xem controller. */
    Route::post('purchase-orders/tao-phieu-nhap/(\d+)', 'admin/purchaseorders/taoPhieuNhap/$1');
 
+   /* KHAI SERIAL SAU KHI ĐƠN ĐÃ LƯU — tài liệu khách 05/11/2026, CRM mục 2:
+      "Thêm serial theo phiếu mua (chọn phiếu mua) tránh làm từ lúc tạo đơn mua".
+      Màn riêng chứ không phải một phần của form lập đơn: lúc lập đơn hàng chưa
+      về, chưa ai cầm được cái tem để đọc số. */
+   Route::get('purchase-orders/serial/(\d+)',  'admin/purchaseorders/serial/$1');
+   Route::post('purchase-orders/serial/(\d+)', 'admin/purchaseorders/postSerial/$1');
+
    /* QUAN LY SERIAL — CHI DOC. Khong co duong ghi nao: serial khai o Don mua,
       sua o day la tach serial khoi nguon mua. */
    Route::get('serials', 'admin/serials');

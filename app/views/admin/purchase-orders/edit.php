@@ -6,9 +6,15 @@
  * eval nên include partial không chạy).
  *
  * KHÁC add.php ba chỗ:
- *   - serial đã nhập được đổ sẵn vào đúng dòng hàng
  *   - đơn ĐÃ CHỐT thì khoá hết ô nhập, chỉ còn nút Mở lại
  *   - có khối "Tạo phiếu nhập kho" (chọn kho nhận hàng)
+ *   - có nút sang màn Khai serial, kèm số tem đã khai
+ *
+ * SERIAL KHÔNG NẰM TRONG FORM NÀY nữa (05/11/2026) — xem ghi chú ở add.php.
+ * Nhưng lưu đơn vẫn GIỮ NGUYÊN serial đã khai: controller chép chúng sang
+ * dòng hàng mới sau khi ghi lại (Purchaseorders::ghiDongVaSerial). Lưu đơn là
+ * xoá sạch dòng hàng rồi ghi lại, mà serial neo vào dòng hàng theo CASCADE —
+ * không chép lại thì sửa một chữ trên đơn là mất hết tem đã quét.
  */
 $sel = function($k, $mac = '') use ($old, $item){
     return isset($old[$k]) ? $old[$k] : (isset($item[$k]) ? $item[$k] : $mac);
@@ -17,23 +23,36 @@ $sel = function($k, $mac = '') use ($old, $item){
 $daChot  = (int) $item['status'] === 1;
 $daNhap  = !empty($item['goods_receipt_id']);
 $khoaHet = $daChot || $daNhap;
-/* Số ô trống cần trải ở hàng Tổng cộng: đơn đã chốt không có cột "xoá
-   dòng" nên hụt một ô. Để cứng là hàng tổng lệch sang bên. */
-$oTrongCuoi = $khoaHet ? 1 : 2;
+/* Số ô trống cần trải ở hàng Tổng cộng. Bỏ cột serial (05/11/2026) nên chỉ
+   còn phải trải qua ô "xoá dòng" — mà đơn đã chốt thì không có cột đó. Để
+   cứng là hàng tổng lệch sang bên. */
+$oTrongCuoi = $khoaHet ? 0 : 1;
 
-/* Gom serial về từng dòng hàng để JS đổ sẵn */
-$snTheoDong = [];
-foreach ((array) $serials as $s){
-    $k = !empty($s['poi_id']) ? (int) $s['poi_id'] : 0;
-    $snTheoDong[$k][] = $s['serial'];
+/* Số tem đã khai, để nút "Khai serial" nói được còn thiếu hay chưa. Đếm ở đây
+   chứ không hỏi lại CSDL: $serials đã có sẵn trong tay. */
+$soTem = count((array) $serials);
+$soCai = 0;
+foreach ((array) $lines as $l) $soCai += (int) round((float) $l['quantity']);
+
+/* Câu mô tả dựng Ở ĐÂY chứ không viết bằng @if/@elseif trong phần thân.
+   Bộ biên dịch view của dự án chỉ hiểu @if / @else / @endif — KHÔNG có
+   @elseif. Viết @elseif thì nó bị bỏ lại thành chữ thường, @endif thừa ra
+   một cái, và cả trang chết với "unexpected token endif". PHP -l không bắt
+   được vì lỗi nằm trong mã đã biên dịch, không nằm trong file view. */
+if ($soTem === 0){
+    $chuSerial = 'Chưa khai tem nào (' . $soCai . ' chiếc).';
+} elseif ($soTem >= $soCai){
+    $chuSerial = 'Đã khai đủ ' . $soTem . '/' . $soCai . ' chiếc.';
+} else {
+    $chuSerial = 'Mới khai ' . $soTem . '/' . $soCai . ' chiếc.';
 }
+
 $dongJs = [];
 foreach ((array) $lines as $l){
     $dongJs[] = [
         'part_id'    => (int) $l['part_id'],
         'quantity'   => (float) $l['quantity'],
         'unit_price' => isset($l['unit_price']) ? (float) $l['unit_price'] : 0,
-        'serials'    => isset($snTheoDong[(int) $l['id']]) ? $snTheoDong[(int) $l['id']] : [],
     ];
 }
 
@@ -145,7 +164,7 @@ foreach ((array) $parts as $p){
 
     <div class="card card-outline card-info">
         <div class="card-header">
-            <h3 class="card-title"><i class="fas fa-boxes mr-2"></i>Hàng hoá &amp; serial</h3>
+            <h3 class="card-title"><i class="fas fa-boxes mr-2"></i>Hàng hoá</h3>
             <?php if (!$khoaHet): ?>
             <div class="card-tools">
                 <button type="button" class="btn btn-sm btn-info" id="them-dong">
@@ -157,18 +176,26 @@ foreach ((array) $parts as $p){
         <div class="card-body table-responsive p-0">
             <table class="table table-sm mb-0 bang-dong-mua">
                 <thead><tr>
-                    <th style="width:28%">Hàng hoá</th>
-                    <th style="width:90px" class="text-right">Số lượng</th>
-                    <th style="width:130px" class="text-right">Đơn giá</th>
-                    <th style="width:120px" class="text-right">Thành tiền</th>
-                    <th>Serial từng chiếc</th>
-                    <?php if (!$khoaHet): ?><th style="width:44px"></th><?php endif; ?>
+                    <?php /* Ô hàng hoá rộng hẳn ra sau khi bỏ cột serial — khách 05/11/2026:
+                             "Tăng chiều dài hàng hóa, icon to hơn". */ ?>
+                    <th>Hàng hoá</th>
+                    <th style="width:110px" class="text-right">Số lượng</th>
+                    <th style="width:150px" class="text-right">Đơn giá</th>
+                    <th style="width:140px" class="text-right">Thành tiền</th>
+                    <?php if (!$khoaHet): ?><th style="width:56px"></th><?php endif; ?>
                 </tr></thead>
                 <tbody id="dong-mua"></tbody>
                 <tfoot><tr>
                     <th colspan="3" class="text-right">Tổng cộng</th>
                     <th class="text-right"><span id="tong-tien">0</span> đ</th>
-                    <th colspan="{{$oTrongCuoi}}"></th>
+                    <?php /* Viết bằng PHP thuần chứ không dùng @if: bộ biên dịch view
+                             đòi `@if (...)` phải nằm CUỐI DÒNG, nên `@if (...)<th>@endif`
+                             trên một dòng thì @if bị bỏ qua còn @endif vẫn biên dịch —
+                             cả trang chết với "unexpected token endif". PHP -l không bắt
+                             được vì lỗi nằm ở mã đã biên dịch, không ở file này. */ ?>
+                    <?php if ($oTrongCuoi > 0): ?>
+                        <th colspan="<?php echo (int) $oTrongCuoi; ?>"></th>
+                    <?php endif; ?>
                 </tr></tfoot>
             </table>
         </div>
@@ -199,6 +226,16 @@ foreach ((array) $parts as $p){
            class="btn btn-outline-secondary"><i class="fas fa-undo mr-1"></i> Mở lại</a>
         @endif
     <?php endif; ?>
+
+    <?php /* KHAI SERIAL — hiện ở MỌI trạng thái, kể cả đơn đã chốt và đã nhập
+             kho. Chốt đơn là chốt mua gì, giá bao nhiêu; serial là thứ chỉ
+             biết khi hàng về tới nơi, tức là sau đó. Khoá theo trạng thái đơn
+             thì đúng lúc cầm được cái tem lại không khai được. */ ?>
+    @if (route('admin/'.$routeBase.'/serial/'.(int)$item['id']))
+    <a href="{{_WEB_URL.'/admin/'.$routeBase.'/serial/'.(int)$item['id']}}"
+       class="btn btn-outline-primary"><i class="fas fa-barcode mr-1"></i> Khai serial</a>
+    <span class="text-muted small">{{$chuSerial}}</span>
+    @endif
 </div></div>
 
 <?php /* TẠO PHIẾU NHẬP KHO — đường nhập kho thứ hai (tài liệu 29/10/2026). */ ?>
@@ -285,28 +322,6 @@ foreach ((array) $parts as $p){
         return s;
     }
 
-    function veSerial(oBoc, chiSo, soLuong, dsCo){
-        var n = Math.max(0, Math.floor(soLuong || 0));
-        var dangCo = oBoc.querySelectorAll('input.o-serial');
-        for (var i = dangCo.length; i > n; i--) dangCo[i - 1].parentNode.remove();
-        for (var j = dangCo.length; j < n; j++){
-            var cum = document.createElement('div');
-            cum.className = 'input-group input-group-sm mb-1';
-            var pre = document.createElement('div');
-            pre.className = 'input-group-prepend';
-            pre.innerHTML = '<span class="input-group-text">' + (j + 1) + '</span>';
-            var inp = document.createElement('input');
-            inp.type = 'text';
-            inp.name = 'serial[' + chiSo + '][]';
-            inp.className = 'form-control o-serial';
-            inp.placeholder = 'Số serial chiếc thứ ' + (j + 1);
-            if (dsCo && dsCo[j]) inp.value = dsCo[j];
-            if (KHOA) inp.readOnly = true;
-            cum.appendChild(pre); cum.appendChild(inp);
-            oBoc.appendChild(cum);
-        }
-    }
-
     function themDong(r){
         var chiSo = soDong++;
         var tr = document.createElement('tr');
@@ -342,19 +357,14 @@ foreach ((array) $parts as $p){
         oTt.textContent = '—';
         tdT.appendChild(oTt);
 
-        var td3 = document.createElement('td');
-        var boc = document.createElement('div');
-        boc.className = 'o-boc-serial';
-        td3.appendChild(boc);
-
         tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(tdG);
-        tr.appendChild(tdT); tr.appendChild(td3);
+        tr.appendChild(tdT);
 
         if (!KHOA){
             var td4 = document.createElement('td');
             var xoa = document.createElement('button');
             xoa.type = 'button';
-            xoa.className = 'btn btn-sm btn-outline-danger';
+            xoa.className = 'btn btn-sm btn-outline-danger nut-xoa-dong';
             xoa.innerHTML = '<i class="fas fa-times"></i>';
             xoa.title = 'Xoá dòng';
             xoa.addEventListener('click', function (){ tr.remove(); tinhLai(); });
@@ -363,9 +373,8 @@ foreach ((array) $parts as $p){
         }
         tbody.appendChild(tr);
 
-        veSerial(boc, chiSo, parseFloat(qty.value), r && r.serials);
         if (!KHOA){
-            qty.addEventListener('input', function (){ veSerial(boc, chiSo, parseFloat(qty.value), null); tinhLai(); });
+            qty.addEventListener('input', tinhLai);
             gia.addEventListener('input', tinhLai);
         }
         tinhLai();

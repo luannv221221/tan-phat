@@ -352,6 +352,19 @@ class Purchaseorders extends Controller {
                             ? (float) preg_replace('/[^\d]/', '', (string) $f['price'][$i]) : 0,
                        'note'       => isset($f['line_note'][$i]) ? trim((string) $f['line_note'][$i]) : ''];
         }
+        /* GIỮ LẠI SERIAL ĐÃ KHAI. syncForPo() dưới đây XOÁ SẠCH dòng hàng rồi
+           ghi lại, mà `purchase_serials`.`poi_id` có ràng buộc CASCADE — nên
+           serial bị xoá theo, im lặng.
+
+           Trước 05/11 không thành vấn đề: form lập đơn mang theo cả serial
+           nên chúng được ghi lại ngay bên dưới. Từ 05/11 serial khai ở MÀN
+           RIÊNG (khách yêu cầu), form này không còn ô serial nào — không chép
+           lại thì mở đơn ra sửa một chữ là mất hết tem đã quét.
+
+           Gom theo part_id chứ không theo poi_id: id dòng cũ không còn tồn
+           tại sau khi ghi lại. */
+        $serialCu = $this->__serial->theoHang($id);
+
         $daGhi = $this->__item->syncForPo($id, $rows);
 
         /* Khớp lại poi_id mới với thứ tự dòng trên form. syncForPo bỏ qua dòng
@@ -366,17 +379,92 @@ class Purchaseorders extends Controller {
             $viTri++;
         }
 
+        /* FORM NÀY KHÔNG CÒN Ô SERIAL (từ 05/11/2026). Việc duy nhất còn lại là
+           nối serial cũ vào đúng dòng hàng vừa ghi lại.
+
+           Dòng nào bị xoá khỏi đơn thì serial của mặt hàng đó không còn chỗ
+           neo — chúng biến mất, và đúng là phải thế: người dùng vừa bỏ mặt
+           hàng ấy khỏi đơn.
+
+           Một mặt hàng xuất hiện ở HAI dòng thì toàn bộ serial của nó dồn về
+           dòng đầu. Hiếm (cùng mặt hàng mà tách hai dòng), và dồn về một chỗ
+           vẫn tra cứu bảo hành đúng — serial vẫn trỏ về đúng đơn, đúng mặt
+           hàng, đúng nhà cung cấp. */
         $sn = [];
-        $dsSerial = isset($f['serial']) && is_array($f['serial']) ? $f['serial'] : [];
-        foreach ($dsSerial as $i => $nhom){
-            if (!is_array($nhom) || !isset($banDoDong[$i])) continue;
-            foreach ($nhom as $s){
-                $sn[] = ['poi_id'  => $banDoDong[$i],
-                         'part_id' => (int) $parts[$i],
-                         'serial'  => (string) $s];
+        $daDung = [];
+        foreach ($banDoDong as $i => $poiId){
+            $partId = (int) $parts[$i];
+            if (isset($daDung[$partId]) || empty($serialCu[$partId])) continue;
+            $daDung[$partId] = true;
+            foreach ($serialCu[$partId] as $s){
+                $sn[] = ['poi_id' => $poiId, 'part_id' => $partId, 'serial' => (string) $s];
             }
         }
         return $this->__serial->syncForPo($id, $sn);
+    }
+
+    /* ======================================================================
+     * KHAI SERIAL — màn riêng, mở sau khi đơn đã lưu.
+     *
+     * Tài liệu khách 05/11/2026, CRM mục 2: "Thêm serial theo phiếu mua (chọn
+     * phiếu mua) tránh làm từ lúc tạo đơn mua", và mục 1: "serial cho nhập là
+     * kiểu model popup tránh hiển thị nhiều dòng".
+     *
+     * VÌ SAO TÁCH RA. Lúc lập đơn, hàng chưa về — chưa ai cầm được cái tem để
+     * đọc số. Bắt khai lúc đó nghĩa là hoặc để trống hết (ô serial vô dụng),
+     * hoặc chép từ giấy báo giá (số sai mà không ai biết cho tới lúc bảo hành).
+     *
+     * KHAI ĐƯỢC CẢ KHI ĐƠN ĐÃ CHỐT, khác với sửa dòng hàng. Chốt đơn là chốt
+     * MUA GÌ, GIÁ BAO NHIÊU; serial là thứ chỉ biết sau đó. Chặn ở đây thì
+     * đúng lúc hàng về lại không khai được.
+     * ====================================================================== */
+
+    public function serial($id){
+        $item = $this->layCuaToi($id);
+        if (empty($item)) return;
+
+        $this->__data['sub_content'] = $this->viewDir . '/serial';
+        $this->__data['page_title']  = 'Khai serial — ' . $item['po_no'];
+        $this->baseData();
+
+        $c = &$this->__data['content'];
+        $c['page_name'] = 'Khai serial — ' . $item['po_no'];
+        $c['item']      = $item;
+        $c['lines']     = $this->__item->getByPo($id);
+        $c['serials']   = $this->__serial->theoDong($id);
+
+        $this->render('layouts/admin/master_admin', $this->__data);
+    }
+
+    public function postSerial($id){
+        $item = $this->layCuaToi($id);
+        if (empty($item)) return;
+
+        $f    = $this->__request->getFields();
+        $nhom = isset($f['serial']) && is_array($f['serial']) ? $f['serial'] : [];
+
+        /* CHỈ NHẬN DÒNG THUỘC CHÍNH ĐƠN NÀY. Khoá của mảng là poi_id gửi lên
+           từ trình duyệt — sửa được bằng tay. Không đối chiếu thì một POST
+           dựng sẵn gắn được serial vào dòng hàng của đơn khác, kể cả đơn của
+           gara khác. */
+        $hopLe = [];
+        foreach ((array) $this->__item->getByPo($id) as $d) $hopLe[(int) $d['id']] = (int) $d['part_id'];
+
+        $tuChoi = [];
+        $soDong = 0;
+        foreach ($nhom as $poiId => $ds){
+            $poiId = (int) $poiId;
+            if (!isset($hopLe[$poiId]) || !is_array($ds)) continue;
+            $tuChoi = array_merge($tuChoi, $this->__serial->ghiChoDong($id, $poiId, $hopLe[$poiId], $ds));
+            $soDong++;
+        }
+
+        if ($soDong === 0){
+            Session::flash('msgError', 'Không có dòng hàng nào để khai serial.');
+        } else {
+            $this->bao('Đã lưu serial cho ' . $this->labelOne . ' ' . $item['po_no'], $tuChoi);
+        }
+        $this->__response->redirect('admin/' . $this->routeBase . '/serial/' . (int) $id);
     }
 
     /**
