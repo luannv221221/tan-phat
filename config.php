@@ -48,7 +48,42 @@ define('_KHO_TONG_MENU_GON', true);
 $__host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
 $__base = Env::get('APP_BASE_PATH', '/');
 
-$__url = Env::get('APP_URL', 'http://' . $__host . $__base);
+/*
+ * GIAO THỨC PHẢI SUY RA, KHÔNG GHÉP CỨNG 'http://'.
+ *
+ * Nền tảng nhiều gara: mỗi gara có thể dùng TÊN MIỀN RIÊNG của họ, và tên
+ * miền riêng thì gần như chắc chắn chạy HTTPS. Ghép cứng http:// thì mọi
+ * đường dẫn sinh ra (link, chuyển trang, ảnh, CSS) đều là http:// trong một
+ * trang https — trình duyệt chặn vì nội dung lẫn, hoặc kéo người dùng tụt
+ * xuống http. Mà APP_URL phải để TRỐNG trên máy chủ nhiều gara (xem dưới),
+ * nên không vá được bằng cách khai cứng một địa chỉ.
+ *
+ * BA NGUỒN, theo đúng thứ tự tin cậy:
+ *   1. $_SERVER['HTTPS']        — Apache đặt khi chính nó chạy TLS
+ *   2. SERVER_PORT = 443        — có cấu hình không đặt HTTPS
+ *   3. X-Forwarded-Proto        — CHỈ KHI .env bật TRUST_PROXY
+ *
+ * (3) PHẢI XIN PHÉP vì nó là header do người gọi gửi lên: máy chủ đứng
+ * trực tiếp ra Internet mà tin nó thì ai cũng gửi được
+ * "X-Forwarded-Proto: https" để ép sinh link https. Chỉ bật khi thật sự có
+ * proxy / CDN đứng trước (Cloudflare, nginx), vì lúc đó proxy ghi đè header
+ * này và người ngoài không chạm vào được.
+ */
+$__https = false;
+if (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off'){
+    $__https = true;
+} elseif (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443){
+    $__https = true;
+} elseif (Env::get('TRUST_PROXY', false) === true
+          && !empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
+          && strtolower(explode(',', $_SERVER['HTTP_X_FORWARDED_PROTO'])[0]) === 'https'){
+    $__https = true;
+}
+
+/* APP_URL ĐỂ TRỐNG TRÊN MÁY CHỦ NHIỀU GARA — đó là thứ làm mỗi gara mở bằng
+   tên miền của mình mà link vẫn ở lại tên miền đó. Khai cứng một địa chỉ là
+   mọi gara bị kéo hết về tên miền ấy, mất luôn phiên đăng nhập. */
+$__url = Env::get('APP_URL', ($__https ? 'https://' : 'http://') . $__host . $__base);
 
 /*
  * BỎ dấu "/" ở cuối — QUAN TRỌNG.
@@ -65,4 +100,4 @@ $__url = Env::get('APP_URL', 'http://' . $__host . $__base);
  */
 define('_WEB_URL', rtrim($__url, '/'));
 
-unset($__host, $__base, $__url);
+unset($__host, $__base, $__url, $__https);

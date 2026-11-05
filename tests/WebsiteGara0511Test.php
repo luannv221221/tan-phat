@@ -267,6 +267,64 @@ ok(strpos($cssSf, 'prefers-reduced-motion') !== false,
    'Thu nhap nhay lien tuc o mep mat gay chong mat voi mot so nguoi');
 
 // ---------------------------------------------------------------------------
+section('TEN MIEN RIENG — suy giao thuc http / https');
+
+/* VI SAO QUAN TRONG. Nen tang nhieu gara: moi gara co the dung TEN MIEN RIENG,
+ * ma ten mien rieng thi gan nhu chac chan chay HTTPS. Ghep cung 'http://' thi
+ * moi duong dan sinh ra deu la http:// trong mot trang https — trinh duyet
+ * chan vi noi dung lan, hoac keo nguoi dung tut xuong http.
+ *
+ * Va KHONG va duoc bang cach khai cung APP_URL: may chu nhieu gara phai de
+ * APP_URL TRONG, neu khong moi gara bi keo het ve mot ten mien.
+ *
+ * Chay trong TIEN TRINH RIENG vi config.php dinh nghia hang so — dat lai
+ * $_SERVER roi require lan nua trong cung tien trinh thi khong doi duoc. */
+/* Qua FILE TAM chu khong qua `php -r`: trên Windows, escapeshellarg() bọc
+   bằng dấu nháy kép, nên đoạn mã có dấu nháy kép bên trong vỡ cú pháp. */
+$thuUrl = function(array $server) use ($goc){
+    $ma = "<?php\n";
+    foreach ($server as $k => $v){
+        $ma .= '$_SERVER[' . var_export($k, true) . '] = ' . var_export($v, true) . ";\n";
+    }
+    $ma .= "require " . var_export(realpath($goc) . '/vendor/autoload.php', true) . ";\n"
+         . "require " . var_export(realpath($goc) . '/config.php', true) . ";\n"
+         . "echo _WEB_URL;\n";
+
+    $tep = sys_get_temp_dir() . '/tp-thu-scheme-' . getmypid() . '.php';
+    file_put_contents($tep, $ma);
+    $ra = trim((string) shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($tep) . ' 2>&1'));
+    @unlink($tep);
+    return $ra;
+};
+
+$u1 = $thuUrl(['HTTP_HOST' => 'gara-abc.test']);
+ok(strpos($u1, 'http://') === 0, 'Chay http thuong -> sinh link http', $u1);
+
+$u2 = $thuUrl(['HTTP_HOST' => 'gara-abc.test', 'HTTPS' => 'on']);
+ok(strpos($u2, 'https://gara-abc.test') === 0,
+   'Apache bat TLS ($_SERVER[HTTPS]) -> sinh link https', $u2);
+
+$u3 = $thuUrl(['HTTP_HOST' => 'gara-abc.test', 'SERVER_PORT' => '443']);
+ok(strpos($u3, 'https://') === 0, 'Cong 443 -> sinh link https', $u3);
+
+/* HEADER PROXY KHONG DUOC TIN MAC DINH. Day la chot an toan, khong phai
+   tien nghi: may chu dung thang ra Internet ma tin header nay thi BAT KY AI
+   cung gui duoc "X-Forwarded-Proto: https" de ep ung dung sinh link https. */
+$u4 = $thuUrl(['HTTP_HOST' => 'gara-abc.test', 'HTTP_X_FORWARDED_PROTO' => 'https']);
+ok(strpos($u4, 'http://') === 0,
+   'X-Forwarded-Proto BI BO QUA khi chua bat TRUST_PROXY', $u4);
+
+$cfg = codeOnly($goc . 'config.php');
+ok(strpos($cfg, "Env::get('TRUST_PROXY', false) === true") !== false,
+   'Chi tin header proxy khi .env bat TRUST_PROXY');
+ok(strpos($cfg, "'http://' . \$__host") === false,
+   "Khong con ghep cung 'http://' trong config.php");
+$envVd = file_get_contents($goc . '.env.example');
+ok(strpos($envVd, 'TRUST_PROXY') !== false, '.env.example co huong dan TRUST_PROXY');
+ok(strpos($envVd, 'DE TRONG') !== false || strpos($envVd, 'de trong') !== false,
+   '.env.example nhac APP_URL phai de trong tren may chu nhieu gara');
+
+// ---------------------------------------------------------------------------
 section('Directive view — quet CA DU AN');
 
 /* VI SAO QUET CA DU AN, khong chi may file cua dot nay.
