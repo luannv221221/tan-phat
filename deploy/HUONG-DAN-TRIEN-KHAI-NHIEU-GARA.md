@@ -286,10 +286,17 @@ thì mất). Nên **khôi phục từ bản sao lưu** vẫn là đường chắ
 
 ---
 
-## 5. Hai chỗ còn thiếu, đã biết
+## 5. Chỗ còn thiếu, đã biết
 
-- **Giá trên web chưa theo gara.** Gara đặt giá riêng thì màn báo giá dùng giá
-  đó, nhưng website vẫn hiện giá công ty. Chưa gara nào đặt giá riêng nên chưa
-  lệch.
-- **Lời nhắn khi bị đá khỏi trang quản trị không hiện.** Lỗi có sẵn từ trước
-  đợt này. Người dùng vào nhầm địa chỉ gara khác bị đá ra mà không biết vì sao.
+- **Giá trên web chưa theo gara.** Gara đặt giá riêng thì màn báo giá và màn
+  chọn hàng dùng giá đó, nhưng **trang bán hàng công khai vẫn hiện giá công
+  ty** — câu truy vấn của storefront (`PartsModel::storefront()`,
+  `getBySlugFull()`) không nối sang `garage_part_prices`. Chưa gara nào đặt
+  giá riêng nên chưa ai thấy lệch; gara đầu tiên đặt giá riêng là lệch ngay.
+
+> **Đã sửa, không còn là chỗ thiếu** (ghi lại để khỏi đi tìm):
+> *Lời nhắn khi bị đá khỏi trang quản trị* nay **có hiện**. `AuthMiddleware`
+> phân biệt hai lý do khác hẳn nhau và nói đúng cái nào — "tài khoản này không
+> thuộc gara X, đăng nhập tại địa chỉ của gara mình" khác với "tài khoản chưa
+> được gán gara". Lời nhắn được đặt **trước** khi huỷ phiên, nếu không nó rơi
+> vào phiên vừa bị bỏ và người dùng bị đá ra mà không thấy lý do gì.
