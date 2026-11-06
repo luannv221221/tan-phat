@@ -41,3 +41,45 @@
 #     ErrorLog  "logs/tanphat-ssl-error.log"
 #     CustomLog "logs/tanphat-ssl-access.log" common
 # </VirtualHost>
+
+# ============================================================
+#  SSL cho NHIEU TEN MIEN tren MOT IP
+#
+#  Xem deploy/HUONG-DAN-SSL-NHIEU-TEN-MIEN.md de biet cach cap
+#  chung chi bang win-acme (Let's Encrypt, mien phi, tu gia han).
+#
+#  Moi ten mien MOT khoi *:443 rieng, tro vao chung chi cua chinh
+#  no. Mot IP phuc vu duoc khong gioi han ten mien nho SNI —
+#  khong can thue them IP cho moi gara.
+# ============================================================
+
+# ---- Ten mien rieng cua mot gara (vi du) ----
+# <VirtualHost *:443>
+#     ServerName abc.com
+#     ServerAlias www.abc.com
+#     DocumentRoot "C:/xampp/htdocs/tan-phat"
+#
+#     SSLEngine on
+#     # Duong dan THAT do win-acme in ra sau khi cap xong — dung doan.
+#     SSLCertificateFile    "C:/ProgramData/win-acme/.../abc.com-crt.pem"
+#     SSLCertificateKeyFile "C:/ProgramData/win-acme/.../abc.com-key.pem"
+#
+#     <Directory "C:/xampp/htdocs/tan-phat">
+#         AllowOverride All
+#         Require all granted
+#         Options -Indexes +FollowSymLinks
+#     </Directory>
+# </VirtualHost>
+
+# ---- Chuyen http -> https cho ten mien do ----
+# <VirtualHost *:80>
+#     ServerName abc.com
+#     ServerAlias www.abc.com
+#
+#     RewriteEngine On
+#     # KHONG chuyen huong duong xac minh cua Let's Encrypt. Thieu dong nay
+#     # thi moi thu chay ngon suot 60 ngay roi dot nhien chung chi het han,
+#     # khong co loi nao bao truoc.
+#     RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}$1 [R=301,L]
+# </VirtualHost>
