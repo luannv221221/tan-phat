@@ -181,8 +181,15 @@ class Quotations extends Controller {
         $from   = isset($f['from']) ? trim($f['from']) : '';
         $to     = isset($f['to'])   ? trim($f['to'])   : '';
 
+        $dataList = (array) $this->__model->getLists($status, $from, $to);
+
         $this->__data['content']['page_name']    = $this->labelMany;
-        $this->__data['content']['dataList']     = $this->__model->getLists($status, $from, $to);
+        $this->__data['content']['dataList']     = $dataList;
+        /* Báo giá nào đã thành hoá đơn — MỘT truy vấn cho cả trang, để danh
+           sách hiện đúng "Chuyển" hay "đã thành HD-xxx" mà không phải mở từng
+           phiếu ra mới biết. */
+        $this->__data['content']['hoaDonTheoBaoGia'] =
+            $this->__invoice->theoNhieuBaoGia(array_column($dataList, 'id'));
         $this->__data['content']['filterStatus'] = $status;
         $this->__data['content']['filterFrom']   = $from;
         $this->__data['content']['filterTo']     = $to;
@@ -269,7 +276,13 @@ class Quotations extends Controller {
         $this->__data['content']['page_name'] = 'Báo giá ' . $item['quote_no'];
         $this->__data['content']['item']      = $item;
         $this->__data['content']['items']     = $this->__itemModel->getByQuotation($id);
+        /* Hoá đơn đã sinh ra từ phiếu này (nếu có) — nút "Chuyển" đổi thành
+           đường dẫn sang hoá đơn đó. */
+        $this->__data['content']['hoaDon']    = $this->__invoice->theoBaoGia($id);
         $this->__data['content']['msg']       = Session::flash('msg');
+        /* THIẾU DÒNG NÀY thì mọi lỗi của convert() / setStatus() bị nuốt im
+           lặng: view có khối hiện $msgError, nhưng biến chưa bao giờ tới. */
+        $this->__data['content']['msgError']  = Session::flash('msgError');
         $this->__data['content']['errors']    = Session::flash('errors');
         $this->__data['content']['old']       = Session::flash('old');
 
@@ -327,6 +340,29 @@ class Quotations extends Controller {
         if (!route('admin/sales-invoices/add')){
             $this->__response->redirect('admin/khong-co-quyen'); return;
         }
+
+        /* CHỐT 1 — ĐÃ CHUYỂN RỒI THÌ KHÔNG TẠO THÊM.
+         * Bấm hai lần (hoặc bấm rồi quay lại trang) trước đây sinh HAI hoá đơn
+         * cùng nội dung; ghi sổ cả hai là trừ tồn hai lần và doanh thu đếm đôi.
+         * Không báo lỗi suông mà đưa thẳng sang hoá đơn đã có — đó là thứ
+         * người bấm đang muốn tìm. */
+        $daCo = $this->__invoice->theoBaoGia($id);
+        if (!empty($daCo)){
+            Session::flash('msgError', 'Báo giá ' . $item['quote_no'] . ' đã chuyển thành hoá đơn '
+                . $daCo['invoice_no'] . ' — đây là hoá đơn đó, không tạo thêm cái mới.');
+            $this->__response->redirect('admin/sales-invoices/edit/' . (int) $daCo['id']); return;
+        }
+
+        /* CHỐT 2 — KHÁCH ĐÃ TỪ CHỐI THÌ KHÔNG XUẤT HOÁ ĐƠN.
+         * Nháp và Đã gửi vẫn cho chuyển: khách đứng tại quầy đồng ý bằng
+         * miệng là chuyện thường, bắt bấm "Chấp nhận" trước chỉ thêm một bước.
+         * Nhưng "Từ chối" là đã có người ghi nhận khách không mua. */
+        if (isset($item['status']) && $item['status'] === 'rejected'){
+            Session::flash('msgError', 'Báo giá này khách đã TỪ CHỐI, không xuất hoá đơn được. '
+                . 'Nếu khách đổi ý thì chuyển trạng thái sang "Chấp nhận" trước.');
+            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
+        }
+
         $items = $this->__itemModel->getByQuotation($id);
         if (empty($items)){
             Session::flash('msgError', 'Báo giá chưa có dòng hàng.');

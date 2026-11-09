@@ -84,9 +84,30 @@ $tabs = [
         <span class="mx-2 text-muted">|</span>
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/print/'.$item['id'].'?in=1'}}" target="_blank" class="btn btn-sm btn-outline-dark"><i class="fas fa-print mr-1"></i> In / Lưu PDF</a>
         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/print/'.$item['id'].'?word=1'}}" class="btn btn-sm btn-outline-dark"><i class="fas fa-file-word mr-1"></i> Tải Word</a>
-        @if (route('admin/sales-invoices/add'))
-        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/convert/'.$item['id']}}" onclick="return confirm('Tạo hoá đơn bán (nháp) từ báo giá này?')" class="btn btn-sm btn-primary float-right"><i class="fas fa-file-export mr-1"></i> Chuyển thành hoá đơn</a>
-        @endif
+        <?php
+        /* PHP thuần: bộ biên dịch view không có @elseif (core/Template.php).
+           Đã chuyển rồi thì KHÔNG mời bấm nữa — bấm lại cũng không tạo thêm
+           (Quotations::convert() đã chốt), nhưng nút mời bấm mà không làm gì
+           mới là thứ gây hoang mang. */
+        $hdCua     = !empty($hoaDon) ? $hoaDon : null;
+        $daTuChoi  = isset($item['status']) && $item['status'] === 'rejected';
+        $urlThemHd = route('admin/sales-invoices/add');
+        ?>
+        <?php if (!empty($hdCua)): ?>
+            <?php $urlHdCua = route('admin/sales-invoices/edit/' . (int) $hdCua['id']); ?>
+            <span class="float-right">
+                <span class="small text-muted mr-2">Đã thành hoá đơn</span>
+                <?php if ($urlHdCua !== false): ?>
+                <a href="<?php echo e($urlHdCua); ?>" class="btn btn-sm btn-success"><i class="fas fa-file-invoice mr-1"></i> <?php echo e($hdCua['invoice_no']); ?></a>
+                <?php else: ?>
+                <code><?php echo e($hdCua['invoice_no']); ?></code>
+                <?php endif; ?>
+            </span>
+        <?php elseif ($daTuChoi): ?>
+            <span class="float-right small text-muted"><i class="fas fa-ban mr-1"></i> Khách đã từ chối — không xuất hoá đơn</span>
+        <?php elseif ($urlThemHd !== false): ?>
+            <a href="<?php echo e(_WEB_URL . '/admin/' . $routeBase . '/convert/' . (int) $item['id']); ?>" onclick="return confirm('Tạo hoá đơn bán (nháp) từ báo giá này?')" class="btn btn-sm btn-primary float-right"><i class="fas fa-file-export mr-1"></i> Chuyển thành hoá đơn</a>
+        <?php endif; ?>
     </div>
 </div>
 

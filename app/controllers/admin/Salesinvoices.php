@@ -283,7 +283,17 @@ class Salesinvoices extends Controller {
             'form'   => $this->__settings->val('einvoice_form', '1'),
             'nextNo' => $this->__model->nextEinvoiceNo(),
         ];
+        /* Báo giá đã sinh ra hoá đơn này (nếu có) — để màn hoá đơn bấm quay
+           về được, không chỉ có một câu chữ trong ô ghi chú. */
+        $this->__data['content']['baoGia'] = !empty($item['quotation_id'])
+            ? $this->model('QuotationsModel')->getDetail((int) $item['quotation_id'])
+            : null;
         $this->__data['content']['msg']       = Session::flash('msg');
+        /* THIẾU DÒNG NÀY thì mọi lỗi của post() / unpost() / issueEinvoice()
+           bị nuốt im lặng — kể cả "Tồn không đủ để xuất bán" và "phải chọn
+           kho xuất". Người dùng bấm Ghi sổ, không thấy gì xảy ra, không có lời
+           giải thích nào. View đã có khối hiện $msgError từ trước. */
+        $this->__data['content']['msgError']  = Session::flash('msgError');
         $this->__data['content']['errors']    = Session::flash('errors');
         $this->__data['content']['old']       = Session::flash('old');
 

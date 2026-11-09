@@ -60,6 +60,7 @@ $badge = ['draft' => 'secondary', 'sent' => 'info', 'accepted' => 'success', 're
                     <th>Khách hàng</th>
                     <th style="width:15%" class="text-right">Tổng tiền</th>
                     <th style="width:120px" class="text-center">Trạng thái</th>
+                    <th style="width:150px" class="text-center">Hoá đơn</th>
                     <th style="width:80px" class="text-center">Xem</th>
                 </tr>
             </thead>
@@ -72,6 +73,35 @@ $badge = ['draft' => 'secondary', 'sent' => 'info', 'accepted' => 'success', 're
                     <td>{{!empty($item['customer_full']) ? $item['customer_full'] : (!empty($item['customer_name']) ? $item['customer_name'] : '—')}}</td>
                     <td class="text-right font-weight-bold">{{number_format((float)$item['total_amount'],0,',','.')}} ₫</td>
                     <td class="text-center"><span class="badge badge-{{$badge[$item['status']] ?? 'secondary'}}">{{$statuses[$item['status']] ?? $item['status']}}</span></td>
+                    <?php
+                    /* BA TRƯỜNG HỢP, viết bằng PHP thuần vì bộ biên dịch view
+                       không có @elseif (xem core/Template.php):
+                         1. đã thành hoá đơn  -> đường dẫn sang hoá đơn đó
+                         2. còn chuyển được   -> nút Chuyển ngay tại đây
+                         3. khách đã từ chối  -> gạch ngang, không mời bấm
+                       Gác bằng đúng quyền mà Quotations::convert() gác
+                       (`sales-invoices/add`), để không hiện nút rồi bấm vào
+                       lại nảy ra trang "không có quyền". */
+                    $qid = (int) $item['id'];
+                    $hd  = isset($hoaDonTheoBaoGia[$qid]) ? $hoaDonTheoBaoGia[$qid] : null;
+                    $urlChuyen = route('admin/' . $routeBase . '/convert/' . $qid);
+                    $duocChuyen = $urlChuyen !== false && route('admin/sales-invoices/add') !== false
+                                  && $item['status'] !== 'rejected';
+                    ?>
+                    <td class="text-center">
+                    <?php if (!empty($hd)): ?>
+                        <?php $urlHd = route('admin/sales-invoices/edit/' . (int) $hd['id']); ?>
+                        <?php if ($urlHd !== false): ?>
+                        <a href="<?php echo e($urlHd); ?>" class="btn btn-success btn-sm" title="Mở hoá đơn <?php echo e($hd['invoice_no']); ?>"><i class="fas fa-file-invoice mr-1"></i> <?php echo e($hd['invoice_no']); ?></a>
+                        <?php else: ?>
+                        <code><?php echo e($hd['invoice_no']); ?></code>
+                        <?php endif; ?>
+                    <?php elseif ($duocChuyen): ?>
+                        <a href="<?php echo e($urlChuyen); ?>" onclick="return confirm('Tạo hoá đơn bán (nháp) từ báo giá <?php echo e($item['quote_no']); ?>?')" class="btn btn-outline-primary btn-sm" title="Chuyển thành hoá đơn"><i class="fas fa-file-export mr-1"></i> Chuyển</a>
+                    <?php else: ?>
+                        <span class="text-muted">—</span>
+                    <?php endif; ?>
+                    </td>
                     <td class="text-center">
                         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-info btn-sm" title="Mở"><i class="fas fa-folder-open"></i></a>
@@ -80,7 +110,7 @@ $badge = ['draft' => 'secondary', 'sent' => 'info', 'accepted' => 'success', 're
                 </tr>
                 @endforeach
             @else
-                <tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có báo giá nào</td></tr>
+                <tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có báo giá nào</td></tr>
             @endif
             </tbody>
         </table>

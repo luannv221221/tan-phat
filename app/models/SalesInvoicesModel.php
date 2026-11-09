@@ -52,6 +52,51 @@ class SalesInvoicesModel extends Model {
     }
 
     /**
+     * HOÁ ĐƠN ĐÃ SINH RA TỪ MỘT BÁO GIÁ — để chặn chuyển hai lần.
+     *
+     * Không có chốt này thì bấm "Chuyển thành hoá đơn" hai lần ra HAI hoá đơn
+     * cùng nội dung. Ghi sổ cả hai thì tồn kho bị trừ hai lần và doanh thu đếm
+     * đôi — sai lệch không ai nhìn ra cho tới lúc kiểm kho.
+     *
+     * Lấy bản CŨ NHẤT (`id` ASC): dữ liệu cũ có thể đã lỡ có hai cái, và cái
+     * đầu mới là cái người ta đang dùng.
+     */
+    public function theoBaoGia($quotationId){
+        $quotationId = (int) $quotationId;
+        if ($quotationId <= 0) return null;
+
+        $r = $this->bangGara()
+            ->select('`id`, `invoice_no`, `status`, `quotation_id`')
+            ->where('quotation_id', '=', $quotationId)
+            ->orderBy('id', 'ASC')->first();
+        return empty($r) ? null : $r;
+    }
+
+    /**
+     * Cùng việc trên nhưng cho CẢ MỘT TRANG danh sách báo giá — một truy vấn
+     * thay vì một truy vấn mỗi dòng.
+     *
+     * @return array [quotation_id => ['id' =>, 'invoice_no' =>, 'status' =>]]
+     */
+    public function theoNhieuBaoGia(array $quotationIds){
+        $ids = [];
+        foreach ($quotationIds as $v){ $v = (int) $v; if ($v > 0) $ids[$v] = $v; }
+        if (empty($ids)) return [];
+
+        $rows = $this->bangGara()
+            ->select('`id`, `invoice_no`, `status`, `quotation_id`')
+            ->whereIn('quotation_id', array_values($ids))
+            ->orderBy('id', 'ASC')->get();
+
+        $ra = [];
+        foreach ((array) $rows as $r){
+            $k = (int) $r['quotation_id'];
+            if (!isset($ra[$k])) $ra[$k] = $r;   // giữ bản cũ nhất
+        }
+        return $ra;
+    }
+
+    /**
      * Hoá đơn cũ để chép lại dòng hàng.
      *
      * Hoá đơn của CHÍNH khách đang chọn được đẩy lên đầu (`uu_tien`): gara hay

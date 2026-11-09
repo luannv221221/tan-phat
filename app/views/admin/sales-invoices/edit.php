@@ -73,6 +73,22 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
             {!! $posted ? '<span class="badge badge-primary p-2">Đã ghi sổ</span>' : '<span class="badge badge-secondary p-2">Nháp</span>' !!}
         </div>
     </div>
+    <?php
+    /* TỪ BÁO GIÁ NÀO RA — trước đây chỉ có một câu chữ nằm trong ô ghi chú,
+       đọc được mà không bấm sang được. Chỉ hiện khi còn quyền xem báo giá. */
+    $bgCua  = !empty($baoGia) ? $baoGia : null;
+    $urlBg  = !empty($bgCua) ? route('admin/quotations/edit/' . (int) $bgCua['id']) : false;
+    ?>
+    <?php if (!empty($bgCua)): ?>
+    <div class="card-body py-2 border-top">
+        <span class="small text-muted mr-2"><i class="fas fa-file-invoice-dollar mr-1"></i> Lập từ báo giá</span>
+        <?php if ($urlBg !== false): ?>
+        <a href="<?php echo e($urlBg); ?>" class="btn btn-sm btn-outline-primary"><?php echo e($bgCua['quote_no']); ?></a>
+        <?php else: ?>
+        <code><?php echo e($bgCua['quote_no']); ?></code>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
 </div>
 
 @if ($posted)

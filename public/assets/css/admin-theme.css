@@ -475,7 +475,7 @@ select.form-control { padding-right: 32px; }
     display: none;
     position: fixed;
     z-index: 1050;
-    overflow-y: auto;
+    overflow-y: auto;
     background: #fff;
     border: 1px solid var(--border);
     border-radius: var(--radius-ctl);
@@ -729,6 +729,12 @@ body.adm-auth { background: var(--bg-page); }
  *
  * Không ẩn và không xuống dòng cột nào: người dùng đã thử cuộn và thấy ổn,
  * chỉ xin cột tên to ra (17/10/2026).
+ *
+ * 09/11/2026 — nới 760px lên 900px. Ô nhập trong bảng lên 16px (xem mục cuối
+ * file: dưới 16px thì Safari iPhone tự phóng to trang), chữ to hơn thì hai ô
+ * hẹp nhất không còn chứa nổi nội dung: đo được CK% rộng 38px (gõ "100" là
+ * tràn) và Ghi chú rộng 45px (gõ xong không đọc lại được). Bảng đã cuộn ngang
+ * sẵn nên nới thêm 140px không làm vỡ gì — chỉ là cuộn xa hơn một chút.
  */
 /* Mặc định ẩn: màn rộng dùng <tfoot> của chính bảng dòng hàng, để cột tiền
    thẳng hàng với cột "Thành tiền" ở trên. */
@@ -743,7 +749,7 @@ body.adm-auth { background: var(--bg-page); }
 .tong-man-hep__cuoi { font-weight: 700; }
 
 @media (max-width: 767.98px) {
-    .bang-dong-hang { min-width: 760px; }
+    .bang-dong-hang { min-width: 900px; }
     /* Cột đầu = tên hàng hoá / dịch vụ. Đặt cả trên th lẫn td: ô chọn bên
        trong là .form-control nên tự co theo ô, không tự giữ bề ngang. */
     .bang-dong-hang > thead > tr > th:first-child,
@@ -898,3 +904,106 @@ body.adm-auth { background: var(--bg-page); }
     resize: vertical;
 }
 .soan-thao.dang-xem-ma .soan-thao__thanh { background: #fff6e5; }
+
+/* ==========================================================================
+   MÀN HÌNH ĐIỆN THOẠI — Ô NHẬP, CHỮ VÀ ICON PHẢI ĐỦ TO
+   Khách 09/11/2026: "chỗ nhập liệu phải to để nhìn rõ, các icon text cũng vậy".
+
+   ĐO THẬT ở bề ngang 375px TRƯỚC khi sửa (trình duyệt, không phải đọc CSS):
+     ô nhập      14px / cao 40px
+     nhãn        13px
+     chữ bảng    13px
+     nút nhỏ     13px / cao 34px
+     icon        vẽ thật 11–13px
+     ô CK%       rộng 38px      ô Ghi chú  rộng 45px
+
+   VÌ SAO ĐÚNG 16px, KHÔNG PHẢI 15px HAY "to hơn một chút":
+   Safari trên iPhone TỰ PHÓNG TO cả trang khi con trỏ nhảy vào ô nhập có
+   font-size DƯỚI 16px, và không tự thu lại — người dùng phải chụm hai ngón
+   sau MỖI ô. 16px là ngưỡng tắt hành vi đó. Đây là lý do thật của con số,
+   không chỉ là cho dễ đọc: hạ xuống 15px là lỗi quay lại y như cũ.
+
+   VÌ SAO SỬA MỘT CHỖ, KHÔNG SỬA TỪNG MÀN:
+   194 màn admin dùng chung file này. Sửa từng màn là 194 cơ hội bỏ sót, và
+   màn viết sau vẫn nhỏ như cũ. Có test chốt khối này lại —
+   xem tests/ChuyenBaoGiaVaMobileTest.php.
+
+   44px là mức Apple (HIG) và Google (Material) khuyến nghị cho vùng bấm bằng
+   ngón tay; nút nhỏ trong bảng để 40px vì bảng đã chật, 40 vẫn bấm trúng.
+   ========================================================================== */
+@media (max-width: 767.98px) {
+
+    /* ---- Ô nhập liệu ---- */
+    .form-control,
+    .custom-select,
+    .custom-file,
+    .custom-file-input,
+    .custom-file-label {
+        font-size: 16px;
+        height: 46px;
+    }
+    .custom-file-label { padding: 12px 12px; }
+    textarea.form-control { height: auto; min-height: 120px; }
+    /* .form-control-sm nằm ở các thanh lọc — vẫn phải đủ 16px để iPhone không
+       phóng to, chỉ cho thấp hơn ô nhập chính. */
+    .form-control-sm { font-size: 16px; height: 40px; padding: 6px 10px; }
+
+    /* ---- Nhãn và chữ ---- */
+    label { font-size: 14px; }
+    .form-text,
+    .text-danger small,
+    small.text-danger { font-size: 13px; }
+    /* Phải dùng ĐÚNG bộ chọn của mục 9 (`.table thead th` = 0,0,1,2). Viết
+       `.table th` (0,0,1,1) thì thua, và thua im lặng: đo ra vẫn 13px. */
+    .table thead th,
+    .table tbody td { font-size: 14px; }
+    .badge { font-size: 12.5px; }
+
+    /* ---- Nút và icon ---- */
+    .btn { font-size: 15px; min-height: 44px; padding: 10px 16px; }
+    .btn-sm { font-size: 14px; min-height: 40px; padding: 8px 14px; }
+    /* Nút chỉ có icon (không có chữ) không tự nở ra theo padding ngang */
+    .table .btn-sm,
+    .btn-icon { min-width: 40px; justify-content: center; }
+    .btn > i.fas,
+    .btn > i.far,
+    .btn > i.fab,
+    .btn > i.fa { font-size: 15px; }
+    .btn > svg { width: 18px; height: 18px; }
+
+    /* ---- Hai ô hẹp nhất trong bảng chứng từ ----
+       Nhắm theo ĐUÔI TÊN Ô, không theo nth-child: thứ tự cột khác nhau giữa
+       báo giá, hoá đơn, đơn mua, phiếu nhập — đánh số thì sai một bảng là sai
+       âm thầm. Tên do JS sinh ra là <tiền tố>disc[] / <tiền tố>note[], tiền tố
+       là line_ hoặc sv_ (báo giá, hoá đơn) — "kết thúc bằng" bắt được cả hai
+       và cả tiền tố nào thêm sau này.
+       Bảng đã cuộn ngang sẵn nên nới rộng được (xem mục 17 ở trên). */
+    input[name$="disc[]"] { min-width: 76px; }
+    input[name$="note[]"] { min-width: 150px; }
+
+    /* Nút xoá dòng: mục trước để 34px cho màn rộng, trên điện thoại cần 40 */
+    .bang-dong-mua .nut-xoa-dong,
+    .bang-dong-hang .nut-xoa-dong {
+        width: 40px;
+        height: 40px;
+        line-height: 38px;
+        font-size: 17px;
+    }
+
+    /* ---- Trình soạn thảo ----
+       Khung gõ là contenteditable, KHÔNG phải <input>, nên không ăn quy tắc
+       .form-control ở trên — mà iPhone vẫn phóng to khi con trỏ nhảy vào vùng
+       gõ được có chữ dưới 16px. Bỏ sót chỗ này thì viết bài trên điện thoại
+       vẫn bị phóng to y như trước.
+       Thanh công cụ có flex-wrap sẵn nên 15 nút to ra sẽ xuống dòng, không
+       tràn ngang. 38px thay vì 40 để thanh gọn trong 3 hàng. */
+    .soan-thao__khung { font-size: 16px; }
+    .soan-thao .soan-thao__nguon { font-size: 16px; }
+    .soan-thao__nut {
+        min-width: 38px;
+        height: 38px;
+        padding: 0 9px;
+        font-size: 15px;
+    }
+    .soan-thao__vach { height: 24px; }
+}

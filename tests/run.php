@@ -74,6 +74,7 @@ $tests = [
     'NccKhongKhaiXeTest.php'      => 'NGHIEP VU — nha cung cap thuan khong khai xe (man Doi tuong)',
     'DonMuaCoGiaTest.php'         => 'MUA HANG — don mua co don gia / thanh tien / tong cong',
     'WebsiteGara0511Test.php'     => 'WEBSITE GARA — tai lieu 05/11: loc HTML, menu chon dich, serial theo don',
+    'ChuyenBaoGiaVaMobileTest.php'=> 'BAN HANG — bao gia -> hoa don (chan chuyen 2 lan) + o nhap tren dien thoai',
 ];
 
 $php      = PHP_BINARY;
