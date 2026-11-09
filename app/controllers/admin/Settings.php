@@ -45,7 +45,16 @@ class Settings extends Controller {
                      'show_car_filter', 'show_topbar',
                      /* Linh vuc (gara / phu_tung) — quyet dinh man Lap bao gia
                         co hien khoi bao hiem + xe hay khong. Yeu cau 29/10/2026. */
-                     'linh_vuc'];
+                     'linh_vuc',
+                     /* Tai lieu khach 05/11/2026, Frontend muc 13: "Xay dung
+                        cau hinh gara theo (linh vuc, dien tich xuong...)".
+                        Dau "..." trong tai lieu van chua ro la nhung truong gi
+                        — dang hoi khach. Hai truong duoc ghi ten thi lam truoc. */
+                     'dien_tich_xuong',
+                     /* Frontend muc 7: "Phan footer: cung la 1 bai viet co
+                        ckeditor, nguoi dung tu them". Luu HTML da loc; xem
+                        xu ly rieng trong save(). */
+                     'footer_html'];
 
     function __construct(){
         $this->__model    = $this->model('SettingsModel');
@@ -89,6 +98,15 @@ class Settings extends Controller {
         $kv = [];
         foreach ($this->keys as $k){
             if ($k === 'og_image' || $k === 'logo') continue; // hai khoá ảnh xử lý riêng
+            /* CHÂN TRANG là HTML do người dùng soạn, và nó in ra trang khách
+               bằng {!! !!} (không escape — phải thế thì <strong> mới in đậm).
+               Nên đây là chỗ duy nhất trong màn này nhận thẻ HTML, và bắt buộc
+               đi qua bộ lọc. trim() suông là mở cửa cho <script> vào thẳng mọi
+               trang của gara. */
+            if ($k === 'footer_html'){
+                $kv[$k] = isset($f[$k]) ? loc_html_an_toan($f[$k]) : '';
+                continue;
+            }
             $kv[$k] = isset($f[$k]) ? trim($f[$k]) : '';
         }
         if ($up['status'] === 'ok') $kv['og_image'] = $up['path'];

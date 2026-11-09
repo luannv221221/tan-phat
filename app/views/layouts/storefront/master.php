@@ -304,6 +304,31 @@ $this->render($sub_content, $content);
             <p><a href="<?php echo _WEB_URL; ?>/"><img src="<?php echo e($logoUrl); ?>" alt="" style="max-height:70px;width:auto"/></a></p>
             <h2><?php echo e($siteName); ?></h2>
         </div>
+        <?php
+        /* CHÂN TRANG DO GARA TỰ SOẠN — tài liệu khách 05/11/2026, Frontend 7.
+           Khai ở Hệ thống › Cấu hình gara › Chân trang website.
+
+           In bằng {!! !!} (không escape) vì nếu escape thì <strong> hiện ra
+           nguyên chữ "<strong>" chứ không in đậm — mà in đậm chính là lý do
+           khách đòi trình soạn thảo. An toàn nằm ở ĐẦU VÀO: Settings::save()
+           đã đẩy qua loc_html_an_toan() trước khi ghi, nên trong CSDL không
+           còn thẻ chạy được. Dữ liệu cũ (nếu có) cũng lọc lại lúc in cho chắc
+           — lọc hai lần không hỏng gì, bỏ sót một lần là mất cả trang.
+
+           Rỗng thì không in cả khối lẫn đường kẻ: gara chưa viết gì mà hiện ra
+           một mảng trống kèm gạch ngang thì nhìn như trang nạp hỏng. */
+        $chanTuSoan = !empty($settings['footer_html'])
+            ? trim(loc_html_an_toan($settings['footer_html'])) : '';
+        ?>
+        <?php if ($chanTuSoan !== ''): ?>
+        <hr/>
+        <?php /* echo THẲNG, không qua e(): nội dung này PHẢI giữ thẻ HTML thì
+                 <strong> mới in đậm — xem ghi chú ngay trên. Và phải là PHP
+                 thuần chứ không phải {!! !!}: file layout storefront KHÔNG đi
+                 qua bộ biên dịch view (cả file dùng <?php echo e(...)), viết
+                 {!! !!} ở đây thì nó in ra nguyên văn dấu ngoặc. */ ?>
+        <div class="footer__tu-soan"><?php echo $chanTuSoan; ?></div>
+        <?php endif; ?>
         <hr/>
         <div class="footer__address">
             <div class="row g-3">

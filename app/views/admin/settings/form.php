@@ -56,6 +56,18 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                         Biển số xe và Số km vào. Chọn <b>Bán phụ tùng</b> thì báo giá chỉ cần thông tin khách hàng.
                     </small>
                 </div>
+                <?php /* DIỆN TÍCH XƯỞNG — tài liệu khách 05/11/2026, Frontend
+                         mục 13. Để trống được: gara chỉ bán phụ tùng thì không
+                         có xưởng nào để khai, bắt buộc điền là bắt người ta bịa
+                         một con số. */ ?>
+                <div class="form-group">
+                    <label>Diện tích xưởng (m²)</label>
+                    <input type="number" name="dien_tich_xuong" class="form-control" min="0" step="1"
+                           value="{{$s('dien_tich_xuong')}}" placeholder="VD: 450"/>
+                    <small class="form-text text-muted">
+                        Để trống nếu không có xưởng. Dùng cho hồ sơ năng lực của gara.
+                    </small>
+                </div>
                 <div class="form-group">
                     <label>Tên viết tắt</label>
                     <input type="text" name="site_short_name" class="form-control"
@@ -161,6 +173,28 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
             </div>
         </div>
 
+        <?php /* CHÂN TRANG — tài liệu khách 05/11/2026, Frontend mục 7:
+                 "Phần footer: cũng là 1 bài viết có ckeditor, người dùng tự thêm".
+                 Trước đây chân trang là markup cứng, gara muốn đổi một dòng
+                 cũng phải nhờ lập trình.
+                 Khối logo / địa chỉ / đăng ký nhận tin vẫn giữ nguyên bên dưới;
+                 ô này chèn THÊM phần gara tự viết, không thay thế chúng — thay
+                 thế là gara nào chưa viết gì sẽ mất trắng chân trang. */ ?>
+        <div class="card card-outline card-info">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-shoe-prints mr-2"></i>Chân trang website</h3></div>
+            <div class="card-body">
+                <div class="form-group mb-1">
+                    <label>Nội dung gara tự soạn</label>
+                    <textarea name="footer_html" class="form-control" rows="6">{{$s('footer_html')}}</textarea>
+                    <small class="form-text text-muted">
+                        Hiện ở <b>chân trang website của gara</b>, phía trên khối địa chỉ.
+                        Để trống thì chân trang giữ nguyên như cũ.
+                        Thẻ <code>&lt;script&gt;</code> và mã chạy được sẽ bị loại bỏ khi lưu.
+                    </small>
+                </div>
+            </div>
+        </div>
+
         <div class="card card-outline card-success">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-university mr-2"></i>Tài khoản ngân hàng (hướng dẫn chuyển khoản)</h3></div>
             <div class="card-body">
@@ -174,3 +208,14 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
         </div>
     </form>
 </div></div>
+<script src="{{asset('public/assets/js/soan-thao.js')}}"></script>
+<script>
+/* Ô chân trang thành trình soạn thảo có định dạng — khách yêu cầu "1 bài viết
+   có ckeditor". Dùng trình tự viết (không CDN), cùng cái đang dùng ở màn Tin.
+   Có kiểm window.oSoanThao: thiếu file js thì ô vẫn là textarea gõ HTML được,
+   không làm hỏng cả màn Cấu hình. */
+(function(){
+    if (!window.oSoanThao) return;
+    window.oSoanThao(document.querySelector('[name="footer_html"]'));
+})();
+</script>

@@ -525,6 +525,32 @@ a:hover{ color:var(--tp-xanh); }
 .footer a:hover{ color:#fff; }
 .footer .footer__logo h2{ font-size:1.15rem; font-weight:600; color:#fff; margin-top:10px; }
 .footer hr{ border-color:rgba(255,255,255,.14); opacity:1; }
+/* CHÂN TRANG GARA TỰ SOẠN (tài liệu 05/11/2026, Frontend 7).
+   Nội dung do gara gõ trong trình soạn thảo trên nền TRẮNG, nhưng in ra trên
+   nền xanh đậm — nên phải ép màu chữ cho tiêu đề, bảng, trích dẫn, nếu không
+   gara viết một tiêu đề là nó thành chữ đen trên nền xanh, coi như mất. */
+.footer .footer__tu-soan{ font-size:.92rem; line-height:1.7; }
+.footer .footer__tu-soan h1,
+.footer .footer__tu-soan h2,
+.footer .footer__tu-soan h3,
+.footer .footer__tu-soan h4,
+.footer .footer__tu-soan h5,
+.footer .footer__tu-soan h6,
+.footer .footer__tu-soan strong,
+.footer .footer__tu-soan b{ color:#fff; }
+.footer .footer__tu-soan h1,
+.footer .footer__tu-soan h2{ font-size:1.15rem; font-weight:600; }
+.footer .footer__tu-soan h3,
+.footer .footer__tu-soan h4{ font-size:1rem; font-weight:600; }
+.footer .footer__tu-soan p:last-child{ margin-bottom:0; }
+.footer .footer__tu-soan img{ max-width:100%; height:auto; }
+.footer .footer__tu-soan blockquote{
+    border-left:3px solid rgba(255,255,255,.3); padding-left:.9rem;
+    margin:.6rem 0; color:rgba(255,255,255,.7);
+}
+.footer .footer__tu-soan table{ width:100%; border-collapse:collapse; }
+.footer .footer__tu-soan th,
+.footer .footer__tu-soan td{ padding:5px 8px; border:1px solid rgba(255,255,255,.18); }
 .footer .footer__address .footer__address--item h4{
   color:#fff; font-size:.92rem; font-weight:600;
   text-transform:uppercase; letter-spacing:.05em; margin-bottom:12px;

@@ -237,6 +237,22 @@ foreach ($allViews as $v){
                `echo $bien` MOI van bi bat. */
             if (strpos($expr, '$arrows[') === 0) continue;
 
+            /* $chanTuSoan — CHÂN TRANG DO GARA TỰ SOẠN (tài liệu 05/11/2026,
+               Frontend 7: "footer cũng là 1 bài viết có ckeditor").
+
+               CỐ Ý in thô. Escape thì <strong> hiện ra nguyên chữ "<strong>"
+               chứ không in đậm — mà in đậm chính là lý do khách đòi trình
+               soạn thảo. Giống hệt cách nội dung bài viết in bằng {!! !!},
+               chỉ khác là layout storefront không qua bộ biên dịch view nên
+               phải viết <?php echo.
+
+               An toàn nằm ở ĐẦU VÀO, hai lớp:
+                 1. Settings::save() đẩy qua loc_html_an_toan() trước khi ghi
+                 2. master.php lọc LẠI một lần nữa ngay trước khi in
+               Bộ lọc đó có bộ test riêng 12 phép thử tấn công — xem
+               WebsiteGara0511Test.php. */
+            if ($expr === '$chanTuSoan') continue;
+
             $xss[] = str_replace('\\', '/', str_replace(__DIR__ . '/../', '', $v))
                    . ' -> echo ' . substr($expr, 0, 45);
         }

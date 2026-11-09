@@ -187,6 +187,70 @@ function upload_chung_tu($key, $subDir, $baseName = 'ct'){
     return ['status' => 'ok', 'path' => $dir . $name];
 }
 
+/**
+ * Tải lên TỆP CHO KHÁCH TẢI VỀ (bảng giá, catalogue, hồ sơ năng lực…).
+ * Tài liệu khách 05/11/2026 — "Phần download, Upload có link trực tiếp và
+ * link gián tiếp".
+ *
+ * KHÁC HAI HÀM TRÊN Ở CHỖ QUAN TRỌNG NHẤT: tệp KHÔNG vào public/.
+ * `storage/` đã bị chặn khỏi web bằng .htaccess, nên mọi lượt tải buộc phải
+ * đi qua PHP. Đó là điều kiện để đếm được lượt tải và chặn được người chưa
+ * đăng nhập — để trong public/ thì ai đoán ra đường dẫn cũng tải thẳng, hai
+ * thứ kia thành trang trí.
+ *
+ * Vì tệp nằm ngoài tầm web server, danh sách đuôi ở đây rộng hơn (zip, docx…)
+ * mà vẫn an toàn: không có đường nào để máy chủ CHẠY chúng. Dù vậy vẫn là
+ * DANH SÁCH TRẮNG, và tên tệp trên đĩa do mình đặt lại hoàn toàn — tên người
+ * dùng gửi lên chỉ được cất riêng để trả lại đúng tên lúc tải về.
+ *
+ * @return array ['status' => none|ok|error, 'path' =>, 'name' =>, 'size' =>,
+ *                'mime' =>, 'message' =>]
+ */
+function upload_tai_lieu($key, $baseName = 'tai-lieu'){
+    $duoi = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+             'zip', 'rar', '7z', 'txt', 'csv', 'jpg', 'jpeg', 'png'];
+    $maxBytes = 25 * 1024 * 1024;
+
+    if (empty($_FILES[$key]) || !isset($_FILES[$key]['error'])
+        || $_FILES[$key]['error'] === UPLOAD_ERR_NO_FILE){
+        return ['status' => 'none'];
+    }
+    $file = $_FILES[$key];
+    if ($file['error'] !== UPLOAD_ERR_OK){
+        return ['status' => 'error', 'message' => 'Tải tệp thất bại (mã ' . (int) $file['error'] . ')'];
+    }
+    if ($file['size'] <= 0)        return ['status' => 'error', 'message' => 'Tệp rỗng'];
+    if ($file['size'] > $maxBytes) return ['status' => 'error', 'message' => 'Tệp vượt quá 25MB'];
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if (!in_array($ext, $duoi, true)){
+        return ['status' => 'error', 'message' => 'Chỉ nhận: ' . implode(', ', $duoi)];
+    }
+
+    $dir = dirname(__DIR__, 2) . '/storage/downloads/';
+    if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)){
+        return ['status' => 'error', 'message' => 'Không tạo được thư mục lưu tệp'];
+    }
+    $slug = slugify($baseName); if ($slug === '') $slug = 'tai-lieu';
+    $ten  = $slug . '-' . bin2hex(random_bytes(6)) . '.' . $ext;
+    if (!move_uploaded_file($file['tmp_name'], $dir . $ten)){
+        return ['status' => 'error', 'message' => 'Không lưu được tệp'];
+    }
+
+    /* Tên gốc để trả lại lúc tải về. Cắt bỏ mọi thành phần đường dẫn: trình
+       duyệt gửi lên "..\\..\\web.config" là chuyện đã từng xảy ra thật, và
+       tên này về sau đi thẳng vào header Content-Disposition. */
+    $tenGoc = basename(str_replace('\\', '/', (string) $file['name']));
+    $tenGoc = preg_replace('/[\x00-\x1F"\\\\]+/', '', $tenGoc);
+    if ($tenGoc === '' || $tenGoc === null) $tenGoc = $ten;
+
+    return ['status' => 'ok',
+            'path'   => 'storage/downloads/' . $ten,
+            'name'   => mb_substr($tenGoc, 0, 200),
+            'size'   => (int) $file['size'],
+            'mime'   => mb_substr((string) $file['type'], 0, 100)];
+}
+
 /** URL hiển thị ảnh: giữ nguyên nếu là URL ngoài (http), else ghép _WEB_URL */
 function media_url($path){
     if (empty($path)) return '';

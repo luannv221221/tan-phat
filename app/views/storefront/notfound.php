@@ -3,8 +3,14 @@
 <div class="container">
     <div class="card border-0 shadow-sm mx-auto" style="max-width:520px"><div class="card-body text-center p-5">
         <div style="font-size:50px">🔍</div>
-        <h2>Không tìm thấy</h2>
-        <p class="text-muted">Nội dung không tồn tại hoặc đã ngừng hiển thị.</p>
+        <?php /* $loi: màn Tải về dùng để nói rõ "tệp hỏng" thay vì "không có
+                 trang này" — hai chuyện khác nhau, và người trực web cần biết
+                 mình phải đi tải lại tệp. Màn khác không truyền thì vẫn hiện
+                 câu mặc định như cũ. */ ?>
+        <h2><?php echo !empty($loi) ? 'Không tải được tệp' : 'Không tìm thấy'; ?></h2>
+        <p class="text-muted"><?php echo !empty($loi)
+            ? e($loi)
+            : 'Nội dung không tồn tại hoặc đã ngừng hiển thị.'; ?></p>
         <a class="btn btn-primary" href="<?php echo _WEB_URL; ?>/san-pham">Về danh sách sản phẩm</a>
         <a class="btn btn-outline-secondary" href="<?php echo _WEB_URL; ?>/">Về trang chủ</a>
     </div></div>

@@ -155,6 +155,7 @@ Route::group('admin', function(){
        'galleries'       => 'galleries',         // Thư viện ảnh/video
        'menus'           => 'menus',             // Menu website
        'banners'         => 'banners',           // Banner slider trang chủ
+       'downloads'       => 'downloads',         // Tệp tải về (tài liệu 05/11/2026)
    ];
    foreach ($cmsModules as $url => $controller){
        Route::get($url,                 'admin/'.$controller);
@@ -164,6 +165,10 @@ Route::group('admin', function(){
        Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
        Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
    }
+   /* Tải về: đổi token = thu hồi mọi link TRỰC TIẾP đã phát ra.
+      Dùng chung quyền `edit` của module downloads (kiểm trong controller). */
+   Route::get('downloads/doi-token/(\d+)', 'admin/downloads/doiToken/$1');
+
    // Thư viện: quản lý ảnh/video trong album
    Route::post('galleries/images/(\d+)', 'admin/galleries/postImages/$1');
    Route::post('galleries/add-video/(\d+)', 'admin/galleries/addVideo/$1');
@@ -589,6 +594,14 @@ Route::get('du-an', 'duan/index');
 Route::get('du-an/([a-z0-9\-]+)', 'duan/detail/$1');
 Route::get('thu-vien', 'thuvien/index');
 Route::get('thu-vien/([a-z0-9\-]+)', 'thuvien/detail/$1');
+
+/* TẢI VỀ (tài liệu khách 05/11/2026).
+   /tai-ve           danh sách
+   /tai-ve/<slug>    link GIÁN TIẾP — kiểm đăng nhập, đếm lượt
+   /tai-ve/<slug>?k= link TRỰC TIẾP — tải thẳng, không kiểm, không đếm
+   Cả hai cùng một đường: khác nhau ở query ?k=, xem Taive::file(). */
+Route::get('tai-ve', 'taive/index');
+Route::get('tai-ve/([a-z0-9\-]+)', 'taive/file/$1');
 Route::get('sitemap.xml', 'sitemap/index');
 
 // Webchat khách (JSON, polling)

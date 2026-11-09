@@ -467,6 +467,11 @@ $manRiengGara = [
        NoiDungWebGaraTest. */
     'news' => 0, 'news-categories' => 0, 'banners' => 0,
     'menus' => 0, 'galleries' => 0, 'du-an' => 0,
+    /* Tep tai ve (migration 000105, tai lieu khach 05/11/2026). `downloads`
+       da bat $_theoGara, va ca ham cong luot tai cung kem dieu kien gara —
+       co test rieng o TaiLieu0511ConLaiTest, gom ca phep thu "gara khac
+       khong tim thay va khong cong duoc luot cho tep cua gara nay". */
+    'downloads' => 0,
     /* Khach web / giao dich web, mo cho gara tu 07/10/2026 (000089 + 000090).
        Co test rieng o KhachWebGaraTest. */
     'orders' => 0, 'tai-khoan-web' => 0, 'contact-messages' => 0,

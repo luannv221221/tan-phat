@@ -73,7 +73,9 @@ $menuGroups = [
     'CSKH'               => ['customers', 'customer-groups', 'vehicles', 'receptions', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'chat', 'contact-messages', 'reviews', 'newsletter', 'tai-khoan-web', 'bao-cao-cskh'],
 
     // --- Khu 2: trang bán hàng trên web ---
-    'Quản lý website'    => ['news', 'news-categories', 'du-an', 'galleries', 'banners', 'menus'],
+    /* `downloads` đứng cạnh `galleries`: cả hai là kho tệp cho khách — một
+       bên ảnh/video để xem, một bên tài liệu để tải. (Tài liệu 05/11/2026) */
+    'Quản lý website'    => ['news', 'news-categories', 'du-an', 'galleries', 'downloads', 'banners', 'menus'],
 
     // --- Khu 3: quản trị ---
     // `modules` đứng NGAY SAU `groups`: hai màn hình này đi liền một mạch —
