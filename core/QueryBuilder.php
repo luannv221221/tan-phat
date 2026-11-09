@@ -281,6 +281,42 @@ trait QueryBuilder{
         return $this;
     }
 
+    /**
+     * Điều kiện WHERE là BIỂU THỨC SQL DO LẬP TRÌNH VIÊN VIẾT.
+     *
+     * Cần cho những chỗ điều kiện không đặt trên một cột trần mà trên một
+     * biểu thức — ví dụ lọc theo GIÁ HIỆU LỰC của gara:
+     *     COALESCE(`garage_part_prices`.`price`, `parts`.`price`) >= ?
+     * where() không làm được: nó đẩy $field qua wrapField(), mà hàm đó chỉ
+     * nhận đúng dạng `bang.cot` và ném lỗi với mọi thứ khác.
+     *
+     * TUYỆT ĐỐI KHÔNG nối dữ liệu người dùng vào $sql. Giá trị truyền qua
+     * $bindings (dấu ?) — đó là lý do hàm này có tham số thứ hai.
+     */
+    public function whereRaw($sql, array $bindings = []){
+        $sql = trim((string) $sql);
+        if ($sql === '') return $this;
+
+        $this->whereQuery .= $this->whereConnector(false) . ' ' . $sql . ' ';
+        foreach ($bindings as $b) $this->bindings[] = $b;
+        return $this;
+    }
+
+    /**
+     * ORDER BY là BIỂU THỨC SQL DO LẬP TRÌNH VIÊN VIẾT — xem whereRaw().
+     * Sắp xếp theo giá hiệu lực cần đúng hàm này: orderBy() bọc backtick nên
+     * COALESCE(...) sẽ bị từ chối.
+     */
+    public function orderByRaw($sql, $type = 'ASC'){
+        $sql  = trim((string) $sql);
+        if ($sql === '') return $this;
+        $type = strtoupper(trim($type)) === 'DESC' ? 'DESC' : 'ASC';
+
+        $operator = (strpos($this->orderByQuery, 'ORDER BY') !== false) ? ', ' : 'ORDER BY ';
+        $this->orderByQuery .= $operator . $sql . ' ' . $type;
+        return $this;
+    }
+
     /** LIMIT: ép kiểu int nên an toàn, không cần placeholder (MySQL không bind được LIMIT ở mọi driver) */
     public function limit($number, $start=0){
         $number = (int)$number;

@@ -96,6 +96,19 @@ foreach ((array) $parts as $p){
                 <label>Ghi chú</label>
                 <input type="text" name="note" class="form-control" value="<?php echo e($gt('note')); ?>"/>
             </div>
+            <?php /* THUẾ GTGT — tờ hoá đơn đỏ của NCC dán ngay bên trên luôn có
+                     con số này. Mặc định 0 chứ không phải 10: nhiều gara mua của
+                     hộ kinh doanh không xuất hoá đơn GTGT, đặt sẵn 10% là mỗi đơn
+                     phải nhớ xoá đi. */ ?>
+            <div class="form-group">
+                <label>Thuế GTGT (%)</label>
+                <input type="number" name="vat_rate" class="form-control" min="0" max="100" step="0.01"
+                       style="max-width:160px" value="<?php echo e($gt('vat_rate', '0')); ?>"/>
+                <small class="form-text text-muted">
+                    Để 0 nếu nhà cung cấp không xuất hoá đơn GTGT.
+                    Thuế <b>không</b> tính vào giá vốn khi nhập kho — nó là khoản được khấu trừ.
+                </small>
+            </div>
         </div>
     </div>
 
@@ -117,15 +130,22 @@ foreach ((array) $parts as $p){
                     <th>Hàng hoá</th>
                     <th style="width:110px" class="text-right">Số lượng</th>
                     <th style="width:150px" class="text-right">Đơn giá</th>
+                    <th style="width:90px" class="text-right">CK %</th>
                     <th style="width:140px" class="text-right">Thành tiền</th>
                     <th style="width:56px"></th>
                 </tr></thead>
                 <tbody id="dong-mua"></tbody>
-                <tfoot><tr>
-                    <th colspan="3" class="text-right">Tổng cộng</th>
-                    <th class="text-right"><span id="tong-tien">0</span> đ</th>
-                    <th></th>
-                </tr></tfoot>
+                <tfoot>
+                    <tr><th colspan="4" class="text-right font-weight-normal">Cộng chưa thuế</th>
+                        <th class="text-right font-weight-normal"><span id="tong-truoc-thue">0</span> đ</th>
+                        <th></th></tr>
+                    <tr><th colspan="4" class="text-right font-weight-normal">Thuế GTGT (<span id="nhan-vat">0</span>%)</th>
+                        <th class="text-right font-weight-normal"><span id="tien-thue">0</span> đ</th>
+                        <th></th></tr>
+                    <tr><th colspan="4" class="text-right">Tổng cộng</th>
+                        <th class="text-right"><span id="tong-tien">0</span> đ</th>
+                        <th></th></tr>
+                </tfoot>
             </table>
         </div>
         <div class="card-footer text-muted small">
@@ -161,18 +181,48 @@ foreach ((array) $parts as $p){
     /* Ô đơn giá TRỐNG khác hẳn đơn giá 0: trống là "NCC chưa báo giá" và luác
        tạo phiếu nhập sẽ rơi về giá nhập gần nhất. Nên thành tiền hiện dấu —
        chứ không hiện số 0, để người nhìn biết là chưa khai. */
+    /* PHẦN TRĂM giữ lại dấu chấm (khác soTien ngay trên): "7.5" là con số có
+       thật. Kẹp 0–100 giống hệt phía máy chủ — hai nơi phải ra cùng một số,
+       nếu không thì màn hình hiện một đằng, CSDL lưu một nẻo. */
+    function phanTram(v){
+        var n = parseFloat(String(v || '').replace(/[^\d.]/g, '')) || 0;
+        return Math.max(0, Math.min(100, n));
+    }
+
     function tinhLai(){
         var t = 0;
         Array.prototype.forEach.call(tbody.querySelectorAll('tr'), function (r){
-            var oSl = r.querySelector('.o-sl'), oGia = r.querySelector('.o-gia'), oTt = r.querySelector('.o-tt');
+            var oSl = r.querySelector('.o-sl'), oGia = r.querySelector('.o-gia'),
+                oCk = r.querySelector('.o-ck'), oTt = r.querySelector('.o-tt');
             if (!oSl || !oGia || !oTt) return;
             var g  = soTien(oGia.value);
-            var tt = Math.round(soLuongO(oSl.value) * g);
+            var ck = oCk ? phanTram(oCk.value) : 0;
+            var tt = Math.round(soLuongO(oSl.value) * g * (1 - ck / 100));
             oTt.textContent = g > 0 ? tt.toLocaleString('vi-VN') : '—';
             t += tt;
         });
-        oTong.textContent = t.toLocaleString('vi-VN');
+
+        /* Làm tròn thuế ĐÚNG CÁCH máy chủ làm (round trên tổng chưa thuế, không
+           cộng dồn thuế từng dòng) — lệch cách là màn hình và CSDL chênh nhau
+           vài đồng, đủ để người dùng mất tin vào cả con số. */
+        var oVat = document.querySelector('[name="vat_rate"]');
+        var vat  = oVat ? phanTram(oVat.value) : 0;
+        var thue = Math.round(t * vat / 100);
+
+        var oTruoc = document.getElementById('tong-truoc-thue');
+        var oThue  = document.getElementById('tien-thue');
+        var oNhan  = document.getElementById('nhan-vat');
+        if (oTruoc) oTruoc.textContent = t.toLocaleString('vi-VN');
+        if (oThue)  oThue.textContent  = thue.toLocaleString('vi-VN');
+        if (oNhan)  oNhan.textContent  = String(vat).replace(/\.0+$/, '');
+        oTong.textContent = (t + thue).toLocaleString('vi-VN');
     }
+
+    /* Đổi thuế suất thì tính lại ngay, không đợi gõ vào dòng hàng */
+    (function(){
+        var o = document.querySelector('[name="vat_rate"]');
+        if (o) o.addEventListener('input', tinhLai);
+    })();
 
     function oChon(chon){
         var s = document.createElement('select');
@@ -217,6 +267,17 @@ foreach ((array) $parts as $p){
         if (window.oTien) window.oTien(gia);
         tdG.appendChild(gia);
 
+        var tdC = document.createElement('td');
+        var ck = document.createElement('input');
+        ck.type = 'number'; ck.min = '0'; ck.max = '100'; ck.step = '0.01';
+        ck.name = 'disc[]';
+        ck.className = 'form-control form-control-sm text-right o-ck';
+        ck.placeholder = '0';
+        /* KHÔNG dùng oTien(): đó là ô tiền (bỏ dấu chấm, bước 1 đồng), gắn vào
+           đây thì gõ 7.5% ra 75%. */
+        ck.value = (r && parseFloat(r.discount_percent) > 0) ? parseFloat(r.discount_percent) : '';
+        tdC.appendChild(ck);
+
         var tdT = document.createElement('td');
         tdT.className = 'text-right align-middle';
         var oTt = document.createElement('span');
@@ -234,11 +295,12 @@ foreach ((array) $parts as $p){
         td4.appendChild(xoa);
 
         tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(tdG);
-        tr.appendChild(tdT); tr.appendChild(td4);
+        tr.appendChild(tdC); tr.appendChild(tdT); tr.appendChild(td4);
         tbody.appendChild(tr);
 
         qty.addEventListener('input', tinhLai);
         gia.addEventListener('input', tinhLai);
+        ck.addEventListener('input', tinhLai);
         tinhLai();
 
         /* Ô chọn mới thêm phải được gắn ô tìm kiếm — admin.js theo dõi DOM nên

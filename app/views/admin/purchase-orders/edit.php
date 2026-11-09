@@ -53,6 +53,7 @@ foreach ((array) $lines as $l){
         'part_id'    => (int) $l['part_id'],
         'quantity'   => (float) $l['quantity'],
         'unit_price' => isset($l['unit_price']) ? (float) $l['unit_price'] : 0,
+        'discount_percent' => isset($l['discount_percent']) ? (float) $l['discount_percent'] : 0,
     ];
 }
 
@@ -159,6 +160,19 @@ foreach ((array) $parts as $p){
                 <input type="text" name="note" class="form-control"
                        value="<?php echo e($sel('note')); ?>" <?php echo $khoaHet ? 'readonly' : ''; ?>/>
             </div>
+            <?php /* THUẾ GTGT — đọc-chỉ khi đơn đã chốt, giống mọi ô khác trên
+                     màn này: chốt rồi mà đổi thuế suất là tổng đơn đổi sau lưng
+                     phiếu nhập đã sinh ra. */ ?>
+            <div class="form-group">
+                <label>Thuế GTGT (%)</label>
+                <input type="number" name="vat_rate" class="form-control" min="0" max="100" step="0.01"
+                       style="max-width:160px" value="<?php echo e($sel('vat_rate', '0')); ?>"
+                       <?php echo $khoaHet ? 'readonly' : ''; ?>/>
+                <small class="form-text text-muted">
+                    Thuế <b>không</b> tính vào giá vốn khi nhập kho — nó là khoản được khấu trừ.
+                    Chiết khấu thì có.
+                </small>
+            </div>
         </div>
     </div>
 
@@ -181,12 +195,20 @@ foreach ((array) $parts as $p){
                     <th>Hàng hoá</th>
                     <th style="width:110px" class="text-right">Số lượng</th>
                     <th style="width:150px" class="text-right">Đơn giá</th>
+                    <th style="width:90px" class="text-right">CK %</th>
                     <th style="width:140px" class="text-right">Thành tiền</th>
                     <?php if (!$khoaHet): ?><th style="width:56px"></th><?php endif; ?>
                 </tr></thead>
                 <tbody id="dong-mua"></tbody>
-                <tfoot><tr>
-                    <th colspan="3" class="text-right">Tổng cộng</th>
+                <tfoot>
+                    <tr><th colspan="4" class="text-right font-weight-normal">Cộng chưa thuế</th>
+                        <th class="text-right font-weight-normal"><span id="tong-truoc-thue">0</span> đ</th>
+                        <?php if ($oTrongCuoi > 0): ?><th></th><?php endif; ?></tr>
+                    <tr><th colspan="4" class="text-right font-weight-normal">Thuế GTGT (<span id="nhan-vat">0</span>%)</th>
+                        <th class="text-right font-weight-normal"><span id="tien-thue">0</span> đ</th>
+                        <?php if ($oTrongCuoi > 0): ?><th></th><?php endif; ?></tr>
+                    <tr>
+                    <th colspan="4" class="text-right">Tổng cộng</th>
                     <th class="text-right"><span id="tong-tien">0</span> đ</th>
                     <?php /* Viết bằng PHP thuần chứ không dùng @if: bộ biên dịch view
                              đòi `@if (...)` phải nằm CUỐI DÒNG, nên `@if (...)<th>@endif`
@@ -289,18 +311,48 @@ foreach ((array) $parts as $p){
     /* Ô đơn giá TRỐNG khác hẳn đơn giá 0: trống là "NCC chưa báo giá", và lúc
        tạo phiếu nhập dòng đó mới rơi về giá nhập gần nhất. Nên thành tiền hiện
        dấu — chứ không hiện 0, để người đọc biết là chưa khai. */
+    /* PHẦN TRĂM giữ lại dấu chấm (khác soTien ngay trên): "7.5" là con số có
+       thật. Kẹp 0–100 giống hệt phía máy chủ — hai nơi phải ra cùng một số,
+       nếu không thì màn hình hiện một đằng, CSDL lưu một nẻo. */
+    function phanTram(v){
+        var n = parseFloat(String(v || '').replace(/[^\d.]/g, '')) || 0;
+        return Math.max(0, Math.min(100, n));
+    }
+
     function tinhLai(){
         var t = 0;
         Array.prototype.forEach.call(tbody.querySelectorAll('tr'), function (r){
-            var oSl = r.querySelector('.o-sl'), oGia = r.querySelector('.o-gia'), oTt = r.querySelector('.o-tt');
+            var oSl = r.querySelector('.o-sl'), oGia = r.querySelector('.o-gia'),
+                oCk = r.querySelector('.o-ck'), oTt = r.querySelector('.o-tt');
             if (!oSl || !oGia || !oTt) return;
             var g  = soTien(oGia.value);
-            var tt = Math.round(soLuongO(oSl.value) * g);
+            var ck = oCk ? phanTram(oCk.value) : 0;
+            var tt = Math.round(soLuongO(oSl.value) * g * (1 - ck / 100));
             oTt.textContent = g > 0 ? tt.toLocaleString('vi-VN') : '—';
             t += tt;
         });
-        oTong.textContent = t.toLocaleString('vi-VN');
+
+        /* Làm tròn thuế ĐÚNG CÁCH máy chủ làm (round trên tổng chưa thuế, không
+           cộng dồn thuế từng dòng) — lệch cách là màn hình và CSDL chênh nhau
+           vài đồng, đủ để người dùng mất tin vào cả con số. */
+        var oVat = document.querySelector('[name="vat_rate"]');
+        var vat  = oVat ? phanTram(oVat.value) : 0;
+        var thue = Math.round(t * vat / 100);
+
+        var oTruoc = document.getElementById('tong-truoc-thue');
+        var oThue  = document.getElementById('tien-thue');
+        var oNhan  = document.getElementById('nhan-vat');
+        if (oTruoc) oTruoc.textContent = t.toLocaleString('vi-VN');
+        if (oThue)  oThue.textContent  = thue.toLocaleString('vi-VN');
+        if (oNhan)  oNhan.textContent  = String(vat).replace(/\.0+$/, '');
+        oTong.textContent = (t + thue).toLocaleString('vi-VN');
     }
+
+    /* Đổi thuế suất thì tính lại ngay, không đợi gõ vào dòng hàng */
+    (function(){
+        var o = document.querySelector('[name="vat_rate"]');
+        if (o) o.addEventListener('input', tinhLai);
+    })();
     var soDong = 0;   // chỉ tăng — xem ghi chú ở add.php
 
     function oChon(chon){
@@ -350,6 +402,18 @@ foreach ((array) $parts as $p){
         if (KHOA) gia.readOnly = true;
         tdG.appendChild(gia);
 
+        var tdC = document.createElement('td');
+        var ck = document.createElement('input');
+        ck.type = 'number'; ck.min = '0'; ck.max = '100'; ck.step = '0.01';
+        ck.name = 'disc[]';
+        ck.className = 'form-control form-control-sm text-right o-ck';
+        ck.placeholder = '0';
+        /* KHÔNG dùng oTien(): đó là ô tiền (bỏ dấu chấm, bước 1 đồng), gắn vào
+           đây thì gõ 7.5% ra 75%. */
+        ck.value = (r && parseFloat(r.discount_percent) > 0) ? parseFloat(r.discount_percent) : '';
+        if (KHOA) ck.readOnly = true;
+        tdC.appendChild(ck);
+
         var tdT = document.createElement('td');
         tdT.className = 'text-right align-middle';
         var oTt = document.createElement('span');
@@ -358,7 +422,7 @@ foreach ((array) $parts as $p){
         tdT.appendChild(oTt);
 
         tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(tdG);
-        tr.appendChild(tdT);
+        tr.appendChild(tdC); tr.appendChild(tdT);
 
         if (!KHOA){
             var td4 = document.createElement('td');
@@ -376,6 +440,7 @@ foreach ((array) $parts as $p){
         if (!KHOA){
             qty.addEventListener('input', tinhLai);
             gia.addEventListener('input', tinhLai);
+            ck.addEventListener('input', tinhLai);
         }
         tinhLai();
         if (window.initSearchSelects) window.initSearchSelects(tr);

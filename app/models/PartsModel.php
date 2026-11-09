@@ -199,9 +199,100 @@ class PartsModel extends Model {
      * tắt được, còn điều kiện này thì không được phép quên. Và chốt một chỗ
      * duy nhất — bảy nơi truy vấn storefront đều đi qua hàm này.
      */
+    /* ======================================================================
+     * GIÁ RIÊNG CỦA GARA TRÊN TRANG KHÁCH
+     *
+     * Trong trang quản trị, mỗi gara từ lâu đã đặt được giá riêng cho hàng
+     * lấy từ kho tổng (`garage_part_prices`) — màn Lập báo giá dùng đúng giá
+     * đó. Nhưng gian hàng công khai thì vẫn đọc thẳng `parts`.`price`, nên
+     * khách vào web thấy GIÁ KHO TỔNG, còn gara báo giá lại ra số khác.
+     *
+     * Quy tắc đè giá chép NGUYÊN VĂN từ theoNguon() — nơi màn báo giá đang
+     * dùng. Lệch một ly là web nói một đằng, phiếu báo giá nói một nẻo, và
+     * không ai biết bên nào mới đúng:
+     *
+     *   giá      = giá riêng nếu có, không thì giá kho tổng
+     *   giá KM   = gara đã tự định giá -> CHỈ dùng khuyến mãi của gara
+     *              (giá khuyến mãi của kho tổng không còn liên quan)
+     *              gara chưa định giá -> rơi hết về kho tổng, cả giá lẫn KM
+     *
+     * Dùng tên bảng đầy đủ chứ không đặt bí danh `gpp`: leftJoin() của bộ
+     * dựng truy vấn bọc backtick cho tên bảng nên không nhận bí danh.
+     * ====================================================================== */
+    const GIA_WEB = 'COALESCE(`garage_part_prices`.`price`, `parts`.`price`)';
+    const GIA_KM_WEB = 'CASE WHEN `garage_part_prices`.`price` IS NOT NULL
+                             THEN `garage_part_prices`.`sale_price`
+                             ELSE COALESCE(`garage_part_prices`.`sale_price`, `parts`.`sale_price`)
+                        END';
+
+    /**
+     * Gara của GIAN HÀNG đang mở. 0 = dùng giá kho tổng, không đè gì.
+     *
+     * Lấy qua self::garaLoc() chứ không gọi gara_hien_tai() — cùng lý do đã
+     * ghi trong chiHangLenWeb() ngay dưới.
+     */
+    private function garaGianHang(){
+        $gid = self::garaLoc();
+        if ($gid === null || (int) $gid <= 0) return 0;
+        $gid = (int) $gid;
+
+        $gara = \App\core\Load::model('GaragesModel')->getDetail($gid);
+        // Kho tổng sở hữu danh mục chung — giá của nó CHÍNH LÀ giá gốc
+        if (!empty($gara['is_master'])) return 0;
+        return $gid;
+    }
+
+    /** Có đang áp giá riêng không — dùng để quyết định lọc/sắp xếp theo cột nào */
+    private function coGiaRieng(){ return $this->garaGianHang() > 0; }
+
+    /** Biểu thức giá hiệu lực, dùng CHUNG cho select / lọc / sắp xếp */
+    private function cotGia(){
+        return $this->coGiaRieng() ? self::GIA_WEB : '`parts`.`price`';
+    }
+    private function cotGiaKM(){
+        return $this->coGiaRieng() ? self::GIA_KM_WEB : '`parts`.`sale_price`';
+    }
+
+    /**
+     * selectWithJoins() + hai cột giá đã đè, cho các truy vấn TRANG KHÁCH.
+     *
+     * Alias trùng tên cột (`price`, `sale_price`) nên đứng SAU `parts`.* —
+     * nhưng không dựa vào thứ tự đó: `parts`.* được liệt kê bằng tên từng cột
+     * thì quá dài, nên vẫn dùng `parts`.*, và MySQL trả alias sau cùng nên
+     * PDO::FETCH_ASSOC giữ đúng giá trị đã đè. Thêm `gia_goc` để màn hình
+     * muốn khoe "giá kho tổng" vẫn còn số cũ mà dùng.
+     */
+    private function selectWithJoinsWeb(){
+        $q = $this->selectWithJoins();
+        if (!$this->coGiaRieng()) return $q;
+
+        return $q->select('`parts`.*, `part_categories`.`name` AS category_name, '
+                        . '`part_brands`.`name` AS brand_name, '
+                        . '`part_origins`.`name` AS origin_name, '
+                        . '`part_units`.`name` AS unit_name, '
+                        . '`parts`.`price` AS `gia_goc`, '
+                        . self::GIA_WEB . ' AS `price`, '
+                        . self::GIA_KM_WEB . ' AS `sale_price`');
+    }
+
     private function chiHangLenWeb($q){
         $q = $q->where('parts.status', '=', 1)
                ->where('parts.show_on_web', '=', 1);
+
+        /* NỐI BẢNG GIÁ RIÊNG ngay tại đây — chokepoint duy nhất mà MỌI truy
+           vấn trang khách đi qua. Nối ở nơi khác là sớm muộn có một đường
+           quên nối, và đường đó âm thầm hiện giá kho tổng.
+
+           Điều kiện gara nằm trong ON chứ không trong WHERE: đẩy xuống WHERE
+           thì LEFT JOIN thành INNER JOIN, và mọi mặt hàng gara CHƯA đặt giá
+           riêng biến mất khỏi gian hàng. */
+        $gidGia = $this->garaGianHang();
+        if ($gidGia > 0){
+            $q = $q->leftJoin('garage_part_prices',
+                    '`garage_part_prices`.`part_id` = `parts`.`id`'
+                  . ' AND `garage_part_prices`.`garage_id` = ' . (int) $gidGia
+                  . ' AND `garage_part_prices`.`status` = 1');
+        }
 
         /* LẤY GARA QUA self::garaLoc(), ĐỪNG gọi thẳng gara_hien_tai().
            Hai đường này KHÔNG trả về cùng một thứ: garaLoc() tôn trọng
@@ -247,10 +338,30 @@ class PartsModel extends Model {
         });
     }
 
+    /**
+     * CHI TIẾT MỘT MẶT HÀNG THEO ID, NHÌN TỪ TRANG KHÁCH — giá đã đè theo gara.
+     *
+     * Vì sao không sửa thẳng getDetail(): hàm đó còn dùng để ĐỔ DỮ LIỆU VÀO
+     * FORM SỬA HÀNG HOÁ bên quản trị. Trả về giá đã đè ở đó là bấm Lưu một
+     * cái, giá riêng của gara bị ghi đè lên `parts`.`price` của kho tổng —
+     * hỏng danh mục chung cho tất cả các gara còn lại.
+     *
+     * Hàm này KHẮT KHE HƠN getDetail(): phải là hàng đang bán, đang hiện trên
+     * web, và thuộc gian hàng của gara đang mở. Đó mới là điều kiện để một
+     * món xuất hiện được trong giỏ hàng.
+     */
+    public function chiTietWeb($id){
+        $id = (int) $id;
+        if ($id <= 0) return [];
+        $r = $this->chiHangLenWeb($this->selectWithJoinsWeb())
+                  ->where('parts.id', '=', $id)->first();
+        return empty($r) ? [] : $r;
+    }
+
     /** Chi tiết 1 phụ tùng kèm tên danh mục/thương hiệu/xuất xứ/đơn vị — cho storefront */
     public function getBySlugFull($slug){
         return $this->chiHangLenWeb(
-            $this->selectWithJoins()->where('parts.slug', '=', $slug)
+            $this->selectWithJoinsWeb()->where('parts.slug', '=', $slug)
         )->first();
     }
 
@@ -267,7 +378,7 @@ class PartsModel extends Model {
      *   sort               : 'new'|'price_asc'|'price_desc'|'name'
      */
     public function storefront($filters = [], $limit = 0, $offset = 0){
-        $q = $this->applyStorefront($this->selectWithJoins(), $filters);
+        $q = $this->applyStorefront($this->selectWithJoinsWeb(), $filters);
 
         // Một phụ tùng lắp cho nhiều đời xe sẽ ra nhiều dòng sau khi join
         // part_fitments — gom lại để thẻ sản phẩm không hiện trùng.
@@ -277,9 +388,13 @@ class PartsModel extends Model {
             $q = $q->groupBy('parts.id');
         }
 
+        /* SẮP XẾP cũng theo giá hiệu lực — cùng lý do với bộ lọc ngay trên:
+           xếp "giá tăng dần" theo cột gốc thì danh sách hiện ra lộn xộn ngay
+           trước mắt khách, vì con số họ đọc được không phải con số dùng để
+           xếp. */
         switch ($filters['sort'] ?? '') {
-            case 'price_asc':  $q = $q->orderBy('parts.price', 'ASC'); break;
-            case 'price_desc': $q = $q->orderBy('parts.price', 'DESC'); break;
+            case 'price_asc':  $q = $q->orderByRaw($this->cotGia(), 'ASC'); break;
+            case 'price_desc': $q = $q->orderByRaw($this->cotGia(), 'DESC'); break;
             case 'new':        $q = $q->orderBy('parts.id', 'DESC'); break;
             default:           $q = $q->orderBy('parts.name', 'ASC');
         }
@@ -384,7 +499,7 @@ class PartsModel extends Model {
     private function theoDanhSachId(array $ids){
         if (empty($ids)) return [];
 
-        $rows = $this->chiHangLenWeb($this->selectWithJoins())
+        $rows = $this->chiHangLenWeb($this->selectWithJoinsWeb())
                      ->whereIn('parts.id', $ids)->get();
 
         // whereIn trả về theo thứ tự MySQL thấy tiện, không theo thứ tự mình
@@ -405,10 +520,22 @@ class PartsModel extends Model {
         if (!empty($filters['brandIds']))    $q = $q->whereIn('parts.brand_id', $filters['brandIds']);
         if (!empty($filters['originIds']))    $q = $q->whereIn('parts.origin_id', $filters['originIds']);
 
-        if (isset($filters['priceMin']) && $filters['priceMin'] !== '') $q = $q->where('parts.price', '>=', (float) $filters['priceMin']);
-        if (isset($filters['priceMax']) && $filters['priceMax'] !== '') $q = $q->where('parts.price', '<=', (float) $filters['priceMax']);
+        /* LỌC THEO GIÁ HIỆU LỰC, không theo `parts`.`price`.
+           Lọc cột gốc là: gara bán món đó 900k nhưng kho tổng ghi 400k, khách
+           lọc "dưới 500k" vẫn thấy nó, bấm vào thì giá 900k. Người dùng đọc ra
+           là bộ lọc hỏng, mà không có lỗi nào để lần. */
+        $gia = $this->cotGia();
+        if (isset($filters['priceMin']) && $filters['priceMin'] !== ''){
+            $q = $q->whereRaw($gia . ' >= ?', [(float) $filters['priceMin']]);
+        }
+        if (isset($filters['priceMax']) && $filters['priceMax'] !== ''){
+            $q = $q->whereRaw($gia . ' <= ?', [(float) $filters['priceMax']]);
+        }
 
-        if (!empty($filters['promo'])) $q = $q->whereNotNull('parts.sale_price');
+        /* "Đang khuyến mãi" cũng phải hỏi giá KM HIỆU LỰC: gara tự định giá
+           thì khuyến mãi của kho tổng không còn áp dụng — để nguyên là gắn
+           nhãn giảm giá cho món gara đang bán nguyên giá. */
+        if (!empty($filters['promo'])) $q = $q->whereRaw($this->cotGiaKM() . ' IS NOT NULL');
 
         if (!empty($filters['keyword'])){
             $q = $q->where(function($sub) use ($filters){
@@ -685,7 +812,7 @@ class PartsModel extends Model {
      */
     public function getByCarYear($carYearId, $filters = []){
         $q = $this->chiHangLenWeb(
-            $this->selectWithJoins()
+            $this->selectWithJoinsWeb()
                  ->joinOn('part_fitments', 'parts.id', 'part_fitments.part_id')
                  ->where('part_fitments.car_year_id', '=', $carYearId)
         );

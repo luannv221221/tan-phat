@@ -76,6 +76,7 @@ $tests = [
     'WebsiteGara0511Test.php'     => 'WEBSITE GARA — tai lieu 05/11: loc HTML, menu chon dich, serial theo don',
     'ChuyenBaoGiaVaMobileTest.php'=> 'BAN HANG — bao gia -> hoa don (chan chuyen 2 lan) + o nhap tren dien thoai',
     'TaiLieu0511ConLaiTest.php'   => 'WEBSITE GARA — 4 muc cuoi 05/11: tuyen dung, chan trang, dien tich, tai ve',
+    'VatMuaHangVaGiaWebTest.php'  => 'MUA HANG — VAT / chiet khau don mua + gia rieng cua gara len web',
 ];
 
 $php      = PHP_BINARY;

@@ -139,7 +139,7 @@ class Purchaseorders extends Controller {
         ]);
 
         $tuChoi = $this->ghiDongVaSerial($id, $f);
-        $this->chotTong($id);
+        $this->chotTong($id, $this->docVat($f));
         $this->bao('Đã lập ' . $this->labelOne . ' ' . $this->__model->getDetail($id)['po_no'], $tuChoi);
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
     }
@@ -188,7 +188,7 @@ class Purchaseorders extends Controller {
 
         $this->__model->edit($data, $id);
         $tuChoi = $this->ghiDongVaSerial($id, $f);
-        $this->chotTong($id);
+        $this->chotTong($id, $this->docVat($f));
         $this->bao('Đã lưu đơn mua ' . $item['po_no'], $tuChoi);
         $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . (int) $id);
     }
@@ -278,11 +278,29 @@ class Purchaseorders extends Controller {
                    (= 0) mới rơi về giá nhập gần nhất — đơn cũ đều đi đường này. */
                 $gia = (float) (isset($d['unit_price']) ? $d['unit_price'] : 0);
                 if ($gia <= 0) $gia = $this->__model->giaNhapGanNhat((int) $d['part_id']);
-                $tt  = round($gia * (float) $d['quantity'], 2);
+
+                /* ───────────────────────────────────────────────────────────
+                 * CHIẾT KHẤU VÀO GIÁ VỐN, VAT THÌ KHÔNG.
+                 * ───────────────────────────────────────────────────────────
+                 * Giảm giá 10% là tiền thật trả cho hàng giảm đi, nên giá vốn
+                 * phải đi theo — không trừ thì lãi gộp của mọi hoá đơn bán sau
+                 * này bị tính thiếu.
+                 *
+                 * Thuế GTGT đầu vào thì ngược lại: là khoản ĐƯỢC KHẤU TRỪ,
+                 * không phải giá trị hàng tồn. Cộng nó vào đây là thổi giá vốn
+                 * lên 8–10% ở mọi mặt hàng — sai âm thầm, không dòng nào báo.
+                 * Vì vậy $tong dưới đây là tiền CHƯA THUẾ, và `total_amount`
+                 * của phiếu nhập cũng vậy. */
+                $ck = (float) (isset($d['discount_percent']) ? $d['discount_percent'] : 0);
+                $ck = max(0, min(100, $ck));
+                $giaSauCk = round($gia * (1 - $ck / 100), 2);
+
+                $tt  = round($giaSauCk * (float) $d['quantity'], 2);
                 $tong += $tt;
                 $rows[] = ['part_id' => (int) $d['part_id'], 'quantity' => (float) $d['quantity'],
-                           'unit_cost' => $gia, 'amount' => $tt,
-                           'note' => 'Đơn mua ' . $item['po_no']];
+                           'unit_cost' => $giaSauCk, 'amount' => $tt,
+                           'note' => 'Đơn mua ' . $item['po_no']
+                                   . ($ck > 0 ? ' (đã trừ chiết khấu ' . rtrim(rtrim(number_format($ck, 2, '.', ''), '0'), '.') . '%)' : '')];
             }
 
             $pnkId = (int) $this->__receipt->add([
@@ -350,6 +368,11 @@ class Purchaseorders extends Controller {
                           thì "1.450.000" thành 1.45: sai một triệu lần, không báo gì. */
                        'unit_price' => isset($f['price'][$i])
                             ? (float) preg_replace('/[^\d]/', '', (string) $f['price'][$i]) : 0,
+                       /* CHIẾT KHẤU giữ lại dấu chấm (khác ô giá ngay trên):
+                          đây là phần trăm, "7.5" là con số có thật. Bỏ dấu
+                          chấm ở đây thì 7.5% thành 75%. */
+                       'discount_percent' => isset($f['disc'][$i])
+                            ? (float) preg_replace('/[^\d.]/', '', (string) $f['disc'][$i]) : 0,
                        'note'       => isset($f['line_note'][$i]) ? trim((string) $f['line_note'][$i]) : ''];
         }
         /* GIỮ LẠI SERIAL ĐÃ KHAI. syncForPo() dưới đây XOÁ SẠCH dòng hàng rồi
@@ -473,8 +496,33 @@ class Purchaseorders extends Controller {
      * ĐỌC LẠI TỪ CSDL chứ không cộng từ mảng vừa gửi lên: syncForPo() bỏ qua
      * dòng trống và làm tròn thành tiền, nên cộng ở hai nơi là có ngày lệch.
      */
-    private function chotTong($id){
-        $this->__model->edit(['total_amount' => $this->__item->tongTheoPo($id)], $id);
+    private function chotTong($id, $vatRate = null){
+        $subtotal = (float) $this->__item->tongTheoPo($id);
+
+        /* $vatRate = null nghĩa là "giữ nguyên thuế suất đang lưu" — dùng ở
+           những đường không đi qua form (khai serial, mở lại đơn). Đọc lại từ
+           CSDL thay vì mặc định 0: mặc định 0 là mỗi lần khai serial lại âm
+           thầm xoá mất thuế của đơn. */
+        if ($vatRate === null){
+            $cu = $this->__model->getDetail($id);
+            $vatRate = !empty($cu['vat_rate']) ? (float) $cu['vat_rate'] : 0;
+        }
+        $vatRate = max(0, min(100, (float) $vatRate));
+        $thue    = round($subtotal * $vatRate / 100, 2);
+
+        $this->__model->edit([
+            'vat_rate'     => $vatRate,
+            'subtotal'     => $subtotal,
+            'tax_amount'   => $thue,
+            'total_amount' => $subtotal + $thue,
+        ], $id);
+    }
+
+    /** Thuế suất người dùng vừa gõ trên form, kẹp trong 0–100 */
+    private function docVat(array $f){
+        if (!isset($f['vat_rate'])) return 0.0;
+        $v = (float) preg_replace('/[^\d.]/', '', (string) $f['vat_rate']);
+        return max(0, min(100, $v));
     }
 
     private function bao($thanhCong, array $tuChoi){

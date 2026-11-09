@@ -53,11 +53,15 @@ section('Model ghi don gia va thanh tien');
 
 $mdlIt = codeOnly($goc . 'app/models/PurchaseOrderItemsModel.php');
 ok(strpos($mdlIt, "'unit_price' => \$gia") !== false, 'syncForPo() ghi `unit_price`');
-ok(strpos($mdlIt, "'amount'     => \$tt") !== false, 'syncForPo() ghi `amount`');
+ok(preg_match("~'amount'\s*=> \\\$tt~", $mdlIt) === 1, 'syncForPo() ghi `amount`');
 ok(strpos($mdlIt, 'if ($gia < 0) $gia = 0;') !== false,
    'Don gia AM bi keo ve 0',
    'Mot dong am du lon la don trieu dong thanh don vai nghin, khong ai nhin ra');
-ok(strpos($mdlIt, 'round($gia * $qty, 2)') !== false, 'Thanh tien = don gia x so luong, lam tron 2 so');
+/* 09/11/2026 — cong thuc them chiet khau (migration 000106). Don cu khong doi
+   mot dong nao: discount_percent mac dinh 0 nen (1 - 0/100) = 1.
+   Phep thu CON SO cho ca hai duong nam o VatMuaHangVaGiaWebTest. */
+ok(preg_match('~round\(\$gia \* \$qty \* \(1 - \$ck / 100\), 2\)~', $mdlIt) === 1,
+   'Thanh tien = don gia x so luong x (1 - CK%), lam tron 2 so');
 ok(strpos($mdlIt, 'function tongTheoPo') !== false, 'Model co tongTheoPo()');
 ok(strpos($mdlIt, 'COALESCE(SUM(`amount`), 0)') !== false,
    'tongTheoPo() cong tu dong hang chu khong doc total_amount',

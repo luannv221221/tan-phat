@@ -52,18 +52,29 @@ class PurchaseOrderItemsModel extends Model {
                đơn vài nghìn, không ai nhìn ra trên màn danh sách. */
             $gia = isset($r['unit_price']) ? (float) $r['unit_price'] : 0;
             if ($gia < 0) $gia = 0;
-            $tt  = round($gia * $qty, 2);
+
+            /* CHIẾT KHẤU kẹp trong 0–100. Âm thì thành tiền phình ra, trên
+               100 thì thành tiền âm — cả hai đều làm tổng đơn sai mà màn danh
+               sách không có dấu hiệu gì. Kẹp ở đây, nơi duy nhất ghi dòng
+               hàng, thay vì tin vào ô nhập trên form. */
+            $ck = isset($r['discount_percent']) ? (float) $r['discount_percent'] : 0;
+            if ($ck < 0)   $ck = 0;
+            if ($ck > 100) $ck = 100;
+
+            $tt  = round($gia * $qty * (1 - $ck / 100), 2);
 
             $this->insert($this->_table, [
-                'po_id'      => $poId,
-                'part_id'    => $partId,
-                'quantity'   => $qty,
-                'unit_price' => $gia,
-                'amount'     => $tt,
-                'note'       => isset($r['note']) && $r['note'] !== '' ? mb_substr($r['note'], 0, 255) : null,
+                'po_id'            => $poId,
+                'part_id'          => $partId,
+                'quantity'         => $qty,
+                'unit_price'       => $gia,
+                'discount_percent' => $ck,
+                'amount'           => $tt,
+                'note'             => isset($r['note']) && $r['note'] !== '' ? mb_substr($r['note'], 0, 255) : null,
             ]);
             $ra[(int) $this->lastId()] = ['part_id' => $partId, 'quantity' => $qty,
-                                          'unit_price' => $gia, 'amount' => $tt];
+                                          'unit_price' => $gia, 'discount_percent' => $ck,
+                                          'amount' => $tt];
         }
         return $ra;
     }

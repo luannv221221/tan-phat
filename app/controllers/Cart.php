@@ -38,7 +38,14 @@ class Cart extends Controller {
     private function buildRows($cart){
         $rows = []; $total = 0.0;
         foreach ($cart as $partId => $qty){
-            $p = $this->__part->getDetail((int) $partId);
+            /* chiTietWeb() chứ không getDetail(): hàm này trả GIÁ ĐÃ ĐÈ theo
+               gara đang mở gian hàng.
+
+               Đây là nơi DUY NHẤT giỏ hàng tính ra tiền, và placeOrder() cũng
+               gọi lại chính nó — nên sai ở đây là khách nhìn một giá trên
+               trang sản phẩm rồi bị tính một giá khác lúc đặt hàng. Thà không
+               làm còn hơn làm nửa chừng kiểu đó. */
+            $p = $this->__part->chiTietWeb((int) $partId);
             if (empty($p)) continue;
             $price = !empty($p['sale_price']) ? (float) $p['sale_price'] : (float) $p['price'];
             $amount = $price * (int) $qty;
