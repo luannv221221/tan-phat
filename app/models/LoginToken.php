@@ -32,6 +32,24 @@ class LoginToken extends Model{
     }
 
     /**
+     * Đá MỌI phiên khác của tài khoản này ra, GIỮ LẠI phiên đang thao tác.
+     *
+     * Dùng khi đổi mật khẩu. Đổi mật khẩu mà các máy khác vẫn vào được thì
+     * việc đổi gần như vô nghĩa ở đúng tình huống người ta cần nó nhất: nghi
+     * bị lộ, hoặc vừa đăng nhập nhờ ở một máy lạ. Cookie "Ghi nhớ đăng nhập"
+     * sống 30 ngày nên máy đó còn vào được tới một tháng nữa.
+     *
+     * GIỮ phiên hiện tại chứ không xoá sạch: xoá cả là người vừa đổi mật khẩu
+     * bị văng ra trang đăng nhập ngay lúc màn hình báo "đổi thành công" —
+     * nhìn như hỏng.
+     */
+    public function removeKhacPhien($userId, $giuTokenId){
+        return $this->delete($this->_table,
+                             '`user_id` = ? AND `id` <> ?',
+                             [(int) $userId, (int) $giuTokenId]);
+    }
+
+    /**
      * Xoá token đã quá hạn — MỘT câu DELETE duy nhất.
      *
      * Bản cũ (AuthMiddleware::removeLoginToken) làm thế này ở MỌI request:

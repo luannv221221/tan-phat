@@ -453,6 +453,20 @@ Route::group('admin', function(){
       tuong ung, nen nut nay khong thanh duong vong qua phan quyen. */
    Route::post("them-nhanh/danh-muc", "admin/themnhanh/danhMuc");
 
+   /* ĐỔI MẬT KHẨU của chính tài khoản đang đăng nhập (khách nhắn 11/11/2026:
+      "thiếu đổi password em nhé").
+
+      KHÔNG có module `doi-mat-khau` trong bảng `modules`, cố ý: đổi mật khẩu
+      của chính mình không phải một quyền để cấp hay thu. Nhờ thế chỉ cần đăng
+      nhập là vào được, giống `dia-gioi` ngay dưới.
+
+      TUYẾN POST ĐẶT TRÙNG TÊN TUYẾN GET. Bảng middleware đánh khoá theo chuỗi
+      đường dẫn chứ không theo phương thức, mà Route::post() không ghi tuyến
+      vào nhóm `admin/*` (chỉ Route::get() ghi). Đặt tên khác — ví dụ
+      `doi-mat-khau/luu` — thì tuyến POST đó không có AuthMiddleware. */
+   Route::get('doi-mat-khau',  'admin/doimatkhau');
+   Route::post('doi-mat-khau', 'admin/doimatkhau/postDoi');
+
    /* Tỉnh / phường cho các ô chọn địa chỉ. Server gọi API ngoài rồi nhớ tạm;
       không có module `dia-gioi` trong bảng modules nên chỉ cần đăng nhập. */
    Route::get("dia-gioi/tinh",     "admin/diagioi/tinh");

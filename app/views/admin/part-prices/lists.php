@@ -26,9 +26,9 @@ $tien = function($v){
         @if (!empty($coQuyenTinh))
         <div class="card-tools">
             <form action="{{_WEB_URL.'/admin/'.$routeBase.'/edit/tinh-lai'}}" method="post" class="d-inline"
-                  onsubmit="return confirm('Tính lại toàn bộ bảng giá theo giá vốn hiện tại?');">
+                  onsubmit="return confirm('Cập nhật toàn bộ bảng giá theo giá vốn hiện tại?');">
                 <?php echo csrf_field(); ?>
-                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-calculator mr-1"></i> Tính lại giá</button>
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-calculator mr-1"></i> Cập nhật giá</button>
             </form>
         </div>
         @endif
@@ -62,7 +62,7 @@ $tien = function($v){
                 @if (!empty($tinhLanCuoi))
                 <div class="text-muted small mt-2 text-md-right">Tính lần cuối: {{date('d/m/Y H:i', strtotime($tinhLanCuoi))}}</div>
                 @else
-                <div class="text-warning small mt-2 text-md-right">Chưa tính lần nào — bấm “Tính lại giá”.</div>
+                <div class="text-warning small mt-2 text-md-right">Chưa tính lần nào — bấm “Cập nhật giá”.</div>
                 @endif
             </div>
         </div>

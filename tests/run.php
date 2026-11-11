@@ -78,6 +78,7 @@ $tests = [
     'TaiLieu0511ConLaiTest.php'   => 'WEBSITE GARA — 4 muc cuoi 05/11: tuyen dung, chan trang, dien tich, tai ve',
     'VatMuaHangVaGiaWebTest.php'  => 'MUA HANG — VAT / chiet khau don mua + gia rieng cua gara len web',
     'BangTinhGiaTest.php'         => 'HANG HOA — bang tinh gia: gia von + gia ban theo tung loai khach',
+    'DoiMatKhauTest.php'          => 'BAO MAT — doi mat khau tai khoan quan tri (da cac thiet bi khac ra)',
 ];
 
 $php      = PHP_BINARY;

@@ -82,6 +82,17 @@ elseif (!empty($page_title))  { $__pageLabel = $page_title; }
                 <a href="<?php echo _WEB_URL; ?>" target="_blank" class="dropdown-item">
                     <?php echo icon('external-link'); ?> Xem trang chủ
                 </a>
+                <?php /* ĐỔI MẬT KHẨU — khách nhắn 11/11/2026 "thiếu đổi
+                         password em nhé". Không hỏi route() như các mục khác:
+                         màn này cố ý không có module nên không có quyền nào
+                         để hỏi, và mọi tài khoản đăng nhập được đều phải thấy
+                         nó. Xem app/controllers/admin/Doimatkhau.php. */ ?>
+                <a href="<?php echo _WEB_URL.'/admin/doi-mat-khau'; ?>" class="dropdown-item">
+                    <?php /* `lock` chứ không phải `key`: bộ sprite Lucide nhúng
+                             trong dự án không có biểu tượng `key`, mà icon()
+                             thiếu hình thì in ra một ô trống chứ không báo lỗi. */ ?>
+                    <?php echo icon('lock'); ?> Đổi mật khẩu
+                </a>
                 <a href="<?php echo _WEB_URL.'/dang-xuat'; ?>" class="dropdown-item">
                     <?php echo icon('log-out'); ?> Đăng xuất
                 </a>
