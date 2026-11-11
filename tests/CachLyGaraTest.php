@@ -516,6 +516,13 @@ $manRiengGara = [
        garage_id nhung luon di qua `po_id` cua mot don DA LAY DUNG GARA. Co
        test rieng o MuaHangSerialTest. */
     'purchase-orders' => 0, 'serials' => 0,
+    /* Bang tinh gia (migration 000107, khach chot 11/11/2026) — man cua GARA:
+       gia von sinh ra tu kho CUA GARA va he so lai dat trong nhom khach CUA
+       GARA, nen gia ban cung la cua rieng gara do. `part_prices` co garage_id
+       va PartPricesModel bat $_theoGara. Khoa duy nhat la bo ba
+       (garage_id, part_id, group_id): hai gara cung ban mot ma hang kho tong
+       van la hai dong gia khac nhau. Co test rieng o BangTinhGiaTest. */
+    'part-prices' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);

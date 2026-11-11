@@ -68,7 +68,10 @@ $menuGroups = [
     'Kho'                => ['dat-hang-kho-tong', 'goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'ton-kho-dau-ky', 'warehouses', 'warehouse-locations'],
     // `garage-catalog` đứng ngay sau `services`: nó là danh mục hàng hoá nhìn
     // từ phía một gara, nên thuộc nhóm Hàng hoá chứ không phải nhóm Hệ thống.
-    'Hàng hoá'           => ['products', 'services', 'garage-catalog', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
+    /* `part-prices` đứng NGAY SAU `products`: bảng tính giá chính là danh sách
+       hàng hoá nhìn từ phía giá — mở màn Hàng hoá rồi hỏi "mã này bán bao
+       nhiêu cho đại lý" là bước tiếp theo liền mạch. (Khách chốt 11/11/2026) */
+    'Hàng hoá'           => ['products', 'part-prices', 'services', 'garage-catalog', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
     'CSKH'               => ['customers', 'customer-groups', 'vehicles', 'receptions', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'chat', 'contact-messages', 'reviews', 'newsletter', 'tai-khoan-web', 'bao-cao-cskh'],
 

@@ -152,6 +152,14 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                         </div>
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group col-md-5 mb-0">
+                            <label>Chi phí cộng vào giá vốn (₫)</label>
+                            <input type="number" min="0" step="1" class="form-control" name="cost_extra" placeholder="VD: 20000" value="{{!empty($old['cost_extra'])?$old['cost_extra']:''}}"/>
+                            <small class="form-text text-muted">Vận chuyển, bao bì, công lắp… Bảng tính giá cộng khoản này vào giá vốn rồi mới nhân hệ số lãi của nhóm khách. Để trống là 0.</small>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label>Mô tả</label>
                         <textarea class="form-control" name="description" rows="3">{{!empty($old['description'])?$old['description']:''}}</textarea>

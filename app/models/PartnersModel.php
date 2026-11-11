@@ -198,6 +198,24 @@ class PartnersModel extends Model {
 
     public function getDetail($id){ return $this->getFirst($id); }
 
+    /**
+     * [partner_id => group_id] — cho màn lập báo giá / hoá đơn biết khách đang
+     * chọn thuộc LOẠI KHÁCH nào, để lấy đúng giá bán của loại đó.
+     *
+     * Khách chưa gán nhóm thì không có mặt trong bản đồ — và khi đó giá dòng
+     * giữ nguyên giá niêm yết, chứ không rơi về nhóm nào cả. (Khách 11/11/2026)
+     */
+    public function nhomCuaKhach(){
+        $rows = $this->bangGara()
+            ->select('`partners`.`id`, `partners`.`group_id`')
+            ->get();
+        $map = [];
+        foreach ($rows ?: [] as $r){
+            if (!empty($r['group_id'])) $map[(int) $r['id']] = (int) $r['group_id'];
+        }
+        return $map;
+    }
+
     /** [partner_id => % chiết khấu nhóm KH] — cho auto-điền chiết khấu dòng */
     public function groupDiscountMap(){
         $rows = $this->bangGara()

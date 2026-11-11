@@ -106,6 +106,10 @@ class Customergroups extends Controller {
         return [
             'name'             => trim($f['name']),
             'discount_percent' => isset($f['discount_percent']) ? (float) preg_replace('/[^\d.]/', '', str_replace(',', '.', (string) $f['discount_percent'])) : 0,
+            /* HỆ SỐ LÃI (yêu cầu khách 11/11/2026) — cộng lên trên giá vốn để
+               ra giá bán của nhóm. Ngược chiều với `discount_percent` ở trên,
+               nên là hai cột chứ không dùng chung một. */
+            'markup_percent'   => isset($f['markup_percent']) ? max(0, (float) preg_replace('/[^\d.]/', '', str_replace(',', '.', (string) $f['markup_percent']))) : 0,
             'note'             => !empty($f['note']) ? trim($f['note']) : null,
             'sort_order'       => isset($f['sort_order']) ? (int) $f['sort_order'] : 0,
             'status'           => !empty($f['status']) ? 1 : 0,

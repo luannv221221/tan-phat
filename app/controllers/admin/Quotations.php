@@ -68,6 +68,22 @@ class Quotations extends Controller {
         $c['parts']            = $this->hopNhatHang($tong, $gara);
         $c['garaCuaPhieu']     = $garageId > 0 ? $this->__gara->getDetail($garageId) : null;
         $c['partnerDiscounts'] = $this->__partner->groupDiscountMap();
+        /* GIÁ BÁN THEO LOẠI KHÁCH — khách chốt 11/11/2026 ("giá khách lẻ" trên
+           bảng đơn hàng trong sơ đồ). Chọn khách xong thì đơn giá từng dòng
+           lấy theo nhóm của khách đó; vẫn gõ đè được ("giá bán tùy chỉnh").
+           Mặt hàng chưa có trong bảng giá thì giữ nguyên giá niêm yết. */
+        $c['partnerGroups'] = $this->__partner->nhomCuaKhach();
+
+        /* ĐỌC BẢNG GIÁ CỦA ĐÚNG GARA MANG PHIẾU, không phải gara đang bấm.
+           Danh mục hàng ngay trên đã lấy theo $garageId (theoNguon NGUON_GARA),
+           nên giá cũng phải theo gara đó — nếu không thì mở phiếu của gara A
+           ra sửa lại thấy giá của gara B. Chuyện này có thật khi Tân Phát mở
+           phiếu của một gara ra xem. trongGara() trả gara cũ về trong finally
+           nên không có đường nào quên tắt. */
+        $giaModel = $this->model('PartPricesModel');
+        $c['giaTheoNhom'] = $garageId > 0
+            ? PartPricesModel::trongGara($garageId, function () use ($giaModel){ return $giaModel->mapMoiNhom(); })
+            : $giaModel->mapMoiNhom();
         /* Hang bao hiem cho o chon "bao hiem tra" (tai lieu 14/10/2026). */
         $c['insurers']         = $this->model('InsurersModel')->getActive();
     }

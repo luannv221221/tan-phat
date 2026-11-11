@@ -20,6 +20,7 @@ $vSlug    = isset($old['slug'])     ? $old['slug']     : $item['slug'];
 $vPrice   = isset($old['price'])    ? $old['price']    : (int) $item['price'];
 $vSale    = isset($old['sale_price']) ? $old['sale_price'] : ($item['sale_price'] !== null ? (int) $item['sale_price'] : '');
 $vWar     = isset($old['warranty_month']) ? $old['warranty_month'] : $item['warranty_month'];
+$vChiPhi  = isset($old['cost_extra']) ? $old['cost_extra'] : (int) (isset($item['cost_extra']) ? $item['cost_extra'] : 0);
 $vDesc    = isset($old['description']) ? $old['description'] : $item['description'];
 $vMetaT   = isset($old['meta_title'])       ? $old['meta_title']       : $item['meta_title'];
 $vMetaD   = isset($old['meta_description']) ? $old['meta_description'] : $item['meta_description'];
@@ -166,6 +167,14 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                         <div class="form-group col-md-3">
                             <label>Bảo hành (tháng)</label>
                             <input type="number" class="form-control" name="warranty_month" value="{{!empty($vWar)?$vWar:''}}"/>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-5">
+                            <label>Chi phí cộng vào giá vốn (₫)</label>
+                            <input type="number" min="0" step="1" class="form-control" name="cost_extra" placeholder="VD: 20000" value="{{!empty($vChiPhi)?$vChiPhi:''}}"/>
+                            <small class="form-text text-muted">Vận chuyển, bao bì, công lắp… Bảng tính giá cộng khoản này vào giá vốn rồi mới nhân hệ số lãi của nhóm khách. Để trống là 0.</small>
                         </div>
                     </div>
 

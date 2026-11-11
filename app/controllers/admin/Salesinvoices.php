@@ -54,6 +54,12 @@ class Salesinvoices extends Controller {
            và dịch vụ riêng của gara không bao giờ lên được hoá đơn. */
         $this->__data['content']['parts']      = $this->__part->choGara();
         $this->__data['content']['partnerDiscounts'] = $this->__partner->groupDiscountMap();
+        /* GIÁ BÁN THEO LOẠI KHÁCH — khách chốt 11/11/2026 ("giá khách lẻ" trên
+           bảng đơn hàng trong sơ đồ). Chọn khách xong thì đơn giá từng dòng
+           lấy theo nhóm của khách đó; vẫn gõ đè được ("giá bán tùy chỉnh").
+           Mặt hàng chưa có trong bảng giá thì giữ nguyên giá niêm yết. */
+        $this->__data['content']['partnerGroups'] = $this->__partner->nhomCuaKhach();
+        $this->__data['content']['giaTheoNhom']   = $this->model('PartPricesModel')->mapMoiNhom();
     }
 
     /* ==================================================================

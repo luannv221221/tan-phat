@@ -462,6 +462,13 @@ $tabs = [
     };
     var DISC = {!! json_encode((object)$partnerDiscounts, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
 
+    /* GIÁ BÁN THEO LOẠI KHÁCH — khách chốt 11/11/2026.
+       NHOM_KH: khách nào thuộc nhóm nào.  GIA_NHOM: nhóm nào bán mã nào bao nhiêu.
+       Mang sẵn cả bảng xuống đây chứ không hỏi lại máy chủ mỗi lần đổi khách:
+       đổi khách là lúc đang nhập liệu, chèn một vòng chờ mạng vào đó là thấy giật. */
+    var NHOM_KH  = {!! json_encode((object)$partnerGroups, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+    var GIA_NHOM = {!! json_encode((object)$giaTheoNhom,  JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+
     var vatEl   = document.getElementById('vat_rate');
     var bhEl    = document.getElementById('bao_hiem_tra');
     var custSel = document.querySelector('select[name="customer_id"]');
@@ -470,6 +477,23 @@ $tabs = [
     function num(v){ return parseFloat(String(v || '').replace(/[^\d.]/g, '')) || 0; }
     function money(v){ return parseInt(String(v || '').replace(/[^\d]/g, ''), 10) || 0; }
     function groupDisc(){ var v = custSel ? custSel.value : ''; return (v && DISC[v] != null) ? parseFloat(DISC[v]) : 0; }
+
+    /* Giá bán của mặt hàng cho LOẠI KHÁCH đang chọn, hoặc null.
+       null có ba nghĩa, và cả ba đều phải dẫn tới "giữ nguyên giá niêm yết":
+         - chưa chọn khách
+         - khách chưa được gán nhóm
+         - mã này chưa có trong bảng giá (chưa từng nhập kho nên chưa có giá vốn)
+       Trả 0 thay vì null là mọi dòng về 0 đồng mà không có gì báo. */
+    function giaNhom(partId){
+        var kh = custSel ? custSel.value : '';
+        if (!kh) return null;
+        var nh = NHOM_KH[kh];
+        if (!nh) return null;
+        var bang = GIA_NHOM[nh];
+        if (!bang) return null;
+        var g = bang[partId];
+        return (g != null && g > 0) ? Math.round(g) : null;
+    }
 
     var bang = {};
 
@@ -606,7 +630,12 @@ $tabs = [
                    Muốn giá riêng thì gõ đè sau khi đã chọn xong hàng. Mở phiếu
                    cũ ra sửa KHÔNG bị ảnh hưởng: dòng cũ dựng thẳng từ dữ liệu
                    đã lưu, không đi qua sự kiện change này. */
-                if (p) price.value = p;
+                /* GIÁ CỦA LOẠI KHÁCH ĐI TRƯỚC giá niêm yết (khách 11/11/2026).
+                   Khách chưa chọn / chưa có nhóm / mã chưa có giá vốn thì
+                   giaNhom() trả null và dòng này giữ nguyên nếp cũ. */
+                var gn = sel.value ? giaNhom(sel.value) : null;
+                if (gn != null)   price.value = gn;
+                else if (p)       price.value = p;
                 // Mặt hàng vừa đổi -> mọi ô chọn khác phải bỏ/thêm nó lại
                 napLaiTatCa();
                 recompute();
@@ -761,6 +790,19 @@ $tabs = [
         custSel.addEventListener('change', function (){
             var gd = groupDisc();
             document.querySelectorAll('.pane-dong .line-row .disc').forEach(function (d){ d.value = gd > 0 ? gd : ''; });
+
+            /* ĐỔI KHÁCH THÌ ĐƠN GIÁ ĐI THEO LOẠI KHÁCH MỚI.
+               Cùng một lẽ với ô chiết khấu ngay trên: lập dở cho khách lẻ rồi
+               đổi sang đại lý mà giá đứng yên là phiếu ghi giá của loại khách
+               cũ — sai tiền mà không có gì báo.
+               Mã nào chưa có giá theo nhóm thì KHÔNG đụng vào: giữ giá niêm
+               yết, hoặc giữ đúng con số người dùng vừa gõ đè. */
+            document.querySelectorAll('.pane-dong .line-row').forEach(function (r){
+                var s = r.querySelector('select.part-sel');
+                if (!s || !s.value) return;
+                var gn = giaNhom(s.value);
+                if (gn != null) r.querySelector('.price').value = gn;
+            });
             recompute();
         });
     }

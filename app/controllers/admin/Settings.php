@@ -51,6 +51,12 @@ class Settings extends Controller {
                         Dau "..." trong tai lieu van chua ro la nhung truong gi
                         — dang hoi khach. Hai truong duoc ghi ten thi lam truoc. */
                      'dien_tich_xuong',
+                     /* BẢNG TÍNH GIÁ — khách chốt 11/11/2026: "cấu hình giá
+                        theo 2 kiểu: bình quân hoặc gần nhất" và "đặt lịch
+                        ngày, tuần, tháng". Giá trị lạ bị PartPricesModel kéo
+                        về mặc định, nên dù form có bị sửa tay cũng không sinh
+                        ra kiểu tính giá vốn thứ ba. */
+                     'cost_method', 'price_schedule',
                      /* Frontend muc 7: "Phan footer: cung la 1 bai viet co
                         ckeditor, nguoi dung tu them". Luu HTML da loc; xem
                         xu ly rieng trong save(). */

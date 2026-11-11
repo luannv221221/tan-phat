@@ -68,6 +68,42 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                         Để trống nếu không có xưởng. Dùng cho hồ sơ năng lực của gara.
                     </small>
                 </div>
+                <?php /* BẢNG TÍNH GIÁ — khách chốt 11/11/2026, đúng hai dòng
+                         trong sơ đồ: "cấu hình giá theo 2 kiểu: bình quân hoặc
+                         gần nhất" và "nút tính giá — đặt lịch ngày, tuần,
+                         tháng".
+
+                         MẶC ĐỊNH LÀ BÌNH QUÂN vì đó đúng là cách kho đang chạy
+                         từ ngày đầu (StocksModel::applyIn). Đặt mặc định khác
+                         là đổi giá vốn của mọi gara mà không ai yêu cầu. */ ?>
+                <div class="form-group">
+                    <label>Kiểu tính giá vốn</label>
+                    <?php $cm = $s('cost_method', 'binh_quan'); ?>
+                    <select name="cost_method" class="form-control">
+                        <option value="binh_quan" <?php echo $cm !== 'gan_nhat' ? 'selected' : ''; ?>>Bình quân gia quyền</option>
+                        <option value="gan_nhat" <?php echo $cm === 'gan_nhat' ? 'selected' : ''; ?>>Giá nhập gần nhất</option>
+                    </select>
+                    <small class="form-text text-muted">
+                        <b>Bình quân gia quyền</b>: trung bình theo lượng của mọi lần nhập còn tồn — đây là con số
+                        phiếu xuất kho và lãi gộp đang dùng. <b>Giá nhập gần nhất</b>: lấy đơn giá của phiếu nhập
+                        đã ghi sổ mới nhất. Đổi ô này chỉ đổi <a href="{{_WEB_URL.'/admin/part-prices'}}">Bảng tính giá</a>,
+                        không đụng tới giá vốn đã ghi trên các phiếu cũ.
+                    </small>
+                </div>
+                <div class="form-group">
+                    <label>Lịch tự tính lại bảng giá</label>
+                    <?php $ps = $s('price_schedule', 'tat'); ?>
+                    <select name="price_schedule" class="form-control">
+                        <?php foreach (['tat' => 'Không tự chạy', 'ngay' => 'Hằng ngày',
+                                        'tuan' => 'Hằng tuần', 'thang' => 'Hằng tháng'] as $k => $ten): ?>
+                        <option value="<?php echo e($k); ?>" <?php echo $ps === $k ? 'selected' : ''; ?>><?php echo e($ten); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="form-text text-muted">
+                        Tới kỳ thì bảng giá tự tính lại khi có người mở màn Bảng tính giá. Lúc nào cũng bấm
+                        <b>Tính lại giá</b> ở màn đó được, không cần chờ tới kỳ.
+                    </small>
+                </div>
                 <div class="form-group">
                     <label>Tên viết tắt</label>
                     <input type="text" name="site_short_name" class="form-control"

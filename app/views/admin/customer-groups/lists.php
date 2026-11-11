@@ -15,13 +15,14 @@
     </div>
     <div class="card-body table-responsive p-0">
         <table class="table table-hover mb-0">
-            <thead><tr><th style="width:60px" class="text-center">STT</th><th>Tên nhóm</th><th style="width:130px" class="text-right">Chiết khấu (%)</th><th>Ghi chú</th><th style="width:110px" class="text-center">Trạng thái</th><th style="width:130px" class="text-center">Thao tác</th></tr></thead>
+            <thead><tr><th style="width:60px" class="text-center">STT</th><th>Tên nhóm</th><th style="width:130px" class="text-right">Hệ số lãi (%)</th><th style="width:130px" class="text-right">Chiết khấu (%)</th><th>Ghi chú</th><th style="width:110px" class="text-center">Trạng thái</th><th style="width:130px" class="text-center">Thao tác</th></tr></thead>
             <tbody>
             @if (!empty($dataList))
                 @foreach ($dataList as $key => $item)
                 <tr>
                     <td class="text-center text-muted">{{$key+1}}</td>
                     <td class="font-weight-bold">{{$item['name']}}</td>
+                    <td class="text-right font-weight-bold">{{rtrim(rtrim(number_format((float)(isset($item['markup_percent'])?$item['markup_percent']:0),2,'.',''),'0'),'.')}}%</td>
                     <td class="text-right">{{rtrim(rtrim(number_format((float)$item['discount_percent'],2,'.',''),'0'),'.')}}%</td>
                     <td class="text-muted">{{!empty($item['note'])?$item['note']:'—'}}</td>
                     <td class="text-center">{!! $item['status']==1 ? '<span class="badge badge-success">Bật</span>' : '<span class="badge badge-secondary">Ẩn</span>' !!}</td>
@@ -36,7 +37,7 @@
                 </tr>
                 @endforeach
             @else
-                <tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có nhóm</td></tr>
+                <tr><td colspan="7" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có nhóm</td></tr>
             @endif
             </tbody>
         </table>

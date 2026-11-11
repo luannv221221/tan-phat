@@ -20,8 +20,14 @@ $isActive = isset($old['status']) ? !empty($old['status']) : ((int) $item['statu
                     {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
                 </div>
                 <div class="form-group">
+                    <label>Hệ số lãi (%)</label>
+                    <input type="number" min="0" step="any" name="markup_percent" class="form-control" style="max-width:150px" value="{{$v('markup_percent','0')}}"/>
+                    <small class="form-text text-muted">Phần lãi cộng lên trên giá vốn để ra giá bán cho nhóm này. VD: 20 nghĩa là giá vốn 1.200.000 ra giá bán 1.440.000.</small>
+                </div>
+                <div class="form-group">
                     <label>Chiết khấu (%)</label>
                     <input type="number" min="0" max="100" step="any" name="discount_percent" class="form-control" style="max-width:150px" value="{{$v('discount_percent','0')}}"/>
+                    <small class="form-text text-muted">Giảm trừ điền sẵn vào từng dòng hàng khi lập báo giá — khác với hệ số lãi ở trên.</small>
                 </div>
                 <div class="form-group">
                     <label>Ghi chú</label>

@@ -759,6 +759,12 @@ class Products extends Controller {
             'unit_id'         => $this->validFk($this->__unitModel,   $f['unit_id']         ?? null),
             'price'           => $this->parseMoney($f['price'] ?? 0),
             'sale_price'      => (isset($f['sale_price']) && $f['sale_price'] !== '') ? $this->parseMoney($f['sale_price']) : null,
+            /* CHI PHÍ CỘNG VÀO GIÁ VỐN — yêu cầu khách 11/11/2026 ("giá vốn +
+               trường chi phí thành giá bán"). Vận chuyển, bao bì, công lắp…
+               Bảng tính giá cộng khoản này vào giá vốn TRƯỚC khi nhân hệ số lãi.
+               Để trống = 0, và khi đó giá bán ra đúng bằng công thức khách vẽ. */
+            'cost_extra'      => (isset($f['cost_extra']) && $f['cost_extra'] !== '')
+                                 ? max(0, $this->parseMoney($f['cost_extra'])) : 0,
             'warranty_month'  => (isset($f['warranty_month']) && $f['warranty_month'] !== '') ? (int) $f['warranty_month'] : null,
             'description'     => !empty($f['description']) ? trim($f['description']) : null,
             /* META SEO — tài liệu khách 05/11/2026, Frontend mục 5: "chọn sửa

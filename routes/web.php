@@ -145,6 +145,17 @@ Route::group('admin', function(){
    // Xuất catalogue CSV (TASK_85)
    Route::get('products/export', 'admin/products/export');
 
+   /* BẢNG TÍNH GIÁ — giá vốn + giá bán theo từng nhóm khách (khách chốt 11/11/2026).
+      Màn CHỈ ĐỌC, nên chỉ có một tuyến xem.
+
+      Lệnh "Tính lại giá" cố ý nằm dưới `edit/`: RoleMiddleware kiểm quyền
+      theo nhánh `.../edit/*` có sẵn, nên việc ghi đè cả bảng giá đòi quyền
+      `edit` mà không phải thêm một cơ chế phân quyền thứ hai. Đặt tên khác
+      (vd `part-prices/tinh-lai`) thì middleware chỉ đòi `view` — ai xem được
+      bảng giá cũng tính lại được. */
+   Route::get('part-prices', 'admin/partprices');
+   Route::post('part-prices/edit/tinh-lai', 'admin/partprices/postTinhlai');
+
    /* =========================================================
     * CMS NỘI DUNG — Tin tức + Danh mục tin + Dự án (portfolio) + Thư viện
     * ========================================================= */
