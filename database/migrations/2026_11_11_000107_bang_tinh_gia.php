@@ -12,6 +12,19 @@
  *   "giá vốn + trường chi phí thành giá bán"
  *   "giá bán tùy chỉnh"                      (trên đơn vẫn sửa tay được)
  *
+ * CÓ HAI BẢN SƠ ĐỒ, ĐỪNG NHẦM. Khách sửa lại ảnh bằng Paint ngay sau buổi họp
+ * rồi gửi qua Zalo lúc 10:14 cùng ngày. Bản gửi Zalo đổi ba chỗ:
+ *
+ *   "mua hàng"                        -> "mua hàng (phiếu nhập kho)"
+ *   "nút tính giá"                    -> "button (cập nhật giá)"
+ *   "giá vốn + trường chi phí thành giá bán"
+ *       -> "Giá vốn + hệ số lãi = giá bán (giá bán cho sửa được ở đơn hàng
+ *           như hiện tại)"
+ *
+ * Hai chỗ đầu chỉ là nói rõ thêm, và đã làm đúng: giá vốn lấy từ phiếu nhập
+ * kho, nút mang tên "Cập nhật giá". Chỗ thứ ba thì BỎ "trường chi phí" đi.
+ * Cột `cost_extra` vẫn giữ — xem mục 3 dưới đây.
+ *
  * ──────────────────────────────────────────────────────────────────────────
  *  BA CHỖ DỄ LÀM SAI
  * ──────────────────────────────────────────────────────────────────────────
@@ -28,11 +41,18 @@
  *    không được tùy chỉnh"). Bảng tính giá vì vậy ĐỌC giá vốn từ kho, không
  *    bao giờ ghi ngược lại.
  *
- * 3. `cost_extra` MẶC ĐỊNH 0 LÀ CÓ CHỦ Ý. Sơ đồ khách ghi hai điều hơi khác
- *    nhau: công thức xanh là "giá vốn × hệ số + giá vốn", còn ghi chú xanh
- *    dương là "giá vốn + trường chi phí thành giá bán". Để 0 thì công thức ra
- *    ĐÚNG BẰNG con số trong sơ đồ (gạt mưa 1,2tr × 20% + 1,2tr), mà ô chi phí
- *    vẫn có đó cho ai cần. Hai điều cùng được tôn trọng, không phải chọn một.
+ * 3. `cost_extra` MẶC ĐỊNH 0 LÀ CÓ CHỦ Ý. Bản sơ đồ chiếu trong họp ghi "giá
+ *    vốn + trường chi phí thành giá bán"; bản sửa gửi Zalo bỏ câu đó, chỉ còn
+ *    "Giá vốn + hệ số lãi = giá bán".
+ *
+ *    GIỮ CỘT, ĐỂ MẶC ĐỊNH 0. Với 0 thì công thức ra ĐÚNG BẰNG con số trong cả
+ *    hai bản sơ đồ (gạt mưa 1,2tr × 20% + 1,2tr = 1,44tr) — tức là không có
+ *    cách nào phân biệt được, nên giữ nó không làm sai một đồng nào. Mà bỏ đi
+ *    thì lúc khách hỏi lại "chi phí vận chuyển tính vào đâu" là phải chạy lại
+ *    migration trên CSDL thật.
+ *
+ *    Nếu khách chốt là KHÔNG cần: giấu ô nhập ở hai view products/add|edit là
+ *    đủ, không phải bỏ cột.
  *
  * CHẠY LẠI ĐƯỢC: bảng/cột nào có rồi thì bỏ qua.
  */

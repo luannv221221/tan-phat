@@ -79,6 +79,7 @@ $tests = [
     'VatMuaHangVaGiaWebTest.php'  => 'MUA HANG — VAT / chiet khau don mua + gia rieng cua gara len web',
     'TuyenPostCoChanTest.php'     => 'PHAN QUYEN — moi tuyen POST cua admin deu phai qua middleware',
     'BangTinhGiaTest.php'         => 'HANG HOA — bang tinh gia: gia von + gia ban theo tung loai khach',
+    'DoiMatKhauTest.php'          => 'BAO MAT — doi mat khau tai khoan quan tri (da cac thiet bi khac ra)',
 ];
 
 $php      = PHP_BINARY;

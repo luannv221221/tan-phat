@@ -101,7 +101,7 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                     </select>
                     <small class="form-text text-muted">
                         Tới kỳ thì bảng giá tự tính lại khi có người mở màn Bảng tính giá. Lúc nào cũng bấm
-                        <b>Tính lại giá</b> ở màn đó được, không cần chờ tới kỳ.
+                        <b>Cập nhật giá</b> ở màn đó được, không cần chờ tới kỳ.
                     </small>
                 </div>
                 <div class="form-group">

@@ -27,7 +27,7 @@ use App\core\Load;
  *    PurchaseOrdersModel::giaNhapGanNhat() có rơi về `parts`.`price` khi chưa
  *    từng nhập — chấp nhận được ở chỗ đó vì thà có một con số còn hơn nhập kho
  *    với giá vốn 0. Ở ĐÂY THÌ KHÔNG: bảng giá mà lấy giá bán làm giá vốn rồi
- *    cộng thêm 20% là mỗi lần bấm "Tính lại giá" giá lại trèo lên một bậc.
+ *    cộng thêm 20% là mỗi lần bấm "Cập nhật giá" giá lại trèo lên một bậc.
  *    Chưa nhập bao giờ thì giá vốn = 0 và dòng đó hiện "chưa có giá vốn".
  */
 class PartPricesModel extends Model {

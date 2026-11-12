@@ -14,7 +14,7 @@ use App\core\Session;
  *
  * MÀN HÌNH NÀY CHỈ ĐỌC. Không có nút Sửa, không có nút Xoá — cố ý. Muốn đổi
  * giá bán thì đổi HỆ SỐ LÃI ở Nhóm khách hàng hoặc ô CHI PHÍ ở Hàng hoá rồi
- * bấm Tính lại; sửa thẳng một ô giá ở đây là lần tính sau mất trắng.
+ * bấm Cập nhật giá; sửa thẳng một ô giá ở đây là lần tính sau mất trắng.
  */
 class Partprices extends Controller {
 
@@ -55,7 +55,7 @@ class Partprices extends Controller {
         $this->__data['content']['msgError']   = Session::flash('msgError');
 
         if ($daTuChay){
-            $this->__data['content']['msg'] = 'Đã tới kỳ theo lịch — bảng giá vừa được tính lại.';
+            $this->__data['content']['msg'] = 'Đã tới kỳ theo lịch — bảng giá vừa được cập nhật.';
         }
 
         $this->render('layouts/admin/master_admin', $this->__data);
@@ -104,7 +104,7 @@ class Partprices extends Controller {
             $this->__response->redirect('admin/' . $this->routeBase); return;
         }
 
-        $tin = 'Đã tính lại ' . number_format($kq['dong'], 0, ',', '.') . ' dòng giá.';
+        $tin = 'Đã cập nhật ' . number_format($kq['dong'], 0, ',', '.') . ' dòng giá.';
         if ((int) $kq['thieu_gia_von'] > 0){
             /* NÓI RA chứ không im lặng: mã chưa từng nhập kho thì giá vốn 0,
                giá bán cũng ra 0 — nhìn bảng mà không biết vì sao thì tưởng

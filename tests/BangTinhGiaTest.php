@@ -412,7 +412,7 @@ ok(abs($lai['gn'] - $truoc['gn']) < 0.01 && abs($lai['bq'] - $truoc['bq']) < 0.0
    'gan_nhat ' . $truoc['gn'] . ' -> ' . $lai['gn'] . ' | binh_quan ' . $truoc['bq'] . ' -> ' . $lai['bq']);
 
 // ---------------------------------------------------------------------------
-section('Nut "Tinh lai gia" phai doi quyen that, khong chi an di');
+section('Nut "Cap nhat gia" phai doi quyen that, khong chi an di');
 
 /* ⚠️ MIDDLEWARE KHONG CHAY CHO TUYEN NAY — da thu that 11/11/2026.
  *
