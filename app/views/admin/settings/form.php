@@ -27,17 +27,13 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
         <?php echo csrf_field(); ?>
 
         <div class="card card-outline card-primary">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-cog mr-2"></i>Thông tin chung</h3></div>
+        <div class="card card-outline card-primary">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-cog mr-2"></i>Vận hành gara</h3></div>
             <div class="card-body">
-                <div class="form-row">
-                    <div class="form-group col-md-6"><label>Tên website</label><input type="text" name="site_name" class="form-control" value="{{$s('site_name')}}"/></div>
-                    <div class="form-group col-md-6"><label>Slogan</label><input type="text" name="site_slogan" class="form-control" value="{{$s('site_slogan')}}"/></div>
-                </div>
-                <?php /* TÊN VIẾT TẮT — yêu cầu 29/10/2026. Đặt NGAY TRÊN Logo vì
-                         hai ô này đi cùng nhau: menu trái hiện logo rồi tới tên,
-                         mà tên đầy đủ ("Công ty TNHH Phụ tùng Ô tô Tân Phát" là
-                         35 ký tự) trong sidebar 232px phải kẹp lại hai dòng mới
-                         vừa. Tên viết tắt là chỗ để chủ gara tự chọn cái ngắn. */ ?>
+                <?php /* TÊN, LOGO, LIÊN HỆ ĐÃ CHUYỂN SANG "CẤU HÌNH WEBSITE" (12/11/2026) — khách
+                         yêu cầu: "cái này phải ở bên Quản lý website". Ở lại đây là những ô
+                         quyết định CÁCH GARA LÀM VIỆC chứ không phải trang khách hiển thị
+                         gì: lĩnh vực, diện tích xưởng, cách tính giá vốn, lịch cập nhật giá. */ ?>
                 <?php /* LĨNH VỰC — yêu cầu 29/10/2026, ảnh minh hoạ khoanh đúng
                          chỗ này (cạnh Logo). Quyết định màn Lập báo giá có hiện
                          khối Hãng bảo hiểm / Biển số xe / Số km hay không: chỗ
@@ -104,59 +100,10 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                         <b>Cập nhật giá</b> ở màn đó được, không cần chờ tới kỳ.
                     </small>
                 </div>
-                <div class="form-group">
-                    <label>Tên viết tắt</label>
-                    <input type="text" name="site_short_name" class="form-control"
-                           value="{{$s('site_short_name')}}" placeholder="VD: Tân Phát ETEK"/>
-                    <small class="form-text text-muted">
-                        Hiện ở <b>menu trái trang quản trị</b>, cạnh logo — thay cho tên đầy đủ.
-                        Bỏ trống thì vẫn lấy tên ở ô trên.
-                    </small>
-                </div>
-                <div class="form-group mb-0">
-                    <label>Logo</label>
-                    {!! !empty($settings['logo']) ? '<img src="'.e(media_url($settings['logo'])).'" style="height:48px;background:#fff;border:1px solid #ddd;border-radius:4px;padding:4px;display:block;margin-bottom:6px"/>' : '' !!}
-                    <input type="file" name="logo_file" accept="image/*" class="form-control-file"/>
-                    <input type="text" name="logo" class="form-control mt-1" placeholder="hoặc đường dẫn ảnh" value="{{$s('logo')}}"/>
-                    <small class="form-text text-muted">
-                        Dùng cho đầu trang bán hàng và <b>biểu mẫu in báo giá / hoá đơn</b>.
-                        Bỏ trống thì lấy logo mặc định của giao diện.
-                    </small>
-                </div>
-            </div>
-        </div>
-
-        <div class="card card-outline card-info">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-address-book mr-2"></i>Liên hệ</h3></div>
-            <div class="card-body">
-                <div class="form-row">
-                    <div class="form-group col-md-4"><label>Hotline</label><input type="tel" name="hotline" class="form-control" value="{{$s('hotline')}}"/></div>
-                    <div class="form-group col-md-4"><label>Email</label><input type="email" name="email" class="form-control" value="{{$s('email')}}"/></div>
-                    <div class="form-group col-md-4"><label>Địa chỉ</label><input type="text" name="address" class="form-control" value="{{$s('address')}}"/></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group col-md-4">
-                        <label>Mã số thuế</label>
-                        <input type="text" name="tax_code" class="form-control" value="{{$s('tax_code')}}"/>
-                        <small class="form-text text-muted">In ở đầu biểu mẫu báo giá / hoá đơn.</small>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group col-md-4"><label>Facebook (URL)</label><input type="text" name="facebook" class="form-control" value="{{$s('facebook')}}"/></div>
-                    <div class="form-group col-md-4">
-                        <label>Zalo (URL/SĐT)</label>
-                        <input type="text" name="zalo" class="form-control" value="{{$s('zalo')}}"/>
-                        <small class="form-text text-muted">Gõ số điện thoại cũng được.</small>
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label>Messenger (URL/tên trang)</label>
-                        <input type="text" name="messenger" class="form-control" placeholder="vd: m.me/garaabc hoặc garaabc" value="{{$s('messenger')}}"/>
-                    </div>
-                </div>
                 <p class="text-muted small mb-0">
                     <i class="fas fa-info-circle mr-1"></i>
-                    Ba ô Zalo / Hotline / Messenger cũng là ba <strong>nút hỗ trợ trực tuyến</strong>
-                    nổi ở góc trang khách. Ô nào để trống thì nút đó không hiện.
+                    Tên website, logo, hotline, email, địa chỉ, mã số thuế, Facebook / Zalo / Messenger
+                    nằm ở <a href="{{_WEB_URL.'/admin/cau-hinh-website'}}">Quản lý website › Cấu hình website</a>.
                 </p>
             </div>
         </div>

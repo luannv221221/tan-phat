@@ -108,9 +108,10 @@ ok(strpos($css, ':has(img)') === false,
 section('Ten viet tat (yeu cau 29/10/2026)');
 
 $stt = file_get_contents($goc . 'app/controllers/admin/Settings.php');
-$frm = file_get_contents($goc . 'app/views/admin/settings/form.php');
+/* Ten viet tat chuyen sang Cau hinh website cung ten website + logo (12/11/2026). */
+$frm = file_get_contents($goc . 'app/views/admin/cau-hinh-website/form.php');
 
-ok(strpos($frm, 'name="site_short_name"') !== false, 'Man Cau hinh co o Ten viet tat');
+ok(strpos($frm, 'name="site_short_name"') !== false, 'Man Cau hinh website co o Ten viet tat');
 ok(preg_match('~\$keys\s*=\s*\[[^\]]*\x27site_short_name\x27~s', $stt) === 1,
    'site_short_name nam trong danh sach khoa duoc sua',
    'Khong co trong whitelist thi go vao roi bam Luu cung khong luu');

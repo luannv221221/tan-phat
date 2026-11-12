@@ -835,6 +835,13 @@ body.adm-auth { background: var(--bg-page); }
 }
 .adm-topbar__nhanh a:hover { opacity: 1; background: rgba(0, 0, 0, .06); text-decoration: none; }
 .adm-topbar__nhanh a > svg { width: 16px; height: 16px; }
+/* Nút bánh răng "Tuỳ chỉnh lối tắt": mờ hơn các nút lối tắt để không giành mắt
+   với việc người ta đang làm, nhưng đủ rõ để tìm thấy khi cần. */
+.adm-topbar__nhanh .adm-topbar__nhanh-cfg { padding: 5px 8px; opacity: .42; }
+.adm-topbar__nhanh .adm-topbar__nhanh-cfg:hover { opacity: .9; }
+/* Dưới 1200px chỉ giữ hình, ẩn chữ (chữ vẫn nằm trong title): sáu lối tắt kèm
+   chữ rộng chừng 600px, đè lên tên trang và tên gara ở khổ laptop nhỏ. */
+@media (max-width: 1199.98px) { .adm-topbar__nhanh a > span { display: none; } }
 
 /* ==========================================================================
    TRÌNH SOẠN THẢO CÓ ĐỊNH DẠNG (public/assets/js/soan-thao.js)

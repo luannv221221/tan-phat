@@ -1,6 +1,6 @@
 <?php
 /**
- * CẤU HÌNH WEBSITE — những ô CHỈ ảnh hưởng tới trang khách.
+ * CẤU HÌNH WEBSITE — những ô trang khách HIỂN THỊ (nhận diện, liên hệ, giao diện, SEO, chân trang).
  *
  * Tách khỏi màn Cấu hình chung 12/11/2026 theo yêu cầu của khách: "phần cấu
  * hình chung, những thứ liên quan đến website đẩy hết lên Quản lý website".
@@ -35,13 +35,87 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
 
     <p class="text-muted small">
         <i class="fas fa-info-circle mr-1"></i>
-        Tên gara, logo, hotline, địa chỉ, số tài khoản nằm ở
-        <a href="{{_WEB_URL.'/admin/settings'}}">Cấu hình chung</a> — mấy ô đó còn in trên
-        báo giá và hoá đơn nên không chuyển sang đây.
+        Lĩnh vực, diện tích xưởng, cách tính giá vốn và tài khoản ngân hàng nằm ở
+        <a href="{{_WEB_URL.'/admin/settings'}}">Cấu hình chung</a> — mấy ô đó quyết định
+        gara làm việc thế nào chứ không hiện trên trang khách.
     </p>
 
     <form action="{{_WEB_URL.'/admin/cau-hinh-website/save'}}" method="post" enctype="multipart/form-data">
         <?php echo csrf_field(); ?>
+
+        <?php /* THÔNG TIN WEBSITE + LIÊN HỆ — chuyển từ Cấu hình chung sang 12/11/2026,
+                 khách yêu cầu: "cái này phải ở bên Quản lý website chứ". Tám ô trong hai
+                 thẻ này là thứ trang khách HIỂN THỊ thật: tên, slogan, logo ở đầu trang;
+                 hotline / email / địa chỉ ở chân trang và trang liên hệ; Zalo / Messenger
+                 / hotline thành ba nút hỗ trợ nổi. */ ?>
+        <div class="card card-outline card-primary">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-id-card mr-2"></i>Thông tin website</h3></div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-6"><label>Tên website</label><input type="text" name="site_name" class="form-control" value="{{$s('site_name')}}"/></div>
+                    <div class="form-group col-md-6"><label>Slogan</label><input type="text" name="site_slogan" class="form-control" value="{{$s('site_slogan')}}"/></div>
+                </div>
+                <?php /* TÊN VIẾT TẮT — yêu cầu 29/10/2026. Đặt NGAY TRÊN Logo vì
+                         hai ô này đi cùng nhau: menu trái hiện logo rồi tới tên,
+                         mà tên đầy đủ ("Công ty TNHH Phụ tùng Ô tô Tân Phát" là
+                         35 ký tự) trong sidebar 232px phải kẹp lại hai dòng mới
+                         vừa. Tên viết tắt là chỗ để chủ gara tự chọn cái ngắn. */ ?>
+                <div class="form-group">
+                    <label>Tên viết tắt</label>
+                    <input type="text" name="site_short_name" class="form-control"
+                           value="{{$s('site_short_name')}}" placeholder="VD: Tân Phát ETEK"/>
+                    <small class="form-text text-muted">
+                        Hiện ở <b>menu trái trang quản trị</b>, cạnh logo — thay cho tên đầy đủ.
+                        Bỏ trống thì vẫn lấy tên ở ô trên.
+                    </small>
+                </div>
+                <div class="form-group mb-0">
+                    <label>Logo</label>
+                    {!! !empty($settings['logo']) ? '<img src="'.e(media_url($settings['logo'])).'" style="height:48px;background:#fff;border:1px solid #ddd;border-radius:4px;padding:4px;display:block;margin-bottom:6px"/>' : '' !!}
+                    <input type="file" name="logo_file" accept="image/*" class="form-control-file"/>
+                    <input type="text" name="logo" class="form-control mt-1" placeholder="hoặc đường dẫn ảnh" value="{{$s('logo')}}"/>
+                    <small class="form-text text-muted">
+                        Dùng cho đầu trang bán hàng và <b>biểu mẫu in báo giá / hoá đơn</b>.
+                        Bỏ trống thì lấy logo mặc định của giao diện.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-outline card-info">
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-address-book mr-2"></i>Liên hệ</h3></div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-4"><label>Hotline</label><input type="tel" name="hotline" class="form-control" value="{{$s('hotline')}}"/></div>
+                    <div class="form-group col-md-4"><label>Email</label><input type="email" name="email" class="form-control" value="{{$s('email')}}"/></div>
+                    <div class="form-group col-md-4"><label>Địa chỉ</label><input type="text" name="address" class="form-control" value="{{$s('address')}}"/></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Mã số thuế</label>
+                        <input type="text" name="tax_code" class="form-control" value="{{$s('tax_code')}}"/>
+                        <small class="form-text text-muted">In ở đầu biểu mẫu báo giá / hoá đơn.</small>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4"><label>Facebook (URL)</label><input type="text" name="facebook" class="form-control" value="{{$s('facebook')}}"/></div>
+                    <div class="form-group col-md-4">
+                        <label>Zalo (URL/SĐT)</label>
+                        <input type="text" name="zalo" class="form-control" value="{{$s('zalo')}}"/>
+                        <small class="form-text text-muted">Gõ số điện thoại cũng được.</small>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Messenger (URL/tên trang)</label>
+                        <input type="text" name="messenger" class="form-control" placeholder="vd: m.me/garaabc hoặc garaabc" value="{{$s('messenger')}}"/>
+                    </div>
+                </div>
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Ba ô Zalo / Hotline / Messenger cũng là ba <strong>nút hỗ trợ trực tuyến</strong>
+                    nổi ở góc trang khách. Ô nào để trống thì nút đó không hiện.
+                </p>
+            </div>
+        </div>
 
         <div class="card card-outline card-secondary">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-desktop mr-2"></i>Giao diện website</h3></div>

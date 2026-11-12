@@ -470,6 +470,14 @@ Route::group('admin', function(){
       ghi tuyến vào nhóm `admin/*`, nên đặt tên khác (`doi-mat-khau/luu`) là
       tuyến POST đó mất luôn AuthMiddleware. Lỗ ấy đã vá ngay sau đó — xem
       core/Route.php::post() — nên giờ đặt tên nào cũng được bảo vệ. */
+   /* LỐI TẮT TRÊN THANH TRÊN CÙNG do từng người tự đặt (khách yêu cầu 12/11/2026).
+      Cũng KHÔNG có module `loi-tat`, cùng lý do với đổi mật khẩu: lối tắt của
+      chính mình không phải một quyền để cấp hay thu. Mọi POST ở đây chỉ sửa
+      dòng của người đang đăng nhập — xem app/controllers/admin/Loitat.php. */
+   Route::get('loi-tat',            'admin/loitat');
+   Route::post('loi-tat',           'admin/loitat/postLuu');
+   Route::post('loi-tat/mac-dinh',  'admin/loitat/postMacDinh');
+
    Route::get('doi-mat-khau',  'admin/doimatkhau');
    Route::post('doi-mat-khau', 'admin/doimatkhau/postDoi');
 

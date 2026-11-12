@@ -1677,3 +1677,184 @@ function html_don_thuoc_tinh($el, array $choPhep){
         $el->setAttribute('rel', 'noopener noreferrer');
     }
 }
+
+/**
+ * NGỮ CẢNH "WEBSITE" CỦA MÀN HÀNG HOÁ / DANH MỤC (12/11/2026).
+ *
+ * Khách yêu cầu: trong Quản lý website, mục Sản phẩm "chỉ cho những sản phẩm
+ * hiển thị ở website xuống, và khi thêm mới ở đó mặc định là sản phẩm hiển thị
+ * trên web" — chứ không phải một lối tắt tới đúng màn Hàng hoá (bấm vào thì cả
+ * hai nhóm menu cùng sáng, thêm xong lại văng về màn Hàng hoá thường).
+ *
+ * LÀ MỘT THAM SỐ `?nguon=web`, KHÔNG PHẢI MODULE HAY ĐƯỜNG DẪN MỚI. Đây là
+ * quyết định có chủ ý: RoleMiddleware nhận ra màn đang mở bằng đầu đường dẫn
+ * so với `modules`.`link`, và đường admin không thuộc module nào thì được CHO
+ * QUA (xem Fix B ngày 11/11). Dựng một đường dẫn mới cho "sản phẩm website"
+ * mà quên đăng ký module là mở toang cửa ghi cho mọi tài khoản đã đăng nhập.
+ * Cùng đường dẫn, cùng module, cùng quyền — chỉ khác cách hiển thị.
+ *
+ * ĐỌC CẢ $_GET LẪN $_POST: form gửi `action=""` giữ nguyên chuỗi truy vấn nên
+ * `nguon` vẫn nằm trong $_GET lúc POST, nhưng ô ẩn trong form cũng được chấp
+ * nhận — đừng bắt mọi view phải nhớ làm đúng một kiểu.
+ *
+ * @return bool
+ */
+function ngu_canh_website(){
+    $v = isset($_GET['nguon']) ? $_GET['nguon'] : (isset($_POST['nguon']) ? $_POST['nguon'] : '');
+    return $v === 'web';
+}
+
+/**
+ * Hậu tố để nối vào mọi liên kết / chuyển hướng trong màn có ngữ cảnh website,
+ * để thêm xong, sửa xong, xoá xong vẫn ở lại ngữ cảnh đó.
+ *
+ * @param string $dau '?' khi URL chưa có tham số, '&' khi đã có
+ * @return string
+ */
+function ngu_canh_qs($dau = '?'){
+    return ngu_canh_website() ? $dau . 'nguon=web' : '';
+}
+
+/* ==========================================================================
+ * LỐI TẮT TRÊN THANH TRÊN CÙNG — MỖI NGƯỜI TỰ ĐẶT (12/11/2026)
+ *
+ * Khách: "làm cả cái nút shortcut trên menu cho anh người ta có thể chủ động
+ * set". Xem migration 000111 (vì sao một cột JSON trên `users`) và
+ * app/controllers/admin/Loitat.php (màn đặt lối tắt).
+ * ========================================================================== */
+
+/** Số lối tắt tối đa trên thanh trên. Thanh chỉ rộng chừng ấy: nhiều hơn là
+ *  nút tràn đè lên tên trang và tên gara ngay cạnh. */
+function loi_tat_toi_da(){
+    return 6;
+}
+
+/** Bộ MẶC ĐỊNH — đúng ba nút từng viết cứng từ 05/11/2026. Người chưa tuỳ
+ *  chỉnh (cột `shortcuts` = NULL) vẫn thấy y như hôm qua. */
+function loi_tat_mac_dinh(){
+    return ['quotations/add', 'purchase-orders/add', 'customers'];
+}
+
+/**
+ * DANH MỤC NHỮNG GÌ ĐƯỢC PHÉP GHIM: khoá => ['icon', 'ngan' (chữ trên thanh),
+ * 'dai' (chữ ở màn đặt), 'nhom'].
+ *
+ * KHOÁ LÀ ĐƯỜNG DẪN BỎ TIỀN TỐ `admin/`, và CHỈ NHỮNG KHOÁ CÓ TRONG DANH MỤC
+ * này mới được lưu hay hiện. Không bao giờ nhận một địa chỉ do người dùng gõ:
+ * lối tắt in ra thành <a href> trên MỌI trang của họ, nên cho nhập URL tự do là
+ * cho nhét `javascript:` hay một đường dẫn ra ngoài vào đúng chỗ họ bấm nhiều
+ * nhất. Danh mục đóng thì POST gửi tay khoá lạ cũng chỉ bị bỏ qua.
+ *
+ * Hai nhóm:
+ *   - "Lập nhanh": màn LẬP MỚI (…/add). Trỏ thẳng vào form thay vì danh sách,
+ *     vì vào danh sách thì vẫn phải tìm nút "Thêm", mà nó nằm chỗ khác nhau
+ *     trên từng màn.
+ *   - "Mở màn hình": màn danh sách của mọi module — lấy từ bảng `modules` nên
+ *     module mới tự có mặt, không phải sửa danh mục này.
+ *
+ * Danh mục CHƯA lọc theo quyền — việc đó làm ở chỗ dùng, bằng route(). Lọc ở
+ * đây thì phải biết người dùng là ai, mà hàm này cần gọi được ở cả chỗ kiểm
+ * khoá hợp lệ lẫn chỗ vẽ màn đặt.
+ *
+ * @param array|null $modules các dòng bảng `modules` (cần `link`, `name`)
+ * @return array
+ */
+function loi_tat_danh_muc($modules = null){
+
+    $dm = [];
+
+    foreach ([
+        ['quotations/add',      'shopping-cart', 'Bán hàng',   'Lập báo giá'],
+        ['sales-invoices/add',  'receipt',       'Hoá đơn',    'Lập hoá đơn bán'],
+        ['purchase-orders/add', 'truck',         'Mua hàng',   'Lập đơn mua'],
+        ['goods-receipts/add',  'warehouse',     'Nhập kho',   'Lập phiếu nhập kho'],
+        ['goods-issues/add',    'warehouse',     'Xuất kho',   'Lập phiếu xuất kho'],
+        ['phieu-thu/add',       'receipt',       'Phiếu thu',  'Lập phiếu thu'],
+        ['phieu-chi/add',       'receipt',       'Phiếu chi',  'Lập phiếu chi'],
+        ['products/add',        'package',       'Thêm hàng',  'Thêm hàng hoá'],
+        ['customers/add',       'users',         'Thêm khách', 'Thêm khách hàng'],
+        ['vehicles/add',        'car',           'Thêm xe',    'Thêm xe của khách'],
+    ] as $m){
+        $dm[$m[0]] = ['icon' => $m[1], 'ngan' => $m[2], 'dai' => $m[3], 'nhom' => 'Lập nhanh'];
+    }
+
+    /* Chữ + hình riêng cho vài màn đã quen mặt. `customers` giữ nhãn "Chăm
+       sóc" vì đó là tên nút từ 05/11 mà bộ mặc định dùng — đổi thành "Khách
+       hàng" là người đang quen đột nhiên thấy nút đổi tên. */
+    $rieng = [
+        'customers'      => ['headset',       'Chăm sóc',  'Chăm sóc khách hàng'],
+        'quotations'     => ['shopping-cart', 'Báo giá',   null],
+        'sales-invoices' => ['receipt',       'Hoá đơn',   null],
+        'orders'         => ['shopping-cart', 'Đơn hàng',  null],
+        'products'       => ['package',       'Hàng hoá',  null],
+        'users'          => ['users',         'Người dùng', null],
+    ];
+
+    /* CHỈ NHỮNG MODULE CÓ MÀN DANH SÁCH THẬT. route() trả "được phép" cả với
+       đường dẫn không tồn tại (không khớp tuyến nào thì không có middleware
+       nào chặn), nên nếu không tự kiểm thì một module không có tuyến chỉ mục
+       sẽ mọc ra thành nút dẫn tới 404. */
+    $co = [];
+    if (is_array($modules) && !empty($modules)){
+        $dsTuyen = (new \App\core\Route())->getRouteInGroup('admin');
+        $co = is_array($dsTuyen) ? array_flip($dsTuyen) : [];
+    }
+
+    $man = [];
+    foreach ((array) $modules as $m){
+        if (empty($m['link']) || empty($m['name'])) continue;
+        $k = $m['link'];
+        if (!isset($co['admin/' . $k])) continue;
+        if (isset($dm[$k])) continue;
+
+        $r = isset($rieng[$k]) ? $rieng[$k] : null;
+        $man[$k] = [
+            'icon' => $r ? $r[0] : 'star',
+            'ngan' => $r ? $r[1] : $m['name'],
+            'dai'  => ($r && $r[2]) ? $r[2] : $m['name'],
+            'nhom' => 'Mở màn hình',
+        ];
+    }
+    uasort($man, function($a, $b){ return strcmp($a['dai'], $b['dai']); });
+
+    return $dm + $man;
+}
+
+/** Giải mã cột `shortcuts` thành danh sách khoá. NULL / hỏng -> bộ mặc định. */
+function loi_tat_giai_ma($tho){
+    if ($tho === null || $tho === '') return loi_tat_mac_dinh();
+    $ds = json_decode((string) $tho, true);
+    return is_array($ds) ? $ds : loi_tat_mac_dinh();
+}
+
+/**
+ * Danh sách nút để vẽ trên thanh trên: [[url, icon, chữ], ...].
+ *
+ * LỌC HAI LẦN, ở LÚC VẼ chứ không chỉ lúc lưu:
+ *   - khoá phải còn trong danh mục (module bị gỡ thì nút biến mất);
+ *   - người dùng phải CÒN quyền vào màn đó. Quyền đổi được sau khi họ ghim —
+ *     người làm kho bị rút quyền Bán hàng mà thanh trên vẫn còn nút "Bán hàng"
+ *     thì bấm vào ăn trang từ chối, một cái bẫy bày đúng chỗ dễ bấm nhất.
+ *
+ * @param string|null $tho cột `shortcuts` của người dùng
+ * @param array|null  $modules bảng `modules` (để biết khoá nào hợp lệ)
+ * @return array
+ */
+function loi_tat_cua_toi($tho, $modules = null){
+
+    $dm = loi_tat_danh_muc($modules);
+    $ra = [];
+
+    foreach (loi_tat_giai_ma($tho) as $k){
+        if (!is_string($k) || !isset($dm[$k])) continue;
+
+        $url = route('admin/' . $k);    // false nếu không có quyền
+        if (!$url) continue;
+
+        $ra[] = [$url, $dm[$k]['icon'], $dm[$k]['ngan']];
+        if (count($ra) >= loi_tat_toi_da()) break;
+    }
+
+    return $ra;
+}
+

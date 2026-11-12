@@ -244,8 +244,20 @@ ok(strpos($shop, 'tại Tân Phát') === false,
 
 $hdr = file_get_contents($goc . 'app/views/layouts/admin/header.php');
 ok(strpos($hdr, 'adm-topbar__nhanh') !== false, 'Thanh tren co cum thao tac nhanh');
-ok(substr_count($hdr, "['admin/") === 3, 'Du ba duong tat: ban hang, mua hang, cham soc');
-ok(strpos($hdr, '$__u = route($__m[0]);') !== false,
+/* 12/11/2026 — BA NUT KHONG CON VIET CUNG TRONG HEADER. Khach yeu cau moi
+   nguoi tu dat loi tat (xem LoiTatTest, migration 000111). Hai khang dinh o
+   day truoc kiem CACH CAI CU (dem dung 3 dong `['admin/` trong header va tim
+   dung cau `$__u = route($__m[0])`); Y DINH cua chung van phai giu, nen kiem
+   o cho no da chuyen toi:
+     - bo MAC DINH van la ban hang / mua hang / cham soc (nguoi chua tuy chinh
+       van thay y nhu hom qua)
+     - loc THEO QUYEN van co, va nay con xay ra LUC VE chu khong chi luc luu */
+$fnSrc = codeOnly($goc . 'app/helpers/functions.php');
+ok(preg_match("~function loi_tat_mac_dinh\(\)\{\s*return \['quotations/add', 'purchase-orders/add', 'customers'\];~", $fnSrc) === 1,
+   'Du ba duong tat MAC DINH: ban hang, mua hang, cham soc');
+ok(strpos($hdr, 'loi_tat_cua_toi(') !== false, 'Header ve nut tu loi_tat_cua_toi()');
+$viTriHam = strpos($fnSrc, 'function loi_tat_cua_toi');
+ok($viTriHam !== false && strpos(substr($fnSrc, $viTriHam), "route('admin/' . \$k)") !== false,
    'Duong tat loc THEO QUYEN',
    'Khong loc thi nhan vien kho van thay "Ban hang", bam vao an trang tu choi');
 

@@ -71,8 +71,14 @@ class Products extends Controller {
     // ================= Danh sách (có phân trang) =================
 
     public function index(){
+        /* NGỮ CẢNH WEBSITE: tab "Sản phẩm website" bị KHOÁ cứng và ẩn hàng tab.
+           Không để người dùng bấm sang tab khác — họ vào đây từ Quản lý website
+           để quản lý đúng thứ trang khách thấy, còn muốn xem cả kho thì đã có
+           màn Hàng hoá. Xem ngu_canh_website() ở functions.php. */
+        $tenMan = ngu_canh_website() ? 'Sản phẩm trên website' : $this->labelMany;
+
         $this->__data['sub_content'] = $this->viewDir . '/lists';
-        $this->__data['page_title']  = $this->labelMany;
+        $this->__data['page_title']  = $tenMan;
 
         $this->baseData();
 
@@ -91,6 +97,7 @@ class Products extends Controller {
            'web' không phải loại hàng thứ tư nên nó chồng lấn với 3 tab trên. */
         $tab = isset($f['tab']) ? $f['tab'] : '';
         if (!isset(PartsModel::$loaiHang[$tab]) && $tab !== self::TAB_WEB) $tab = '';
+        if (ngu_canh_website()) $tab = self::TAB_WEB;
 
         $filters = [];
         if ($catId > 0){
@@ -110,7 +117,7 @@ class Products extends Controller {
         }
         $offset = ($page - 1) * $perPage;
 
-        $this->__data['content']['page_name']     = $this->labelMany;
+        $this->__data['content']['page_name']     = $tenMan;
         // getLists() hiểu limit = 0 là "lấy hết" nên "Tất cả" không cần nhánh riêng.
         $dataList = $this->__model->getLists($filters, $keyword, $perPage, $offset, $promo, $attrId, $attrVal);
         $this->__data['content']['dataList']      = $dataList;
@@ -213,7 +220,7 @@ class Products extends Controller {
         if ($fail > 0) $msg .= ", $fail ảnh bị bỏ qua (sai định dạng hoặc quá 3MB)";
 
         Session::flash('msg', $msg);
-        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $partId);
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $partId . ngu_canh_qs());
     }
 
     // ================= Sửa =================
@@ -255,7 +262,7 @@ class Products extends Controller {
         $this->syncAttrs($id);
 
         Session::flash('msg', 'Cập nhật ' . $this->labelOne . ' thành công');
-        $this->__response->redirect('admin/' . $this->routeBase);
+        $this->__response->redirect('admin/' . $this->routeBase . ngu_canh_qs());
     }
 
     // ================= Xoá =================
@@ -267,7 +274,7 @@ class Products extends Controller {
         $this->__model->remove($id);
 
         Session::flash('msg', 'Xoá ' . $this->labelOne . ' thành công');
-        $this->__response->redirect('admin/' . $this->routeBase);
+        $this->__response->redirect('admin/' . $this->routeBase . ngu_canh_qs());
     }
 
     // ================= Ảnh (TASK_77) =================
@@ -285,7 +292,7 @@ class Products extends Controller {
 
         if (empty($this->normalizeFiles('images'))){
             Session::flash('msgError', 'Chưa chọn ảnh nào để tải lên');
-            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
+            $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id . ngu_canh_qs());
             return;
         }
 
@@ -297,7 +304,7 @@ class Products extends Controller {
             Session::flash('msgError', 'Không tải được ảnh nào (sai định dạng hoặc quá 3MB)');
         }
 
-        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id . ngu_canh_qs());
     }
 
     /**
@@ -334,7 +341,7 @@ class Products extends Controller {
         $img = $this->__imgModel->getDetail($imageId);
         if (empty($img)){
             Session::flash('msgError', 'Không tìm thấy ảnh');
-            $this->__response->redirect('admin/' . $this->routeBase);
+            $this->__response->redirect('admin/' . $this->routeBase . ngu_canh_qs());
             return;
         }
 
@@ -351,7 +358,7 @@ class Products extends Controller {
         }
 
         Session::flash('msg', 'Đã xoá ảnh');
-        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $partId);
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $partId . ngu_canh_qs());
     }
 
     /** Đặt 1 ảnh làm ảnh đại diện */
@@ -359,7 +366,7 @@ class Products extends Controller {
         $img = $this->__imgModel->getDetail($imageId);
         if (empty($img)){
             Session::flash('msgError', 'Không tìm thấy ảnh');
-            $this->__response->redirect('admin/' . $this->routeBase);
+            $this->__response->redirect('admin/' . $this->routeBase . ngu_canh_qs());
             return;
         }
 
@@ -370,7 +377,7 @@ class Products extends Controller {
 
         $this->__imgModel->setPrimary($imageId);
         Session::flash('msg', 'Đã đặt ảnh đại diện');
-        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $img['part_id']);
+        $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $img['part_id'] . ngu_canh_qs());
     }
 
     /** Chuẩn hoá $_FILES['images'] (multiple) thành mảng từng file */
@@ -696,7 +703,7 @@ class Products extends Controller {
             ? 'Mặt hàng "' . $co['name'] . '" thuộc kho tổng, gara không sửa được. '
             . 'Muốn bán mặt hàng này thì chọn nó ở màn Hàng hoá › Danh mục của gara.'
             : 'Không tìm thấy ' . $this->labelOne);
-        $this->__response->redirect('admin/' . $this->routeBase);
+        $this->__response->redirect('admin/' . $this->routeBase . ngu_canh_qs());
         return null;
     }
 
@@ -913,6 +920,6 @@ class Products extends Controller {
         Session::flash('errors', $errors);
         Session::flash('old', $this->__request->getFields());
         Session::flash('msg', 'Vui lòng kiểm tra các lỗi bên dưới');
-        $this->__response->redirect('admin/' . $this->routeBase . '/' . $back);
+        $this->__response->redirect('admin/' . $this->routeBase . '/' . $back . ngu_canh_qs());
     }
 }

@@ -11,9 +11,33 @@
 
 $currentUrl = isset($_GET['module']) ? trim($_GET['module'], '/') : '';
 
-$isActive = function ($link) use ($currentUrl) {
-    return $currentUrl === 'admin/' . $link
+/* NGỮ CẢNH WEBSITE (12/11/2026) — xem ngu_canh_website() ở functions.php.
+   `products` có HAI LỐI VÀO trên menu: một ở nhóm Hàng hoá và một ở Quản lý
+   website mở cùng màn đó với `?nguon=web`.
+
+   DANH MỤC HÀNG HOÁ KHÔNG CÓ LỐI VÀO Ở QUẢN LÝ WEBSITE — khách chốt 12/11/2026:
+   "bỏ cái danh mục hàng hoá ở quản lý website đi, nó không hợp lý". Danh mục là
+   dữ liệu nền dùng chung cho kho, báo giá, hoá đơn; website chỉ là một nơi nó
+   hiện ra, không phải nơi nó thuộc về. Lần trước em kê nó vào nhóm này như một
+   lối tắt rồi tới lần sau còn định dựng ngữ cảnh riêng cho nó — cả hai đều sai
+   hướng, và đã gỡ hết. Lối ảo ghi là
+   '<module>@web'. Chỉ MỘT trong hai lối được sáng tại một thời điểm: sáng cả
+   hai thì người dùng không biết mình đang đứng ở đâu — đó chính là cái khách
+   chê ở bản lối tắt ("bấm mục trên mà mục dưới cũng bật"). */
+$coLoiAo = ['products'];
+$nguonWeb = function_exists('ngu_canh_website') && ngu_canh_website();
+
+$isActive = function ($link) use ($currentUrl, $coLoiAo, $nguonWeb) {
+    if (substr($link, -4) === '@web') {
+        $goc = substr($link, 0, -4);
+        return $nguonWeb && ($currentUrl === 'admin/' . $goc
+            || strpos($currentUrl, 'admin/' . $goc . '/') === 0);
+    }
+    $khop = $currentUrl === 'admin/' . $link
         || strpos($currentUrl, 'admin/' . $link . '/') === 0;
+    // đang ở ngữ cảnh website thì lối "thường" của module có lối ảo không sáng
+    if ($khop && $nguonWeb && in_array($link, $coLoiAo, true)) return false;
+    return $khop;
 };
 
 /**
@@ -78,22 +102,22 @@ $menuGroups = [
     // --- Khu 2: trang bán hàng trên web ---
     /* `downloads` đứng cạnh `galleries`: cả hai là kho tệp cho khách — một
        bên ảnh/video để xem, một bên tài liệu để tải. (Tài liệu 05/11/2026) */
-    /* `products` + `part-categories` CÓ MẶT Ở CẢ HAI NHÓM — khách yêu cầu
-       12/11/2026: "bê những sản phẩm hiển thị ở website xuống phần Quản lý
-       website, danh mục cũng thế".
+    /* `products@web` — "Sản phẩm website". Khách yêu cầu 12/11/2026: trong Quản
+       lý website, mục Sản phẩm "chỉ cho những sản phẩm hiển thị ở website xuống,
+       và khi thêm mới ở đó mặc định là sản phẩm hiển thị trên web".
 
-       LÀ LỐI TẮT, KHÔNG PHẢI MÀN THỨ HAI — y như `partners` đang đứng ở cả
-       Mua hàng lẫn Bán hàng. Menu chỉ vẽ link mà user có quyền, nên kê tên
-       một module ở hai nhóm không sinh thêm module, không sinh thêm một dòng
-       quyền nào, và hai lối vào cùng mở đúng một màn.
+       Là LỐI VÀO ẢO tới màn Hàng hoá với `?nguon=web` (xem $loiAo và
+       ngu_canh_website()), KHÔNG phải module hay đường dẫn mới: cùng module
+       `products`, cùng RoleMiddleware, không sinh thêm dòng quyền nào.
 
-       KHÔNG NHẤC HẲN KHỎI NHÓM HÀNG HOÁ. `products` là danh mục hàng hoá lõi:
-       phiếu nhập, phiếu xuất, báo giá, hoá đơn đều đọc nó — website chỉ là
-       một trong những nơi nó hiện ra. Nhấc đi là thủ kho muốn sửa đơn vị tính
-       của một mã hàng phải vào mục Quản lý website mới thấy. Đó cũng đúng lý
-       do nó từng được chuyển RA khỏi nhóm này (xem ghi chú đầu file) — lần
-       này thêm lối vào, không trả nó về chỗ cũ. */
-    'Quản lý website'    => ['products', 'part-categories', 'news', 'news-categories', 'du-an', 'galleries', 'downloads', 'banners', 'menus', 'cau-hinh-website'],
+       KHÔNG NHẤC KHỎI NHÓM HÀNG HOÁ. `products` là danh mục hàng hoá lõi: phiếu
+       nhập, phiếu xuất, báo giá, hoá đơn đều đọc nó — website chỉ là một trong
+       những nơi nó hiện ra. Thủ kho muốn sửa đơn vị tính của một mã hàng không
+       nên phải vào mục Quản lý website mới thấy.
+
+       DANH MỤC HÀNG HOÁ KHÔNG CÓ MẶT Ở ĐÂY (khách chốt 12/11/2026: "nó không
+       hợp lý") — xem ghi chú ở $coLoiAo. */
+    'Quản lý website'    => ['products@web', 'news', 'news-categories', 'du-an', 'galleries', 'downloads', 'banners', 'menus', 'cau-hinh-website'],
 
     // --- Khu 3: quản trị ---
     // `modules` đứng NGAY SAU `groups`: hai màn hình này đi liền một mạch —
@@ -159,6 +183,18 @@ if (defined('_KHO_TONG_MENU_GON') && _KHO_TONG_MENU_GON && !empty($garaHienTai['
        phiếu thu chi thì đúng là việc của gara, bản thử nghiệm menu gọn vẫn
        giữ nguyên ý của nó. */
     $menuDon['orders'] = 'shopping-cart';
+
+    /* CẤU HÌNH WEBSITE CŨNG Ở LẠI — sửa 12/11/2026, cùng lý do với Đơn hàng.
+       Cùng ngày, tên website / logo / hotline / địa chỉ được chuyển từ Cấu hình
+       chung (nằm trong nhóm Hệ thống, luôn hiện) sang Cấu hình website (nằm
+       trong nhóm Quản lý website, bị ẩn ở trên). Không dặn gì thêm thì Tân
+       Phát mất lối vào để sửa nhận diện của chính mình — mà Tân Phát CÓ website
+       thật (tp01 / etek.rikkeiedu.org trong garage_domains) và có đơn thật.
+
+       Chỉ ra MỘT MỤC này, không mở lại cả nhóm: bài viết, banner, menu website
+       vẫn do bản thử "menu gọn" quyết định — câu hỏi đó chưa ai đóng, và mở
+       cả nhóm là đổi nó sau lưng người ta. */
+    $menuDon['cau-hinh-website'] = 'folder-open';
 }
 foreach ($anNhom as $g) unset($menuGroups[$g]);
 
@@ -187,6 +223,18 @@ if (!empty($listModules)) {
         if (route('admin/' . $m['link'])) {
             $allowed[$m['link']] = $m;
         }
+    }
+}
+
+/* LỐI VÀO ẢO — dùng ĐÚNG quyền của module gốc, không sinh module hay dòng
+   quyền nào. Ai xem được Hàng hoá thì thấy "Sản phẩm website"; ai không thì
+   không. Hai lối cùng mở một màn, cùng một RoleMiddleware. */
+$loiAo = [
+    'products@web' => ['products', 'Sản phẩm website', 'products?nguon=web'],
+];
+foreach ($loiAo as $khoa => $a) {
+    if (isset($allowed[$a[0]])) {
+        $allowed[$khoa] = ['name' => $a[1], 'link' => $khoa, 'url' => $a[2]];
     }
 }
 
@@ -304,7 +352,7 @@ if (!empty($listModules)) {
                     <ul class="adm-sub">
                         <?php foreach ($visible as $l): $m = $allowed[$l]; ?>
                             <li>
-                                <a href="<?php echo e(_WEB_URL.'/admin/'.$l); ?>"
+                                <a href="<?php echo e(_WEB_URL.'/admin/'.(isset($m['url']) ? $m['url'] : $l)); ?>"
                                    class="adm-nav__link <?php echo $isActive($l) ? 'is-active' : ''; ?>"
                                    title="<?php echo e($m['name']); ?>">
                                     <span class="adm-nav__text"><?php echo e($m['name']); ?></span>

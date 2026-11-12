@@ -67,7 +67,14 @@ $dungMenu = function($laGaraTong) use ($dauFile){
    Ban dau chot "8 nhom" va do ngay khi them nhom Mua hang (29/10/2026) — mot
    con so dung o thoi diem viet roi thanh sai, trong khi dieu can khang dinh
    la "tat cong tac thi thay LAI DU cac nhom", bao nhieu cung duoc. */
-$SO_NHOM = preg_match_all("~^    '[^']+'\s*=>\s*\[~m", $sb);
+/* CHI DEM TRONG KHOI `$menuGroups = [ ... ];`, khong quet ca file. Quet ca file
+   thi bat ca mang loi vao ao `$loiAo` (12/11/2026, "San pham website" trong
+   Quan ly website) vi no cung viet dang `    'ten' => [` — va dem no thanh
+   nhom thu muoi trong khi menu van co 9 nhom. Chinh chu thich tren noi y la
+   dem tu `$menuGroups`; dong nay chi ghi lai cho dung y do do. */
+$khoiNhom = preg_match('~\$menuGroups\s*=\s*\[(.*?)
+\];~s', $sb, $mkn) ? $mkn[1] : '';
+$SO_NHOM  = preg_match_all("~^    '[^']+'\s*=>\s*\[~m", $khoiNhom);
 ok($SO_NHOM >= 8, "Doc duoc so nhom tu menuGroups ($SO_NHOM nhom)");
 
 section('Cong tac — tat la ve nhu cu (chot 1)');

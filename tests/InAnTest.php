@@ -102,7 +102,8 @@ ok(preg_match("~elseif \(isset\(\\\$f\['logo'\]\)\)~", $ctrl) === 1,
    'Settings: chi ghi de logo khi that su co anh moi / co gia tri gui len',
    'Ghi de vo dieu kien la moi lan bam Luu lai xoa trang logo da tai len');
 
-$form = file_get_contents($goc . 'app/views/admin/settings/form.php');
+/* Logo + ma so thue da chuyen sang Cau hinh website (12/11/2026, khach yeu cau). */
+$form = file_get_contents($goc . 'app/views/admin/cau-hinh-website/form.php');
 ok(strpos($form, 'name="logo_file"') !== false, 'Form cau hinh co o tai logo');
 ok(strpos($form, 'name="tax_code"') !== false,  'Form cau hinh co o ma so thue');
 

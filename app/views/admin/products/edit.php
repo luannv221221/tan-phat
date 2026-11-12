@@ -32,6 +32,7 @@ $selMnf   = isset($old['manufacturer_id']) ? $old['manufacturer_id'] : $item['ma
 $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['origin_id'];
 ?>
 <form action="" method="post">
+    {!! ngu_canh_website() ? '<input type="hidden" name="nguon" value="web"/>' : '' !!}
     <?php echo csrf_field(); ?>
 
     @if (!empty($msg))
@@ -301,7 +302,7 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
     <div class="card">
         <div class="card-body">
             <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Cập nhật</button>
-            <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-default"><i class="fas fa-arrow-left mr-1"></i> Quay lại</a>
+            <a href="{{_WEB_URL.'/admin/'.$routeBase.ngu_canh_qs()}}" class="btn btn-default"><i class="fas fa-arrow-left mr-1"></i> Quay lại</a>
         </div>
     </div>
 </form>
@@ -320,9 +321,9 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                         @if ($img['is_primary']==1)
                         <span class="badge badge-success">Đại diện</span>
                         @else
-                        <a href="{{_WEB_URL.'/admin/products/image-primary/'.$img['id']}}" class="badge badge-light border">Đặt đại diện</a>
+                        <a href="{{_WEB_URL.'/admin/products/image-primary/'.$img['id'].ngu_canh_qs()}}" class="badge badge-light border">Đặt đại diện</a>
                         @endif
-                        <a href="{{_WEB_URL.'/admin/products/image-delete/'.$img['id']}}" onclick="return confirm('Xoá ảnh này?')" class="badge badge-danger">Xoá</a>
+                        <a href="{{_WEB_URL.'/admin/products/image-delete/'.$img['id'].ngu_canh_qs()}}" onclick="return confirm('Xoá ảnh này?')" class="badge badge-danger">Xoá</a>
                     </div>
                 </div>
             </div>
@@ -332,7 +333,7 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
         <p class="text-muted">Chưa có ảnh nào.</p>
         @endif
 
-        <form action="{{_WEB_URL.'/admin/products/images/'.$item['id']}}" method="post" enctype="multipart/form-data" class="form-inline mt-2">
+        <form action="{{_WEB_URL.'/admin/products/images/'.$item['id'].ngu_canh_qs()}}" method="post" enctype="multipart/form-data" class="form-inline mt-2">
             <?php echo csrf_field(); ?>
             <div class="custom-file mr-2" style="max-width:360px">
                 <input type="file" name="images[]" id="imgs" class="custom-file-input" accept="image/*" multiple/>

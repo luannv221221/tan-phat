@@ -53,13 +53,26 @@ $to   = $perPage > 0 ? min($page * $perPage, $total) : $total;
             </a>
             @endif
             @if (route('admin/'.$routeBase.'/add'))
-            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/add'}}" class="btn btn-primary btn-sm">
+            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/add'.ngu_canh_qs()}}" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus mr-1"></i> Thêm {{$labelOne}}
             </a>
             @endif
         </div>
     </div>
 
+    @if (ngu_canh_website())
+    <?php /* NGỮ CẢNH WEBSITE (12/11/2026): không còn hàng tab — chỉ liệt kê hàng đang
+             tích Hiển thị website. Một dòng nói rõ đang xem cái gì và lối sang màn
+             Hàng hoá đầy đủ, để người dùng không tưởng hàng của mình biến mất khi
+             nó chỉ đang bị lọc ra. Đếm theo $demTheoLoai[$tabWeb] cho khớp số dòng. */ ?>
+    <div class="px-3 pt-3 pb-2 text-muted small" style="border-bottom:1px solid #dee2e6">
+        <i class="fas fa-globe mr-1"></i>
+        Chỉ hiện hàng đang <b>hiển thị trên website</b>
+        <span class="badge badge-light ml-1">{{(int)($demTheoLoai[$tabWeb] ?? 0)}}</span>.
+        Hàng thêm mới ở đây mặc định hiển thị trên web.
+        <a href="{{_WEB_URL.'/admin/'.$routeBase}}">Xem toàn bộ hàng hoá →</a>
+    </div>
+    @else
     <!-- Ba nhóm hàng: khách muốn nhìn thấy đúng cây Phụ tùng / Thiết bị / Dịch vụ -->
     <ul class="nav nav-tabs px-3 pt-2" style="border-bottom:1px solid #dee2e6">
         <li class="nav-item">
@@ -88,10 +101,12 @@ $to   = $perPage > 0 ? min($page * $perPage, $total) : $total;
             </a>
         </li>
     </ul>
+    @endif
 
     <div class="card-body border-bottom">
         <form method="get" class="form-row align-items-end">
             {!! !empty($filterLoai) ? '<input type="hidden" name="tab" value="'.e($filterLoai).'"/>' : '' !!}
+            {!! ngu_canh_website() ? '<input type="hidden" name="nguon" value="web"/>' : '' !!}
             <div class="form-group col-md-4 mb-2">
                 <label class="mb-1 small">Tìm kiếm</label>
                 <div class="position-relative">
@@ -138,7 +153,7 @@ $to   = $perPage > 0 ? min($page * $perPage, $total) : $total;
             <div class="form-group col-md-2 mb-2">
                 <button type="submit" class="btn btn-sm btn-info"><i class="fas fa-search mr-1"></i> Lọc</button>
                 @if ($keyword !== '' || !empty($filterCat) || !empty($filterPromo) || !empty($filterAttrId) || !empty($filterLoai))
-                <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-sm btn-default">Xoá</a>
+                <a href="{{_WEB_URL.'/admin/'.$routeBase.ngu_canh_qs()}}" class="btn btn-sm btn-default">Xoá</a>
                 @endif
             </div>
         </form>
@@ -190,10 +205,10 @@ $to   = $perPage > 0 ? min($page * $perPage, $total) : $total;
                     </td>
                     <td class="text-center">
                         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
-                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-warning btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
+                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id'].ngu_canh_qs()}}" class="btn btn-warning btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
                         @endif
                         @if (route('admin/'.$routeBase.'/delete/'.$item['id']))
-                        <a onclick="return confirm('Bạn có chắc chắn muốn xoá hàng hoá này?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
+                        <a onclick="return confirm('Bạn có chắc chắn muốn xoá hàng hoá này?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id'].ngu_canh_qs()}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
                         @endif
                     </td>
                 </tr>

@@ -82,6 +82,9 @@ $tests = [
     'DoiMatKhauTest.php'          => 'BAO MAT — doi mat khau tai khoan quan tri (da cac thiet bi khac ra)',
     'DatHangWebTest.php'          => 'GIAN HANG — dat hang tu web: tu choi thi phai noi ro vi sao',
     'MenuCayTest.php'             => 'WEBSITE — menu dang cay, keo tha doi thu tu, o sua ben phai',
+    'CauHinhWebsiteTest.php'      => 'WEBSITE — cau hinh chung / website: moi o dung mot noi, luu man nay khong mat o man kia',
+    'NguCanhWebsiteTest.php'      => 'WEBSITE — Quan ly website > San pham: chi hang hien thi tren web, them moi mac dinh hien thi',
+    'LoiTatTest.php'              => 'GIAO DIEN — loi tat tren thanh tren cung: moi nguoi tu dat, chan quyen + tan cong',
 ];
 
 $php      = PHP_BINARY;

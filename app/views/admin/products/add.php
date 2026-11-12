@@ -13,6 +13,7 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
 }
 ?>
 <form action="" method="post" enctype="multipart/form-data">
+    {!! ngu_canh_website() ? '<input type="hidden" name="nguon" value="web"/>' : '' !!}
     <?php echo csrf_field(); ?>
 
     @if (!empty($msg))
@@ -297,7 +298,7 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
     <div class="card">
         <div class="card-body">
             <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Thêm hàng hoá</button>
-            <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-default"><i class="fas fa-arrow-left mr-1"></i> Quay lại</a>
+            <a href="{{_WEB_URL.'/admin/'.$routeBase.ngu_canh_qs()}}" class="btn btn-default"><i class="fas fa-arrow-left mr-1"></i> Quay lại</a>
         </div>
     </div>
 </form>

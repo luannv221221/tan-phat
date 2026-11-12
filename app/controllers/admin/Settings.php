@@ -63,33 +63,44 @@ class Settings extends Controller {
                      'footer_html'];
 
     /* ====================================================================
-     *  Ô NÀO VỀ MÀN "CẤU HÌNH WEBSITE" — khách yêu cầu 12/11/2026:
-     *  "phần cấu hình chung, những thứ liên quan đến website đẩy hết lên
-     *  Quản lý website".
+     *  Ô NÀO VỀ MÀN "CẤU HÌNH WEBSITE" — khách yêu cầu 12/11/2026, hai lần:
+     *  lần đầu "những thứ liên quan đến website đẩy hết lên Quản lý website",
+     *  lần hai (kèm ảnh hai thẻ Thông tin chung / Liên hệ) "cái này phải ở
+     *  bên Quản lý website chứ".
      * ====================================================================
      *
-     * RANH GIỚI LÀ "CHỈ ẢNH HƯỞNG TRANG KHÁCH", không phải "có chữ website".
-     * Sáu ô dưới đây tắt đi thì chỉ trang khách đổi, không đụng gì tới quản
-     * trị hay giấy tờ in ra.
+     * LẦN ĐẦU EM CHIA SAI. Em giữ tên gara, logo, hotline, địa chỉ ở Cấu hình
+     * chung với lý do "chúng còn in trên báo giá và hoá đơn". Lý do đó đúng về
+     * kỹ thuật nhưng trả lời sai câu hỏi: người dùng vào Quản lý website để
+     * sửa cái TRANG KHÁCH hiển thị, và tám ô dưới đây chính là cái trang khách
+     * hiển thị (đếm trong view storefront: tên 3 chỗ, hotline 3, email 7, địa
+     * chỉ 5...). Chúng được in ra giấy chỉ vì giấy tờ ĐỌC LẠI cùng một nguồn;
+     * nơi sửa không cần trùng nơi dùng.
      *
-     * Ở LẠI Cấu hình chung những ô DÙNG CHUNG CHO CẢ HAI NƠI, dù chúng cũng
-     * hiện trên website:
-     *   site_name / logo / site_short_name  -> menu trái trang quản trị VÀ
-     *                                          đầu biểu mẫu báo giá, hoá đơn
-     *   hotline / email / address / tax_code-> in trên báo giá, hoá đơn
-     *   bank_*                              -> hướng dẫn chuyển khoản (in)
-     *   linh_vuc / dien_tich_xuong          -> quyết định màn Lập báo giá
-     *   cost_method / price_schedule        -> Bảng tính giá
-     * Đẩy mấy ô đó sang màn website là lúc cần sửa số điện thoại in trên hoá
-     * đơn thì phải đi tìm trong mục Quản lý website.
+     * Ở LẠI Cấu hình chung là những ô quyết định GARA LÀM VIỆC THẾ NÀO, không
+     * ô nào hiện trên trang khách: lĩnh vực (màn Lập báo giá hiện gì), diện
+     * tích xưởng, kiểu tính giá vốn, lịch cập nhật giá, tài khoản ngân hàng.
+     *
+     * MÃ SỐ THUẾ đi theo thẻ Liên hệ nó nằm trong, dù trang khách không hiện nó
+     * (đếm được 0 chỗ). Tách riêng một ô ra khỏi thẻ là bắt người dùng đi tìm
+     * ở hai nơi hai thứ vốn nằm cạnh nhau; cần trả lại thì chỉ đổi danh sách
+     * này và dời một khối trong view.
      *
      * DANH SÁCH NÀY CÒN LÀ CHỐT AN TOÀN, không phải chỉ để xếp màn. luu()
      * ghi ĐÚNG những khoá của nhóm đang gửi lên: ô nào không nằm trong nhóm
      * thì không bị đụng tới. Trước đây save() duyệt cả $keys và gán '' cho ô
      * vắng mặt — cách đó mà giữ nguyên khi tách làm hai form thì bấm Lưu ở
-     * màn Cấu hình website là XOÁ TRẮNG hotline, số tài khoản, mã số thuế. */
-    private $khoaWebsite = ['meta_description', 'meta_keywords', 'og_image',
-                            'show_car_filter', 'show_topbar', 'footer_html'];
+     * một màn là XOÁ TRẮNG hotline, số tài khoản, mã số thuế ở màn kia. Nay
+     * hai chiều đều phải đúng: lưu màn website không được làm mất ngân hàng,
+     * và lưu màn chung không được làm mất hotline. */
+    private $khoaWebsite = [
+        // nhận diện + liên hệ — chuyển sang 12/11/2026
+        'site_name', 'site_slogan', 'site_short_name', 'logo',
+        'hotline', 'email', 'address', 'tax_code', 'facebook', 'zalo', 'messenger',
+        // giao diện + SEO + chân trang — tách từ lần đầu
+        'meta_description', 'meta_keywords', 'og_image',
+        'show_car_filter', 'show_topbar', 'footer_html',
+    ];
 
     function __construct(){
         $this->__model    = $this->model('SettingsModel');
