@@ -460,10 +460,11 @@ Route::group('admin', function(){
       của chính mình không phải một quyền để cấp hay thu. Nhờ thế chỉ cần đăng
       nhập là vào được, giống `dia-gioi` ngay dưới.
 
-      TUYẾN POST ĐẶT TRÙNG TÊN TUYẾN GET. Bảng middleware đánh khoá theo chuỗi
-      đường dẫn chứ không theo phương thức, mà Route::post() không ghi tuyến
-      vào nhóm `admin/*` (chỉ Route::get() ghi). Đặt tên khác — ví dụ
-      `doi-mat-khau/luu` — thì tuyến POST đó không có AuthMiddleware. */
+      TUYẾN POST ĐẶT TRÙNG TÊN TUYẾN GET — nay chỉ còn là cho gọn, không còn
+      là chuyện an toàn. Khi viết dòng này (11/11/2026) `Route::post()` chưa
+      ghi tuyến vào nhóm `admin/*`, nên đặt tên khác (`doi-mat-khau/luu`) là
+      tuyến POST đó mất luôn AuthMiddleware. Lỗ ấy đã vá ngay sau đó — xem
+      core/Route.php::post() — nên giờ đặt tên nào cũng được bảo vệ. */
    Route::get('doi-mat-khau',  'admin/doimatkhau');
    Route::post('doi-mat-khau', 'admin/doimatkhau/postDoi');
 

@@ -105,7 +105,7 @@ ok((int) $m === 0,
    'KHONG dang ky `doi-mat-khau` vao bang `modules`',
    'Co module la sinh ra mot o tich o man Phan quyen — bo tich la ca nhom het doi duoc mat khau cua chinh minh');
 
-$base = 'http://localhost:88/tan-phat';
+$base = web_goc();
 $EMAIL = 'covan.sg@gara-mau.test';   // Staff gara 2 — vai thap nhat, van phai doi duoc
 $MK    = 'Gara@2026';
 $MK_MOI = 'ZzThu@' . random_int(100000, 999999);
