@@ -43,7 +43,7 @@ use App\core\Model;
 
 echo 'PHP ' . PHP_VERSION . "\n";
 $goc  = __DIR__ . '/../';
-$base = 'http://localhost:88/tan-phat';
+$base = web_goc();
 
 // ---------------------------------------------------------------------------
 section('Migration + noi day');

@@ -38,7 +38,7 @@ require_once __DIR__ . '/../config.php';
 
 echo 'PHP ' . PHP_VERSION . "\n";
 $goc  = __DIR__ . '/../';
-$base = 'http://localhost:88/tan-phat';
+$base = web_goc();
 
 require_once $goc . 'app/helpers/functions.php';
 

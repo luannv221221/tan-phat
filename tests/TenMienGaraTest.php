@@ -32,7 +32,7 @@ require_once __DIR__ . '/../config.php';
 
 echo 'PHP ' . PHP_VERSION . "\n";
 $goc  = __DIR__ . '/../';
-$base = 'http://localhost:88/tan-phat';
+$base = web_goc();
 
 /* Model khong tu nap: cac test khac cung require tay nhu vay. */
 require_once $goc . 'app/models/GarageDomainsModel.php';

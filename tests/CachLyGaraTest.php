@@ -21,7 +21,7 @@ require_once __DIR__ . '/../config.php';
 
 echo 'PHP ' . PHP_VERSION . "\n";
 $goc  = __DIR__ . '/../';
-$base = 'http://localhost:88/tan-phat';
+$base = web_goc();
 
 try {
     $pdo = new PDO('mysql:host=' . _HOST . ';port=' . _PORT . ';dbname=' . _DB . ';charset=utf8mb4',

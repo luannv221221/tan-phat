@@ -388,7 +388,7 @@ ok(!preg_match('~\.car-filter__form\s*\{[^}]*overflow:\s*hidden~s', $css),
    'form KHONG co overflow:hidden (se cat mat khung goi y)');
 
 // ---- Kiem tra that qua HTTP neu Apache dang chay ----
-$base = 'http://localhost:88/tan-phat/tim-kiem/goi-y';
+$base = web_goc() . '/tim-kiem/goi-y';
 $ctx  = stream_context_create(['http' => ['timeout' => 3, 'ignore_errors' => true]]);
 $hit  = @file_get_contents($base . '?q=loc', false, $ctx);
 

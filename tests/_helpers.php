@@ -51,6 +51,33 @@ if (!function_exists('codeOnly')){
     }
 }
 
+if (!function_exists('web_goc')){
+    /**
+     * Địa chỉ HTTP của CHÍNH BẢN MÃ đang chạy test.
+     *
+     * VÌ SAO KHÔNG GÕ CỨNG ĐỊA CHỈ (11/11/2026):
+     *
+     * Bộ test này còn được chạy trong git worktree (.claude/worktrees/<tên>/),
+     * mà worktree có bản mã KHÁC bản ở thư mục chính. Gõ cứng địa chỉ thì phần
+     * gọi HTTP đo bản ở THƯ MỤC CHÍNH rồi báo xanh — trong khi thứ vừa sửa nằm
+     * ở worktree. Đã xảy ra thật: cả 17 file test có gọi HTTP đều báo PASS cho
+     * một bản vá mà chúng chưa từng chạm tới.
+     *
+     * Thư mục dự án nằm trong htdocs nên phần đuôi sau 'htdocs/' chính là đường
+     * dẫn URL. Lưu ý: .env của worktree phải có APP_BASE_PATH trỏ đúng vào
+     * worktree đó, nếu không mọi chuyển hướng sẽ bay sang thư mục chính.
+     */
+    function web_goc(){
+        $thuMuc = str_replace('\\', '/', (string) realpath(__DIR__ . '/..'));
+
+        if (preg_match('~/htdocs/(.+)$~i', $thuMuc, $m)){
+            return 'http://localhost:88/' . rtrim($m[1], '/');
+        }
+
+        return 'http://localhost:88/tan-phat';
+    }
+}
+
 if (!function_exists('summary')){
     /** In tổng kết và trả về exit code */
     function summary(){

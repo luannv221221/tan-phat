@@ -23,7 +23,7 @@ require_once __DIR__ . '/../config.php';
 
 echo 'PHP ' . PHP_VERSION . "\n";
 $goc  = __DIR__ . '/../';
-$base = 'http://localhost:88/tan-phat';
+$base = web_goc();
 
 // ---------------------------------------------------------------------------
 section('han_bao_tri() — theo thang HOAC km, cai nao toi truoc');

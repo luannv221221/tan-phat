@@ -126,7 +126,7 @@ ok(strpos($sess, "left_time") !== false && strpos($sess, 'gc_maxlifetime') !== f
 section('Form dang nhap co o tich');
 
 $ctx = stream_context_create(['http' => ['timeout' => 3, 'ignore_errors' => true]]);
-$html = @file_get_contents('http://localhost:88/tan-phat/dang-nhap', false, $ctx);
+$html = @file_get_contents(web_goc() . '/dang-nhap', false, $ctx);
 if ($html === false){
     echo "  [SKIP] Apache khong chay\n";
 } else {

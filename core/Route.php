@@ -48,6 +48,33 @@ class Route{
 
         if (!empty(self::$pathGroup)){
             $path = self::$pathGroup.'/'.$path;
+
+            /*
+             * DÒNG NÀY LÀ PHÂN QUYỀN, KHÔNG PHẢI SỔ SÁCH CHO ĐẸP. Vá 11/11/2026.
+             *
+             * `'admin/*' => [AuthMiddleware, RoleMiddleware]` trong configs/app.php
+             * KHÔNG phải một luật ký tự đại diện được xét lúc request.
+             * App::updateConfigRouteMiddleware() BUNG nó ra thành từng tuyến một,
+             * và danh sách tuyến của nhóm lấy từ getRouteInGroup() — tức là từ
+             * đúng dòng này. Thiếu nó ở post() thì tuyến POST không có tên trong
+             * danh sách, nên không được gắn middleware nào.
+             *
+             * Bảng middleware đánh khoá theo CHUỖI ĐƯỜNG DẪN chứ không theo
+             * phương thức HTTP. Nên lỗi này nằm im rất lâu: tuyến POST nào trùng
+             * tên với một tuyến GET (phần lớn các form: /add, /edit/5) thì được
+             * bảo vệ ké tuyến GET ấy. Chỉ những tuyến CHỈ CÓ POST mới hở — và hở
+             * thì hở hoàn toàn, không AuthMiddleware lẫn RoleMiddleware.
+             *
+             * Đo trên bảng tuyến thật ngày 11/11/2026: 111 tuyến POST của admin,
+             * 16 tuyến không được gắn. CsrfMiddleware là global nên vẫn chạy, nên
+             * người chưa đăng nhập không lọt; nhưng BẤT KỲ tài khoản đã đăng nhập
+             * nào, bất kể vai trò, bất kể thuộc gara nào, đều gọi được 16 tuyến
+             * đó. Đã dựng lại thật: tài khoản Staff không có một dòng quyền nào
+             * trên module garage-catalog vẫn POST tạo được mặt hàng mới.
+             *
+             * tests/TuyenPostCoChanTest.php giữ chỗ này.
+             */
+            self::$routeInGroup[self::$pathGroup][] = trim($path, '/');
         }
 
         $path = trim($path, '/');
@@ -164,15 +191,45 @@ class Route{
 
         $pathRoute = null;
 
-        if (!empty(self::$routes[$method])){
-            foreach (self::$routes[$method] as $key => $value){
+        /*
+         * TÌM Ở BẢNG TUYẾN CỦA PHƯƠNG THỨC HIỆN TẠI, RỒI MỚI ĐẾN BẢNG GET.
+         * Thêm phần rơi về 'get' ngày 11/11/2026.
+         *
+         * Câu hỏi mà is() trả lời là "người này có được vào ĐƯỜNG DẪN kia hay
+         * không" — mà bảng middleware đánh khoá theo CHUỖI ĐƯỜNG DẪN, không
+         * theo phương thức. Chỉ tìm trong bảng của phương thức hiện tại thì
+         * trong lúc xử lý một POST, mọi câu hỏi về một đường dẫn CHỈ CÓ GET đều
+         * không tìm thấy gì, và hàm rơi xuống `return true` ở cuối = CHO QUA.
+         *
+         * Đó là lý do năm cái chốt tự kiểm quyền trong controller chưa bao giờ
+         * chặn được ai — chúng chạy trong lúc xử lý POST và hỏi về màn hình
+         * (tuyến GET):
+         *     Settings::save()          hỏi 'admin/settings'
+         *     Baotri::saveConfig()      hỏi 'admin/nhac-bao-tri/edit/0'
+         *     Chatadmin::reply()        hỏi 'admin/chat/edit/<id>'
+         *     Tonkhodauky::postImport() hỏi 'admin/ton-kho-dau-ky/add'
+         *     Dathangkhotong::postDat() hỏi 'admin/dat-hang-kho-tong/add'
+         * Cả năm câu đều trả về true cho MỌI tài khoản. Nhìn vào controller thì
+         * tưởng có gác, mà thực ra không — tệ hơn là không viết gì, vì người
+         * đọc sau sẽ tin là đã có.
+         *
+         * Rơi về bảng GET cũng là điều đúng về mặt nghĩa: màn hình là tuyến
+         * GET, nên "có được vào màn đó không" phải tra ở bảng GET.
+         */
+        $bangTim = [$method];
+        if ($method !== 'get') $bangTim[] = 'get';
+
+        foreach ($bangTim as $bang){
+            if (empty(self::$routes[$bang])) continue;
+
+            foreach (self::$routes[$bang] as $key => $value){
                 $pattern = '~^'.$key.'$~i';
 
                 if (preg_match($pattern, $path)){
 
                     $pathRoute = $key;
 
-                    break;
+                    break 2;
                 }
             }
         }

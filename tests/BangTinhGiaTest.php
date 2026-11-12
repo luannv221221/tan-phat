@@ -434,7 +434,7 @@ ok(preg_match('~function postTinhlai\(\)\{\s*if \(!\$this->coQuyenTinh\(\)\)~s',
 ok(strpos($ctlQuyen, "redirect('admin/khong-co-quyen')") !== false,
    'Khong du quyen thi da ve trang "khong co quyen"');
 
-$base = 'http://localhost:88/tan-phat';
+$base = web_goc();
 $MK   = 'Gara@2026';
 $jars = [];
 register_shutdown_function(function() use (&$jars){ foreach ($jars as $j) @unlink($j); });
@@ -487,7 +487,14 @@ if ($thuAnDanh === null){
     exit(summary());
 }
 
-ok(strpos($thuAnDanh['http']['loc'], 'khong-co-quyen') !== false && !$thuAnDanh['doi'],
+/* CHAN O DAU CUNG DUOC, MIEN LA CHAN. Noi long khang dinh 11/11/2026 sau khi
+   va Route::post(): truoc day tuyen nay khong co middleware nen khach an danh
+   di thang vao controller, va chinh coQuyenTinh() day ve 'khong-co-quyen'. Nay
+   AuthMiddleware chan ngay o cua va day ve 'dang-nhap' — chan SOM HON, tot hon.
+   Dieu phai giu nguyen la phan sau: bang gia KHONG bi tinh lai. */
+ok(($biChanO = (strpos($thuAnDanh['http']['loc'], 'khong-co-quyen') !== false
+                || strpos($thuAnDanh['http']['loc'], 'dang-nhap') !== false))
+   && !$thuAnDanh['doi'],
    'CHUA DANG NHAP: bi chan, bang gia KHONG bi tinh lai',
    'HTTP ' . $thuAnDanh['http']['code'] . ' -> ' . $thuAnDanh['http']['loc']
    . ' | moc tinh gia doi: ' . ($thuAnDanh['doi'] ? 'CO' : 'khong'));
