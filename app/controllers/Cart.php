@@ -75,13 +75,27 @@ class Cart extends Controller {
         $partId = !empty($f['part_id']) ? (int) $f['part_id'] : 0;
         $qty    = !empty($f['qty']) ? max(1, (int) $f['qty']) : 1;
 
-        if ($partId > 0 && !empty($this->__part->getDetail($partId))){
+        /* HỎI ĐÚNG CÂU HỎI MÀ GIỎ HÀNG SẼ HỎI LẠI — sửa 12/11/2026.
+         *
+         * Trước đây chỗ này dùng getDetail(): "mã này có trong bảng `parts`
+         * không". Nhưng buildRows() — nơi giỏ hàng và cả placeOrder() dựng
+         * dòng hàng — lại dùng chiTietWeb(), tức "mặt hàng này CÓ BÁN TRÊN
+         * GIAN HÀNG ĐANG MỞ không" (đã lọc theo gara).
+         *
+         * Hai câu hỏi khác nhau thì có mặt hàng lọt qua câu thứ nhất mà rớt ở
+         * câu thứ hai. Khi đó khách bấm "Thêm vào giỏ" -> hiện "Đã thêm vào
+         * giỏ hàng", mở giỏ ra thì TRỐNG KHÔNG, bấm Đặt hàng thì bị đá ngược
+         * về giỏ — không một câu giải thích nào. Đã dựng lại được trên máy.
+         *
+         * Hỏi đúng hàm mà giỏ hàng dùng thì mặt hàng nào không bán được sẽ bị
+         * từ chối NGAY LÚC BẤM, kèm lý do. */
+        if ($partId > 0 && !empty($this->__part->chiTietWeb($partId))){
             $cart = $this->getCart();
             $cart[$partId] = (isset($cart[$partId]) ? (int) $cart[$partId] : 0) + $qty;
             Session::set('cart', $cart);
             Session::flash('msg', 'Đã thêm vào giỏ hàng.');
         } else {
-            Session::flash('errors', ['add' => 'Sản phẩm không hợp lệ']);
+            Session::flash('errors', ['add' => 'Mặt hàng này hiện không bán trên gian hàng, không thêm vào giỏ được.']);
         }
         $this->__response->redirect('gio-hang');
     }
@@ -186,6 +200,13 @@ class Cart extends Controller {
         $c['payments'] = OrdersModel::$payments;
         $c['errors']   = Session::flash('errors');
         $c['old']      = Session::flash('old');
+        /* NÓI TRƯỚC KHI KHÁCH BẤM XÁC NHẬN, không phải sau.
+           Thiếu hàng nay không chặn đơn nữa, nhưng im lặng nhận rồi vài hôm
+           sau gara mới gọi báo "phải đợi" thì còn tệ hơn cả bị từ chối ngay.
+           Con số ở đây là ước tính lúc xem — lúc chốt đơn mới chia chính thức
+           trong khoá tồn (chiaDatTruoc), nên hai lần có thể lệch nếu vừa có
+           người khác mua mất. */
+        $c['datTruoc'] = $this->thieuTon($data['rows']);
         $this->render('layouts/storefront/master', $this->__data);
     }
 
@@ -224,6 +245,45 @@ class Cart extends Controller {
         return $thieu;
     }
 
+    /**
+     * Chia từng dòng hàng thành phần CÓ SẴN và phần PHẢI ĐẶT TRƯỚC.
+     *
+     * Trả lại chính mảng dòng hàng, mỗi dòng thêm khoá `datTruoc` (số lượng
+     * gara chưa có). `datTruoc` = 0 nghĩa là giao được ngay.
+     *
+     * PHẢI GỌI TRONG TRANSACTION, SAU lockParts() — xem placeOrder().
+     *
+     * TRỪ DẦN THEO TỪNG DÒNG chứ không hỏi lại tồn cho mỗi dòng: một giỏ có
+     * thể có cùng một mã hàng ở hai dòng (khách bấm thêm hai lần), hỏi lại
+     * mỗi lần thì cả hai dòng cùng tưởng mình được lấy nốt số hàng cuối.
+     *
+     * DỊCH VỤ KHÔNG BAO GIỜ LÀ ĐẶT TRƯỚC: nó không có tồn để mà thiếu. Đánh
+     * dấu đặt trước cho công thay dầu là bắt gara đi lấy một thứ không tồn tại.
+     */
+    private function chiaDatTruoc($rows){
+
+        $conLai = [];
+        foreach ($rows as $i => $r){
+            $rows[$i]['datTruoc'] = 0.0;
+
+            if (empty($r['part']['id'])) continue;
+
+            $loai = isset($r['part']['item_type']) ? $r['part']['item_type'] : PartsModel::LOAI_PHU_TUNG;
+            if (!PartsModel::coKho($loai)) continue;
+
+            $pid = (int) $r['part']['id'];
+            if (!isset($conLai[$pid])) $conLai[$pid] = (float) $this->__stock->sellableByPart($pid);
+
+            $can = (float) $r['qty'];
+            $giu = min($can, max(0.0, $conLai[$pid]));
+
+            $conLai[$pid] -= $giu;
+            $rows[$i]['datTruoc'] = $can - $giu;
+        }
+
+        return $rows;
+    }
+
     public function placeOrder(){
         $data = $this->buildRows($this->getCart());
         if (empty($data['rows'])){
@@ -259,8 +319,11 @@ class Cart extends Controller {
         // Đo bằng tồn KHẢ DỤNG (tổng tồn − phần đang giữ cho đơn khác), không
         // phải tổng tồn: hai khách cùng đặt cái cuối cùng thì người sau phải bị
         // chặn, chứ không phải cả hai cùng qua rồi gara mới phát hiện thiếu.
-        $thieu = $this->thieuTon($data['rows']);
-        if (!empty($thieu)) $errors['stock'] = 'Không đủ hàng: ' . implode('; ', $thieu);
+        /* THIẾU HÀNG KHÔNG CÒN LÀ LÝ DO TỪ CHỐI — anh chốt 12/11/2026.
+           Phần gara chưa có tồn nay đi vào đơn dưới dạng ĐẶT TRƯỚC; xem
+           chiaDatTruoc() và migration 000110. Các lỗi còn lại (thiếu tên, sai
+           số điện thoại, sai tỉnh/phường) vẫn chặn như cũ — đó là thứ khách
+           sửa được ngay tại form. */
         if (!empty($errors)){
             Session::flash('errors', $errors);
             Session::flash('old', $f);
@@ -269,25 +332,26 @@ class Cart extends Controller {
 
         $memberId = Session::get('dataMember');
 
-        /* Tạo đơn + giữ tồn phải NGUYÊN TỬ và phải KIỂM LẠI TỒN bên trong.
-           Lần kiểm phía trên nằm ngoài transaction: hai khách bấm đặt cùng lúc
-           thì cả hai đều thấy còn hàng rồi cùng giữ -> bán quá tồn. Khoá dòng
-           tồn xong đọc lại là người sau phải xếp hàng và thấy số đã trừ. */
+        /* Tạo đơn + giữ tồn phải NGUYÊN TỬ và phải ĐO LẠI TỒN bên trong.
+           Hai khách bấm đặt cùng lúc thì cả hai đều thấy còn hàng; khoá dòng
+           tồn xong mới chia là người sau xếp hàng và thấy số đã trừ. Nay
+           không ai bị từ chối nữa, nhưng việc chia "mấy cái có sẵn, mấy cái
+           phải đợi" vẫn phải nằm trong khoá — chia sai thì hai đơn cùng giữ
+           một cái hàng, và `sellableByPart()` tụt xuống số âm. */
         $orderId = 0;
-        $thieuLucChot = [];
+        $dong    = $data['rows'];
         $this->__order->transaction(function($db) use (
-            &$orderId, &$thieuLucChot, $data, $memberId, $name, $phone, $email,
+            &$orderId, &$dong, $memberId, $name, $phone, $email,
             $address, $provinceCode, $wardCode, $area, $f, $pay
         ){
-            $resv = [];
-            foreach ($data['rows'] as $r){
-                if (!empty($r['part']['id'])) $resv[] = ['part_id' => (int) $r['part']['id'], 'quantity' => (float) $r['qty']];
+            $pids = [];
+            foreach ($dong as $r){
+                if (!empty($r['part']['id'])) $pids[] = (int) $r['part']['id'];
             }
 
-            $this->__stock->lockParts(array_column($resv, 'part_id'));
+            $this->__stock->lockParts(array_values(array_unique($pids)));
 
-            $thieuLucChot = $this->thieuTon($data['rows']);
-            if (!empty($thieuLucChot)) return;   // không tạo gì cả, transaction commit rỗng
+            $dong = $this->chiaDatTruoc($dong);
 
             $orderId = $this->__order->add([
                 'order_no'       => $this->__order->nextNo(),
@@ -308,18 +372,21 @@ class Cart extends Controller {
                 'total_amount'   => 0,
                 'status'         => 'new',
             ]);
-            $total = $this->__orderItem->syncForOrder($orderId, $data['rows']);
+            $total = $this->__orderItem->syncForOrder($orderId, $dong);
             $this->__order->edit(['subtotal' => $total, 'total_amount' => $total], $orderId);
 
-            // Giữ tồn (đặt trước) theo phụ tùng — chưa trừ tồn thật
+            /* GIỮ TỒN CHỈ PHẦN CÓ THẬT, không giữ phần đặt trước.
+               Giữ cả phần chưa có là đẩy sellableByPart() xuống số âm: khách
+               sau vào thấy "hết hàng" trong khi kho vẫn còn, và màn Tồn kho
+               của gara hiện số không giải thích được. */
+            $resv = [];
+            foreach ($dong as $r){
+                if (empty($r['part']['id'])) continue;
+                $giu = (float) $r['qty'] - (float) (isset($r['datTruoc']) ? $r['datTruoc'] : 0);
+                if ($giu > 0) $resv[] = ['part_id' => (int) $r['part']['id'], 'quantity' => $giu];
+            }
             if (!empty($resv)) $this->__reservation->reserveForOrder($orderId, $resv);
         });
-
-        if (!empty($thieuLucChot)){
-            Session::flash('errors', ['stock' => 'Không đủ hàng: ' . implode('; ', $thieuLucChot)]);
-            Session::flash('old', $f);
-            $this->__response->redirect('dat-hang'); return;
-        }
 
         Session::remove('cart');
         $order = $this->__order->getDetail($orderId);

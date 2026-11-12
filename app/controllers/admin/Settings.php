@@ -62,6 +62,35 @@ class Settings extends Controller {
                         xu ly rieng trong save(). */
                      'footer_html'];
 
+    /* ====================================================================
+     *  Ô NÀO VỀ MÀN "CẤU HÌNH WEBSITE" — khách yêu cầu 12/11/2026:
+     *  "phần cấu hình chung, những thứ liên quan đến website đẩy hết lên
+     *  Quản lý website".
+     * ====================================================================
+     *
+     * RANH GIỚI LÀ "CHỈ ẢNH HƯỞNG TRANG KHÁCH", không phải "có chữ website".
+     * Sáu ô dưới đây tắt đi thì chỉ trang khách đổi, không đụng gì tới quản
+     * trị hay giấy tờ in ra.
+     *
+     * Ở LẠI Cấu hình chung những ô DÙNG CHUNG CHO CẢ HAI NƠI, dù chúng cũng
+     * hiện trên website:
+     *   site_name / logo / site_short_name  -> menu trái trang quản trị VÀ
+     *                                          đầu biểu mẫu báo giá, hoá đơn
+     *   hotline / email / address / tax_code-> in trên báo giá, hoá đơn
+     *   bank_*                              -> hướng dẫn chuyển khoản (in)
+     *   linh_vuc / dien_tich_xuong          -> quyết định màn Lập báo giá
+     *   cost_method / price_schedule        -> Bảng tính giá
+     * Đẩy mấy ô đó sang màn website là lúc cần sửa số điện thoại in trên hoá
+     * đơn thì phải đi tìm trong mục Quản lý website.
+     *
+     * DANH SÁCH NÀY CÒN LÀ CHỐT AN TOÀN, không phải chỉ để xếp màn. luu()
+     * ghi ĐÚNG những khoá của nhóm đang gửi lên: ô nào không nằm trong nhóm
+     * thì không bị đụng tới. Trước đây save() duyệt cả $keys và gán '' cho ô
+     * vắng mặt — cách đó mà giữ nguyên khi tách làm hai form thì bấm Lưu ở
+     * màn Cấu hình website là XOÁ TRẮNG hotline, số tài khoản, mã số thuế. */
+    private $khoaWebsite = ['meta_description', 'meta_keywords', 'og_image',
+                            'show_car_filter', 'show_topbar', 'footer_html'];
+
     function __construct(){
         $this->__model    = $this->model('SettingsModel');
         $this->__gara     = $this->model('GarageSettingsModel');
@@ -71,9 +100,28 @@ class Settings extends Controller {
 
     public function index(){
         $chung = la_gara_tong();
-        $ten   = $chung ? 'Cấu hình chung' : 'Cấu hình gara';
+        $this->man('admin/settings/form', $chung ? 'Cấu hình chung' : 'Cấu hình gara', $chung);
+    }
 
-        $this->__data['sub_content'] = 'admin/settings/form';
+    /**
+     * MÀN CẤU HÌNH WEBSITE — nằm trong nhóm Quản lý website của menu.
+     *
+     * Vẫn là controller này, vẫn hai bảng `site_settings` / `garage_settings`
+     * ấy: tách ra chỉ là tách CHỖ ĐỨNG trên menu và tách danh sách ô, không
+     * phải một kho cấu hình thứ hai. Nhờ thế quy tắc "gara tổng sửa mặc định
+     * chung, gara khác sửa riêng của mình" và chiKhacMacDinh() áp dụng y
+     * nguyên cho cả hai màn — viết lại ở nơi khác là sớm muộn cũng lệch.
+     *
+     * Module riêng (`cau-hinh-website`) thì BẮT BUỘC phải có: menu và phân
+     * quyền đều đi theo `modules`.`link`, không có dòng module thì mục này
+     * không hiện ra cho ai cả. Xem migration 2026_11_12_000109.
+     */
+    public function website(){
+        $this->man('admin/cau-hinh-website/form', 'Cấu hình website', la_gara_tong());
+    }
+
+    private function man($view, $ten, $chung){
+        $this->__data['sub_content'] = $view;
         $this->__data['page_title']  = $ten;
         $this->__data['content']['page_name'] = $ten;
         $this->__data['content']['laChung']   = $chung;
@@ -87,22 +135,49 @@ class Settings extends Controller {
     public function save(){
         if (!route('admin/settings')){ $this->__response->redirect('admin/khong-co-quyen'); return; }
 
+        /* Phần còn lại sau khi đã nhấc các ô website đi — xem $khoaWebsite. */
+        $this->luu(array_values(array_diff($this->keys, $this->khoaWebsite)), 'admin/settings');
+    }
+
+    public function saveWebsite(){
+        /* Hỏi ĐÚNG màn của mình, không hỏi 'admin/settings'. Hai màn nay là
+           hai module riêng, nên gara được sửa cấu hình website chưa chắc đã
+           được sửa cấu hình chung — và ngược lại. */
+        if (!route('admin/cau-hinh-website')){ $this->__response->redirect('admin/khong-co-quyen'); return; }
+
+        $this->luu($this->khoaWebsite, 'admin/cau-hinh-website');
+    }
+
+    /**
+     * Ghi ĐÚNG những ô của một nhóm. $veDau là màn để quay lại sau khi lưu.
+     */
+    private function luu(array $khoa, $veDau){
+
+        $coOg   = in_array('og_image', $khoa, true);
+        $coLogo = in_array('logo', $khoa, true);
+
         // Upload ảnh (tuỳ chọn) — OG image và logo
-        $up = upload_image('og_image_file', 'settings', 'og');
-        if ($up['status'] === 'error'){
-            Session::flash('msg', 'Ảnh OG lỗi: ' . $up['message']);
-            $this->__response->redirect('admin/settings'); return;
+        $up = ['status' => 'none'];
+        if ($coOg){
+            $up = upload_image('og_image_file', 'settings', 'og');
+            if ($up['status'] === 'error'){
+                Session::flash('msg', 'Ảnh OG lỗi: ' . $up['message']);
+                $this->__response->redirect($veDau); return;
+            }
         }
 
-        $upLogo = upload_image('logo_file', 'settings', 'logo');
-        if ($upLogo['status'] === 'error'){
-            Session::flash('msg', 'Ảnh logo lỗi: ' . $upLogo['message']);
-            $this->__response->redirect('admin/settings'); return;
+        $upLogo = ['status' => 'none'];
+        if ($coLogo){
+            $upLogo = upload_image('logo_file', 'settings', 'logo');
+            if ($upLogo['status'] === 'error'){
+                Session::flash('msg', 'Ảnh logo lỗi: ' . $upLogo['message']);
+                $this->__response->redirect($veDau); return;
+            }
         }
 
         $f = $this->__request->getFields();
         $kv = [];
-        foreach ($this->keys as $k){
+        foreach ($khoa as $k){
             if ($k === 'og_image' || $k === 'logo') continue; // hai khoá ảnh xử lý riêng
             /* CHÂN TRANG là HTML do người dùng soạn, và nó in ra trang khách
                bằng {!! !!} (không escape — phải thế thì <strong> mới in đậm).
@@ -115,14 +190,18 @@ class Settings extends Controller {
             }
             $kv[$k] = isset($f[$k]) ? trim($f[$k]) : '';
         }
-        if ($up['status'] === 'ok') $kv['og_image'] = $up['path'];
-        elseif (isset($f['og_image'])) $kv['og_image'] = trim($f['og_image']);
+        if ($coOg){
+            if ($up['status'] === 'ok') $kv['og_image'] = $up['path'];
+            elseif (isset($f['og_image'])) $kv['og_image'] = trim($f['og_image']);
+        }
 
         /* Chỉ ghi đè logo khi THỰC SỰ có ảnh mới hoặc người dùng gõ đường dẫn.
            Ghi đè vô điều kiện là mỗi lần bấm Lưu (dù chỉ sửa số điện thoại)
            lại xoá trắng logo đã tải lên. */
-        if ($upLogo['status'] === 'ok') $kv['logo'] = $upLogo['path'];
-        elseif (isset($f['logo'])) $kv['logo'] = trim($f['logo']);
+        if ($coLogo){
+            if ($upLogo['status'] === 'ok') $kv['logo'] = $upLogo['path'];
+            elseif (isset($f['logo'])) $kv['logo'] = trim($f['logo']);
+        }
 
         /* GARA TỔNG ghi vào cấu hình CHUNG (mặc định cho mọi gara).
            GARA KHÁC ghi vào cấu hình RIÊNG của chính nó — không đụng được vào
@@ -137,7 +216,7 @@ class Settings extends Controller {
             $this->__gara->saveMany($this->chiKhacMacDinh($kv));
             Session::flash('msg', 'Đã lưu cấu hình của gara');
         }
-        $this->__response->redirect('admin/settings');
+        $this->__response->redirect($veDau);
     }
 
     /**

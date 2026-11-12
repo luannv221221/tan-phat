@@ -172,11 +172,12 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                     <div class="form-row">
                         <div class="form-group col-md-5">
                             <label class="small text-muted">SEO — Thẻ meta tiêu đề</label>
-                            <input type="text" id="o-meta-title" name="meta_title" class="form-control form-control-sm" value="{{!empty($old['meta_title'])?$old['meta_title']:''}}"/>
+                            <?php /* Textarea — xem lý do ở app/views/admin/news/add.php. */ ?>
+                            <textarea id="o-meta-title" name="meta_title" class="form-control form-control-sm" rows="2">{{!empty($old['meta_title'])?$old['meta_title']:''}}</textarea>
                         </div>
                         <div class="form-group col-md-7">
                             <label class="small text-muted">SEO — Thẻ meta mô tả</label>
-                            <input type="text" id="o-meta-desc" name="meta_description" class="form-control form-control-sm" value="{{!empty($old['meta_description'])?$old['meta_description']:''}}"/>
+                            <textarea id="o-meta-desc" name="meta_description" class="form-control form-control-sm" rows="2">{{!empty($old['meta_description'])?$old['meta_description']:''}}</textarea>
                         </div>
                     </div>
                     <div class="form-group">

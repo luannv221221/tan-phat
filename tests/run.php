@@ -80,6 +80,8 @@ $tests = [
     'TuyenPostCoChanTest.php'     => 'PHAN QUYEN — moi tuyen POST cua admin deu phai qua middleware',
     'BangTinhGiaTest.php'         => 'HANG HOA — bang tinh gia: gia von + gia ban theo tung loai khach',
     'DoiMatKhauTest.php'          => 'BAO MAT — doi mat khau tai khoan quan tri (da cac thiet bi khac ra)',
+    'DatHangWebTest.php'          => 'GIAN HANG — dat hang tu web: tu choi thi phai noi ro vi sao',
+    'MenuCayTest.php'             => 'WEBSITE — menu dang cay, keo tha doi thu tu, o sua ben phai',
 ];
 
 $php      = PHP_BINARY;

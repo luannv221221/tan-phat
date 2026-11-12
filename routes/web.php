@@ -176,6 +176,11 @@ Route::group('admin', function(){
        Route::post($url.'/edit/(\d+)',  'admin/'.$controller.'/postEdit/$1');
        Route::get($url.'/delete/(\d+)', 'admin/'.$controller.'/delete/$1');
    }
+   /* MENU WEBSITE: kéo thả đổi thứ tự / đổi cấp, lưu cả cây một lần.
+      Tuyến CHỈ CÓ POST, và là tuyến GHI -> RoleMiddleware đòi quyền ghi trên
+      module `menus` (xem core/Route.php::post()). */
+   Route::post('menus/sap-xep', 'admin/menus/postSapXep');
+
    /* Tải về: đổi token = thu hồi mọi link TRỰC TIẾP đã phát ra.
       Dùng chung quyền `edit` của module downloads (kiểm trong controller). */
    Route::get('downloads/doi-token/(\d+)', 'admin/downloads/doiToken/$1');
@@ -563,6 +568,18 @@ Route::group('admin', function(){
    // Cấu hình chung (liên hệ, mã số thuế, ngân hàng, giao diện website, SEO)
    Route::get('settings', 'admin/settings');
    Route::post('settings/save', 'admin/settings/save');
+
+   /* CẤU HÌNH WEBSITE — tách khỏi Cấu hình chung 12/11/2026 theo yêu cầu
+      khách. Vẫn do controller Settings xử lý: cùng hai bảng cấu hình, cùng
+      quy tắc "gara tổng sửa mặc định chung, gara khác sửa riêng của mình",
+      chỉ khác danh sách ô và chỗ đứng trên menu.
+
+      ĐƯỜNG DẪN PHẢI BẮT ĐẦU BẰNG `cau-hinh-website` vì RoleMiddleware nhận ra
+      module bằng cách so đầu đường dẫn với `modules`.`link`. Đặt là
+      `settings/website` thì nó rơi vào module `settings` và mục menu riêng
+      trở nên vô nghĩa. */
+   Route::get('cau-hinh-website',       'admin/settings/website');
+   Route::post('cau-hinh-website/save', 'admin/settings/saveWebsite');
 
    Route::get('khong-co-quyen', 'admin/dashboard/noPermission');
 

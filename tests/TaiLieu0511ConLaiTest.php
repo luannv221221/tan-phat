@@ -137,10 +137,15 @@ ok(strpos($master, '{!! $chanTuSoan !!}') === false,
 ok(preg_match('~chanTuSoan.*?loc_html_an_toan~s', $master) === 1,
    'Loc lai mot lan nua luc in — du lieu cu co the ghi truoc khi co bo loc');
 
+/* HAI MAN, KHONG PHAI MOT — tach 12/11/2026 theo yeu cau khach.
+   O chan trang chi anh huong trang khach -> sang man Cau hinh website.
+   Dien tich xuong thi O LAI Cau hinh chung: no la ho so nang luc cua gara,
+   con quyet dinh man Lap bao gia hien gi, khong phai thiet lap trang web. */
+$formWeb      = file_get_contents($goc . 'app/views/admin/cau-hinh-website/form.php');
 $formSettings = file_get_contents($goc . 'app/views/admin/settings/form.php');
-ok(strpos($formSettings, 'name="footer_html"') !== false, 'Man Cau hinh co o chan trang');
-ok(strpos($formSettings, 'name="dien_tich_xuong"') !== false, 'Man Cau hinh co o dien tich xuong');
-ok(strpos($formSettings, 'soan-thao.js') !== false, 'O chan trang gan trinh soan thao');
+ok(strpos($formWeb, 'name="footer_html"') !== false, 'Man Cau hinh website co o chan trang');
+ok(strpos($formSettings, 'name="dien_tich_xuong"') !== false, 'Man Cau hinh chung co o dien tich xuong');
+ok(strpos($formWeb, 'soan-thao.js') !== false, 'O chan trang gan trinh soan thao');
 
 // ===========================================================================
 section('Chay that tren MySQL');

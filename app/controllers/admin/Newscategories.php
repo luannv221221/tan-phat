@@ -14,8 +14,9 @@ class Newscategories extends Controller {
     private $__model, $__request, $__response;
 
     private $routeBase = 'news-categories';
-    private $labelOne  = 'danh mục tin';
-    private $labelMany = 'Danh mục tin';
+    /* Đổi chữ theo yêu cầu khách 12/11/2026 — xem News.php. */
+    private $labelOne  = 'danh mục bài viết';
+    private $labelMany = 'Danh mục bài viết';
     private $viewDir   = 'admin/news-categories';
 
     function __construct(){

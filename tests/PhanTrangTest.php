@@ -155,6 +155,13 @@ ok(count($views) >= 35, 'Quet duoc >= 35 view danh sach', 'thay ' . count($views
    dai hang tram dong — khac nhau o do, nen chi mien cho dung man nay. */
 $mienPhanTrang = [
     'acc-accounts' => 'cay tai khoan ke toan — cat trang thi con tach khoi cha',
+    /* Menu website (bo phan trang 12/11/2026, khi dung lai man theo kieu cay
+       keo tha). DUNG Y DO O TREN, khong phai mot ngoai le moi: menu la mot
+       CAY, va day la man de sua CHINH CAU TRUC cha-con cua no — cat trang thi
+       muc con roi sang trang sau, nhin vao khong con ra cau truc nua.
+       Khac `part-categories` o CHO DAI: danh muc hang hoa co the hang tram
+       dong, con menu mot website chi 15-30 muc, xem mot luot la dung. */
+    'menus' => 'cay menu website — man nay de sua cau truc cha-con cua chinh no',
 ];
 
 $thieu = [];

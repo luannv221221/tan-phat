@@ -214,8 +214,20 @@ ok(preg_match('~function placeOrder\(.*?transaction\(function~s', $cartSrc) === 
    'Tao don + giu ton nam trong 1 transaction');
 ok(preg_match('~transaction\(function.*?lockParts~s', $cartSrc) === 1,
    'Co khoa dong ton truoc khi kiem lai (chong hai khach cung dat cai cuoi)');
-ok(preg_match('~lockParts.*?thieuTon~s', $cartSrc) === 1,
-   'Kiem LAI ton SAU khi khoa — khoa xong khong doc lai thi khoa vo nghia');
+/* TU 12/11/2026 THIEU HANG KHONG CON CHAN DON (anh chot: cho dat truoc), nen
+   sau khoa khong goi thieuTon() nua ma goi chiaDatTruoc() — ham chia tung
+   dong thanh phan co san va phan phai doi.
+
+   NHUNG LY DO CO CAI KHOA THI KHONG DOI MOT LY NAO: phai DOC LAI ton sau khi
+   khoa. Hai khach bam dat cung luc, khoa xong khong doc lai thi ca hai cung
+   duoc chia "co san" tren cung mot cai hang cuoi — don thu hai giu mot cai
+   khong ton tai, va sellableByPart() tut xuong so am. */
+ok(preg_match('~lockParts.*?chiaDatTruoc~s', $cartSrc) === 1,
+   'Chia dat truoc nam SAU khoa — khoa xong khong doc lai thi khoa vo nghia');
+ok(preg_match('~function chiaDatTruoc.*?sellableByPart~s', $cartSrc) === 1,
+   'chiaDatTruoc() doc ton KHA DUNG that, khong tin con so lay truoc khi khoa');
+ok(preg_match('~function chiaDatTruoc.*?\$conLai\[\$pid\] -=~s', $cartSrc) === 1,
+   'Tru dan theo tung dong — cung mot ma hang o hai dong khong cung lay not hang cuoi');
 
 // ---- Don dep ----
 $pdo->exec("DELETE FROM stock_cards WHERE part_id IN ($pid, $pid2)");

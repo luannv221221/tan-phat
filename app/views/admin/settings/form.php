@@ -27,7 +27,7 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
         <?php echo csrf_field(); ?>
 
         <div class="card card-outline card-primary">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-cog mr-2"></i>Thông tin & SEO</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-cog mr-2"></i>Thông tin chung</h3></div>
             <div class="card-body">
                 <div class="form-row">
                     <div class="form-group col-md-6"><label>Tên website</label><input type="text" name="site_name" class="form-control" value="{{$s('site_name')}}"/></div>
@@ -113,7 +113,7 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                         Bỏ trống thì vẫn lấy tên ở ô trên.
                     </small>
                 </div>
-                <div class="form-group">
+                <div class="form-group mb-0">
                     <label>Logo</label>
                     {!! !empty($settings['logo']) ? '<img src="'.e(media_url($settings['logo'])).'" style="height:48px;background:#fff;border:1px solid #ddd;border-radius:4px;padding:4px;display:block;margin-bottom:6px"/>' : '' !!}
                     <input type="file" name="logo_file" accept="image/*" class="form-control-file"/>
@@ -121,54 +121,6 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                     <small class="form-text text-muted">
                         Dùng cho đầu trang bán hàng và <b>biểu mẫu in báo giá / hoá đơn</b>.
                         Bỏ trống thì lấy logo mặc định của giao diện.
-                    </small>
-                </div>
-
-                <div class="form-group">
-                    <label>Meta description (mô tả SEO mặc định)</label>
-                    <textarea name="meta_description" class="form-control" rows="2">{{$s('meta_description')}}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Meta keywords</label>
-                    <input type="text" name="meta_keywords" class="form-control" value="{{$s('meta_keywords')}}"/>
-                </div>
-                <div class="form-group mb-0">
-                    <label>Ảnh chia sẻ mạng xã hội (OG image)</label>
-                    {!! !empty($settings['og_image']) ? '<img src="'.e(media_url($settings['og_image'])).'" style="height:60px;border-radius:4px;display:block;margin-bottom:6px"/>' : '' !!}
-                    <input type="file" name="og_image_file" accept="image/*" class="form-control-file"/>
-                    <input type="text" name="og_image" class="form-control mt-1" placeholder="hoặc URL ảnh" value="{{$s('og_image')}}"/>
-                </div>
-            </div>
-        </div>
-
-        <div class="card card-outline card-secondary">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-desktop mr-2"></i>Giao diện website</h3></div>
-            <div class="card-body">
-                <div class="form-group">
-                    <!-- Ô tick không tick thì trình duyệt KHÔNG gửi gì cả. Input hidden
-                         cùng tên đứng trước để lúc nào cũng có giá trị gửi lên; tick vào
-                         thì giá trị của ô tick ghi đè lên nó. -->
-                    <input type="hidden" name="show_car_filter" value="0"/>
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" name="show_car_filter" id="show_car_filter" value="1" {{$s('show_car_filter','1')==='1'?'checked':''}}/>
-                        <label class="custom-control-label" for="show_car_filter">Hiện thanh lọc xe ở đầu trang</label>
-                    </div>
-                    <small class="form-text text-muted">
-                        Thanh chọn Thương hiệu / Dòng xe / Model / Năm sản xuất kèm ô tìm kiếm,
-                        nằm giữa logo và menu chính. Tắt đi thì phần đầu trang chỉ còn logo và menu.
-                    </small>
-                </div>
-
-                <div class="form-group mb-0">
-                    <input type="hidden" name="show_topbar" value="0"/>
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" name="show_topbar" id="show_topbar" value="1" {{$s('show_topbar','1')==='1'?'checked':''}}/>
-                        <label class="custom-control-label" for="show_topbar">Hiện thanh xanh trên cùng</label>
-                    </div>
-                    <small class="form-text text-muted">
-                        Thanh chứa "Xây dựng báo giá", "Hệ thống chi nhánh" và phần Đăng ký / Đăng nhập.
-                        Tắt đi thì link Đăng ký / Đăng nhập (hoặc Tài khoản / Đăng xuất) tự dời xuống
-                        hàng logo, cạnh giỏ hàng — khách vẫn đăng nhập được.
                     </small>
                 </div>
             </div>
@@ -209,28 +161,6 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
             </div>
         </div>
 
-        <?php /* CHÂN TRANG — tài liệu khách 05/11/2026, Frontend mục 7:
-                 "Phần footer: cũng là 1 bài viết có ckeditor, người dùng tự thêm".
-                 Trước đây chân trang là markup cứng, gara muốn đổi một dòng
-                 cũng phải nhờ lập trình.
-                 Khối logo / địa chỉ / đăng ký nhận tin vẫn giữ nguyên bên dưới;
-                 ô này chèn THÊM phần gara tự viết, không thay thế chúng — thay
-                 thế là gara nào chưa viết gì sẽ mất trắng chân trang. */ ?>
-        <div class="card card-outline card-info">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-shoe-prints mr-2"></i>Chân trang website</h3></div>
-            <div class="card-body">
-                <div class="form-group mb-1">
-                    <label>Nội dung gara tự soạn</label>
-                    <textarea name="footer_html" class="form-control" rows="6">{{$s('footer_html')}}</textarea>
-                    <small class="form-text text-muted">
-                        Hiện ở <b>chân trang website của gara</b>, phía trên khối địa chỉ.
-                        Để trống thì chân trang giữ nguyên như cũ.
-                        Thẻ <code>&lt;script&gt;</code> và mã chạy được sẽ bị loại bỏ khi lưu.
-                    </small>
-                </div>
-            </div>
-        </div>
-
         <div class="card card-outline card-success">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-university mr-2"></i>Tài khoản ngân hàng (hướng dẫn chuyển khoản)</h3></div>
             <div class="card-body">
@@ -244,14 +174,3 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
         </div>
     </form>
 </div></div>
-<script src="{{asset('public/assets/js/soan-thao.js')}}"></script>
-<script>
-/* Ô chân trang thành trình soạn thảo có định dạng — khách yêu cầu "1 bài viết
-   có ckeditor". Dùng trình tự viết (không CDN), cùng cái đang dùng ở màn Tin.
-   Có kiểm window.oSoanThao: thiếu file js thì ô vẫn là textarea gõ HTML được,
-   không làm hỏng cả màn Cấu hình. */
-(function(){
-    if (!window.oSoanThao) return;
-    window.oSoanThao(document.querySelector('[name="footer_html"]'));
-})();
-</script>

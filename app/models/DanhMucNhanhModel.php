@@ -54,7 +54,7 @@ class DanhMucNhanhModel extends Model {
         'part-brand'  => ['bang' => 'part_brands',        'quyen' => 'product-brands',         'nhan' => 'thương hiệu',       'chung' => true],
         'part-mnf'    => ['bang' => 'part_manufacturers', 'quyen' => 'product-manufacturers',  'nhan' => 'nhà sản xuất',      'chung' => true],
         'part-origin' => ['bang' => 'part_origins',       'quyen' => 'product-origins',        'nhan' => 'xuất xứ',           'chung' => true],
-        'news-cat'    => ['bang' => 'news_categories',    'quyen' => 'news-categories',        'nhan' => 'danh mục tin',      'gara' => true],
+        'news-cat'    => ['bang' => 'news_categories',    'quyen' => 'news-categories',        'nhan' => 'danh mục bài viết', 'gara' => true],
         'car-body'    => ['bang' => 'car_body_types',     'quyen' => 'car-body-types',         'nhan' => 'kiểu dáng xe'],
         'car-fuel'    => ['bang' => 'car_fuels',          'quyen' => 'car-fuels',              'nhan' => 'nhiên liệu'],
         'kh-nhom'     => ['bang' => 'customer_groups',    'quyen' => 'customer-groups',        'nhan' => 'nhóm khách', 'gara' => true, 'slug' => false],

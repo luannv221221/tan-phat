@@ -302,7 +302,10 @@ $settingsCtrl = codeOnly(__DIR__ . '/../app/controllers/admin/Settings.php');
 ok(strpos($settingsCtrl, "'show_car_filter'") !== false,
    'show_car_filter nam trong whitelist cua admin Settings');
 
-$formSrc = file_get_contents(__DIR__ . '/../app/views/admin/settings/form.php');
+/* HAI O TICK NAY DA CHUYEN SANG MAN CAU HINH WEBSITE (12/11/2026) — khach
+   yeu cau dua nhung thu chi anh huong trang khach ve nhom Quan ly website.
+   Van la mot khoa cu trong whitelist cua Settings, chi khac cho dat o form. */
+$formSrc = file_get_contents(__DIR__ . '/../app/views/admin/cau-hinh-website/form.php');
 // O tick khong tick thi trinh duyet khong gui gi -> phai co hidden cung ten
 // dung truoc, neu khong thi khong bao gio tat duoc.
 ok(preg_match('~type="hidden"\s+name="show_car_filter"\s+value="0"~', $formSrc) === 1,

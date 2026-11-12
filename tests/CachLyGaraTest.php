@@ -523,6 +523,11 @@ $manRiengGara = [
        (garage_id, part_id, group_id): hai gara cung ban mot ma hang kho tong
        van la hai dong gia khac nhau. Co test rieng o BangTinhGiaTest. */
     'part-prices' => 0,
+    /* Cau hinh website (migration 000109, khach yeu cau 12/11/2026) — man cua
+       GARA: no ghi vao `garage_settings` qua dung Settings::luu() nhu man Cau
+       hinh chung, nen gara nao sua trang cua gara do. Chep `chi_tan_phat` tu
+       module `settings` chu khong dat tay, de hai man luon cung pham vi. */
+    'cau-hinh-website' => 0,
 ];
 if (in_array('chi_tan_phat', $cot('modules'), true)){
     $that = $pdo->query("SELECT link FROM modules WHERE chi_tan_phat = 0")->fetchAll(PDO::FETCH_COLUMN);
@@ -751,17 +756,22 @@ ok($r['code'] === 302 && strpos($r['loc'], 'khong-co-quyen') !== false, 'Gara B 
 list($jarTP) = $dangNhap('zz-cl-tp@local.test');
 $mn = $menuTrai($http('GET', "$base/admin", $jarTP));
 /* THU NGHIEM 16/10/2026 — _KHO_TONG_MENU_GON an nhom "Ban hang" (co `orders`)
-   khoi menu cua gara tong. Nen khang dinh "thay tren menu" chi con dung khi
-   cong tac TAT; tat cong tac la guard nay tu song lai, khong phai sua test.
+   khoi menu cua gara tong. Tu 11/10/2026 den 12/11/2026 test nay chap nhan
+   dieu do la "dung y do".
 
-   Khang dinh THU HAI moi la cai gac chuyen cach ly gara that su: `orders` cua
-   Tan Phat van phai MO DUOC. Giu nguyen vo dieu kien — ban thu chi dong vao
-   menu, khong duoc dong vao quyen. */
-if (!defined('_KHO_TONG_MENU_GON') || !_KHO_TONG_MENU_GON){
-    ok(strpos($mn, "$base/admin/orders\"") !== false, 'Manager cua Tan Phat VAN thay Don hang web');
-} else {
-    ok(strpos($mn, "$base/admin/orders\"") === false,
-       'Menu gon dang bat: Tan Phat khong thay Don hang web tren menu (dung y do)');
+   NAY THI KHONG. Anh bao 12/11/2026: khach dat thu mot don tren gian hang
+   Tan Phat roi di tim khong thay no dau. Don VAN LUU dung cho (moi don web
+   trong CSDL deu mang garage_id = 1), chi la nguoi cua Tan Phat khong co loi
+   nao tren menu de toi man Don hang. Ly do an no — "kho tong khong chay trang
+   web ban hang" — la mot cau SAI ve nghiep vu.
+
+   `orders` nay ra MOT MUC RIENG ngoai nhom (nhu "Quan ly cac gara"), nen phai
+   THAY du cong tac menu gon bat hay tat. Nhom Ban hang thi van an nhu cu. */
+ok(strpos($mn, "$base/admin/orders\"") !== false,
+   'Tan Phat THAY Don hang web tren menu (du menu gon dang bat)');
+if (defined('_KHO_TONG_MENU_GON') && _KHO_TONG_MENU_GON){
+    ok(strpos($mn, "$base/admin/quotations\"") === false,
+       'Menu gon van an phan con lai cua nhom Ban hang (bao gia)');
 }
 ok($http('GET', "$base/admin/orders", $jarTP)['code'] === 200, 'Manager cua Tan Phat VAN mo duoc Don hang web');
 

@@ -189,11 +189,12 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                     <div class="form-row">
                         <div class="form-group col-md-5">
                             <label class="small text-muted">SEO — Thẻ meta tiêu đề</label>
-                            <input type="text" id="o-meta-title" name="meta_title" class="form-control form-control-sm" value="{{!empty($vMetaT)?$vMetaT:''}}"/>
+                            <?php /* Textarea — xem lý do ở app/views/admin/news/add.php. */ ?>
+                            <textarea id="o-meta-title" name="meta_title" class="form-control form-control-sm" rows="2">{{!empty($vMetaT)?$vMetaT:''}}</textarea>
                         </div>
                         <div class="form-group col-md-7">
                             <label class="small text-muted">SEO — Thẻ meta mô tả</label>
-                            <input type="text" id="o-meta-desc" name="meta_description" class="form-control form-control-sm" value="{{!empty($vMetaD)?$vMetaD:''}}"/>
+                            <textarea id="o-meta-desc" name="meta_description" class="form-control form-control-sm" rows="2">{{!empty($vMetaD)?$vMetaD:''}}</textarea>
                         </div>
                     </div>
 

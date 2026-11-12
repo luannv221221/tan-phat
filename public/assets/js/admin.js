@@ -356,3 +356,49 @@
         window.location.href = s.getAttribute('data-base') + (qs ? '?' + qs : '');
     });
 })();
+
+/* ============================================================
+ * MÀN HẸP — GHIM CỘT THAO TÁC VÀO MÉP PHẢI
+ *
+ * Khách phản ánh 12/11/2026 "các màn có những nút bị mất". Bảng dài hơn màn
+ * thì cuộn ngang được, nhưng cột Thao tác là cột CUỐI nên nằm xa nhất bên
+ * phải: đo trên khổ 375px, nút ở màn Khách hàng nằm ở mốc 1002-1266px.
+ * Ghim cột cuối lại thì nút lúc nào cũng thấy. Phần tô vẽ nằm ở
+ * admin-theme.css mục 18.
+ *
+ * VÌ SAO GẮN LỚP BẰNG JS CHỨ KHÔNG VIẾT THẲNG VÀO VIEW:
+ * có 35 view danh sách đang dùng cột Thao tác. Sửa từng file thì file thứ 36
+ * viết sau này sẽ quên, mà quên thì không ai biết — màn mới lặng lẽ hỏng
+ * đúng kiểu cũ. Gắn theo TIÊU ĐỀ CỘT thì màn mới tự được hưởng.
+ *
+ * VÌ SAO KHÔNG GHIM MỌI CỘT CUỐI: có bảng mà cột cuối là DỮ LIỆU, không phải
+ * nút — ví dụ Bảng tính giá, cột cuối là giá bán cho nhóm khách cuối cùng.
+ * Ghim một cột dữ liệu thì nó đứng đè lên các cột khác lúc cuộn, vừa vô
+ * nghĩa vừa khó đọc. Nên chỉ ghim khi tiêu đề đúng là tên một cột thao tác.
+ * ============================================================ */
+(function () {
+    'use strict';
+
+    var TEN_COT_NUT = ['thao tác', 'xem', 'hành động', 'sửa'];
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        document.querySelectorAll('.table-responsive table.table').forEach(function (bang) {
+
+            /* Bảng nhập dòng hàng (báo giá / hoá đơn / phiếu nhập) đã có cách
+               xử lý riêng cho màn hẹp từ 17/10/2026 — min-width, khối tổng
+               xếp dọc. Ghim thêm cột vào đó là hai cách chữa cãi nhau. */
+            if (bang.classList.contains('bang-dong-hang')) return;
+
+            var th = bang.querySelectorAll('thead th');
+            if (!th.length) return;
+
+            var cuoi = (th[th.length - 1].textContent || '')
+                       .replace(/\s+/g, ' ').trim().toLowerCase();
+
+            if (TEN_COT_NUT.indexOf(cuoi) === -1) return;
+
+            bang.classList.add('bang-ghim-cuoi');
+        });
+    });
+})();

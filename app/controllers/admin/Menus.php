@@ -32,9 +32,68 @@ class Menus extends Controller {
         $this->baseData();
         $this->__data['content']['page_name'] = $this->labelMany;
         $this->__data['content']['dataList']  = $this->__model->getTree();
+        /* Ô SỬA NẰM NGAY BÊN PHẢI CÂY MENU (12/11/2026, anh muốn giống màn
+           của bên khách). Nên màn danh sách phải nạp sẵn mọi thứ form cần:
+           danh sách menu gốc để chọn cha, và ba danh sách đích. Menu của một
+           gara chỉ vài chục dòng — nạp hết một lần rẻ hơn mỗi lần bấm một
+           mục lại gọi thêm một nhịp mạng. */
+        $this->__data['content']['roots']     = $this->__model->getRoots();
+        foreach ($this->dsDich() as $k => $v) $this->__data['content'][$k] = $v;
         $this->__data['content']['msg']       = Session::flash('msg');
         $this->__data['content']['msgError']  = Session::flash('msgError');
+        $this->__data['content']['errors']    = Session::flash('errors');
+        $this->__data['content']['old']       = Session::flash('old');
         $this->render('layouts/admin/master_admin', $this->__data);
+    }
+
+    /**
+     * LƯU LẠI THỨ TỰ + CẤP SAU KHI KÉO THẢ.
+     *
+     * Nhận một mảng JSON [{id, parent_id, sort_order}, ...] — cả cây một lần,
+     * không phải từng mục một: kéo một mục lên đầu là đổi thứ tự của mọi mục
+     * dưới nó, gửi lẻ thì giữa chừng mất mạng là cây còn lại nửa cũ nửa mới.
+     *
+     * KIỂM LẠI TỪNG DÒNG Ở ĐÂY, không tin mảng gửi lên:
+     *   - `id` phải là mục CÓ THẬT và thuộc gara đang đăng nhập. getDetail()
+     *     của model có $_theoGara nên dòng của gara khác trả về rỗng -> bỏ qua.
+     *     Thiếu bước này thì một gara gửi tay id của gara khác là xếp lại menu
+     *     trên website của người ta.
+     *   - cha phải là MỘT MỤC GỐC và khác chính nó. Menu website chỉ hai cấp
+     *     (xem buildData()); thả một mục vào mục con thì hạ về gốc chứ không
+     *     tạo cấp ba — cấp ba sẽ không hiện ra ở đâu trên trang khách cả.
+     */
+    public function postSapXep(){
+
+        $f    = $this->__request->getFields();
+        $json = isset($f['thuTu']) ? (string) $f['thuTu'] : '';
+        $ds   = json_decode($json, true);
+
+        if (!is_array($ds)){
+            Session::flash('msgError', 'Không đọc được thứ tự mới');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+
+        /* Mục nào đang là gốc — tra một lần, dùng cho mọi dòng. */
+        $goc = [];
+        foreach ($this->__model->getRoots() as $r) $goc[(int) $r['id']] = true;
+
+        $soDoi = 0;
+        foreach ($ds as $d){
+            $id = isset($d['id']) ? (int) $d['id'] : 0;
+            if ($id <= 0 || empty($this->__model->getDetail($id))) continue;
+
+            $cha = isset($d['parent_id']) ? (int) $d['parent_id'] : 0;
+            if ($cha === $id || empty($goc[$cha])) $cha = 0;
+
+            $this->__model->edit([
+                'parent_id'  => $cha > 0 ? $cha : null,
+                'sort_order' => isset($d['sort_order']) ? (int) $d['sort_order'] : 0,
+            ], $id);
+            $soDoi++;
+        }
+
+        Session::flash('msg', 'Đã lưu thứ tự menu (' . $soDoi . ' mục)');
+        $this->__response->redirect('admin/' . $this->routeBase);
     }
 
     public function add(){

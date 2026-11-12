@@ -11,7 +11,7 @@
         <h3 class="card-title"><i class="fas fa-newspaper mr-2"></i>{{$page_name}}</h3>
         <div class="card-tools">
             @if (route('admin/'.$routeBase.'/add'))
-            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/add'}}" class="btn btn-primary btn-sm"><i class="fas fa-plus mr-1"></i> Thêm tin</a>
+            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/add'}}" class="btn btn-primary btn-sm"><i class="fas fa-plus mr-1"></i> Thêm bài viết</a>
             @endif
         </div>
     </div>
@@ -46,13 +46,13 @@
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-warning btn-sm"><i class="fas fa-edit"></i></a>
                         @endif
                         @if (route('admin/'.$routeBase.'/delete/'.$item['id']))
-                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" onclick="return confirm('Xoá tin này?')" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
+                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" onclick="return confirm('Xoá bài viết này?')" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></a>
                         @endif
                     </td>
                 </tr>
                 @endforeach
             @else
-                <tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có tin nào</td></tr>
+                <tr><td colspan="6" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có bài viết nào</td></tr>
             @endif
             </tbody>
         </table>

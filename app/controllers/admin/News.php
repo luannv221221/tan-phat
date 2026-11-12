@@ -14,8 +14,12 @@ class News extends Controller {
     private $__model, $__cat, $__request, $__response;
 
     private $routeBase = 'news';
-    private $labelOne  = 'tin';
-    private $labelMany = 'Quản lý tin tức';
+    /* "BÀI VIẾT" CHỨ KHÔNG PHẢI "TIN TỨC" — khách yêu cầu 12/11/2026.
+       Chỉ đổi CHỮ HIỆN RA. Bảng `news`, module `link` = 'news' và đường dẫn
+       /admin/news giữ nguyên: `link` là khoá phân quyền (xem RoleMiddleware)
+       và là tên tuyến, đổi nó là mọi dòng quyền đã cấp trỏ vào hư không. */
+    private $labelOne  = 'bài viết';
+    private $labelMany = 'Quản lý bài viết';
     private $viewDir   = 'admin/news';
 
     function __construct(){

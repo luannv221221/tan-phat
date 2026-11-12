@@ -78,7 +78,22 @@ $menuGroups = [
     // --- Khu 2: trang bán hàng trên web ---
     /* `downloads` đứng cạnh `galleries`: cả hai là kho tệp cho khách — một
        bên ảnh/video để xem, một bên tài liệu để tải. (Tài liệu 05/11/2026) */
-    'Quản lý website'    => ['news', 'news-categories', 'du-an', 'galleries', 'downloads', 'banners', 'menus'],
+    /* `products` + `part-categories` CÓ MẶT Ở CẢ HAI NHÓM — khách yêu cầu
+       12/11/2026: "bê những sản phẩm hiển thị ở website xuống phần Quản lý
+       website, danh mục cũng thế".
+
+       LÀ LỐI TẮT, KHÔNG PHẢI MÀN THỨ HAI — y như `partners` đang đứng ở cả
+       Mua hàng lẫn Bán hàng. Menu chỉ vẽ link mà user có quyền, nên kê tên
+       một module ở hai nhóm không sinh thêm module, không sinh thêm một dòng
+       quyền nào, và hai lối vào cùng mở đúng một màn.
+
+       KHÔNG NHẤC HẲN KHỎI NHÓM HÀNG HOÁ. `products` là danh mục hàng hoá lõi:
+       phiếu nhập, phiếu xuất, báo giá, hoá đơn đều đọc nó — website chỉ là
+       một trong những nơi nó hiện ra. Nhấc đi là thủ kho muốn sửa đơn vị tính
+       của một mã hàng phải vào mục Quản lý website mới thấy. Đó cũng đúng lý
+       do nó từng được chuyển RA khỏi nhóm này (xem ghi chú đầu file) — lần
+       này thêm lối vào, không trả nó về chỗ cũ. */
+    'Quản lý website'    => ['products', 'part-categories', 'news', 'news-categories', 'du-an', 'galleries', 'downloads', 'banners', 'menus', 'cau-hinh-website'],
 
     // --- Khu 3: quản trị ---
     // `modules` đứng NGAY SAU `groups`: hai màn hình này đi liền một mạch —
@@ -132,6 +147,18 @@ if (defined('_KHO_TONG_MENU_GON') && _KHO_TONG_MENU_GON && !empty($garaHienTai['
        trên một menu, người dùng tưởng là hai thứ khác nhau. */
     $menuDon['garages'] = 'factory';
     $menuGroups['Hệ thống'] = array_values(array_diff($menuGroups['Hệ thống'], ['garages']));
+
+    /* ĐƠN HÀNG PHẢI Ở LẠI, dù cả nhóm Bán hàng bị ẩn — sửa 12/11/2026.
+       Lý do viết ở đầu khối là "kho tổng ... không chạy trang web bán hàng".
+       Câu đó SAI: gian hàng của Tân Phát đang nhận đơn thật, mọi đơn web hiện
+       có trong CSDL đều mang garage_id = 1. Đơn vẫn lưu đúng chỗ, nhưng người
+       của Tân Phát không có lối nào trên menu để tới xem — khách đặt thử xong
+       đi tìm không thấy, tưởng đơn rơi mất (anh báo 12/11/2026).
+
+       Ra MỘT MỤC RIÊNG chứ không mở lại cả nhóm Bán hàng: báo giá, hoá đơn,
+       phiếu thu chi thì đúng là việc của gara, bản thử nghiệm menu gọn vẫn
+       giữ nguyên ý của nó. */
+    $menuDon['orders'] = 'shopping-cart';
 }
 foreach ($anNhom as $g) unset($menuGroups[$g]);
 

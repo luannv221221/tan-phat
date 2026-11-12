@@ -26,7 +26,7 @@ $isPub = isset($old['is_published']) ? !empty($old['is_published']) : ((int) $it
                                 <option value="{{$c['id']}}" {{$v('category_id')==$c['id']?'selected':''}}>{{$c['name']}}</option>
                                 @endforeach
                             </select>
-                            <div class="input-group-append">{!! nut_them_nhanh('news-cat', 'category_id', ['nhan' => 'danh mục tin', 'vd' => 'VD: Tin xưởng']) !!}</div>
+                            <div class="input-group-append">{!! nut_them_nhanh('news-cat', 'category_id', ['nhan' => 'danh mục bài viết', 'vd' => 'VD: Tin xưởng']) !!}</div>
                         </div>
                     </div>
                 </div>
@@ -53,8 +53,9 @@ $isPub = isset($old['is_published']) ? !empty($old['is_published']) : ((int) $it
                     <textarea name="content" class="form-control" rows="10">{{$v('content')}}</textarea>
                 </div>
                 <div class="form-row">
-                    <div class="form-group col-md-5"><label class="small text-muted">SEO — Meta title</label><input type="text" name="meta_title" class="form-control form-control-sm" value="{{$v('meta_title')}}"/></div>
-                    <div class="form-group col-md-7"><label class="small text-muted">SEO — Meta description</label><input type="text" name="meta_description" class="form-control form-control-sm" value="{{$v('meta_description')}}"/></div>
+                    <?php /* Textarea — xem lý do ở add.php cùng thư mục. */ ?>
+                    <div class="form-group col-md-5"><label class="small text-muted">SEO — Meta title</label><textarea name="meta_title" class="form-control form-control-sm" rows="2">{{$v('meta_title')}}</textarea></div>
+                    <div class="form-group col-md-7"><label class="small text-muted">SEO — Meta description</label><textarea name="meta_description" class="form-control form-control-sm" rows="2">{{$v('meta_description')}}</textarea></div>
                 </div>
                 <div class="form-group">
                     <label class="small text-muted">Từ khoá</label>
@@ -70,7 +71,7 @@ $isPub = isset($old['is_published']) ? !empty($old['is_published']) : ((int) $it
             <div class="card-footer">
                 <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Lưu</button>
                 @if (route('admin/'.$routeBase.'/delete/'.$item['id']))
-                <a href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" onclick="return confirm('Xoá tin này?')" class="btn btn-outline-danger"><i class="fas fa-trash mr-1"></i> Xoá</a>
+                <a href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" onclick="return confirm('Xoá bài viết này?')" class="btn btn-outline-danger"><i class="fas fa-trash mr-1"></i> Xoá</a>
                 @endif
                 <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-default">Quay lại</a>
             </div>

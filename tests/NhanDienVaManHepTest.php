@@ -457,4 +457,70 @@ foreach (['.ss__thumb', 'span.ss__thumb'] as $c){
 ok(strpos($js, "option[data-img]") !== false,
    'admin.js van xet option[data-img] de chua cho anh');
 
+// ===========================================================================
+section('Man hep — nut khong duoc bien mat (khach bao 12/11/2026)');
+
+/* Khach: "responsive no khong dong deu, cac man co nhung nut bi mat". Do that
+   tren kho 375px bang tai khoan chu gara, dem nut nam ngoai khung nhin:
+
+       Don hang 0, Bai viet 0, Phieu thu 0        <- vua man
+       Phieu nhap 2, Hoa don ban 3, Bao gia 4
+       Xe cua khach 10, Hang hoa 11, Khach hang 20
+
+   Hai nguyen nhan khac han nhau, nen hai cach chua — giu ca hai o day. */
+
+/* (a) KHOI NUT DAU THE: `.card-tools` co margin-left:auto va khong xuong hang.
+       Man Hang hoa ba nut rong 340px trong khung 375px -> ket thuc o moc 428,
+       keo CA TRANG rong ra 428px. */
+ok(preg_match('~@media \s*\(max-width:\s*767\.98px\)[^}]*?\{(?:[^{}]|\{[^{}]*\})*?\.card-header\s*\{[^}]*flex-wrap:\s*wrap~s', $css) === 1,
+   'Man hep: dau the cho xuong hang (khoi nut khong keo tran ca trang)');
+ok(preg_match('~\.card-tools\s*\{[^}]*width:\s*100%~s', $css) === 1,
+   'Man hep: khoi nut chiem tron mot hang cua rieng no');
+
+/* (b) GHIM COT THAO TAC. Cot thao tac luon la cot CUOI nen nam xa nhat ben
+       phai: o man Khach hang, nut nam o moc 1002-1266px trong khi man chi
+       nhin thay toi 375px. */
+ok(strpos($css, '.bang-ghim-cuoi') !== false, 'CSS co luat ghim cot cuoi');
+ok(preg_match('~\.bang-ghim-cuoi[^@]*?position:\s*sticky~s', $css) === 1,
+   'Cot ghim dung position: sticky');
+ok(preg_match('~\.bang-ghim-cuoi[^@]*?box-shadow~s', $css) === 1,
+   'Co vet do bong — dau hieu DUY NHAT bao con cuon duoc sang phai');
+
+/* CA `min` LAN `max`. Chi chan tren thi bang tu chia lai be ngang va bop cot
+   ghim xuong 84px — do duoc dung con so do — luc ay sau cai nut xep thanh sau
+   hang doc, dong cao gap ba. Chi chan duoi thi cot thao tac 260px cua man
+   Khach hang ghim nguyen vao man 375px, nuot gan het be ngang: nhin vao chi
+   thay mot dai nut, khong con thay dang bam vao khach NAO. Da chup lai ca hai
+   lan hong truoc khi ra duoc con so nay. */
+ok(preg_match('~\.bang-ghim-cuoi[^@]*?min-width:\s*140px~s', $css) === 1,
+   'Cot ghim co chan DUOI (khong thi nut xep doc, dong cao gap ba)');
+ok(preg_match('~\.bang-ghim-cuoi[^@]*?max-width:\s*150px~s', $css) === 1,
+   'Cot ghim co chan TREN (khong thi cot thao tac nuot ca man)');
+
+/* GAN LOP BANG JS, KHONG SUA 35 VIEW: file thu 36 viet sau nay se quen, ma
+   quen thi khong ai biet. Gan theo TIEU DE COT thi man moi tu duoc huong. */
+ok(strpos($js, 'bang-ghim-cuoi') !== false, 'admin.js co gan lop ghim cot');
+ok(strpos($js, 'TEN_COT_NUT') !== false, 'Gan theo TIEU DE cot, khong gan bua moi bang');
+/* Co bang ma cot cuoi la DU LIEU chu khong phai nut — Bang tinh gia, cot cuoi
+   la gia ban cho nhom khach cuoi. Ghim mot cot du lieu thi no dung de len cac
+   cot khac luc cuon, vua vo nghia vua kho doc. */
+ok(preg_match("~TEN_COT_NUT[^;]*'thao tác'~u", $js) === 1, 'Danh sach ten cot nut co "thao tác"');
+ok(strpos($js, "bang.classList.contains('bang-dong-hang')") !== false,
+   'Bo qua bang nhap dong hang — bang do da co cach chua rieng tu 17/10/2026');
+
+/* COT THAO TAC PHAI LA COT CUOI. Ca co che ghim dung tren gia dinh nay; view
+   nao dat no o giua thi ghim nham cot va khong ai phat hien ra. */
+$saiCho = [];
+foreach (glob($goc . 'app/views/admin/*/lists.php') as $v){
+    $s = file_get_contents($v);
+    if (!preg_match('~<thead>(.*?)</thead>~s', $s, $mh)) continue;
+    preg_match_all('~<th[^>]*>(.*?)</th>~s', $mh[1], $mt);
+    if (empty($mt[1])) continue;
+    $ten = array_map(function($x){ return trim(strip_tags($x)); }, $mt[1]);
+    $i = array_search('Thao tác', $ten, true);
+    if ($i !== false && $i !== count($ten) - 1) $saiCho[] = basename(dirname($v));
+}
+ok(empty($saiCho), 'Moi view: cot "Thao tác" la cot CUOI',
+   empty($saiCho) ? '' : 'Dat sai cho: ' . implode(', ', $saiCho));
+
 exit(summary());

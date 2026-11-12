@@ -43,6 +43,12 @@ class OrderItemsModel extends Model {
                     'part_name'  => $p['name'],
                     'part_code'  => $p['code'],
                     'quantity'   => (int) $r['qty'],
+                    /* SỐ PHẢI ĐỢI của chính dòng này (migration 000110).
+                       Cart::chiaDatTruoc() tính ra nó bên trong khoá tồn; chỗ
+                       nào gọi syncForOrder() mà không có khoá đó thì mặc định
+                       0 — đúng, vì đơn soạn tay trong quản trị là gara tự biết
+                       mình có hàng hay không. */
+                    'preorder_qty' => isset($r['datTruoc']) ? (float) $r['datTruoc'] : 0,
                     'unit_price' => (float) $r['price'],
                     'amount'     => $amount,
                 ]);

@@ -1006,4 +1006,87 @@ body.adm-auth { background: var(--bg-page); }
         font-size: 15px;
     }
     .soan-thao__vach { height: 24px; }
+
+/* ==========================================================================
+   18. MÀN HẸP — NÚT KHÔNG ĐƯỢC BIẾN MẤT
+   --------------------------------------------------------------------------
+   Khách phản ánh 12/11/2026: "responsive nó không đồng đều, các màn có những
+   nút bị mất". Đo thật trên khổ 375px bằng tài khoản chủ gara, đếm nút nằm
+   ngoài khung nhìn:
+
+       Đơn hàng 0   Bài viết 0   Phiếu thu 0      <- vừa màn, không ai kêu
+       Phiếu nhập 2   Hoá đơn bán 3   Báo giá 4
+       Xe của khách 10   Hàng hoá 11   Khách hàng 20
+
+   "Không đồng đều" là đúng từ: màn ít cột thì vừa, màn nhiều cột thì hỏng.
+   Hai nguyên nhân khác hẳn nhau, nên hai cách chữa:
+
+   (a) KHỐI NÚT Ở ĐẦU THẺ ĐẨY TRÀN CẢ TRANG.
+       `.card-tools` có `margin-left:auto` và không xuống hàng. Màn Hàng hoá
+       có ba nút (Xuất catalogue / Import Excel / Thêm hàng hoá) rộng 340px
+       trong khung 375px -> khối đó kết thúc ở mốc 428px, kéo CẢ TRANG rộng
+       ra 428px. Hậu quả không chỉ là mất nút: mọi thứ khác lệch theo, và
+       trang cuộn ngang được trong khi không có gì đáng cuộn.
+       Chữa: cho đầu thẻ xuống hàng, khối nút nằm nguyên một hàng của mình.
+
+   (b) CỘT THAO TÁC NẰM NGOÀI VÙNG CUỘN CỦA BẢNG.
+       Bảng dài hơn màn thì `.table-responsive` cho cuộn ngang — đúng. Nhưng
+       cột Thao tác luôn là cột CUỐI, tức nằm xa nhất về bên phải: ở màn
+       Khách hàng, năm cái nút nằm ở mốc 1002-1266px trong khi màn chỉ nhìn
+       thấy tới 375px. Người dùng không thấy nút, và cũng không có dấu hiệu
+       nào bảo rằng cuộn sang phải thì có.
+       Chữa: GHIM cột cuối vào mép phải. Nút lúc nào cũng ở đó, phần dữ liệu
+       vẫn cuộn bên dưới nó.
+
+   KHÔNG SỬA 35 FILE VIEW. Lớp `.bang-ghim-cuoi` do admin.js gắn, và chỉ gắn
+   khi tiêu đề cột cuối đúng là một cột thao tác — xem lý do ở đó.
+   ========================================================================== */
+
+
+    /* ---- (a) Khối nút ở đầu thẻ ---- */
+    .card-header { flex-wrap: wrap; row-gap: 10px; }
+    .card-tools  { margin-left: 0; width: 100%; flex-wrap: wrap; }
+    /* Chia đều bề ngang còn lại: hai nút thì mỗi nút một nửa, ba nút thì ba
+       phần. Để nút tự co theo chữ thì "Xuất catalogue" chiếm gần hết hàng
+       còn "Thêm" bị đẩy xuống một mình, trông như hai nhóm không liên quan. */
+    .card-tools .btn { flex: 1 1 auto; justify-content: center; }
+
+    /* ---- (b) Ghim cột thao tác ---- */
+    .bang-ghim-cuoi > thead > tr > th:last-child,
+    .bang-ghim-cuoi > tbody > tr > td:last-child:not([colspan]) {
+        position: sticky;
+        right: 0;
+        /* Vệt đổ bóng về bên trái là thứ DUY NHẤT báo cho người dùng biết
+           phần bên dưới còn cuộn được. Bỏ nó đi thì cột ghim trông như cột
+           cuối cùng của một bảng đã hết. */
+        box-shadow: -8px 0 8px -6px rgba(0, 0, 0, .18);
+    }
+    /* CHẶN BỀ NGANG CỘT GHIM — nếu không thì chữa một lỗi, đẻ một lỗi.
+       Màn Khách hàng khai `width:260px` cho cột thao tác (6 nút: hồ sơ, thêm
+       xe, Zalo, gọi, nhắn tin, email). Ghim nguyên 260px vào màn 375px thì
+       cột ghim nuốt gần hết bề ngang: nhìn vào chỉ thấy một dải nút, không
+       còn thấy mình đang bấm vào khách NÀO. Đã chụp lại và thấy đúng như vậy.
+
+       170px vừa đủ ba nút một hàng; `white-space: normal` cho mấy nút còn lại
+       xuống hàng dưới, nên dòng cao hơn một chút nhưng dữ liệu vẫn còn 205px
+       để đọc. `max-width` thắng `width` khai trong thẻ, không cần !important. */
+    .bang-ghim-cuoi > thead > tr > th:last-child,
+    .bang-ghim-cuoi > tbody > tr > td:last-child:not([colspan]) {
+        min-width: 140px;
+        max-width: 150px;
+        white-space: normal;
+    }
+    /* CẢ `min` LẪN `max`, không phải chỉ `max`. Chỉ chặn trên thì bảng tự
+       chia bề ngang lại và bóp cột ghim xuống 84px — đo được đúng con số đó —
+       lúc ấy sáu cái nút xếp thành SÁU HÀNG DỌC, dòng cao gấp ba. 140px vừa
+       đúng ba nút một hàng. */
+
+    /* Nền ĐỤC, không trong suốt: trong suốt thì chữ của cột bên dưới trôi
+       qua phía sau mấy cái nút. */
+    .bang-ghim-cuoi > thead > tr > th:last-child { background: var(--thead-bg); z-index: 3; }
+    .bang-ghim-cuoi > tbody > tr > td:last-child:not([colspan]) { background: var(--bg-surface); z-index: 2; }
+    /* Ô có nền riêng thì không ăn màu di chuột của cả dòng nữa — phải tô lại,
+       nếu không di tới dòng nào cũng thấy một ô trắng lạc lõng bên phải. */
+    .table-hover.bang-ghim-cuoi > tbody > tr:hover > td:last-child:not([colspan]) { background: var(--row-hover); }
 }
+

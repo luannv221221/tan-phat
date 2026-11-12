@@ -11,6 +11,35 @@
     {!! !empty($errors['address']) ? '<div class="alert alert-danger">'.e($errors['address']).'</div>' : '' !!}
     {!! !empty($errors['email']) ? '<div class="alert alert-danger">'.e($errors['email']).'</div>' : '' !!}
     {!! !empty($errors['area']) ? '<div class="alert alert-danger">'.e($errors['area']).'</div>' : '' !!}
+    <?php /* HAI LỖI NÀY TỪNG KHÔNG ĐƯỢC IN RA — sửa 12/11/2026.
+             placeOrder() đặt bảy khoá lỗi, màn này in năm. Hai khoá vắng mặt
+             lại đúng là hai khoá duy nhất khách KHÔNG tự sửa được bằng cách
+             gõ lại form:
+               `stock` — "Không đủ hàng: ... (còn 0, đặt 1)"
+               `cart`  — "Giỏ hàng trống"
+             Hậu quả: bấm "Xác nhận đặt hàng" thì trang nạp lại y như cũ, đơn
+             không vào, KHÔNG MỘT CHỮ giải thích. Khách tưởng nút hỏng, còn
+             gara thì không biết là có người vừa định mua hàng.
+             Đã dựng lại được trên máy: gian hàng gara 2 (dmsg), mặt hàng
+             "Đèn pha Toyota Vios LED" của kho tổng — gara 2 không có tồn. */ ?>
+    {!! !empty($errors['stock']) ? '<div class="alert alert-danger">'.e($errors['stock']).'</div>' : '' !!}
+    {!! !empty($errors['cart']) ? '<div class="alert alert-danger">'.e($errors['cart']).'</div>' : '' !!}
+
+    <?php /* ĐẶT TRƯỚC — anh chốt 12/11/2026: thiếu hàng thì vẫn cho đặt.
+             Báo VÀNG (nhắc) chứ không ĐỎ (lỗi): đơn vẫn đi được, khách chỉ
+             cần biết là phải đợi. Và nói ở ĐÂY, ngay trên nút Xác nhận, chứ
+             không để gara gọi báo sau. */ ?>
+    @if (!empty($datTruoc))
+    <div class="alert alert-warning">
+        <b><i class="fa fa-clock-o mr-1"></i> Có mặt hàng phải đặt trước.</b>
+        Gara chưa có sẵn mấy món dưới đây, đơn vẫn nhận và gara sẽ liên hệ hẹn ngày giao:
+        <ul class="mb-0 mt-1">
+            @foreach ($datTruoc as $d)
+            <li>{{$d}}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
 
     <form method="post" action="{{_WEB_URL.'/dat-hang'}}">
         <?php echo csrf_field(); ?>

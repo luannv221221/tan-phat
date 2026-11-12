@@ -51,7 +51,19 @@
                     <tbody>
                     @foreach ($items as $it)
                     <tr>
-                        <td><code>{{$it['part_code']}}</code> {{$it['part_name']}}</td>
+                        <?php /* NHÃN ĐẶT TRƯỚC — người soạn hàng phải nhìn ra ngay
+                                 dòng nào phải đi lấy từ kho tổng về. Số lượng chứ
+                                 không phải cái dấu tích: khách đặt 5, kho còn 2 thì
+                                 2 cái giao ngay, 3 cái đợi — chỉ một dòng này thôi
+                                 đã là hai việc khác nhau. (Migration 000110) */ ?>
+                        <td>
+                            <code>{{$it['part_code']}}</code> {{$it['part_name']}}
+                            @if (!empty($it['preorder_qty']) && (float)$it['preorder_qty'] > 0)
+                            <span class="badge badge-warning ml-1" title="Gara chưa có sẵn lúc khách đặt — phải lấy về">
+                                Đặt trước {{rtrim(rtrim(number_format((float)$it['preorder_qty'], 3), '0'), '.')}}
+                            </span>
+                            @endif
+                        </td>
                         <td class="text-center">{{(int)$it['quantity']}}</td>
                         <td class="text-right">{{number_format((float)$it['unit_price'],0,',','.')}}</td>
                         <td class="text-right">{{number_format((float)$it['amount'],0,',','.')}}</td>

@@ -41,8 +41,9 @@ $isPub = isset($old['is_published']) ? !empty($old['is_published']) : ((int) $it
                 <div class="form-group"><label>Tóm tắt</label><textarea name="summary" class="form-control" rows="2">{{$v('summary')}}</textarea></div>
                 <div class="form-group"><label>Nội dung (cho phép HTML)</label><textarea name="content" class="form-control" rows="8">{{$v('content')}}</textarea></div>
                 <div class="form-row">
-                    <div class="form-group col-md-5"><label class="small text-muted">SEO — Meta title</label><input type="text" name="meta_title" class="form-control form-control-sm" value="{{$v('meta_title')}}"/></div>
-                    <div class="form-group col-md-7"><label class="small text-muted">SEO — Meta description</label><input type="text" name="meta_description" class="form-control form-control-sm" value="{{$v('meta_description')}}"/></div>
+                    <?php /* Textarea — xem lý do ở app/views/admin/news/add.php. */ ?>
+                    <div class="form-group col-md-5"><label class="small text-muted">SEO — Meta title</label><textarea name="meta_title" class="form-control form-control-sm" rows="2">{{$v('meta_title')}}</textarea></div>
+                    <div class="form-group col-md-7"><label class="small text-muted">SEO — Meta description</label><textarea name="meta_description" class="form-control form-control-sm" rows="2">{{$v('meta_description')}}</textarea></div>
                 </div>
                 <div class="form-row align-items-center">
                     <div class="form-group col-md-3"><label>Thứ tự</label><input type="number" name="sort_order" class="form-control" value="{{$v('sort_order','0')}}"/></div>

@@ -22,7 +22,7 @@
                                 <option value="{{$c['id']}}" {{(!empty($old['category_id']) && $old['category_id']==$c['id'])?'selected':''}}>{{$c['name']}}</option>
                                 @endforeach
                             </select>
-                            <div class="input-group-append">{!! nut_them_nhanh('news-cat', 'category_id', ['nhan' => 'danh mục tin', 'vd' => 'VD: Tin xưởng']) !!}</div>
+                            <div class="input-group-append">{!! nut_them_nhanh('news-cat', 'category_id', ['nhan' => 'danh mục bài viết', 'vd' => 'VD: Tin xưởng']) !!}</div>
                         </div>
                     </div>
                 </div>
@@ -47,9 +47,14 @@
                     <label>Nội dung</label>
                     <textarea name="content" class="form-control" rows="10">{{!empty($old['content'])?$old['content']:''}}</textarea>
                 </div>
+                <?php /* TEXTAREA CHỨ KHÔNG PHẢI Ô MỘT DÒNG — khách yêu cầu 12/11/2026.
+                         Hai ô này nhắm tới 50–70 và 120–160 ký tự, mà ô một dòng
+                         rộng chừng 40 ký tự: đang gõ thì chữ trôi sang trái, muốn
+                         đọc lại câu mình vừa viết phải rê con trỏ. Thanh đo độ dài
+                         ngay dưới ô (oDoDaiSeo) đọc .value nên chạy y nguyên. */ ?>
                 <div class="form-row">
-                    <div class="form-group col-md-5"><label class="small text-muted">SEO — Meta title</label><input type="text" name="meta_title" class="form-control form-control-sm" value="{{!empty($old['meta_title'])?$old['meta_title']:''}}"/></div>
-                    <div class="form-group col-md-7"><label class="small text-muted">SEO — Meta description</label><input type="text" name="meta_description" class="form-control form-control-sm" value="{{!empty($old['meta_description'])?$old['meta_description']:''}}"/></div>
+                    <div class="form-group col-md-5"><label class="small text-muted">SEO — Meta title</label><textarea name="meta_title" class="form-control form-control-sm" rows="2">{{!empty($old['meta_title'])?$old['meta_title']:''}}</textarea></div>
+                    <div class="form-group col-md-7"><label class="small text-muted">SEO — Meta description</label><textarea name="meta_description" class="form-control form-control-sm" rows="2">{{!empty($old['meta_description'])?$old['meta_description']:''}}</textarea></div>
                 </div>
                 <div class="form-group">
                     <label class="small text-muted">Từ khoá</label>
