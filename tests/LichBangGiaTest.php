@@ -57,6 +57,19 @@ ok(strpos($view, 'name="price_schedule"') !== false, 'Man Bang tinh gia co o cho
 ok(preg_match('~name="price_schedule".*?foreach \(\$tenChuKy~s', $view) === 1 || strpos($view, '$tenChuKy as $ma') !== false,
    'O chon liet ke du bon lua chon tu PartPricesModel::LICH');
 
+// Khach 13/11/2026: "day ra ngoai, gan nut cap nhat, dat lich" — o dat lich phai o
+// DAU THE, cung cum nut voi "Cap nhat gia", khong giau xuong than the.
+$viTriLich  = (int) strpos($view, 'name="price_schedule"');
+$viTriTinh  = (int) strpos($view, "/edit/tinh-lai");
+$viTriThan  = (int) strpos($view, 'class="card-body border-bottom"');
+ok($viTriLich > 0 && $viTriTinh > 0 && $viTriThan > 0, 'Tim thay o lich, nut Cap nhat gia va than the trong view');
+ok($viTriLich < $viTriThan, 'O dat lich nam o DAU THE (truoc than the), khong con o than the');
+ok($viTriLich < $viTriTinh && ($viTriTinh - $viTriLich) < 1500,
+   'O dat lich dung NGAY TRUOC nut Cap nhat gia (cung cum card-tools)', 'cach nhau ' . ($viTriTinh - $viTriLich) . ' ky tu');
+ok(substr_count($view, 'name="price_schedule"') === 1, 'Chi mot o chon lich tren man (khong nhan doi o than the)');
+ok(strpos($view, 'Đặt lịch') !== false && strpos($view, 'Lưu lịch') === false,
+   'Nut ten "Dat lich" (khach goi ten nhu vay), khong con "Luu lich"');
+
 // ===========================================================================
 section('Chay that');
 
@@ -143,6 +156,14 @@ try {
     $r = $http('GET', "$base/admin/part-prices", $jarM);
     ok($r['code'] === 200, 'Manager mo duoc man Bang tinh gia', 'HTTP ' . $r['code']);
     ok(strpos($r['body'], 'name="price_schedule"') !== false, 'Manager (co quyen edit) THAY o chon lich');
+    $htmlLich = (int) strpos($r['body'], 'name="price_schedule"');
+    $htmlThan = (int) strpos($r['body'], 'card-body border-bottom');
+    $htmlTinh = (int) strpos($r['body'], '/edit/tinh-lai');
+    ok($htmlLich > 0 && $htmlLich < $htmlThan, 'Trang that: o chon lich nam o dau the, truoc than the',
+       "lich=$htmlLich than=$htmlThan");
+    ok($htmlLich < $htmlTinh && $htmlTinh < $htmlThan, 'Trang that: o chon lich ngay truoc nut Cap nhat gia, cung dau the',
+       "lich=$htmlLich tinh=$htmlTinh than=$htmlThan");
+    ok(strpos($chu($r['body']), 'Đặt lịch') !== false, 'Trang that: co nut "Dat lich"');
     foreach (['Không tự chạy', 'Hằng ngày', 'Hằng tuần', 'Hằng tháng'] as $nhan){
         ok(strpos($chu($r['body']), '>' . $nhan . '<') !== false, "O chon co lua chon \"$nhan\"");
     }

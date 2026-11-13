@@ -307,6 +307,11 @@ body.adm-collapsed .adm-collapse-btn .ic { transform: rotate(180deg); }
 .card-title { margin: 0; font-size: 16px; font-weight: 600; color: #1f2937; }
 .card-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .card-body   { padding: 18px; }
+/* Ô "Đặt lịch" cạnh nút Cập nhật giá (màn Bảng tính giá, khách 13/11/2026). */
+.dat-lich { display: flex; align-items: center; gap: 6px; margin: 0; }
+.dat-lich label { margin: 0; font-size: 13px; white-space: nowrap; }
+.dat-lich select { width: auto; }
+
 .card-body.p-0 { padding: 0; }
 .card-footer {
     background: var(--bg-surface);
@@ -1091,6 +1096,15 @@ body.adm-auth { background: var(--bg-page); }
        phần. Để nút tự co theo chữ thì "Xuất catalogue" chiếm gần hết hàng
        còn "Thêm" bị đẩy xuống một mình, trông như hai nhóm không liên quan. */
     .card-tools .btn { flex: 1 1 auto; justify-content: center; }
+    /* Ô đặt lịch: nhãn một dòng riêng (để nhãn + ô chọn + nút không chen nhau
+       tràn khỏi màn 375px — đã thấy nút "Đặt lịch" bị cắt ở mép phải), dòng dưới là
+       ô chọn giãn hết chỗ + nút. Nút Cập nhật giá chiếm trọn hàng cuối. */
+    .dat-lich { flex: 1 1 100%; flex-wrap: wrap; }
+    .dat-lich label { flex: 1 1 100%; }
+    .dat-lich select { flex: 1 1 0; min-width: 0; }
+    .dat-lich .btn { flex: 0 0 auto; }
+    .card-tools .nut-tinh-lai { flex: 1 1 100%; margin: 0; }
+    .card-tools .nut-tinh-lai .btn { width: 100%; }
 
     /* ---- (b) Bảng có cột thao tác -> thẻ xếp dọc ---- */
     .bang-the thead { display: none; }

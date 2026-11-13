@@ -25,7 +25,24 @@ $tien = function($v){
         <h3 class="card-title"><i class="fas fa-tags mr-2"></i>{{$page_name}}</h3>
         @if (!empty($coQuyenTinh))
         <div class="card-tools">
-            <form action="{{_WEB_URL.'/admin/'.$routeBase.'/edit/tinh-lai'}}" method="post" class="d-inline"
+            <?php /* ĐẶT LỊCH — nằm NGAY CẠNH nút "Cập nhật giá" (khách 13/11/2026: "đẩy ra
+                     ngoài, gần nút cập nhật, đặt lịch"). Bấm tay và đặt tự chạy là hai
+                     cách làm cùng một việc nên đứng chung một chỗ, không giấu xuống thân thẻ.
+
+                     Cùng quyền với nút bên cạnh: ai tự tay tính lại được thì được dặn nó
+                     tự tính lại. Người chỉ có quyền XEM thấy lịch dạng chữ ở thân thẻ.
+                     Dựng giống ô "Gom theo" của màn Báo cáo kế toán: một ô chọn + một nút. */ ?>
+            <form action="{{_WEB_URL.'/admin/'.$routeBase.'/edit/lich'}}" method="post" class="dat-lich">
+                <?php echo csrf_field(); ?>
+                <label for="o-lich" class="text-muted"><i class="fas fa-clock mr-1"></i>Tự cập nhật:</label>
+                <select name="price_schedule" id="o-lich" class="form-control form-control-sm">
+                    @foreach ($tenChuKy as $ma => $ten)
+                    <option value="{{$ma}}" {{$chuKy === $ma ? 'selected' : ''}}>{{$ten}}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="btn btn-sm btn-outline-primary"><i class="fas fa-calendar-check mr-1"></i> Đặt lịch</button>
+            </form>
+            <form action="{{_WEB_URL.'/admin/'.$routeBase.'/edit/tinh-lai'}}" method="post" class="d-inline nut-tinh-lai"
                   onsubmit="return confirm('Cập nhật toàn bộ bảng giá theo giá vốn hiện tại?');">
                 <?php echo csrf_field(); ?>
                 <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-calculator mr-1"></i> Cập nhật giá</button>
@@ -42,30 +59,16 @@ $tien = function($v){
                     <span class="badge badge-info">{{isset($tenKieu[$kieu]) ? $tenKieu[$kieu] : $kieu}}</span>
                     @if (route('admin/settings'))
                     <?php /* Chỉ KIỂU GIÁ VỐN còn đặt ở Cấu hình gara. Lịch tự cập nhật đã
-                             chuyển xuống ngay dưới (13/11/2026) — xem Partprices::postLich. */ ?>
+                             chuyển lên đầu thẻ, cạnh nút Cập nhật giá (13/11/2026) — xem
+                             Partprices::postLich. */ ?>
                     <a href="{{_WEB_URL.'/admin/settings'}}" class="ml-2 small"><i class="fas fa-cog mr-1"></i>Đổi kiểu giá vốn ở Cấu hình gara</a>
                     @endif
                 </p>
 
-                <?php /* LỊCH TỰ CẬP NHẬT — đặt NGAY TRÊN MÀN NÀY, khách yêu cầu 13/11/2026
-                         ("chỗ này cho thêm cái lịch đặt tự động theo ngày, tuần, tháng như
-                         cái báo cáo kế toán"). Bộ chọn dựng giống ô "Gom theo" của màn Báo
-                         cáo kế toán: một ô chọn + một nút.
-
-                         Người chỉ có quyền XEM thì thấy lịch dạng chữ, không có ô chọn:
-                         đặt lịch cùng quyền với việc bấm "Cập nhật giá". */ ?>
-                @if (!empty($coQuyenTinh))
-                <form action="{{_WEB_URL.'/admin/'.$routeBase.'/edit/lich'}}" method="post" class="form-inline mb-1">
-                    <?php echo csrf_field(); ?>
-                    <label for="o-lich" class="text-muted mr-2 mb-1">Lịch tự cập nhật giá:</label>
-                    <select name="price_schedule" id="o-lich" class="form-control form-control-sm mr-2 mb-1" style="width:auto">
-                        @foreach ($tenChuKy as $ma => $ten)
-                        <option value="{{$ma}}" {{$chuKy === $ma ? 'selected' : ''}}>{{$ten}}</option>
-                        @endforeach
-                    </select>
-                    <button type="submit" class="btn btn-sm btn-outline-primary mb-1"><i class="fas fa-clock mr-1"></i> Lưu lịch</button>
-                </form>
-                @else
+                <?php /* LỊCH TỰ CẬP NHẬT — ô chọn + nút "Đặt lịch" nằm ở đầu thẻ, cạnh nút
+                         "Cập nhật giá". Ở đây chỉ còn phần dành cho người CHỈ CÓ QUYỀN XEM:
+                         họ thấy lịch đang chạy dạng chữ, không có ô chọn. */ ?>
+                @if (empty($coQuyenTinh))
                 <p class="mb-1">
                     <span class="text-muted">Lịch tự cập nhật giá:</span>
                     <span class="badge badge-secondary">{{isset($tenChuKy[$chuKy]) ? $tenChuKy[$chuKy] : $chuKy}}</span>
