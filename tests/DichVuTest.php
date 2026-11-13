@@ -220,37 +220,56 @@ foreach (['quotations/add', 'quotations/edit',
 }
 
 // ---------------------------------------------------------------------------
-section('Da chon mat hang o dong nay thi dong khac khong chon lai duoc');
+section('Chon trung mot mat hang thi CONG SO LUONG vao dong da co (thay luat loc 19/08)');
 
-/* Khach bao 19/08/2026: chon PT-0008 o mot dong roi van chon lai duoc chinh
-   no o dong duoi. Trung dong la loi nhap lieu chu khong phai nhu cau — can
-   nhieu thi tang so luong. Loc thang khoi danh sach thi khong bam nham duoc,
-   thay vi cho chon xong moi bao loi. */
+/* Khach bao 19/08/2026: chon PT-0008 o mot dong roi van chon lai duoc chinh no o
+   dong duoi. Luc do em LOC mat hang da chon khoi danh sach cua dong khac.
+
+   13/11/2026 khach noi ve Don mua: "chon 2 san pham giong nhau phai tang so luong
+   day chu lai thanh 2 dong", anh chot lam luon cho bao gia / hoa don. Cung dich
+   (khong bao gio co hai dong trung) nhung nguoi dung chon lai la duoc cong so
+   luong, khong phai di tim dong cu roi tu sua. Nen mat hang KHONG con bi loc khoi
+   danh sach nua — loc thi khong the "chon lai de tang". */
 foreach (['quotations/add', 'quotations/edit',
           'sales-invoices/add', 'sales-invoices/edit'] as $v){
     $s  = file_get_contents($goc . 'app/views/admin/' . $v . '.php');
     preg_match('~<script>(.*?)</script>~s', $s, $m);
     $ma = preg_replace('~/\*.*?\*/~s', '', isset($m[1]) ? $m[1] : '');
-    $ma = preg_replace('~//[^
-]*~', '', $ma);
+    $ma = preg_replace('~//[^\n]*~', '', $ma);
 
     ok(strpos($ma, 'function napOption') !== false,
        "$v: co ham nap lai danh sach o chon");
-    ok(preg_match('~oDongKhac\[s\.value\]\s*=\s*true~', $ma) === 1,
-       "$v: gom cac mat hang dang dung o dong KHAC");
-    ok(preg_match('~if \(oDongKhac\[op\.id\][^
-]*return;~', $ma) === 1,
-       "$v: bo mat hang da co o dong khac ra khoi danh sach");
+    ok(strpos($ma, 'oDongKhac') === false,
+       "$v: KHONG con loc mat hang da co o dong khac ra khoi danh sach",
+       'Loc thi khong chon lai duoc nua, ma khach muon chon lai de tang so luong');
 
-    /* Phai GIU mat hang chinh dong nay dang chon. Phieu lap truoc khi co luat
-       nay co the da co dong trung (HD-000005 dang co 2 dong PT-0006) — loc
-       mat thi mo phieu ra thay o trong, luu mot cai la bay luon dong do. */
-    ok(strpos($ma, 'String(op.id) !== String(dangChon)') !== false,
-       "$v: VAN giu mat hang chinh dong nay dang chon (phieu cu co the da trung)");
+    /* Ham gop + cho goi: dau handler change, TRUOC khi dien gia (gop roi thi dong
+       nay khong con, khong dien gia cho no). */
+    ok(strpos($ma, 'function gopNeuTrung(tr, sel)') !== false, "$v: co ham gop dong trung");
+    ok(preg_match('~sel\.addEventListener\(\'change\', function \(\)\{\s*if \(gopNeuTrung\(tr, sel\)\) return;~', $ma) === 1,
+       "$v: ham gop chay DAU TIEN trong handler doi o chon (gop xong thi dung ngay)");
 
-    ok(strpos($ma, 'napLaiTatCa();') !== false, "$v: doi/xoa dong thi nap lai moi o chon");
+    $than = substr($ma, (int) strpos($ma, 'function gopNeuTrung'), 2400);
+    ok(strpos($than, "s.value === sel.value") !== false, "$v: tim dong da co CUNG mat hang");
+    ok(strpos($than, 'qCu.value = String(nay)') !== false && strpos($than, 'num(qCu.value) + them') !== false,
+       "$v: so luong cua dong vua chon duoc CONG vao dong cu");
+    ok(strpos($than, 'Math.round') !== false, "$v: cong so le lam tron 3 so");
+    ok(strpos($than, 'tr.remove()') !== false, "$v: dong vua chon bien mat (khong de hai dong)");
+    ok(preg_match('~laDongCuoi && conHangDeChon\(\)\) addRow\(\)~', $than) === 1,
+       "$v: gop o dong trong cuoi thi de lai mot dong trong de nhap tiep");
+    ok(strpos($than, 'recompute()') !== false, "$v: tinh lai tong tien sau khi gop");
+    ok(strpos($than, 'bao-gop') !== false, "$v: noi cho nguoi dung biet vi sao dong bien mat");
+
+    /* Phieu lap truoc khi co luat nay co the da co dong trung (HD-000005 dang co 2
+       dong PT-0006). Mo phieu ra khong duoc don dong sau lung: dong dung tu du lieu
+       da luu khong di qua su kien change, va mat hang dang chon van duoc giu du
+       khong co trong nguon. */
+    ok(strpos($ma, 'String(op.id) === String(dangChon)') !== false,
+       "$v: VAN chon dung mat hang chinh dong nay dang giu (phieu cu / dong da luu)");
+
+    ok(strpos($ma, 'napLaiTatCa();') !== false, "$v: doi nguon / xoa dong thi nap lai o chon");
     ok(preg_match('~r\.remove\(\);\s*napLaiTatCa\(\);~', $ma) === 1,
-       "$v: xoa dong thi tra mat hang ve danh sach");
+       "$v: xoa dong thi nap lai danh sach");
     ok(strpos($ma, 'conHangDeChon()') !== false,
        "$v: het hang de chon thi thoi de dong trong");
 }

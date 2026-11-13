@@ -393,33 +393,30 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
                 return s;
             }
 
-            /* Nạp danh sách cho MỘT ô chọn, BỎ những mặt hàng đã có ở dòng khác.
+            /* Nạp danh sách cho MỘT ô chọn.
 
-               Chọn trùng một mặt hàng trên hai dòng là lỗi nhập liệu chứ không phải
-               nhu cầu — cần nhiều thì tăng số lượng. Lọc thẳng khỏi danh sách thì
-               không bấm nhầm được, thay vì cho chọn xong mới báo lỗi.
+               TRƯỚC 13/11/2026 hàm này BỎ những mặt hàng đã có ở dòng khác (khách 19/08:
+               "chọn PT-0008 ở một dòng rồi vẫn chọn lại được ở dòng dưới"). Nay mặt hàng
+               KHÔNG bị lọc nữa: chọn lại một mặt hàng đã có thì gopNeuTrung() cộng vào số
+               lượng của dòng đó — xem ngay dưới. Cùng đích (không có hai dòng trùng), nhưng
+               người dùng không phải đi tìm dòng cũ rồi tự sửa số lượng.
 
-               GIỮ LẠI mặt hàng chính dòng này đang chọn, kể cả khi nó trùng với
-               dòng khác: phiếu lập trước khi có luật này có thể đã có dòng trùng
-               (HD-000005 đang có 2 dòng PT-0006). Lọc mất thì mở phiếu ra thấy ô
-               trống, lưu một cái là bay luôn dòng đó.
+               GIỮ LẠI mặt hàng chính dòng này đang chọn, kể cả khi nó không có trong nguồn
+               đang hiện: phiếu lập trước khi có luật này có thể đã có dòng trùng (HD-000005
+               đang có 2 dòng PT-0006). Mở phiếu cũ ra KHÔNG bị dồn dòng sau lưng — dòng dựng
+               từ dữ liệu đã lưu không đi qua sự kiện change nên gopNeuTrung không chạy.
 
                Ô tìm kiếm phủ bên trên đọc thẳng select.options mỗi lần gõ, nên sửa
                ở đây là nó tự theo, không phải đụng gì thêm. */
             function napOption(sel, dangChon){
                 if (dangChon === undefined) dangChon = sel.value;
 
-                var oDongKhac = {};
-                tbody.querySelectorAll('.line-row select.part-sel').forEach(function (s){
-                    if (s !== sel && s.value) oDongKhac[s.value] = true;
-                });
 
                 sel.textContent = '';
                 var o0 = document.createElement('option');
                 o0.value = ''; o0.textContent = nhanTrong; sel.appendChild(o0);
 
                 DS.forEach(function (op){
-                    if (oDongKhac[op.id] && String(op.id) !== String(dangChon)) return;
                     var o = document.createElement('option');
                     o.value = op.id; o.textContent = op.label; o.setAttribute('data-price', op.price);
                     if (op.img) o.setAttribute('data-img', op.img);
@@ -443,6 +440,59 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
             function td(child, cls){ var t = document.createElement('td'); if (cls) t.className = cls; if (child) t.appendChild(child); return t; }
             function inp(name, cls, val){ var i = document.createElement('input'); i.type = 'text'; i.name = name; i.className = 'form-control form-control-sm ' + cls; i.value = (val === 0 || val) ? val : ''; return i; }
 
+            /* CHỌN TRÙNG MỘT MẶT HÀNG -> CỘNG VÀO SỐ LƯỢNG DÒNG ĐÃ CÓ, KHÔNG ĐẺ DÒNG THỨ HAI.
+
+               Khách 13/11/2026 nói về Đơn mua ("chọn 2 sản phẩm giống nhau phải tăng số
+               lượng đấy chứ lại thành 2 dòng"), anh chốt làm luôn cho báo giá / hoá đơn.
+
+               Dòng vừa chọn (tr) là dòng BỊ GỘP: số lượng của nó cộng vào dòng cũ rồi nó
+               biến mất. Giá, chiết khấu, ghi chú giữ của dòng cũ — người dùng đã chỉnh chúng
+               ở dòng đó. Nếu dòng vừa chọn là dòng trống cuối bảng thì đẻ lại một dòng trống
+               mới, để người dùng nhập tiếp không phải bấm "Thêm dòng".
+
+               Trả true nếu đã gộp (dòng này không còn nữa, handler phải dừng ngay). */
+            function gopNeuTrung(tr, sel){
+                if (!sel.value) return false;
+                var dongCu = null, thuTu = 0, i = 0;
+                tbody.querySelectorAll('.line-row').forEach(function (r){
+                    i++;
+                    if (r === tr || dongCu) return;
+                    var s = r.querySelector('select.part-sel');
+                    if (s && s.value === sel.value){ dongCu = r; thuTu = i; }
+                });
+                if (!dongCu) return false;
+
+                var qCu = dongCu.querySelector('.qty'), qMoi = tr.querySelector('.qty');
+                var them = num(qMoi && qMoi.value) || 1;
+                var nay  = Math.round((num(qCu.value) + them) * 1000) / 1000;
+                qCu.value = String(nay);
+
+                var ten = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent : '';
+                var laDongCuoi = (tr === tbody.lastElementChild);
+                tr.remove();
+                if (laDongCuoi && conHangDeChon()) addRow();
+                recompute();
+
+                dongCu.style.transition = 'background-color .3s';
+                dongCu.style.backgroundColor = '#fff3cd';
+                setTimeout(function (){ dongCu.style.backgroundColor = ''; }, 2200);
+                if (dongCu.scrollIntoView) dongCu.scrollIntoView({ block: 'nearest' });
+
+                var khung = tbody.closest('.table-responsive') || tbody.parentNode;
+                var bao = khung.previousElementSibling;
+                if (!bao || !bao.classList.contains('bao-gop')){
+                    bao = document.createElement('div');
+                    bao.className = 'alert alert-info py-2 px-3 mb-0 small bao-gop';
+                    bao.setAttribute('role', 'status');
+                    khung.parentNode.insertBefore(bao, khung);
+                }
+                bao.textContent = ten + ' đã có ở dòng ' + thuTu + ' — đã cộng thêm ' + them + ' vào số lượng (nay là ' + nay + ').';
+                bao.style.display = 'block';
+                clearTimeout(bao.__an);
+                bao.__an = setTimeout(function (){ bao.style.display = 'none'; }, 6000);
+                return true;
+            }
+
             function addRow(data){
                 data = data || {};
                 var tr = document.createElement('tr'); tr.className = 'line-row';
@@ -450,6 +500,7 @@ $profit = (float) $item['subtotal'] - (float) $item['cost_amount'];
                 var price = oTien(inp(tienTo + 'price[]', 'price text-right', data.price));
 
                 sel.addEventListener('change', function (){
+                    if (gopNeuTrung(tr, sel)) return;   // đã cộng vào dòng cũ, dòng này không còn
                     var o = sel.options[sel.selectedIndex];
                     var p = o ? o.getAttribute('data-price') : 0;
                     /* Đổi mặt hàng thì giá PHẢI đi theo mặt hàng mới.
