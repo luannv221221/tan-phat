@@ -99,15 +99,24 @@ tường lửa nhà cung cấp máy chủ. **Giữ cổng 80** — Let's Encrypt
 > (`/dashboard/`) với chứng chỉ tự ký `localhost` hết hạn từ 2019 — vì vậy mở
 > `https://...` thấy cảnh báo đỏ rồi ra trang XAMPP. Bước 5.2 + 5.3 sửa đúng chỗ đó.
 
-**5.2. Cấp chứng chỉ** — tải win-acme (bản x64) giải nén vào `C:\win-acme`, rồi:
+**5.2. Cấp chứng chỉ** — tải win-acme (bản x64) rồi giải nén vào **`C:\win-acme`**,
+đừng để chạy trong `Downloads`: win-acme tạo tác vụ gia hạn trỏ vào đúng chỗ đặt
+`wacs.exe`, ai dọn `Downloads` là gia hạn chết. Trong PowerShell:
+
+```powershell
+Expand-Archive -Path "$env:USERPROFILE\Downloads\win-acme.v2.2.9.1701.x64.trimmed.zip" -DestinationPath "C:\win-acme" -Force
+```
+
+Rồi chạy **một dòng** (dán được cả vào cmd lẫn PowerShell):
 
 ```bat
-C:\win-acme\wacs.exe --target manual ^
-  --host eteksofts.vn,www.eteksofts.vn,tp01.etek.eteksofts.vn,dmsg.etek.eteksofts.vn,dmdn.etek.eteksofts.vn ^
-  --validation filesystem --webroot "C:\xampp\htdocs\tan-phat" ^
-  --store pemfiles --pemfilespath "C:\ssl" ^
-  --installation none
+C:\win-acme\wacs.exe --target manual --host "eteksofts.vn,www.eteksofts.vn,tp01.etek.eteksofts.vn,dmsg.etek.eteksofts.vn,dmdn.etek.eteksofts.vn" --validation filesystem --webroot "C:\xampp\htdocs\tan-phat" --store pemfiles --pemfilespath "C:\ssl" --installation none
 ```
+
+*(13/11: bản trước viết nhiều dòng nối bằng `^` — dấu nối của cmd. Dán vào
+PowerShell thì mỗi dòng thành một lệnh riêng và báo `Missing expression after unary
+operator '--'`. Danh sách `--host` phải để trong nháy kép: PowerShell coi dấu phẩy
+trần là mảng và tách thành nhiều tham số.)*
 
 - `--host`: kê **đúng các gara đang có** (xem màn Quản lý gara). Gara mở sau thì chạy
   lại lệnh này với danh sách mới.
