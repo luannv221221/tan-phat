@@ -126,9 +126,15 @@ C:\win-acme\wacs.exe --target manual --host "eteksofts.vn,www.eteksofts.vn,tp01.
 ```
 
 `--accepttos` = **đồng ý Điều khoản sử dụng của Let's Encrypt**. Cần cờ này vì có
-tham số dòng lệnh là win-acme chạy chế độ *Unattended* — không hỏi gì, nên không có
-chỗ bấm đồng ý. Muốn nhận thư báo của Let's Encrypt thì thêm
-`--emailaddress <email của anh>` vào cuối.
+tham số dòng lệnh là win-acme chạy chế độ *Unattended*, không có chỗ bấm đồng ý.
+Dù vậy nó **vẫn dừng lại hỏi email** (`Enter email(s) for notifications about
+problems and abuse`, đã gặp 13/11) — gõ email nhận thư báo rồi Enter. Muốn khỏi bị
+hỏi thì thêm `--emailaddress <email của anh>` vào cuối lệnh.
+
+> **Kết quả 13/11/2026:** đã cấp xong. Chứng chỉ Let's Encrypt `CN=eteksofts.vn`,
+> hạn tới **11/02/2027** (tự gia hạn, xem 5.4), phủ đúng 5 tên: `eteksofts.vn`,
+> `www.eteksofts.vn`, `tp01` / `dmsg` / `dmdn.etek.eteksofts.vn`. **Không** phủ các tên
+> `*.etek.rikkeiedu.org` — các tên đó chỉ dùng được bằng `http://`.
 
 *(13/11: bản trước viết nhiều dòng nối bằng `^` — dấu nối của cmd. Dán vào
 PowerShell thì mỗi dòng thành một lệnh riêng và báo `Missing expression after unary
@@ -142,11 +148,35 @@ trần là mảng và tách thành nhiều tham số.)*
 - `--store pemfiles`: Apache cần file `.pem`. Thiếu cờ này win-acme cất chứng chỉ
   vào kho chứng chỉ của Windows, Apache không đọc được.
 
-**5.3. VirtualHost 443** — thêm vào **cuối** `C:\xampp\apache\conf\extra\httpd-vhosts.conf`
+**5.3. VirtualHost 443** — **thêm** vào `C:\xampp\apache\conf\extra\httpd-vhosts.conf`
 (không phải `httpd.conf`), đường dẫn file lấy đúng như win-acme in ra trong `C:\ssl`.
 
 > **Chỉ thêm khối này SAU KHI `C:\ssl` đã có file `.pem`.** Thêm trước thì Apache
 > không khởi động được — sập cả trang `http://` đang chạy, không riêng `https://`.
+
+> **THÊM, đừng dán đè cả file.** File này đang chứa khối `<VirtualHost *:80>` — chính
+> khối đưa `http://` vào ứng dụng. 13/11 file bị dán đè chỉ còn khối 443: restart
+> xong `https://` chạy nhưng **mọi** `http://` rơi về trang XAMPP (`/dashboard/`), vì
+> cổng 80 không còn vhost nào, Apache trả thư mục gốc `C:/xampp/htdocs`.
+>
+> Nội dung đầy đủ của file sau bước này — **khối 80 đứng đầu** (thành mặc định cho
+> mọi tên và cả địa chỉ IP), khối 443 đứng sau:
+>
+> ```apache
+> <VirtualHost *:80>
+>     ServerName   eteksofts.vn
+>     ServerAlias  www.eteksofts.vn *.etek.eteksofts.vn etek.rikkeiedu.org *.etek.rikkeiedu.org
+>     DocumentRoot "C:/xampp/htdocs/tan-phat"
+>
+>     <Directory "C:/xampp/htdocs/tan-phat">
+>         AllowOverride All
+>         Require all granted
+>         Options -Indexes +FollowSymLinks
+>     </Directory>
+> </VirtualHost>
+>
+> # ... rồi khối <VirtualHost *:443> ngay dưới đây
+> ```
 
 ```apache
 <VirtualHost *:443>
