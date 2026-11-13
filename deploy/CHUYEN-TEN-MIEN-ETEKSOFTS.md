@@ -16,6 +16,10 @@ Máy chủ **đã nhận** request cho các tên đó (Apache đã đưa vào �
 dụng trả **"Không tìm thấy gara"** vì bảng `garage_domains` chưa khai chúng.
 `https://eteksofts.vn` không kết nối được — chưa có SSL.
 
+**Đo lại chiều 13/11/2026:** `http://eteksofts.vn/` đã ra trang Tân Phát (migration
+`000112` đã chạy, code trên máy chủ đã có bản mới). `https://` đã kết nối được
+nhưng ra trang XAMPP với chứng chỉ `localhost` hết hạn — còn thiếu Bước 5.
+
 `*.etek` chỉ phủ tên **có thêm một nhãn phía trước** (`tp01.etek...`). Tên trần
 `etek.eteksofts.vn` không có bản ghi và cũng **không cần**.
 
@@ -89,6 +93,12 @@ dấu `#` ở `LoadModule ssl_module modules/mod_ssl.so` và
 `Include conf/extra/httpd-ssl.conf`. Mở cổng **443** trên tường lửa Windows và
 tường lửa nhà cung cấp máy chủ. **Giữ cổng 80** — Let's Encrypt cần nó.
 
+> **Máy chủ hiện tại ĐÃ CÓ SẴN bước này** (anh gửi `httpd.conf` ngày 13/11, em đọc
+> và đo từ ngoài): `mod_ssl` đã bật, `httpd-ssl.conf` đã được nạp, cổng 443 đã mở.
+> **Không sửa `httpd.conf`.** Có điều 443 đang trả trang mặc định của XAMPP
+> (`/dashboard/`) với chứng chỉ tự ký `localhost` hết hạn từ 2019 — vì vậy mở
+> `https://...` thấy cảnh báo đỏ rồi ra trang XAMPP. Bước 5.2 + 5.3 sửa đúng chỗ đó.
+
 **5.2. Cấp chứng chỉ** — tải win-acme (bản x64) giải nén vào `C:\win-acme`, rồi:
 
 ```bat
@@ -107,8 +117,11 @@ C:\win-acme\wacs.exe --target manual ^
   vào kho chứng chỉ của Windows, Apache không đọc được.
 - Lần đầu nó hỏi email và đồng ý điều khoản — anh tự nhập.
 
-**5.3. VirtualHost 443** — thêm vào `C:\xampp\apache\conf\extra\httpd-vhosts.conf`,
-đường dẫn file lấy đúng như win-acme in ra trong `C:\ssl`:
+**5.3. VirtualHost 443** — thêm vào **cuối** `C:\xampp\apache\conf\extra\httpd-vhosts.conf`
+(không phải `httpd.conf`), đường dẫn file lấy đúng như win-acme in ra trong `C:\ssl`.
+
+> **Chỉ thêm khối này SAU KHI `C:\ssl` đã có file `.pem`.** Thêm trước thì Apache
+> không khởi động được — sập cả trang `http://` đang chạy, không riêng `https://`.
 
 ```apache
 <VirtualHost *:443>
@@ -128,7 +141,20 @@ C:\win-acme\wacs.exe --target manual ^
 </VirtualHost>
 ```
 
-Restart Apache. Mở `https://eteksofts.vn/` — phải có ổ khoá, không cảnh báo.
+Trước khi restart, kiểm cấu hình:
+
+```bat
+C:\xampp\apache\bin\httpd.exe -t
+```
+
+Phải ra `Syntax OK`. Ra lỗi thì **đừng restart** — gỡ khối vừa thêm, Apache vẫn
+chạy như cũ. Ra `Syntax OK` thì restart Apache (XAMPP Control Panel → Stop → Start).
+Mở `https://eteksofts.vn/` — phải có ổ khoá, không cảnh báo, ra trang Tân Phát
+(không còn `/dashboard/` của XAMPP).
+
+Khối này đứng trong `httpd-vhosts.conf`, được nạp **trước** `httpd-ssl.conf`, nên
+nó thành khối 443 mặc định: tên chưa có trong chứng chỉ (vd `https://etek.rikkeiedu.org`)
+cũng vào ứng dụng, chỉ còn cảnh báo sai tên — đỡ hơn trang XAMPP như hiện nay.
 
 **5.4. Gia hạn:** win-acme tự tạo tác vụ theo lịch, tự lấy chứng chỉ mới trước khi
 hết hạn (60 ngày). Apache chỉ đọc file mới **sau khi restart** — nhớ restart Apache
