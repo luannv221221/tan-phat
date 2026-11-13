@@ -415,7 +415,10 @@ ok(preg_match('~list\.style\.bottom\s*=\s*\(~', $js) === 1,
 /* MOT bo lang nghe cho CA TRANG, khong phai moi o mot bo: phieu hai chuc dong
    la hai chuc o chon, gan listener cuon cho tung o thi moi lan cuon chay hai
    chuc ham ma muoi chin cai dang dong. */
-ok(substr_count($js, "addEventListener('scroll'") === 1,
+/* Khong dem bo nghe cuon cua DONG GOI Y vuot ngang (`capNhat(khung)`): do la bo
+   gan theo tung khung bang, chi chay khi nguoi dung vuot bang do, khong phai bo
+   cua ca trang chay moi lan cuon. */
+ok(substr_count($js, "addEventListener('scroll'") - substr_count($js, "addEventListener('scroll', function () { capNhat(khung)") === 1,
    'Chi MOT bo lang nghe cuon cho ca trang',
    'Dang co ' . substr_count($js, "addEventListener('scroll'") . ' bo');
 
@@ -459,21 +462,23 @@ ok(strpos($js, "option[data-img]") !== false,
    'admin.js van xet option[data-img] de chua cho anh');
 
 // ===========================================================================
-section('Man hep — nut khong duoc bien mat, khong bi che (khach bao 12-13/11/2026)');
+section('Man hep — bang truot ngang, KHONG che, co dong goi y (khach bao 12-13/11/2026)');
 
-/* 12/11 khach: "responsive no khong dong deu, cac man co nhung nut bi mat".
-   Do that tren kho 375px, dem nut nam ngoai khung nhin:
+/* Ba lan, de lan sau khong quay lai hai cach da bi khach tu choi:
+
+   12/11 khach: "cac man co nhung nut bi mat". Do that tren kho 375px, dem nut
+   nam ngoai khung nhin:
 
        Don hang 0, Bai viet 0, Phieu thu 0        <- vua man
        Phieu nhap 2, Hoa don ban 3, Bao gia 4
        Xe cua khach 10, Hang hoa 11, Khach hang 20
 
-   Hai nguyen nhan khac han nhau, nen hai cach chua.
+   12/11 em GHIM cot thao tac vao mep phai. 13/11 khach chup man Bao gia: "bi che
+   nhe, tat ca mobile deu bi cai chia the nay" — cot ghim de len cot Khach hang.
+   13/11 em doi sang THE XEP DOC. Khach khong chon: gui lai anh man truot cu, noi
+   muon lam GIONG DANG TRUOT DO, chi la khong de no che.
 
-   13/11 khach chup man Bao gia tren dien thoai: "bi che nhe, tat ca mobile deu
-   bi cai chia the nay". Cach chua (b) lan dau — GHIM cot thao tac vao mep phai
-   — chua "nut bi mat" bang cach lam DU LIEU bi mat: cot ghim de len cot Khach
-   hang. Nay thay bang THE XEP DOC. */
+   NAY: bang truot ngang binh thuong + mot dong chu goi y duoi bang. */
 
 /* (a) KHOI NUT DAU THE: `.card-tools` co margin-left:auto va khong xuong hang.
        Man Hang hoa ba nut rong 340px trong khung 375px -> ket thuc o moc 428,
@@ -483,55 +488,96 @@ ok(preg_match('~@media \s*\(max-width:\s*767\.98px\)[^}]*?\{(?:[^{}]|\{[^{}]*\})
 ok(preg_match('~\.card-tools\s*\{[^}]*width:\s*100%~s', $css) === 1,
    'Man hep: khoi nut chiem tron mot hang cua rieng no');
 
-/* (b) THE XEP DOC cho bang co cot thao tac. */
-ok(strpos($css, '.bang-the') !== false, 'CSS co luat the xep doc `.bang-the`');
-ok(preg_match('~\.bang-the\s+thead\s*\{\s*display:\s*none~', $css) === 1,
-   'Man hep: an hang tieu de (nhan nam trong tung o)');
-ok(preg_match('~\.bang-the\s+tbody\s+td::before\s*\{[^}]*content:\s*attr\(data-label\)~s', $css) === 1,
-   'Moi o hien NHAN lay tu tieu de cot (data-label)');
-ok(preg_match('~\.bang-the,\s*\.bang-the\s+tbody,\s*\.bang-the\s+tr,\s*\.bang-the\s+td\s*\{[^}]*display:\s*block~s', $css) === 1,
-   'Bang chuyen sang bo cuc khoi (moi dong la mot the)');
-
-/* KHONG CON GHIM COT — dung cai khach bac. Giu rieng mot khang dinh de ai do
-   "cho gon" quay lai cach ghim thi test noi thang vao cho hong. */
+/* (b) KHONG GHIM, KHONG THE. Hai khang dinh rieng de ai do "cho gon" quay lai
+       mot trong hai cach da bi bac thi test noi thang vao cho hong. */
 ok(strpos($css, 'bang-ghim-cuoi') === false && strpos($js, 'bang-ghim-cuoi') === false,
-   'KHONG con cot ghim (position: sticky) — no de len cot Khach hang, khach bao "bi che"');
-ok(preg_match('~\.bang-the[^@]*?position:\s*sticky~s', $css) !== 1,
-   'The xep doc khong dung sticky o dau ca');
+   'KHONG con cot ghim — no de len cot Khach hang, khach bao "bi che"');
+ok(preg_match('~\b(?:td|th)\b[^{}]*\{[^}]*position:\s*sticky~', $css) !== 1,
+   'Khong o bang nao (td / th) dung position: sticky');
+ok(strpos($css, '.bang-the') === false && strpos($js, 'bang-the') === false,
+   'KHONG con the xep doc `.bang-the` — khach muon dang truot, khong phai the',
+   'Khach gui lai anh man truot cu: "muon lam giong dang truot nay co, nhung khong de no che"');
+ok(strpos($js, "setAttribute('data-label'") === false, 'admin.js khong con gan nhan the (data-label)');
 
-/* The khong duoc tran ra khoi khung: khong co min-width cung tren o. */
-ok(preg_match('~\.bang-the\s+tbody\s+td\s*\{[^}]*white-space:\s*normal~s', $css) === 1,
-   'O trong the cho xuong dong (bang goc co text-nowrap — khong thi gia tri dai tran ra ngoai)');
+/* (c) DONG GOI Y thay cho "nut bi mat": chu chu khong phai thu de len du lieu. */
+ok(strpos($js, 'goi-y-truot') !== false, 'admin.js gan dong goi y `.goi-y-truot` duoi bang');
+ok(strpos($js, "querySelectorAll('.table-responsive')") !== false,
+   'Gan theo khung `.table-responsive` — khong sua tung view, man viet sau tu duoc huong');
+ok(preg_match('~scrollWidth\s*-\s*khung\.clientWidth\s*>\s*4~', $js) === 1,
+   'Chi hien khi bang THAT SU rong hon man (co sai so lam tron)');
+ok(strpos($js, 'khung.scrollLeft') !== false, 'Het goi y khi da vuot toi cuoi bang');
+ok(strpos($js, 'passive: true') !== false, 'Nghe su kien cuon o che do passive (khong lam giat khi vuot)');
+ok(preg_match('~\.goi-y-truot\s*\{\s*display:\s*none~', $css) === 1, 'CSS: goi y mac dinh AN (man rong khong thay)');
+ok(preg_match('~@media \s*\(max-width:\s*767\.98px\)[^}]*?\{(?:[^{}]|\{[^{}]*\})*?\.goi-y-truot:not\(\[hidden\]\)\s*\{[^}]*display:\s*block~s', $css) === 1,
+   'CSS: goi y chi HIEN o man hep, va ton trong thuoc tinh hidden cua JS');
 
-/* GAN LOP + NHAN BANG JS, KHONG SUA 35 VIEW: file thu 36 viet sau nay se quen,
-   ma quen thi khong ai biet. Gan theo TIEU DE COT thi man moi tu duoc huong. */
-ok(strpos($js, "classList.add('bang-the')") !== false, 'admin.js gan lop the');
-ok(strpos($js, "setAttribute('data-label'") !== false, 'admin.js gan nhan tung o theo tieu de cot');
-ok(strpos($js, 'TEN_COT_NUT') !== false, 'Gan theo TIEU DE cot, khong gan bua moi bang');
-/* Co bang ma cot cuoi la DU LIEU chu khong phai nut — Bang tinh gia, cot cuoi
-   la gia ban cho nhom khach cuoi. Do la mot MA TRAN de so sanh theo hang va
-   cot, xep doc thanh the la pha mat cai de so sanh. */
-ok(preg_match("~TEN_COT_NUT[^;]*'thao tác'~u", $js) === 1, 'Danh sach ten cot nut co "thao tác"');
-ok(strpos($js, "bang.classList.contains('bang-dong-hang')") !== false,
-   'Bo qua bang nhap dong hang — bang do da co cach chua rieng tu 17/10/2026');
-/* Nhan tinh theo VI TRI COT (cong colspan), khong theo thu tu the <td>. */
-ok(strpos($js, "getAttribute('colspan')") !== false,
-   'Nhan tinh theo vi tri cot co tinh colspan (dong "Chua co du lieu" khong lam lech)');
+// ===========================================================================
+section('Nut tang / giam so luong tren dien thoai (khach bao 13/11/2026)');
 
-/* COT THAO TAC PHAI LA COT CUOI. Ca co che nay dung tren gia dinh do: o cuoi
-   moi duoc coi la hang nut va bo nhan; view nao dat no o giua thi the xep sai. */
-$saiCho = [];
-foreach (glob($goc . 'app/views/admin/*/lists.php') as $v){
-    $src = file_get_contents($v);
-    if (!preg_match('~<thead>(.*?)</thead>~s', $src, $mh)) continue;
-    preg_match_all('~<th[^>]*>(.*?)</th>~s', $mh[1], $mt);
-    if (empty($mt[1])) continue;
-    $ten = array_map(function($x){ return trim(strip_tags($x)); }, $mt[1]);
-    $i = array_search('Thao tác', $ten, true);
-    if ($i !== false && $i !== count($ten) - 1) $saiCho[] = basename(dirname($v));
+/* "Ban hang (So luong) ==> thieu so tang giam o mobile". O so tren may tinh co
+   mui ten cua trinh duyet; tren dien thoai KHONG co. */
+ok(strpos($js, 'input[name$="qty[]"]') !== false, 'admin.js nham theo DUOI TEN O (`...qty[]`), khong sua tung view');
+foreach (['so-luong-nhom', 'sl-giam', 'sl-tang'] as $lop){
+    ok(strpos($js, $lop) !== false, "admin.js tao `$lop`");
 }
-ok(empty($saiCho), 'Moi view: cot "Thao tác" la cot CUOI',
-   empty($saiCho) ? '' : 'Dat sai cho: ' . implode(', ', $saiCho));
+ok(strpos($js, 'new MutationObserver') !== false && strpos($js, 'addedNodes.forEach(quet)') !== false,
+   'Theo doi DOM: dong hang them sau cung tu co nut (cac view dung bang JS)');
+ok(preg_match('~o\.readOnly\s*\|\|\s*o\.disabled~', $js) === 1,
+   'Khong gan cho o chi doc / vo hieu (don da khoa) — nut bam duoc ma o khong doi la nut noi doi');
+ok(preg_match('~huong\s*<\s*0\s*&&\s*kq\s*<\s*1~', $js) === 1, 'Nut giam khong xuong duoi 1');
+ok(strpos($js, "new Event('input', { bubbles: true })") !== false,
+   'Doi xong ban su kien `input` — cac view nghe dung su kien nay de tinh lai tong tien');
+ok(strpos($js, "b.type = 'button'") !== false, 'Nut la type=button (khong lam nop form khi bam)');
+
+/* Moi form dong hang deu dat ten o so luong ket thuc bang `qty[]` — neu mot form
+   doi ten (quantity[]) thi no lang le mat nut, khong ai bao. */
+$formDong = ['purchase-orders/add', 'purchase-orders/edit', 'quotations/add', 'quotations/edit',
+             'sales-invoices/add', 'sales-invoices/edit', 'goods-receipts/add', 'goods-receipts/edit',
+             'goods-issues/add', 'goods-issues/edit'];
+$sai = [];
+foreach ($formDong as $f){
+    $src = file_get_contents($goc . "app/views/admin/$f.php");
+    if (strpos($src, "qty[]") === false) $sai[] = "$f (khong co qty[])";
+    if (preg_match('~name=["\']quantity\[\]|\'quantity\[\]\'~', $src)) $sai[] = "$f (dung quantity[])";
+}
+ok(empty($sai), 'Moi form dong hang dat ten o so luong ket thuc bang `qty[]`', implode('; ', $sai));
+
+/* CSS: may tinh KHONG doi mot diem anh nao (khung `display: contents`, nut an);
+   man hep moi bat len, vung bam du lon cho ngon tay. */
+ok(preg_match('~\.so-luong-nhom\s*\{\s*display:\s*contents~', $css) === 1,
+   'May tinh: khung bien mat khoi bo cuc (`display: contents`)');
+ok(preg_match('~\.so-luong-nhom\s+\.sl-nut\s*\{\s*display:\s*none~', $css) === 1, 'May tinh: hai nut an');
+ok(preg_match('~@media \s*\(max-width:\s*767\.98px\)[^}]*?\{(?:[^{}]|\{[^{}]*\})*?\.so-luong-nhom\s*\{[^}]*display:\s*flex~s', $css) === 1,
+   'Man hep: khung bat len thanh hang ngang');
+ok(preg_match('~\.so-luong-nhom\s+\.sl-nut\s*\{[^}]*flex:\s*0\s+0\s+40px[^}]*min-height:\s*38px~s', $css) === 1,
+   'Man hep: nut rong 40px, cao >= 38px (ngon tay bam duoc)');
+
+// ===========================================================================
+section('Don mua — chon trung mot mat hang thi CONG SO LUONG, khong de thanh hai dong (khach bao 13/11/2026)');
+
+foreach (['add', 'edit'] as $m){
+    $v = file_get_contents($goc . "app/views/admin/purchase-orders/$m.php");
+    ok(strpos($v, 'function gopNeuTrung(tr, sel)') !== false, "$m.php: co ham gop dong trung");
+    ok(strpos($v, "sel.addEventListener('change', function (){ gopNeuTrung(tr, sel); });") !== false,
+       "$m.php: ham gop chay khi NGUOI DUNG doi o chon");
+    $thanGop = substr($v, (int) strpos($v, 'function gopNeuTrung'), 2600);
+    ok(strpos($thanGop, 'oCu.value = String(nay)') !== false && strpos($thanGop, 'soLuongO(oCu.value) + them') !== false,
+       "$m.php: so luong cua dong vua chon duoc CONG vao dong cu");
+    ok(strpos($thanGop, 'tr.remove()') !== false, "$m.php: dong vua chon bien mat (khong de hai dong)");
+    ok(strpos($thanGop, 'tinhLai()') !== false, "$m.php: tinh lai tong tien sau khi gop");
+    ok(strpos($thanGop, "'bao-gop'") !== false && strpos($v, 'id="bao-gop"') !== false,
+       "$m.php: noi cho nguoi dung biet vi sao dong bien mat (khong lang le)");
+    ok(strpos($thanGop, 'Math.round') !== false, "$m.php: cong so le lam tron 3 so (0.1 + 0.2 khong ra 0.30000000000000004)");
+}
+$vEdit = file_get_contents($goc . 'app/views/admin/purchase-orders/edit.php');
+/* Don da khoa (da nhap kho): chi gan ham gop khi don CHUA khoa. */
+$viTriGan  = strpos($vEdit, "sel.addEventListener('change'");
+$viTriKhoa = strrpos(substr($vEdit, 0, (int) $viTriGan), 'if (!KHOA)');
+ok($viTriGan !== false && $viTriKhoa !== false && ($viTriGan - $viTriKhoa) < 400,
+   'edit.php: ham gop chi gan khi don CHUA khoa (trong khoi `if (!KHOA)`)');
+ok(preg_match('~\.bang-dong-mua\s*>\s*tbody\s*>\s*tr\s*>\s*td:first-child\s*\{?\s*min-width:\s*240px~', $css) === 1
+   || preg_match('~\.bang-dong-mua\s*>\s*tbody\s*>\s*tr\s*>\s*td:first-child\s*\{\s*min-width:\s*240px~', $css) === 1,
+   'Man hep: o chon hang hoa cua don mua rong >= 240px (khong con bi bop thanh "PT-00")');
 
 // ===========================================================================
 section('Thanh tren tren dien thoai — loi tat hien, bo chu tieu de (khach bao 13/11/2026)');

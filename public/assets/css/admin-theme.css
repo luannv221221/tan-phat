@@ -306,6 +306,13 @@ body.adm-collapsed .adm-collapse-btn .ic { transform: rotate(180deg); }
 }
 .card-title { margin: 0; font-size: 16px; font-weight: 600; color: #1f2937; }
 .card-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+/* Dòng gợi ý vuốt ngang: mặc định ẩn, chỉ màn hẹp mới hiện (xem mục 18). */
+.goi-y-truot { display: none; }
+/* Nút tăng/giảm số lượng (admin.js gắn): máy tính đã có mũi tên của trình duyệt
+   nên bọc khung mà không hiện gì — `display: contents` làm khung biến mất khỏi
+   bố cục. Màn hẹp mới bật lên (mục 18). */
+.so-luong-nhom { display: contents; }
+.so-luong-nhom .sl-nut { display: none; }
 .card-body   { padding: 18px; }
 /* Ô "Đặt lịch" cạnh nút Cập nhật giá (màn Bảng tính giá, khách 13/11/2026). */
 .dat-lich { display: flex; align-items: center; gap: 6px; margin: 0; }
@@ -782,6 +789,11 @@ body.adm-auth { background: var(--bg-page); }
     .bang-dong-hang > thead > tr > th:nth-child(2),
     .bang-dong-hang > tbody > tr > td:nth-child(2) { min-width: 76px; }
 
+    /* Đơn mua cũng vậy: ô chọn hàng hoá bị bóp còn "PT-00" (ảnh chụp 13/11 khi
+       thử nút +/-) — chọn mặt hàng mà không đọc được tên mặt hàng. */
+    .bang-dong-mua > thead > tr > th:first-child,
+    .bang-dong-mua > tbody > tr > td:first-child { min-width: 240px; }
+
     /* Khối tổng đổi chỗ: <tfoot> chạy theo lưới cột nên nhãn "Tổng cộng"
        nằm ở mốc 515px, ngoài vùng 333px nhìn thấy — người dùng thấy mấy
        dòng trống trơn dưới bảng. Màn hẹp đổi sang khối xếp dọc nằm NGOÀI
@@ -1071,21 +1083,20 @@ body.adm-auth { background: var(--bg-page); }
        thấy tới 375px. Người dùng không thấy nút, và cũng không có dấu hiệu
        nào bảo rằng cuộn sang phải thì có.
 
-       LẦN ĐẦU EM CHỮA BẰNG CÁCH GHIM cột đó vào mép phải (12/11/2026). SAI.
-       Khách chụp màn Báo giá trên điện thoại gửi lại 13/11/2026: "bị che nhé,
-       tất cả mobile đều bị cái chia thế này" — cột ghim đè lên cột Khách hàng,
-       chữ bị cắt ngay dưới nó. Ghim giải quyết "nút bị mất" bằng cách làm DỮ
-       LIỆU bị mất: thứ này đổi chỗ che chứ không hết che. Và vì mọi màn danh
-       sách đều dùng chung, nó lỗi "tất cả mobile" đúng như khách nói.
+       LỊCH SỬ — hai cách đã bị khách từ chối, đừng quay lại:
+         1. GHIM cột đó vào mép phải (12/11). 13/11 khách chụp màn Báo giá: "bị
+            che nhé, tất cả mobile đều bị cái chia thế này" — cột ghim đè lên
+            cột Khách hàng, chữ bị cắt. Ghim chữa "nút bị mất" bằng cách làm DỮ
+            LIỆU bị mất.
+         2. THẺ XẾP DỌC (13/11). Khách không chọn: gửi lại ảnh màn trượt cũ, nói
+            muốn làm giống dạng trượt đó, chỉ là không để nó che.
 
-       NAY: bảng có cột thao tác thành THẺ XẾP DỌC trên màn hẹp — mỗi dòng là một
-       thẻ, mỗi ô là một cặp "nhãn: giá trị", cột thao tác nằm cuối thẻ. Không
-       còn cuộn ngang, không còn gì bị đè, không còn nút nào ngoài tầm. Đây là
-       cách các bảng danh sách vẫn được làm trên điện thoại.
+       NAY: bảng trượt ngang bình thường, KHÔNG ghim, KHÔNG thẻ. Phần "không
+       thấy nút" chữa bằng một dòng chữ gợi ý ngay dưới bảng — chữ chứ không phải
+       thứ đè lên dữ liệu, nên không che được gì.
 
-   KHÔNG SỬA 35 FILE VIEW. Lớp `.bang-the` và nhãn từng ô (`data-label`) do
-   admin.js gắn từ tiêu đề cột, và chỉ gắn khi tiêu đề cột cuối đúng là một cột
-   thao tác — xem lý do ở đó.
+   KHÔNG SỬA TỪNG FILE VIEW. Dòng gợi ý `.goi-y-truot` do admin.js gắn dưới mọi
+   `.table-responsive` có bảng — màn viết sau tự được hưởng.
    ========================================================================== */
 
 
@@ -1106,67 +1117,38 @@ body.adm-auth { background: var(--bg-page); }
     .card-tools .nut-tinh-lai { flex: 1 1 100%; margin: 0; }
     .card-tools .nut-tinh-lai .btn { width: 100%; }
 
-    /* ---- (b) Bảng có cột thao tác -> thẻ xếp dọc ---- */
-    .bang-the thead { display: none; }
-    .bang-the,
-    .bang-the tbody,
-    .bang-the tr,
-    .bang-the td { display: block; width: 100%; }
-
-    .bang-the tbody tr {
-        margin: 0 12px 12px;
-        width: auto;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        background: var(--bg-surface);
-        overflow: hidden;
-    }
-    .bang-the tbody td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 14px;
-        padding: 9px 14px;
-        border: 0;
-        border-bottom: 1px solid var(--border);
-        background: transparent;
-        text-align: right;
-        /* Bảng gốc có thể khai white-space:nowrap (màn Hàng hoá có `text-nowrap`):
-           trong thẻ thì phải cho xuống dòng, không thì giá trị dài tràn ra ngoài. */
-        white-space: normal;
-        word-break: break-word;
-    }
-    /* Nhãn lấy từ tiêu đề cột (admin.js gắn data-label). */
-    .bang-the tbody td::before {
-        content: attr(data-label);
-        flex: 0 0 38%;
-        max-width: 38%;
-        text-align: left;
+    /* ---- (b) Bảng trượt ngang + dòng gợi ý (admin.js gắn .goi-y-truot) ----
+       Không ghim, không thẻ: khách chọn "dạng trượt cũ, chỉ là không để nó che". */
+    .goi-y-truot:not([hidden]) {
+        display: block;
+        padding: 6px 14px;
         font-size: 12px;
-        font-weight: 600;
+        text-align: center;
         color: #6b7280;
+        background: var(--bg-surface);
+        border-top: 1px solid var(--border);
     }
-    /* Ô không có nhãn (cột thao tác, ô trống): bỏ chỗ dành cho nhãn. */
-    .bang-the tbody td[data-label=""]::before { display: none; }
-    /* STT trong thẻ là thừa: mỗi thẻ đã là một dòng riêng. */
-    .bang-the tbody td[data-label="STT"] { display: none; }
+    .table-responsive { -webkit-overflow-scrolling: touch; }
 
-    /* Cột thao tác (ô cuối): các nút nằm cuối thẻ, xuống dòng nếu nhiều. */
-    .bang-the tbody td:last-child {
-        justify-content: flex-start;
-        flex-wrap: wrap;
-        border-bottom: 0;
-        text-align: left;
-        background: rgba(0, 0, 0, .025);
+    /* ---- (c) Nút − / + cạnh ô số lượng ----
+       Khách 13/11: "thiếu số tăng giảm ở mobile". Ngón tay cần vùng bấm >= 40px;
+       khung tự rộng ra theo nội dung nên cột số lượng nở theo, không cần đoán
+       thứ tự cột của từng bảng. */
+    .so-luong-nhom {
+        display: flex;
+        align-items: stretch;
+        gap: 4px;
+        min-width: 150px;
     }
-    .bang-the tbody td:last-child .btn { margin: 2px 4px 2px 0; }
-
-    /* Dòng "Chưa có dữ liệu" (colspan) không phải một thẻ dữ liệu. */
-    .bang-the tbody tr:has(> td[colspan]) { border: 0; background: transparent; }
-    .bang-the tbody td[colspan] { display: block; text-align: center; border: 0; }
-    .bang-the tbody td[colspan]::before { display: none; }
-
-    /* Rê chuột không còn nghĩa trên cảm ứng, và đè màu lên ô trong suốt trông lạ. */
-    .table-hover.bang-the tbody tr:hover td { background: transparent; }
-    .table-hover.bang-the tbody tr:hover td:last-child { background: rgba(0, 0, 0, .025); }
+    .so-luong-nhom .sl-nut {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 40px;
+        min-height: 38px;
+        padding: 0;
+        font-size: 20px;
+        line-height: 1;
+    }
+    .so-luong-nhom input { flex: 1 1 auto; min-width: 0; text-align: center; }
 }

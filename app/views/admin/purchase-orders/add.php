@@ -121,6 +121,7 @@ foreach ((array) $parts as $p){
                 </button>
             </div>
         </div>
+        <div id="bao-gop" class="alert alert-info py-2 px-3 mb-0 small" style="display:none;border-radius:0" role="status"></div>
         <div class="card-body table-responsive p-0">
             <table class="table table-sm mb-0 bang-dong-mua">
                 <thead><tr>
@@ -224,6 +225,58 @@ foreach ((array) $parts as $p){
         if (o) o.addEventListener('input', tinhLai);
     })();
 
+    /* CHỌN TRÙNG MỘT MẶT HÀNG -> CỘNG VÀO SỐ LƯỢNG DÒNG ĐÃ CÓ, KHÔNG ĐẺ DÒNG THỨ HAI.
+
+       Khách 13/11/2026: "chọn 2 sản phẩm giống nhau phải tăng số lượng đấy chứ
+       lại thành 2 dòng". Hai dòng cùng một mặt hàng là một đơn mua khó đọc (cùng
+       một cái bugi nằm ở hai chỗ) và lúc nhập kho lại sinh hai dòng phiếu cho
+       một mặt hàng.
+
+       Dòng vừa chọn (tr) là dòng BỊ GỘP: số lượng của nó cộng vào dòng cũ rồi nó
+       biến mất. Không đụng tới dòng cũ nào đã lưu trước khi có luật này — luật
+       chỉ chạy khi người dùng ĐỔI ô chọn, còn dòng dựng từ dữ liệu có sẵn không
+       đi qua sự kiện đó, nên mở đơn cũ ra không bị dồn dòng sau lưng. Đơn giá /
+       chiết khấu giữ của dòng cũ; riêng khi dòng cũ để trống mà dòng mới đã gõ
+       thì lấy của dòng mới, để không mất con số người dùng vừa nhập. */
+    function gopNeuTrung(tr, sel){
+        if (!sel.value) return;
+        var dongCu = null, thuTu = 0, i = 0;
+        Array.prototype.forEach.call(tbody.querySelectorAll('tr'), function (r){
+            i++;
+            if (r === tr || dongCu) return;
+            var s = r.querySelector('select[name="part[]"]');
+            if (s && s.value === sel.value){ dongCu = r; thuTu = i; }
+        });
+        if (!dongCu) return;
+
+        var oCu = dongCu.querySelector('.o-sl'), oMoi = tr.querySelector('.o-sl');
+        var them = soLuongO(oMoi && oMoi.value) || 1;
+        var nay  = Math.round((soLuongO(oCu.value) + them) * 1000) / 1000;
+        oCu.value = String(nay);
+
+        var gCu = dongCu.querySelector('.o-gia'), gMoi = tr.querySelector('.o-gia');
+        if (gCu && gMoi && gCu.value === '' && gMoi.value !== '') gCu.value = gMoi.value;
+        var kCu = dongCu.querySelector('.o-ck'), kMoi = tr.querySelector('.o-ck');
+        if (kCu && kMoi && kCu.value === '' && kMoi.value !== '') kCu.value = kMoi.value;
+
+        var ten = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].textContent : '';
+        tr.remove();
+        tinhLai();
+
+        dongCu.style.transition = 'background-color .3s';
+        dongCu.style.backgroundColor = '#fff3cd';
+        setTimeout(function (){ dongCu.style.backgroundColor = ''; }, 2200);
+        if (dongCu.scrollIntoView) dongCu.scrollIntoView({ block: 'nearest' });
+
+        var bao = document.getElementById('bao-gop');
+        if (bao){
+            bao.textContent = ten + ' đã có ở dòng ' + thuTu + ' — đã cộng thêm ' + them + ' vào số lượng (nay là ' + nay + ').';
+            bao.style.display = 'block';
+            clearTimeout(bao.__an);
+            bao.__an = setTimeout(function (){ bao.style.display = 'none'; }, 6000);
+        }
+    }
+
     function oChon(chon){
         var s = document.createElement('select');
         s.name = 'part[]';
@@ -246,7 +299,8 @@ foreach ((array) $parts as $p){
         var tr = document.createElement('tr');
 
         var td1 = document.createElement('td');
-        td1.appendChild(oChon(r && r.part_id));
+        var sel = oChon(r && r.part_id);
+        td1.appendChild(sel);
 
         var td2 = document.createElement('td');
         var qty = document.createElement('input');
@@ -301,6 +355,7 @@ foreach ((array) $parts as $p){
         qty.addEventListener('input', tinhLai);
         gia.addEventListener('input', tinhLai);
         ck.addEventListener('input', tinhLai);
+        sel.addEventListener('change', function (){ gopNeuTrung(tr, sel); });
         tinhLai();
 
         /* Ô chọn mới thêm phải được gắn ô tìm kiếm — admin.js theo dõi DOM nên

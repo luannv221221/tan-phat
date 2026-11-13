@@ -358,72 +358,147 @@
 })();
 
 /* ============================================================
- * MÀN HẸP — BẢNG CÓ CỘT THAO TÁC THÀNH THẺ XẾP DỌC
+ * MÀN HẸP — BẢNG TRƯỢT NGANG, CÓ DÒNG GỢI Ý "VUỐT ĐỂ XEM THÊM"
  *
- * Khách phản ánh 12/11/2026 "các màn có những nút bị mất": bảng dài hơn màn
- * thì cuộn ngang, nhưng cột Thao tác là cột CUỐI nên nằm xa nhất bên phải.
+ * Lịch sử ba lần, để lần sau không quay lại hai cách đã bị khách từ chối:
  *
- * Lần đầu em ghim cột đó vào mép phải. Khách chụp màn Báo giá gửi lại 13/11:
- * "bị che nhé, tất cả mobile đều bị cái chia thế này" — cột ghim đè lên cột
- * Khách hàng. Nay mỗi dòng thành một THẺ (nhãn: giá trị), nút nằm cuối thẻ.
- * Phần tô vẽ nằm ở admin-theme.css mục 18; ở đây chỉ gắn lớp và nhãn.
+ *   12/11/2026  Khách: "các màn có những nút bị mất". Nguyên nhân: bảng dài hơn
+ *               màn thì cuộn ngang, cột Thao tác lại là cột CUỐI nên nằm xa
+ *               nhất bên phải, mà không có dấu hiệu nào bảo "vuốt sang phải".
+ *   12/11       Em GHIM cột thao tác vào mép phải. Sai: 13/11 khách chụp màn Báo
+ *               giá "bị che nhé, tất cả mobile đều bị cái chia thế này" — cột
+ *               ghim đè lên cột Khách hàng, chữ bị cắt.
+ *   13/11       Em đổi sang THẺ XẾP DỌC. Khách không chọn cách đó: gửi lại ảnh
+ *               màn trượt cũ và nói muốn làm GIỐNG DẠNG TRƯỢT ĐÓ, chỉ là không
+ *               để nó che.
  *
- * VÌ SAO GẮN BẰNG JS CHỨ KHÔNG VIẾT THẲNG VÀO VIEW:
- * có 35 view danh sách đang dùng cột Thao tác. Sửa từng file thì file thứ 36
- * viết sau này sẽ quên, mà quên thì không ai biết — màn mới lặng lẽ hỏng đúng
- * kiểu cũ. Gắn theo TIÊU ĐỀ CỘT thì màn mới tự được hưởng.
+ * NAY: bảng trượt ngang bình thường — không ghim, không thẻ, không cột nào đè
+ * cột nào. Phần "nút bị mất" của ngày 12/11 được chữa bằng MỘT DÒNG GỢI Ý nằm
+ * ngay dưới bảng ("Vuốt ngang để xem đủ các cột"), chỉ hiện khi bảng thật sự
+ * rộng hơn màn và người dùng chưa vuốt tới cuối. Gợi ý chữ chứ không phải phần
+ * tử đè lên dữ liệu: nó không che gì được.
  *
- * VÌ SAO KHÔNG ÁP CHO MỌI BẢNG: có bảng mà cột cuối là DỮ LIỆU, không phải
- * nút — ví dụ Bảng tính giá, cột cuối là giá bán cho nhóm khách cuối cùng.
- * Bảng đó là một ma trận để so sánh theo hàng và cột, xếp dọc thành thẻ là phá
- * mất cái để so sánh. Nên chỉ chuyển khi tiêu đề cột cuối đúng là một cột
- * thao tác.
- *
- * NHÃN LẤY TỪ TIÊU ĐỀ, tính theo VỊ TRÍ CỘT chứ không theo thứ tự thẻ <td>,
- * vì một dòng có thể dùng colspan. Dòng "Chưa có dữ liệu" (một ô colspan) bỏ qua.
+ * Gắn bằng JS theo `.table-responsive` thay vì sửa từng view, vì có hàng chục
+ * màn dùng khung này — màn viết sau tự được hưởng. Ẩn/hiện bằng thuộc tính
+ * `hidden`; CSS (admin-theme.css mục 18) chỉ cho nó hiện ở màn hẹp.
  * ============================================================ */
 (function () {
     'use strict';
 
-    var TEN_COT_NUT = ['thao tác', 'xem', 'hành động', 'sửa'];
+    var CHU_GOI_Y = '↔ Vuốt ngang để xem đủ các cột';
 
-    function chuan(t){
-        return (t || '').replace(/\s+/g, ' ').trim();
+    function goiYCua(khung){
+        var ke = khung.nextElementSibling;
+        if (ke && ke.classList.contains('goi-y-truot')) return ke;
+        var d = document.createElement('div');
+        d.className = 'goi-y-truot';
+        d.hidden = true;
+        d.textContent = CHU_GOI_Y;
+        khung.parentNode.insertBefore(d, khung.nextSibling);
+        return d;
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function capNhat(khung){
+        var d = goiYCua(khung);
+        var conXa = khung.scrollWidth - khung.clientWidth - khung.scrollLeft;
+        /* 4px: sai số làm tròn của trình duyệt khi cuộn tới sát mép phải */
+        d.hidden = !(khung.scrollWidth - khung.clientWidth > 4 && conXa > 4);
+    }
 
-        document.querySelectorAll('.table-responsive table.table').forEach(function (bang) {
-
-            /* Bảng nhập dòng hàng (báo giá / hoá đơn / phiếu nhập) đã có cách
-               xử lý riêng cho màn hẹp từ 17/10/2026 — min-width, khối tổng xếp
-               dọc. Hai cách chữa cho cùng một bảng là cãi nhau. */
-            if (bang.classList.contains('bang-dong-hang')) return;
-
-            var th = bang.querySelectorAll('thead th');
-            if (!th.length) return;
-
-            var cuoi = chuan(th[th.length - 1].textContent).toLowerCase();
-            if (TEN_COT_NUT.indexOf(cuoi) === -1) return;
-
-            var nhan = [];
-            th.forEach(function (h) { nhan.push(chuan(h.textContent)); });
-
-            bang.querySelectorAll('tbody > tr').forEach(function (tr) {
-                var cot = 0;
-                Array.prototype.forEach.call(tr.children, function (td) {
-                    if (td.tagName !== 'TD') return;
-
-                    /* Ô cuối (thao tác) KHÔNG có nhãn: nó chỉ là một hàng nút, "Thao
-                       tác:" đứng trước chỉ tốn chỗ. */
-                    var laCuoi = (td === tr.lastElementChild);
-                    td.setAttribute('data-label', laCuoi ? '' : (nhan[cot] || ''));
-
-                    cot += (parseInt(td.getAttribute('colspan'), 10) || 1);
-                });
-            });
-
-            bang.classList.add('bang-the');
+    function gan(){
+        document.querySelectorAll('.table-responsive').forEach(function (khung) {
+            if (!khung.querySelector('table')) return;
+            if (!khung.__goiYTruot) {
+                khung.__goiYTruot = true;
+                khung.addEventListener('scroll', function () { capNhat(khung); }, { passive: true });
+            }
+            capNhat(khung);
         });
-    });
+    }
+
+    document.addEventListener('DOMContentLoaded', gan);
+    window.addEventListener('load', gan);
+    window.addEventListener('resize', gan);
+})();
+
+/* ============================================================
+ * NÚT TĂNG / GIẢM SỐ LƯỢNG TRÊN ĐIỆN THOẠI
+ *
+ * Khách 13/11/2026: "Bán hàng (Số lượng) ==> thiếu số tăng giảm ở mobile".
+ * Ô số trên máy tính có mũi tên tăng/giảm của trình duyệt; trên điện thoại
+ * KHÔNG có — muốn đổi từ 1 lên 2 phải bấm vào ô, mở bàn phím, xoá, gõ lại.
+ *
+ * Gắn cho mọi ô số lượng của dòng hàng (tên ô kết thúc bằng `qty[]`: `qty[]`
+ * của đơn mua, `line_qty[]` của phiếu kho, `<tiền tố>qty[]` của báo giá / hoá
+ * đơn). Theo TÊN Ô chứ không sửa từng view: các view đó dựng dòng bằng JS,
+ * theo dõi DOM thì dòng thêm sau cũng tự có nút, và màn viết sau cũng vậy.
+ *
+ * Chỉ HIỆN ở màn hẹp (CSS mục 18). Trên máy tính bọc khung vào nhưng
+ * `display: contents` và ẩn hai nút, nên không đổi một điểm ảnh nào.
+ *
+ * Bước 1 đơn vị. KHÔNG giảm xuống dưới 1: số lượng 0 hay âm không có nghĩa
+ * trong một dòng hàng, còn muốn bỏ dòng thì đã có nút xoá. Ô đang là số lẻ nhỏ
+ * hơn 1 (0.5 lít) thì nút giảm không đổi nó. Sau khi đổi, bắn sự kiện `input`
+ * để tổng tiền tính lại — các view đang nghe đúng sự kiện đó khi gõ.
+ *
+ * Không gắn cho ô chỉ đọc / vô hiệu (đơn đã khoá): nút bấm được mà ô không đổi
+ * là một nút nói dối.
+ * ============================================================ */
+(function () {
+    'use strict';
+
+    var CHON = 'input[name$="qty[]"]';
+
+    function lam3(n) { return Math.round(n * 1000) / 1000; }
+
+    function buoc(o, huong) {
+        if (o.readOnly || o.disabled) return;
+        var n = parseFloat(String(o.value).replace(',', '.')) || 0;
+        var kq = huong > 0 ? n + 1 : n - 1;
+        if (huong < 0 && kq < 1) kq = Math.min(n, 1);
+        var max = parseFloat(o.max);
+        if (isFinite(max) && kq > max) kq = max;
+        o.value = String(lam3(kq));
+        o.dispatchEvent(new Event('input', { bubbles: true }));
+        o.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function nut(chu, lop, nhan, huong, o) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-outline-secondary sl-nut ' + lop;
+        b.textContent = chu;
+        b.setAttribute('aria-label', nhan);
+        b.addEventListener('click', function () { buoc(o, huong); });
+        return b;
+    }
+
+    function gan(o) {
+        if (o.__soLuongNut || o.readOnly || o.disabled || !o.parentNode) return;
+        o.__soLuongNut = true;
+        var khung = document.createElement('div');
+        khung.className = 'so-luong-nhom';
+        o.parentNode.insertBefore(khung, o);
+        khung.appendChild(nut('−', 'sl-giam', 'Giảm 1', -1, o));
+        khung.appendChild(o);
+        khung.appendChild(nut('+', 'sl-tang', 'Tăng 1', 1, o));
+    }
+
+    function quet(goc) {
+        if (!goc || goc.nodeType !== 1) return;
+        if (goc.matches && goc.matches(CHON)) gan(goc);
+        if (goc.querySelectorAll) goc.querySelectorAll(CHON).forEach(gan);
+    }
+
+    function batDau() {
+        quet(document.body);
+        if (window.MutationObserver) {
+            new MutationObserver(function (muts) {
+                muts.forEach(function (m) { m.addedNodes.forEach(quet); });
+            }).observe(document.body, { childList: true, subtree: true });
+        }
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', batDau);
+    else batDau();
 })();
