@@ -123,8 +123,15 @@ Tải bản `win-acme` (pluggable, x64) từ trang chính thức, giải nén v�
 ### 4.3. Cấp chứng chỉ cho một tên miền
 
 ```
-C:\win-acme\wacs.exe --target manual --host abc.com,www.abc.com --installation script
+C:\win-acme\wacs.exe --target manual --host abc.com,www.abc.com ^
+  --validation filesystem --webroot "C:\xampp\htdocs\tan-phat" ^
+  --store pemfiles --pemfilespath "C:\ssl" --installation none
 ```
+
+*(Sửa 13/11/2026: bản trước thiếu `--store pemfiles` — thiếu cờ đó win-acme cất
+chứng chỉ vào kho chứng chỉ của Windows và **không sinh file `.pem`** cho Apache.
+`--validation filesystem` vì Apache đang giữ cổng 80, win-acme không tự mở cổng
+đó để xác minh được.)*
 
 Lần đầu nó hỏi email (để Let's Encrypt báo khi sắp hết hạn) và yêu cầu đồng ý
 điều khoản. Những lần sau không hỏi lại.
@@ -143,8 +150,8 @@ Mỗi tên miền một khối, trỏ vào file chứng chỉ win-acme vừa sin
     DocumentRoot "C:/xampp/htdocs/tan-phat"
 
     SSLEngine on
-    SSLCertificateFile    "C:/ProgramData/win-acme/.../abc.com-crt.pem"
-    SSLCertificateKeyFile "C:/ProgramData/win-acme/.../abc.com-key.pem"
+    SSLCertificateFile    "C:/ssl/abc.com-chain.pem"
+    SSLCertificateKeyFile "C:/ssl/abc.com-key.pem"
 
     <Directory "C:/xampp/htdocs/tan-phat">
         AllowOverride All

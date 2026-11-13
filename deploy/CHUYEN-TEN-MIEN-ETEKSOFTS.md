@@ -1,7 +1,7 @@
-# Chuyển sang tên miền `eteksofts.vn`
+# Chuyển sang tên miền `eteksofts.vn` — làm trên máy chủ
 
-Khách yêu cầu (13/11/2026). Anh đã trỏ DNS xong. File này là danh sách việc còn lại,
-theo thứ tự — **làm đúng thứ tự**, vì bước sau dựa vào bước trước.
+Khách yêu cầu (13/11/2026). Anh đã trỏ DNS xong. File này là các việc còn lại
+trên máy chủ (Windows + XAMPP), **làm đúng thứ tự** — bước sau dựa vào bước trước.
 
 ## Tình trạng đo được ngày 13/11/2026
 
@@ -12,31 +12,59 @@ theo thứ tự — **làm đúng thứ tự**, vì bước sau dựa vào bư�
 | `www` CNAME `eteksofts.vn.` | `www.eteksofts.vn` → đúng IP máy chủ |
 | `crm` A `27.72.102.65` | Máy khác, **không phải** máy này — không liên quan |
 
-Máy chủ **đã nhận** request cho các tên đó (Apache nhận mọi host), nhưng ứng dụng trả
-trang **"Không tìm thấy gara"** vì bảng `garage_domains` chưa khai chúng. Đường đã thông,
-chỉ thiếu khai báo "tên này thuộc gara nào". Cổng 443 chưa có chứng chỉ:
-`https://eteksofts.vn` không kết nối được.
+Máy chủ **đã nhận** request cho các tên đó (Apache đã đưa vào ứng dụng), nhưng ứng
+dụng trả **"Không tìm thấy gara"** vì bảng `garage_domains` chưa khai chúng.
+`https://eteksofts.vn` không kết nối được — chưa có SSL.
 
-Lưu ý: `*.etek` chỉ phủ tên **có thêm một nhãn phía trước** (`tp01.etek...`). Tên trần
-`etek.eteksofts.vn` không có bản ghi nào và cũng **không cần** — đừng khai nó.
+`*.etek` chỉ phủ tên **có thêm một nhãn phía trước** (`tp01.etek...`). Tên trần
+`etek.eteksofts.vn` không có bản ghi và cũng **không cần**.
 
 ---
 
-## Bước 1 — Chạy migration `000112` (TRƯỚC khi đẩy code, như mọi migration)
+## Bước 1 — Sao lưu CSDL máy chủ
 
-```bash
-php migrate.php
+phpMyAdmin máy chủ → chọn CSDL → tab **Export** → Go. Cất file. Đường lùi duy nhất.
+
+## Bước 2 — Chạy migration TRƯỚC, đẩy code SAU
+
+**Không nhập đè CSDL lần này.** Khách đang nhập dữ liệu thật trên máy chủ (đặt hàng
+web, báo giá…); nhập đè là xoá sạch chỗ đó. Chạy migration thì chỉ thêm, không mất gì.
+
+Mở **cmd** trên máy chủ:
+
+```bat
+cd /d C:\xampp\htdocs\tan-phat
+git fetch origin
+git checkout origin/ban-giao-khach -- database/migrations
+C:\xampp\php\php.exe migrate.php status
+C:\xampp\php\php.exe migrate.php
+git pull --ff-only origin ban-giao-khach
 ```
 
-Migration `2026_11_13_000112_ten_mien_eteksofts` **chỉ thêm** dòng vào `garage_domains`:
+- Dòng `git checkout ... -- database/migrations` lấy **riêng** các file migration mới
+  về trước, để chạy migration khi code cũ vẫn đang chạy. Sau đó `git pull` vẫn chạy
+  bình thường (đã thử trên một bản sao: pull qua, cây sạch).
+- `migrate.php status` để xem máy chủ đang thiếu những migration nào. Đợt này có
+  thể gồm `000109` → `000112` (tuỳ lần cuối anh đẩy lên là lúc nào).
+- Cả bốn migration đợt này đều **chỉ thêm** (thêm cột có giá trị mặc định, thêm
+  module, thêm dòng tên miền) — code cũ chạy trên CSDL mới không sao.
+- `000112` khai `eteksofts.vn` cho gara tổng (`www.` tự khớp) và
+  `<mã gara>.etek.eteksofts.vn` cho mỗi gara. **Không** đổi host chính, **không**
+  gỡ tên miền cũ.
 
-- Gara tổng: `eteksofts.vn` (`www.eteksofts.vn` tự khớp — hệ thống bỏ `www.` trước khi so).
-- Mỗi gara: `<mã gara>.etek.eteksofts.vn`, ví dụ `tp01.etek.eteksofts.vn`.
+## Bước 3 — `.env` trên máy chủ
 
-Nó **không** đổi host chính, **không** gỡ tên miền cũ, chạy lại không sinh dòng trùng.
-Không chạy được migration thì vào **Quản lý gara → Tên miền** khai tay đúng các dòng trên.
+```
+APP_URL=
+APP_DEBUG=false
+```
 
-## Bước 2 — Mở thử từng địa chỉ (bằng `http://`, chưa cần SSL)
+- `APP_URL` **trống**: địa chỉ tự suy từ tên miền đang mở. Nếu đang ghim
+  `http://etek.rikkeiedu.org` thì trang mở bằng `eteksofts.vn` vẫn nạp ảnh, CSS, font
+  từ tên cũ — trình duyệt chặn font khác tên miền, và liên kết dẫn về tên cũ.
+- `APP_DEBUG=false`: đang `true` thì trang lỗi in câu SQL ra cho khách xem.
+
+## Bước 4 — Mở thử bằng `http://` (chưa cần SSL)
 
 | Địa chỉ | Phải thấy |
 |---|---|
@@ -45,57 +73,96 @@ Không chạy được migration thì vào **Quản lý gara → Tên miền** k
 | `http://tp01.etek.eteksofts.vn/` | Trang Tân Phát |
 | `http://dmsg.etek.eteksofts.vn/` | Trang gara Sài Gòn *(nếu còn gara demo)* |
 | `http://khong-co.etek.eteksofts.vn/` | "Không tìm thấy gara" (bị chặn đúng) |
+| `http://etek.rikkeiedu.org/` | Vẫn chạy như cũ |
 
-Vẫn thấy "Không tìm thấy gara" ở dòng 1–4: migration chưa chạy trên máy chủ này.
+Còn "Không tìm thấy gara" ở 4 dòng đầu: migration `000112` chưa chạy.
 
-## Bước 3 — `.env` trên máy chủ: `APP_URL` phải **để trống**
+## Bước 5 — SSL (Let's Encrypt, miễn phí, bằng win-acme)
 
+**Cách gọn nhất: MỘT chứng chỉ kê đủ các tên đang dùng**, xác minh qua HTTP (tự
+động, tự gia hạn), không cần chứng chỉ wildcard. Wildcard `*.etek.eteksofts.vn` bắt
+buộc xác minh qua DNS (thêm bản ghi TXT ở Mắt Bão) và **phải làm tay lại mỗi 60
+ngày** — sớm muộn cũng quên.
+
+**5.1. Bật SSL cho Apache** (nếu chưa): trong `C:\xampp\apache\conf\httpd.conf` bỏ
+dấu `#` ở `LoadModule ssl_module modules/mod_ssl.so` và
+`Include conf/extra/httpd-ssl.conf`. Mở cổng **443** trên tường lửa Windows và
+tường lửa nhà cung cấp máy chủ. **Giữ cổng 80** — Let's Encrypt cần nó.
+
+**5.2. Cấp chứng chỉ** — tải win-acme (bản x64) giải nén vào `C:\win-acme`, rồi:
+
+```bat
+C:\win-acme\wacs.exe --target manual ^
+  --host eteksofts.vn,www.eteksofts.vn,tp01.etek.eteksofts.vn,dmsg.etek.eteksofts.vn,dmdn.etek.eteksofts.vn ^
+  --validation filesystem --webroot "C:\xampp\htdocs\tan-phat" ^
+  --store pemfiles --pemfilespath "C:\ssl" ^
+  --installation none
 ```
-APP_URL=
-```
 
-Nếu đang ghim `APP_URL=http://etek.rikkeiedu.org` thì trang mở bằng `eteksofts.vn` vẫn nạp
-ảnh, CSS, font từ tên miền **cũ** — trình duyệt chặn font khác tên miền (CORS) và mọi liên
-kết/chuyển hướng văn bản dẫn về tên cũ. Để trống thì địa chỉ tự suy ra từ tên miền đang mở.
-(Đây cũng là lời khuyên của `HUONG-DAN-SSL-NHIEU-TEN-MIEN.md` mục 6.)
+- `--host`: kê **đúng các gara đang có** (xem màn Quản lý gara). Gara mở sau thì chạy
+  lại lệnh này với danh sách mới.
+- `--webroot`: đúng `DocumentRoot` của vhost. `.htaccess` của dự án phục vụ thẳng
+  file có thật, nên file xác minh `/.well-known/acme-challenge/...` đi qua được.
+- `--store pemfiles`: Apache cần file `.pem`. Thiếu cờ này win-acme cất chứng chỉ
+  vào kho chứng chỉ của Windows, Apache không đọc được.
+- Lần đầu nó hỏi email và đồng ý điều khoản — anh tự nhập.
 
-## Bước 4 — SSL cho tên miền mới
-
-Cần chứng chỉ cho:
-
-| Phủ | Cách cấp |
-|---|---|
-| `eteksofts.vn`, `www.eteksofts.vn` | HTTP-01 (win-acme) — làm được ngay |
-| `*.etek.eteksofts.vn` (mọi gara) | **Wildcard bắt buộc DNS-01**: thêm bản ghi TXT `_acme-challenge.etek` ở nơi quản lý DNS (đang là Mắt Bão — `ns1.matbao.vn`). Hoặc cấp lẻ từng gara bằng HTTP-01 |
-
-Cách làm chi tiết: [`HUONG-DAN-SSL-NHIEU-TEN-MIEN.md`](HUONG-DAN-SSL-NHIEU-TEN-MIEN.md). VirtualHost:
+**5.3. VirtualHost 443** — thêm vào `C:\xampp\apache\conf\extra\httpd-vhosts.conf`,
+đường dẫn file lấy đúng như win-acme in ra trong `C:\ssl`:
 
 ```apache
-ServerName   eteksofts.vn
-ServerAlias  www.eteksofts.vn *.etek.eteksofts.vn
+<VirtualHost *:443>
+    ServerName   eteksofts.vn
+    ServerAlias  www.eteksofts.vn *.etek.eteksofts.vn
+    DocumentRoot "C:/xampp/htdocs/tan-phat"
+
+    SSLEngine on
+    SSLCertificateFile    "C:/ssl/eteksofts.vn-chain.pem"
+    SSLCertificateKeyFile "C:/ssl/eteksofts.vn-key.pem"
+
+    <Directory "C:/xampp/htdocs/tan-phat">
+        AllowOverride All
+        Require all granted
+        Options -Indexes +FollowSymLinks
+    </Directory>
+</VirtualHost>
 ```
 
-## Bước 5 — Đặt tên miền mới làm **chính** (làm SAU bước 2 và 4)
+Restart Apache. Mở `https://eteksofts.vn/` — phải có ổ khoá, không cảnh báo.
 
-Màn **Quản lý gara → biểu tượng quả địa cầu (Tên miền) của gara Tân Phát**, bấm nút
+**5.4. Gia hạn:** win-acme tự tạo tác vụ theo lịch, tự lấy chứng chỉ mới trước khi
+hết hạn (60 ngày). Apache chỉ đọc file mới **sau khi restart** — nhớ restart Apache
+sau mỗi lần gia hạn, hoặc gắn lệnh restart vào win-acme (`--installation script`).
+
+## Bước 6 — Đặt tên miền mới làm **chính** (làm SAU bước 4 và 5)
+
+**Quản lý gara** → biểu tượng quả địa cầu (Tên miền) của gara Tân Phát → nút
 **ngôi sao** (*Đặt làm tên miền chính*) trên dòng `tp01.etek.eteksofts.vn`.
 
-**Vì sao không làm sớm:** hệ thống suy "tên miền gốc" cho gara mở sau từ host chính của
-gara tổng. Đổi chính xong thì từ giây đó mọi gara mới mở nhận `<mã>.etek.eteksofts.vn`.
-Đổi khi địa chỉ đó chưa có SSL / chưa ai mở thử là phát ra những địa chỉ chưa kiểm tra.
-Vì vậy migration cố ý **không** tự đổi chính — đây là một cú bấm có chủ ý.
+Hệ thống suy "tên miền gốc" cho gara mở sau từ host chính của gara tổng. Đổi chính
+xong thì gara mới mở nhận `<mã>.etek.eteksofts.vn`. Làm sớm (chưa SSL, chưa ai mở
+thử) là phát ra địa chỉ chưa kiểm tra — vì vậy migration cố ý không tự đổi.
 
-## Bước 6 — Tên miền cũ
+## Bước 7 — Chuyển hẳn khách sang tên mới (tuỳ anh, làm sau cùng)
 
-Giữ chạy song song: link đã gửi khách, in trên giấy tờ không chết. Gỡ khi nào anh quyết,
-ở cùng màn Tên miền (nút *Tắt* hoặc *Xoá* từng dòng). Nếu muốn khách tự chuyển sang địa chỉ mới,
-thêm chuyển hướng 301 ở Apache **sau khi** bước 4 xong — chuyển hướng sang một địa chỉ
-chưa có SSL là tự tạo lỗi bảo mật.
+Tên miền cũ vẫn chạy song song: link đã gửi khách không chết. Muốn chuyển hẳn thì
+thêm vào khối `*:80` một chuyển hướng 301 — **sau khi** SSL đã chạy, và **không**
+chuyển hướng đường xác minh của Let's Encrypt:
+
+```apache
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+RewriteRule ^(.*)$ https://%{HTTP_HOST}$1 [R=301,L]
+```
+
+Người đang đăng nhập ở tên cũ sẽ phải đăng nhập lại một lần ở tên mới (phiên đăng
+nhập gắn theo từng tên miền).
 
 ---
 
 ## Hoàn tác
 
-`php migrate.php rollback` (nếu `000112` là batch cuối) gỡ **đúng** các dòng migration này
-đã thêm (theo tên, chỉ những dòng không phải host chính). Tên miền anh tự khai thêm sau đó
-ở màn Tên miền không bị đụng tới.
+- Code: `git reset --hard <commit cũ>` trên máy chủ.
+- CSDL: `C:\xampp\php\php.exe migrate.php rollback` gỡ batch cuối — với `000112` là
+  gỡ **đúng** các dòng tên miền nó đã thêm (theo tên), tên miền anh tự khai thêm sau
+  không bị đụng. Nặng hơn thì nhập lại file sao lưu ở Bước 1.
