@@ -82,7 +82,13 @@ $menuGroups = [
        phiếu, dù phải khai chúng trước mới lập được phiếu: khai một lần rồi
        gần như không đụng nữa, còn phiếu thu / chi thì ngày nào cũng vào. Menu
        này xếp theo tần suất dùng thật, không theo thứ tự cài đặt. */
-    'Kế toán'            => ['phieu-thu', 'phieu-chi', 'bao-cao-ke-toan', 'acc-voucher-types', 'acc-accounts'],
+    /* `part-prices` (Bảng tính giá) NẰM Ở ĐÂY — khách yêu cầu 13/11/2026: "cho
+       vào kế toán cho anh nhé, đừng để ở hàng hoá". Trước đó (11/11) nó đứng
+       ngay sau `products` với lý do "bảng tính giá là danh sách hàng hoá nhìn từ
+       phía giá"; khách nhìn nó là việc của giá vốn và lãi gộp, tức số liệu kế
+       toán. Đứng SAU `bao-cao-ke-toan`: nó là việc làm theo kỳ (bấm Cập nhật giá
+       hằng ngày / tuần / tháng), không phải việc hằng ngày như hai màn phiếu. */
+    'Kế toán'            => ['phieu-thu', 'phieu-chi', 'bao-cao-ke-toan', 'part-prices', 'acc-voucher-types', 'acc-accounts'],
     /* `dat-hang-kho-tong` dung TRUOC `goods-receipts`: dat hang xong moi co
        phieu nhap de ghi so, di dung mot mach. */
     /* `ton-kho-dau-ky` xếp CUỐI nhóm Kho, cạnh Danh mục kho: nó là việc làm
@@ -92,10 +98,9 @@ $menuGroups = [
     'Kho'                => ['dat-hang-kho-tong', 'goods-receipts', 'goods-issues', 'transfers', 'stock-takes', 'ton-kho', 'ton-kho-lau', 'bien-dong-ton', 'the-kho', 'ton-kho-dau-ky', 'warehouses', 'warehouse-locations'],
     // `garage-catalog` đứng ngay sau `services`: nó là danh mục hàng hoá nhìn
     // từ phía một gara, nên thuộc nhóm Hàng hoá chứ không phải nhóm Hệ thống.
-    /* `part-prices` đứng NGAY SAU `products`: bảng tính giá chính là danh sách
-       hàng hoá nhìn từ phía giá — mở màn Hàng hoá rồi hỏi "mã này bán bao
-       nhiêu cho đại lý" là bước tiếp theo liền mạch. (Khách chốt 11/11/2026) */
-    'Hàng hoá'           => ['products', 'part-prices', 'services', 'garage-catalog', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
+    /* `part-prices` ĐÃ CHUYỂN SANG NHÓM KẾ TOÁN (13/11/2026) — xem ghi chú ở
+       nhóm đó. Từng đứng ngay sau `products` từ 11/11/2026. */
+    'Hàng hoá'           => ['products', 'services', 'garage-catalog', 'part-categories', 'attributes', 'product-brands', 'product-origins', 'product-manufacturers', 'product-units'],
     'Danh mục xe'        => ['car-brands', 'car-models', 'car-years', 'car-body-types', 'car-fuels', 'car-colors'],
     'CSKH'               => ['customers', 'customer-groups', 'vehicles', 'receptions', 'warranty', 'lich-bao-hanh', 'nhac-bao-tri', 'chat', 'contact-messages', 'reviews', 'newsletter', 'tai-khoan-web', 'bao-cao-cskh'],
 
@@ -195,6 +200,18 @@ if (defined('_KHO_TONG_MENU_GON') && _KHO_TONG_MENU_GON && !empty($garaHienTai['
        vẫn do bản thử "menu gọn" quyết định — câu hỏi đó chưa ai đóng, và mở
        cả nhóm là đổi nó sau lưng người ta. */
     $menuDon['cau-hinh-website'] = 'folder-open';
+
+    /* BẢNG TÍNH GIÁ CŨNG Ở LẠI — 13/11/2026, cùng họ lỗi với Đơn hàng và Cấu hình
+       website ở trên. Khách chuyển nó từ nhóm Hàng hoá sang nhóm Kế toán, mà bản
+       thử "menu gọn" ẩn cả nhóm Kế toán khỏi menu Tân Phát. Chuyển mà không dặn
+       gì thêm thì Tân Phát đang vào được màn này bằng menu hôm qua, hôm nay hết
+       lối vào — không ai quyết định chuyện đó, nó chỉ là hậu quả của việc dời.
+
+       Ra MỘT MỤC RIÊNG chứ không mở lại nhóm Kế toán: phiếu thu / chi vẫn là việc
+       của gara, ý của bản thử vẫn nguyên. Nếu Tân Phát thực sự không dùng bảng
+       giá thì bỏ dòng này là xong, nhưng đó là quyết định của khách chứ không
+       phải của việc dời menu. */
+    $menuDon['part-prices'] = 'receipt';
 }
 foreach ($anNhom as $g) unset($menuGroups[$g]);
 

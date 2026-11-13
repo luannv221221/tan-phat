@@ -459,16 +459,21 @@ ok(strpos($js, "option[data-img]") !== false,
    'admin.js van xet option[data-img] de chua cho anh');
 
 // ===========================================================================
-section('Man hep — nut khong duoc bien mat (khach bao 12/11/2026)');
+section('Man hep — nut khong duoc bien mat, khong bi che (khach bao 12-13/11/2026)');
 
-/* Khach: "responsive no khong dong deu, cac man co nhung nut bi mat". Do that
-   tren kho 375px bang tai khoan chu gara, dem nut nam ngoai khung nhin:
+/* 12/11 khach: "responsive no khong dong deu, cac man co nhung nut bi mat".
+   Do that tren kho 375px, dem nut nam ngoai khung nhin:
 
        Don hang 0, Bai viet 0, Phieu thu 0        <- vua man
        Phieu nhap 2, Hoa don ban 3, Bao gia 4
        Xe cua khach 10, Hang hoa 11, Khach hang 20
 
-   Hai nguyen nhan khac han nhau, nen hai cach chua — giu ca hai o day. */
+   Hai nguyen nhan khac han nhau, nen hai cach chua.
+
+   13/11 khach chup man Bao gia tren dien thoai: "bi che nhe, tat ca mobile deu
+   bi cai chia the nay". Cach chua (b) lan dau — GHIM cot thao tac vao mep phai
+   — chua "nut bi mat" bang cach lam DU LIEU bi mat: cot ghim de len cot Khach
+   hang. Nay thay bang THE XEP DOC. */
 
 /* (a) KHOI NUT DAU THE: `.card-tools` co margin-left:auto va khong xuong hang.
        Man Hang hoa ba nut rong 340px trong khung 375px -> ket thuc o moc 428,
@@ -478,43 +483,47 @@ ok(preg_match('~@media \s*\(max-width:\s*767\.98px\)[^}]*?\{(?:[^{}]|\{[^{}]*\})
 ok(preg_match('~\.card-tools\s*\{[^}]*width:\s*100%~s', $css) === 1,
    'Man hep: khoi nut chiem tron mot hang cua rieng no');
 
-/* (b) GHIM COT THAO TAC. Cot thao tac luon la cot CUOI nen nam xa nhat ben
-       phai: o man Khach hang, nut nam o moc 1002-1266px trong khi man chi
-       nhin thay toi 375px. */
-ok(strpos($css, '.bang-ghim-cuoi') !== false, 'CSS co luat ghim cot cuoi');
-ok(preg_match('~\.bang-ghim-cuoi[^@]*?position:\s*sticky~s', $css) === 1,
-   'Cot ghim dung position: sticky');
-ok(preg_match('~\.bang-ghim-cuoi[^@]*?box-shadow~s', $css) === 1,
-   'Co vet do bong — dau hieu DUY NHAT bao con cuon duoc sang phai');
+/* (b) THE XEP DOC cho bang co cot thao tac. */
+ok(strpos($css, '.bang-the') !== false, 'CSS co luat the xep doc `.bang-the`');
+ok(preg_match('~\.bang-the\s+thead\s*\{\s*display:\s*none~', $css) === 1,
+   'Man hep: an hang tieu de (nhan nam trong tung o)');
+ok(preg_match('~\.bang-the\s+tbody\s+td::before\s*\{[^}]*content:\s*attr\(data-label\)~s', $css) === 1,
+   'Moi o hien NHAN lay tu tieu de cot (data-label)');
+ok(preg_match('~\.bang-the,\s*\.bang-the\s+tbody,\s*\.bang-the\s+tr,\s*\.bang-the\s+td\s*\{[^}]*display:\s*block~s', $css) === 1,
+   'Bang chuyen sang bo cuc khoi (moi dong la mot the)');
 
-/* CA `min` LAN `max`. Chi chan tren thi bang tu chia lai be ngang va bop cot
-   ghim xuong 84px — do duoc dung con so do — luc ay sau cai nut xep thanh sau
-   hang doc, dong cao gap ba. Chi chan duoi thi cot thao tac 260px cua man
-   Khach hang ghim nguyen vao man 375px, nuot gan het be ngang: nhin vao chi
-   thay mot dai nut, khong con thay dang bam vao khach NAO. Da chup lai ca hai
-   lan hong truoc khi ra duoc con so nay. */
-ok(preg_match('~\.bang-ghim-cuoi[^@]*?min-width:\s*140px~s', $css) === 1,
-   'Cot ghim co chan DUOI (khong thi nut xep doc, dong cao gap ba)');
-ok(preg_match('~\.bang-ghim-cuoi[^@]*?max-width:\s*150px~s', $css) === 1,
-   'Cot ghim co chan TREN (khong thi cot thao tac nuot ca man)');
+/* KHONG CON GHIM COT — dung cai khach bac. Giu rieng mot khang dinh de ai do
+   "cho gon" quay lai cach ghim thi test noi thang vao cho hong. */
+ok(strpos($css, 'bang-ghim-cuoi') === false && strpos($js, 'bang-ghim-cuoi') === false,
+   'KHONG con cot ghim (position: sticky) — no de len cot Khach hang, khach bao "bi che"');
+ok(preg_match('~\.bang-the[^@]*?position:\s*sticky~s', $css) !== 1,
+   'The xep doc khong dung sticky o dau ca');
 
-/* GAN LOP BANG JS, KHONG SUA 35 VIEW: file thu 36 viet sau nay se quen, ma
-   quen thi khong ai biet. Gan theo TIEU DE COT thi man moi tu duoc huong. */
-ok(strpos($js, 'bang-ghim-cuoi') !== false, 'admin.js co gan lop ghim cot');
+/* The khong duoc tran ra khoi khung: khong co min-width cung tren o. */
+ok(preg_match('~\.bang-the\s+tbody\s+td\s*\{[^}]*white-space:\s*normal~s', $css) === 1,
+   'O trong the cho xuong dong (bang goc co text-nowrap — khong thi gia tri dai tran ra ngoai)');
+
+/* GAN LOP + NHAN BANG JS, KHONG SUA 35 VIEW: file thu 36 viet sau nay se quen,
+   ma quen thi khong ai biet. Gan theo TIEU DE COT thi man moi tu duoc huong. */
+ok(strpos($js, "classList.add('bang-the')") !== false, 'admin.js gan lop the');
+ok(strpos($js, "setAttribute('data-label'") !== false, 'admin.js gan nhan tung o theo tieu de cot');
 ok(strpos($js, 'TEN_COT_NUT') !== false, 'Gan theo TIEU DE cot, khong gan bua moi bang');
 /* Co bang ma cot cuoi la DU LIEU chu khong phai nut — Bang tinh gia, cot cuoi
-   la gia ban cho nhom khach cuoi. Ghim mot cot du lieu thi no dung de len cac
-   cot khac luc cuon, vua vo nghia vua kho doc. */
+   la gia ban cho nhom khach cuoi. Do la mot MA TRAN de so sanh theo hang va
+   cot, xep doc thanh the la pha mat cai de so sanh. */
 ok(preg_match("~TEN_COT_NUT[^;]*'thao tác'~u", $js) === 1, 'Danh sach ten cot nut co "thao tác"');
 ok(strpos($js, "bang.classList.contains('bang-dong-hang')") !== false,
    'Bo qua bang nhap dong hang — bang do da co cach chua rieng tu 17/10/2026');
+/* Nhan tinh theo VI TRI COT (cong colspan), khong theo thu tu the <td>. */
+ok(strpos($js, "getAttribute('colspan')") !== false,
+   'Nhan tinh theo vi tri cot co tinh colspan (dong "Chua co du lieu" khong lam lech)');
 
-/* COT THAO TAC PHAI LA COT CUOI. Ca co che ghim dung tren gia dinh nay; view
-   nao dat no o giua thi ghim nham cot va khong ai phat hien ra. */
+/* COT THAO TAC PHAI LA COT CUOI. Ca co che nay dung tren gia dinh do: o cuoi
+   moi duoc coi la hang nut va bo nhan; view nao dat no o giua thi the xep sai. */
 $saiCho = [];
 foreach (glob($goc . 'app/views/admin/*/lists.php') as $v){
-    $s = file_get_contents($v);
-    if (!preg_match('~<thead>(.*?)</thead>~s', $s, $mh)) continue;
+    $src = file_get_contents($v);
+    if (!preg_match('~<thead>(.*?)</thead>~s', $src, $mh)) continue;
     preg_match_all('~<th[^>]*>(.*?)</th>~s', $mh[1], $mt);
     if (empty($mt[1])) continue;
     $ten = array_map(function($x){ return trim(strip_tags($x)); }, $mt[1]);
@@ -523,5 +532,28 @@ foreach (glob($goc . 'app/views/admin/*/lists.php') as $v){
 }
 ok(empty($saiCho), 'Moi view: cot "Thao tác" la cot CUOI',
    empty($saiCho) ? '' : 'Dat sai cho: ' . implode(', ', $saiCho));
+
+// ===========================================================================
+section('Thanh tren tren dien thoai — loi tat hien, bo chu tieu de (khach bao 13/11/2026)');
+
+/* Khach chup man Tong quan tren dien thoai: "cai menu tat ko ra day em oi, em
+   bo chu tanphat tong quan di, cho hien ra day". "Menu tat" = LOI TAT vua lam
+   hom truoc — em an ca dai nay duoi 992px. */
+ok(preg_match('~\.adm-topbar__nhanh\s*\{\s*display:\s*inline-flex~', $css) === 1,
+   'Dai loi tat HIEN mac dinh (khong con an duoi 992px)');
+ok(preg_match('~\.adm-topbar__nhanh\s*\{\s*display:\s*none~', $css) !== 1,
+   'Khong con luat an dai loi tat mac dinh');
+
+$m991 = strpos($css, '@media (max-width: 991.98px)');
+$khoi991 = $m991 !== false ? substr($css, $m991, 2600) : '';
+ok(preg_match('~\.adm-topbar__title,\s*\.adm-topbar__sep\s*\{\s*display:\s*none~', $khoi991) === 1,
+   'Duoi 992px: BO chu "Tan Phat <ten trang>" tren thanh (nhuong cho loi tat)');
+ok(preg_match('~\.adm-topbar__nhanh\s*\{[^}]*flex:\s*1~', $khoi991) === 1,
+   'Duoi 992px: dai loi tat an het phan con lai giua nut menu va cum tai khoan');
+/* Chu van nam trong HTML — chi an bang CSS, de trinh doc man hinh va tab van thay. */
+ok(strpos(file_get_contents($goc . 'app/views/layouts/admin/header.php'), 'adm-topbar__sep') !== false,
+   'Ten trang van nam trong HTML (chi an bang CSS)');
+ok(preg_match('~@media \(max-width: 1199\.98px\)\s*\{\s*\.adm-topbar__nhanh a > span\s*\{\s*display:\s*none~', $css) === 1,
+   'Duoi 1200px chi giu hinh cho loi tat (chu van nam trong title)');
 
 exit(summary());

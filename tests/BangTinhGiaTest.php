@@ -143,8 +143,13 @@ ok(strpos($rt, "Route::post('part-prices/edit/tinh-lai'") !== false,
    'De ten khac thi RoleMiddleware chi doi quyen `view` — ai xem duoc cung tinh lai duoc');
 
 $sb = file_get_contents($goc . 'app/views/layouts/admin/sidebar.php');
-ok(preg_match("~'products', 'part-prices'~", $sb) === 1,
-   'Menu: Bang tinh gia dung ngay sau Hang hoa');
+/* DOI VI TRI 13/11/2026 — khach: "cho vao ke toan cho anh nhe, dung de o hang
+   hoa". Tu 11/11 den hom do khang dinh nay giu "dung ngay sau Hang hoa"; nay
+   no lat nguoc lai, vi do chinh la dieu khach vua doi. */
+ok(preg_match("~'Kế toán'\s*=>\s*\[[^\]]*'part-prices'~u", $sb) === 1,
+   'Menu: Bang tinh gia nam trong nhom KE TOAN (khach chot 13/11/2026)');
+ok(preg_match("~'Hàng hoá'\s*=>\s*\[[^\]]*part-prices~u", $sb) !== 1,
+   'Menu: Bang tinh gia KHONG con trong nhom Hang hoa');
 
 $view = file_get_contents($goc . 'app/views/admin/part-prices/lists.php');
 ok(strpos($view, 'csrf_field()') !== false, 'Form tinh lai co CSRF');

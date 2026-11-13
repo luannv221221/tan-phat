@@ -695,6 +695,25 @@ body.adm-auth { background: var(--bg-page); }
     body.adm-sidebar-open .adm-sidebar { transform: translateX(0); }
     .adm-topbar__burger { display: inline-flex; }
 
+    /* BỎ "TÂN PHÁT <TÊN TRANG>" TRÊN MÀN HẸP — khách yêu cầu 13/11/2026 ("em bỏ
+       chữ Tân Phát Tổng quan đi, cho hiện ra đấy"; ảnh chụp từ điện thoại). Hai
+       chữ này chiếm gần nửa thanh mà không cho thông tin gì: tên hệ thống đã ở
+       đầu menu trượt, còn tên trang lặp lại ngay trong thẻ nội dung bên dưới.
+       Chỗ đó giờ là của lối tắt. Màn rộng (>= 992px) có đủ chỗ cho cả hai nên
+       giữ nguyên.
+
+       ẨN BẰNG CSS chứ không bỏ khỏi HTML: tên trang vẫn nằm trong cây DOM cho
+       trình đọc màn hình và cho tab trình duyệt. */
+    .adm-topbar__title,
+    .adm-topbar__sep { display: none; }
+
+    /* Dải lối tắt ăn hết phần còn lại giữa nút menu và cụm gara/tài khoản. Chữ
+       đã tự ẩn dưới 1200px (chỉ còn hình), sáu hình + bánh răng rộng chừng 230px
+       nên vừa khổ 375px. */
+    .adm-topbar__nhanh { flex: 1 1 auto; min-width: 0; margin-left: 4px; justify-content: flex-start; }
+    .adm-topbar__nhanh a { padding: 6px 8px; }
+    .adm-topbar__nhanh a > svg { width: 19px; height: 19px; }
+
     .adm-backdrop {
         position: fixed;
         inset: 0;
@@ -818,8 +837,12 @@ body.adm-auth { background: var(--bg-page); }
    Ẩn dưới 992px: thanh trên ở màn hẹp đã có nút menu + tên trang + avatar,
    nhét thêm ba link nữa là tên trang bị đẩy mất.
    ========================================================================== */
-.adm-topbar__nhanh { display: none; gap: 2px; margin-left: 18px; }
-@media (min-width: 992px) { .adm-topbar__nhanh { display: inline-flex; } }
+/* LỐI TẮT LUÔN HIỆN, kể cả trên điện thoại (13/11/2026). Trước đó em ẩn cả dải
+   này dưới 992px — "thanh trên màn hẹp không đủ chỗ" — và khách mở trên điện
+   thoại: "cái menu tắt ko ra đây em ơi". Chỗ thì có: tiêu đề "Tân Phát <tên
+   trang>" chiếm đúng chỗ đó (xem khối màn hẹp ở mục 16), mà tiêu đề đã lặp lại
+   ngay trong thẻ nội dung bên dưới. */
+.adm-topbar__nhanh { display: inline-flex; gap: 2px; margin-left: 18px; }
 .adm-topbar__nhanh a {
     display: inline-flex;
     align-items: center;
@@ -1042,11 +1065,22 @@ body.adm-auth { background: var(--bg-page); }
        Khách hàng, năm cái nút nằm ở mốc 1002-1266px trong khi màn chỉ nhìn
        thấy tới 375px. Người dùng không thấy nút, và cũng không có dấu hiệu
        nào bảo rằng cuộn sang phải thì có.
-       Chữa: GHIM cột cuối vào mép phải. Nút lúc nào cũng ở đó, phần dữ liệu
-       vẫn cuộn bên dưới nó.
 
-   KHÔNG SỬA 35 FILE VIEW. Lớp `.bang-ghim-cuoi` do admin.js gắn, và chỉ gắn
-   khi tiêu đề cột cuối đúng là một cột thao tác — xem lý do ở đó.
+       LẦN ĐẦU EM CHỮA BẰNG CÁCH GHIM cột đó vào mép phải (12/11/2026). SAI.
+       Khách chụp màn Báo giá trên điện thoại gửi lại 13/11/2026: "bị che nhé,
+       tất cả mobile đều bị cái chia thế này" — cột ghim đè lên cột Khách hàng,
+       chữ bị cắt ngay dưới nó. Ghim giải quyết "nút bị mất" bằng cách làm DỮ
+       LIỆU bị mất: thứ này đổi chỗ che chứ không hết che. Và vì mọi màn danh
+       sách đều dùng chung, nó lỗi "tất cả mobile" đúng như khách nói.
+
+       NAY: bảng có cột thao tác thành THẺ XẾP DỌC trên màn hẹp — mỗi dòng là một
+       thẻ, mỗi ô là một cặp "nhãn: giá trị", cột thao tác nằm cuối thẻ. Không
+       còn cuộn ngang, không còn gì bị đè, không còn nút nào ngoài tầm. Đây là
+       cách các bảng danh sách vẫn được làm trên điện thoại.
+
+   KHÔNG SỬA 35 FILE VIEW. Lớp `.bang-the` và nhãn từng ô (`data-label`) do
+   admin.js gắn từ tiêu đề cột, và chỉ gắn khi tiêu đề cột cuối đúng là một cột
+   thao tác — xem lý do ở đó.
    ========================================================================== */
 
 
@@ -1058,42 +1092,67 @@ body.adm-auth { background: var(--bg-page); }
        còn "Thêm" bị đẩy xuống một mình, trông như hai nhóm không liên quan. */
     .card-tools .btn { flex: 1 1 auto; justify-content: center; }
 
-    /* ---- (b) Ghim cột thao tác ---- */
-    .bang-ghim-cuoi > thead > tr > th:last-child,
-    .bang-ghim-cuoi > tbody > tr > td:last-child:not([colspan]) {
-        position: sticky;
-        right: 0;
-        /* Vệt đổ bóng về bên trái là thứ DUY NHẤT báo cho người dùng biết
-           phần bên dưới còn cuộn được. Bỏ nó đi thì cột ghim trông như cột
-           cuối cùng của một bảng đã hết. */
-        box-shadow: -8px 0 8px -6px rgba(0, 0, 0, .18);
-    }
-    /* CHẶN BỀ NGANG CỘT GHIM — nếu không thì chữa một lỗi, đẻ một lỗi.
-       Màn Khách hàng khai `width:260px` cho cột thao tác (6 nút: hồ sơ, thêm
-       xe, Zalo, gọi, nhắn tin, email). Ghim nguyên 260px vào màn 375px thì
-       cột ghim nuốt gần hết bề ngang: nhìn vào chỉ thấy một dải nút, không
-       còn thấy mình đang bấm vào khách NÀO. Đã chụp lại và thấy đúng như vậy.
+    /* ---- (b) Bảng có cột thao tác -> thẻ xếp dọc ---- */
+    .bang-the thead { display: none; }
+    .bang-the,
+    .bang-the tbody,
+    .bang-the tr,
+    .bang-the td { display: block; width: 100%; }
 
-       170px vừa đủ ba nút một hàng; `white-space: normal` cho mấy nút còn lại
-       xuống hàng dưới, nên dòng cao hơn một chút nhưng dữ liệu vẫn còn 205px
-       để đọc. `max-width` thắng `width` khai trong thẻ, không cần !important. */
-    .bang-ghim-cuoi > thead > tr > th:last-child,
-    .bang-ghim-cuoi > tbody > tr > td:last-child:not([colspan]) {
-        min-width: 140px;
-        max-width: 150px;
+    .bang-the tbody tr {
+        margin: 0 12px 12px;
+        width: auto;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg-surface);
+        overflow: hidden;
+    }
+    .bang-the tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        padding: 9px 14px;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        background: transparent;
+        text-align: right;
+        /* Bảng gốc có thể khai white-space:nowrap (màn Hàng hoá có `text-nowrap`):
+           trong thẻ thì phải cho xuống dòng, không thì giá trị dài tràn ra ngoài. */
         white-space: normal;
+        word-break: break-word;
     }
-    /* CẢ `min` LẪN `max`, không phải chỉ `max`. Chỉ chặn trên thì bảng tự
-       chia bề ngang lại và bóp cột ghim xuống 84px — đo được đúng con số đó —
-       lúc ấy sáu cái nút xếp thành SÁU HÀNG DỌC, dòng cao gấp ba. 140px vừa
-       đúng ba nút một hàng. */
+    /* Nhãn lấy từ tiêu đề cột (admin.js gắn data-label). */
+    .bang-the tbody td::before {
+        content: attr(data-label);
+        flex: 0 0 38%;
+        max-width: 38%;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+    }
+    /* Ô không có nhãn (cột thao tác, ô trống): bỏ chỗ dành cho nhãn. */
+    .bang-the tbody td[data-label=""]::before { display: none; }
+    /* STT trong thẻ là thừa: mỗi thẻ đã là một dòng riêng. */
+    .bang-the tbody td[data-label="STT"] { display: none; }
 
-    /* Nền ĐỤC, không trong suốt: trong suốt thì chữ của cột bên dưới trôi
-       qua phía sau mấy cái nút. */
-    .bang-ghim-cuoi > thead > tr > th:last-child { background: var(--thead-bg); z-index: 3; }
-    .bang-ghim-cuoi > tbody > tr > td:last-child:not([colspan]) { background: var(--bg-surface); z-index: 2; }
-    /* Ô có nền riêng thì không ăn màu di chuột của cả dòng nữa — phải tô lại,
-       nếu không di tới dòng nào cũng thấy một ô trắng lạc lõng bên phải. */
-    .table-hover.bang-ghim-cuoi > tbody > tr:hover > td:last-child:not([colspan]) { background: var(--row-hover); }
+    /* Cột thao tác (ô cuối): các nút nằm cuối thẻ, xuống dòng nếu nhiều. */
+    .bang-the tbody td:last-child {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        border-bottom: 0;
+        text-align: left;
+        background: rgba(0, 0, 0, .025);
+    }
+    .bang-the tbody td:last-child .btn { margin: 2px 4px 2px 0; }
+
+    /* Dòng "Chưa có dữ liệu" (colspan) không phải một thẻ dữ liệu. */
+    .bang-the tbody tr:has(> td[colspan]) { border: 0; background: transparent; }
+    .bang-the tbody td[colspan] { display: block; text-align: center; border: 0; }
+    .bang-the tbody td[colspan]::before { display: none; }
+
+    /* Rê chuột không còn nghĩa trên cảm ứng, và đè màu lên ô trong suốt trông lạ. */
+    .table-hover.bang-the tbody tr:hover td { background: transparent; }
+    .table-hover.bang-the tbody tr:hover td:last-child { background: rgba(0, 0, 0, .025); }
 }
-

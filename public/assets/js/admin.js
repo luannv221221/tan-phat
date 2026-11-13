@@ -358,47 +358,72 @@
 })();
 
 /* ============================================================
- * MÀN HẸP — GHIM CỘT THAO TÁC VÀO MÉP PHẢI
+ * MÀN HẸP — BẢNG CÓ CỘT THAO TÁC THÀNH THẺ XẾP DỌC
  *
- * Khách phản ánh 12/11/2026 "các màn có những nút bị mất". Bảng dài hơn màn
- * thì cuộn ngang được, nhưng cột Thao tác là cột CUỐI nên nằm xa nhất bên
- * phải: đo trên khổ 375px, nút ở màn Khách hàng nằm ở mốc 1002-1266px.
- * Ghim cột cuối lại thì nút lúc nào cũng thấy. Phần tô vẽ nằm ở
- * admin-theme.css mục 18.
+ * Khách phản ánh 12/11/2026 "các màn có những nút bị mất": bảng dài hơn màn
+ * thì cuộn ngang, nhưng cột Thao tác là cột CUỐI nên nằm xa nhất bên phải.
  *
- * VÌ SAO GẮN LỚP BẰNG JS CHỨ KHÔNG VIẾT THẲNG VÀO VIEW:
+ * Lần đầu em ghim cột đó vào mép phải. Khách chụp màn Báo giá gửi lại 13/11:
+ * "bị che nhé, tất cả mobile đều bị cái chia thế này" — cột ghim đè lên cột
+ * Khách hàng. Nay mỗi dòng thành một THẺ (nhãn: giá trị), nút nằm cuối thẻ.
+ * Phần tô vẽ nằm ở admin-theme.css mục 18; ở đây chỉ gắn lớp và nhãn.
+ *
+ * VÌ SAO GẮN BẰNG JS CHỨ KHÔNG VIẾT THẲNG VÀO VIEW:
  * có 35 view danh sách đang dùng cột Thao tác. Sửa từng file thì file thứ 36
- * viết sau này sẽ quên, mà quên thì không ai biết — màn mới lặng lẽ hỏng
- * đúng kiểu cũ. Gắn theo TIÊU ĐỀ CỘT thì màn mới tự được hưởng.
+ * viết sau này sẽ quên, mà quên thì không ai biết — màn mới lặng lẽ hỏng đúng
+ * kiểu cũ. Gắn theo TIÊU ĐỀ CỘT thì màn mới tự được hưởng.
  *
- * VÌ SAO KHÔNG GHIM MỌI CỘT CUỐI: có bảng mà cột cuối là DỮ LIỆU, không phải
+ * VÌ SAO KHÔNG ÁP CHO MỌI BẢNG: có bảng mà cột cuối là DỮ LIỆU, không phải
  * nút — ví dụ Bảng tính giá, cột cuối là giá bán cho nhóm khách cuối cùng.
- * Ghim một cột dữ liệu thì nó đứng đè lên các cột khác lúc cuộn, vừa vô
- * nghĩa vừa khó đọc. Nên chỉ ghim khi tiêu đề đúng là tên một cột thao tác.
+ * Bảng đó là một ma trận để so sánh theo hàng và cột, xếp dọc thành thẻ là phá
+ * mất cái để so sánh. Nên chỉ chuyển khi tiêu đề cột cuối đúng là một cột
+ * thao tác.
+ *
+ * NHÃN LẤY TỪ TIÊU ĐỀ, tính theo VỊ TRÍ CỘT chứ không theo thứ tự thẻ <td>,
+ * vì một dòng có thể dùng colspan. Dòng "Chưa có dữ liệu" (một ô colspan) bỏ qua.
  * ============================================================ */
 (function () {
     'use strict';
 
     var TEN_COT_NUT = ['thao tác', 'xem', 'hành động', 'sửa'];
 
+    function chuan(t){
+        return (t || '').replace(/\s+/g, ' ').trim();
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
 
         document.querySelectorAll('.table-responsive table.table').forEach(function (bang) {
 
             /* Bảng nhập dòng hàng (báo giá / hoá đơn / phiếu nhập) đã có cách
-               xử lý riêng cho màn hẹp từ 17/10/2026 — min-width, khối tổng
-               xếp dọc. Ghim thêm cột vào đó là hai cách chữa cãi nhau. */
+               xử lý riêng cho màn hẹp từ 17/10/2026 — min-width, khối tổng xếp
+               dọc. Hai cách chữa cho cùng một bảng là cãi nhau. */
             if (bang.classList.contains('bang-dong-hang')) return;
 
             var th = bang.querySelectorAll('thead th');
             if (!th.length) return;
 
-            var cuoi = (th[th.length - 1].textContent || '')
-                       .replace(/\s+/g, ' ').trim().toLowerCase();
-
+            var cuoi = chuan(th[th.length - 1].textContent).toLowerCase();
             if (TEN_COT_NUT.indexOf(cuoi) === -1) return;
 
-            bang.classList.add('bang-ghim-cuoi');
+            var nhan = [];
+            th.forEach(function (h) { nhan.push(chuan(h.textContent)); });
+
+            bang.querySelectorAll('tbody > tr').forEach(function (tr) {
+                var cot = 0;
+                Array.prototype.forEach.call(tr.children, function (td) {
+                    if (td.tagName !== 'TD') return;
+
+                    /* Ô cuối (thao tác) KHÔNG có nhãn: nó chỉ là một hàng nút, "Thao
+                       tác:" đứng trước chỉ tốn chỗ. */
+                    var laCuoi = (td === tr.lastElementChild);
+                    td.setAttribute('data-label', laCuoi ? '' : (nhan[cot] || ''));
+
+                    cot += (parseInt(td.getAttribute('colspan'), 10) || 1);
+                });
+            });
+
+            bang.classList.add('bang-the');
         });
     });
 })();
