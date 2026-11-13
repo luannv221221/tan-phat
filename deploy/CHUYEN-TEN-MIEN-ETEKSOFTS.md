@@ -112,11 +112,23 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.
 "Expand-Archive is not recognized" — đã gặp 13/11. Lệnh trên dùng thẳng .NET, chạy
 được cả bản cũ.)*
 
+Tạo sẵn thư mục chứa chứng chỉ — win-acme **không tự tạo**, thiếu là báo
+`Directory C:\ssl does not exist ... invalid --pemfilespath` (đã gặp 13/11):
+
+```powershell
+mkdir C:\ssl
+```
+
 Rồi chạy **một dòng** (dán được cả vào cmd lẫn PowerShell):
 
 ```bat
-C:\win-acme\wacs.exe --target manual --host "eteksofts.vn,www.eteksofts.vn,tp01.etek.eteksofts.vn,dmsg.etek.eteksofts.vn,dmdn.etek.eteksofts.vn" --validation filesystem --webroot "C:\xampp\htdocs\tan-phat" --store pemfiles --pemfilespath "C:\ssl" --installation none
+C:\win-acme\wacs.exe --target manual --host "eteksofts.vn,www.eteksofts.vn,tp01.etek.eteksofts.vn,dmsg.etek.eteksofts.vn,dmdn.etek.eteksofts.vn" --validation filesystem --webroot "C:\xampp\htdocs\tan-phat" --store pemfiles --pemfilespath "C:\ssl" --installation none --accepttos
 ```
+
+`--accepttos` = **đồng ý Điều khoản sử dụng của Let's Encrypt**. Cần cờ này vì có
+tham số dòng lệnh là win-acme chạy chế độ *Unattended* — không hỏi gì, nên không có
+chỗ bấm đồng ý. Muốn nhận thư báo của Let's Encrypt thì thêm
+`--emailaddress <email của anh>` vào cuối.
 
 *(13/11: bản trước viết nhiều dòng nối bằng `^` — dấu nối của cmd. Dán vào
 PowerShell thì mỗi dòng thành một lệnh riêng và báo `Missing expression after unary
@@ -129,7 +141,6 @@ trần là mảng và tách thành nhiều tham số.)*
   file có thật, nên file xác minh `/.well-known/acme-challenge/...` đi qua được.
 - `--store pemfiles`: Apache cần file `.pem`. Thiếu cờ này win-acme cất chứng chỉ
   vào kho chứng chỉ của Windows, Apache không đọc được.
-- Lần đầu nó hỏi email và đồng ý điều khoản — anh tự nhập.
 
 **5.3. VirtualHost 443** — thêm vào **cuối** `C:\xampp\apache\conf\extra\httpd-vhosts.conf`
 (không phải `httpd.conf`), đường dẫn file lấy đúng như win-acme in ra trong `C:\ssl`.
