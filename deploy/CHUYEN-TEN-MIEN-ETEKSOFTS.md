@@ -215,14 +215,47 @@ cũng vào ứng dụng, chỉ còn cảnh báo sai tên — đỡ hơn trang XA
 hết hạn (60 ngày). Apache chỉ đọc file mới **sau khi restart** — nhớ restart Apache
 sau mỗi lần gia hạn, hoặc gắn lệnh restart vào win-acme (`--installation script`).
 
-## Bước 6 — Đặt tên miền mới làm **chính** (làm SAU bước 4 và 5)
+## Bước 6 — Bỏ tầng `etek`: gara dùng `<mã>.eteksofts.vn`, rồi đặt làm **chính**
 
-**Quản lý gara** → biểu tượng quả địa cầu (Tên miền) của gara Tân Phát → nút
-**ngôi sao** (*Đặt làm tên miền chính*) trên dòng `tp01.etek.eteksofts.vn`.
+**Vì sao đang có tầng `etek`:** tên cũ là `<mã>.etek.rikkeiedu.org`. Ở đó `etek`
+bắt buộc phải có, vì `rikkeiedu.org` là tên miền của Rikkei, mình chỉ được dùng
+nhánh `etek`. Khi chuyển, bản ghi DNS tạo theo đúng khuôn cũ (`*.etek`), nên
+migration 000112 khai `<mã>.etek.eteksofts.vn`. `eteksofts.vn` là tên miền của mình,
+nên không cần tầng đó: **`tp01.eteksofts.vn`** là đúng (anh chốt 13/11).
 
-Hệ thống suy "tên miền gốc" cho gara mở sau từ host chính của gara tổng. Đổi chính
-xong thì gara mới mở nhận `<mã>.etek.eteksofts.vn`. Làm sớm (chưa SSL, chưa ai mở
-thử) là phát ra địa chỉ chưa kiểm tra — vì vậy migration cố ý không tự đổi.
+Làm theo **đúng thứ tự**. Bước nào chưa chạy thì đừng làm bước sau.
+
+**6.1. DNS (Mắt Bão):** thêm một bản ghi: Host `*`, loại `A`, giá trị `103.74.101.148`.
+Giữ nguyên `@`, `www`, `*.etek`. Bản ghi `*` không đè lên `www` hay bản ghi thư nào
+đã khai riêng. Kiểm tra: `nslookup tp01.eteksofts.vn 8.8.8.8` phải ra `103.74.101.148`
+(13/11 đang báo *Non-existent domain*).
+
+**6.2. Apache:** trong `httpd-vhosts.conf`, thêm `*.eteksofts.vn` vào cuối dòng
+`ServerAlias` của **cả hai** khối 80 và 443. Chạy `httpd.exe -t`, rồi restart Apache.
+
+**6.3. Cấp lại chứng chỉ, thêm tên mới.** Giữ cả tên cũ để link đã gửi không bị lỗi:
+
+```bat
+C:\win-acme\wacs.exe --target manual --host "eteksofts.vn,www.eteksofts.vn,tp01.eteksofts.vn,dmsg.eteksofts.vn,dmdn.eteksofts.vn,tp01.etek.eteksofts.vn,dmsg.etek.eteksofts.vn,dmdn.etek.eteksofts.vn" --validation filesystem --webroot "C:\xampp\htdocs\tan-phat" --store pemfiles --pemfilespath "C:\ssl" --installation none --accepttos
+```
+
+Restart Apache. Sau đó chạy `C:\win-acme\wacs.exe --list`. Phải còn **một** lịch gia
+hạn. Nếu có hai, lịch cũ 5 tên sẽ ghi đè chứng chỉ mới khi gia hạn, nên phải huỷ
+lịch cũ.
+
+**6.4. Khai tên trong ứng dụng.** Vào **Quản lý gara**, bấm nút quả địa cầu (Tên miền)
+của từng gara. Ở ô *Khai thêm tên miền*, nhập `tp01.eteksofts.vn`, tích *Đặt làm tên
+miền chính*, rồi bấm Khai. Làm tương tự với `dmsg.eteksofts.vn` và `dmdn.eteksofts.vn`.
+
+Hệ thống lấy tên miền chính của gara tổng để suy ra "tên miền gốc" cho các gara mở
+sau. Đặt `tp01.eteksofts.vn` làm chính thì tên miền gốc thành `eteksofts.vn`, và gara
+mở mới sẽ nhận `<mã>.eteksofts.vn`. Thẻ *Tên miền gốc của hệ thống* trên màn đó hiện
+đúng giá trị này, anh xem lại sau khi bấm. Đừng làm bước này trước 6.1–6.3:
+nếu làm sớm, hệ thống sẽ phát ra địa chỉ chưa ai mở được. Vì vậy migration không tự
+đặt tên chính.
+
+Không có nút "sửa" một tên miền: muốn đổi thì khai tên mới, đặt làm chính, rồi
+**tắt** tên cũ (nút cấm). Tắt rồi bật lại được, còn xoá thì mất hẳn.
 
 ## Bước 7 — Chuyển hẳn khách sang tên mới (tuỳ anh, làm sau cùng)
 

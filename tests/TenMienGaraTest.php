@@ -424,6 +424,15 @@ ok(strpos($v, 'tenMienGoc') !== false,
 ok(strpos($v, 'ServerAlias') !== false && strpos($v, 'DNS') !== false,
    'Man nhac hai viec NGOAI he thong: tro DNS va ServerAlias cua Apache',
    'Khai o day chua du, ma bang du lieu thi noi rang da xong');
+/* 13/11/2026: chung chi Let's Encrypt cap theo DANH SACH TEN (khong phai wildcard).
+   Ten mien moi khai — ke ca gara mo sau — vao duoc http:// nhung https:// bao loi
+   cho toi khi chay lai win-acme them ten do. Man phai noi viec thu ba nay. */
+ok(strpos($v, 'chứng chỉ') !== false && strpos($v, 'win-acme') !== false,
+   'Man nhac viec thu ba: them ten moi vao chung chi SSL (chay lai win-acme)',
+   'Chung chi ke tung ten — ten moi khong co trong do thi https:// bao loi');
+ok(strpos($v, 'không phải</em> đụng') === false,
+   'Man KHONG con noi "mo gara moi khong phai dung vao gi nua"',
+   'Sai tu khi co https: moi gara moi deu phai cap lai chung chi');
 ok(strpos($v, 'la_host_noi_bo') !== false,
    'Man danh dau host cua may noi bo (chi dung de chay thu)');
 

@@ -182,22 +182,29 @@ $laTong = (int) $item['is_master'] === 1;
         <div class="card card-outline card-danger">
             <div class="card-header"><h3 class="card-title">Khai ở đây chưa đủ</h3></div>
             <div class="card-body small">
-                <p>Còn hai việc <strong>ngoài hệ thống</strong>, thiếu một trong hai thì địa chỉ
-                   vẫn không mở được:</p>
+                <p>Còn ba việc <strong>ngoài hệ thống</strong>, thiếu một trong ba thì địa chỉ
+                   vẫn không mở được (hoặc mở <code>https://</code> bị trình duyệt báo lỗi):</p>
                 <ol class="pl-3 mb-2">
                     <li class="mb-2">
                         <strong>DNS</strong> — một bản ghi wildcard là đủ cho mọi gara:
                         <br><code>*.{{!empty($tenMienGoc) ? $tenMienGoc : 'tên-miền-gốc'}} &nbsp;A &nbsp;&lt;IP máy chủ&gt;</code>
                     </li>
-                    <li>
+                    <li class="mb-2">
                         <strong>Apache</strong> — thêm vào <code>httpd-vhosts.conf</code>,
                         cả khối cổng 80 lẫn 443:
                         <br><code>ServerAlias *.{{!empty($tenMienGoc) ? $tenMienGoc : 'tên-miền-gốc'}}</code>
                         <br>rồi restart Apache.
                     </li>
+                    <li>
+                        <strong>Chứng chỉ SSL</strong> — chứng chỉ ghi <em>từng tên</em>, không phải
+                        wildcard. Tên mới phải được thêm vào: chạy lại lệnh <code>win-acme</code>,
+                        thêm tên đó vào danh sách <code>--host</code>, rồi restart Apache
+                        (xem <code>deploy/CHUYEN-TEN-MIEN-ETEKSOFTS.md</code>, bước 5.2).
+                    </li>
                 </ol>
                 <p class="mb-0 text-muted">
-                    Có hai thứ đó rồi thì mở gara mới <em>không phải</em> đụng vào DNS hay Apache nữa.
+                    DNS và Apache làm một lần là đủ cho mọi gara. Riêng chứng chỉ thì
+                    <strong>mỗi lần mở gara mới hay khai tên mới đều phải cấp lại</strong>.
                 </p>
             </div>
         </div>
