@@ -101,11 +101,16 @@ tường lửa nhà cung cấp máy chủ. **Giữ cổng 80** — Let's Encrypt
 
 **5.2. Cấp chứng chỉ** — tải win-acme (bản x64) rồi giải nén vào **`C:\win-acme`**,
 đừng để chạy trong `Downloads`: win-acme tạo tác vụ gia hạn trỏ vào đúng chỗ đặt
-`wacs.exe`, ai dọn `Downloads` là gia hạn chết. Trong PowerShell:
+`wacs.exe`, ai dọn `Downloads` là gia hạn chết. Dễ nhất: chuột phải file zip →
+WinRAR *Extract files...* → ô đích gõ `C:\win-acme` → OK. Hoặc trong PowerShell:
 
 ```powershell
-Expand-Archive -Path "$env:USERPROFILE\Downloads\win-acme.v2.2.9.1701.x64.trimmed.zip" -DestinationPath "C:\win-acme" -Force
+Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory("$env:USERPROFILE\Downloads\win-acme.v2.2.9.1701.x64.trimmed.zip", "C:\win-acme")
 ```
+
+*(Không dùng `Expand-Archive`: PowerShell trên máy chủ là bản cũ (dưới 5.0), báo
+"Expand-Archive is not recognized" — đã gặp 13/11. Lệnh trên dùng thẳng .NET, chạy
+được cả bản cũ.)*
 
 Rồi chạy **một dòng** (dán được cả vào cmd lẫn PowerShell):
 
