@@ -155,6 +155,10 @@ Route::group('admin', function(){
       bảng giá cũng tính lại được. */
    Route::get('part-prices', 'admin/partprices');
    Route::post('part-prices/edit/tinh-lai', 'admin/partprices/postTinhlai');
+   /* Đặt lịch tự cập nhật (ngày / tuần / tháng) ngay trên màn Bảng tính giá — khách
+      yêu cầu 13/11/2026. NẰM DƯỚI `edit/` để RoleMiddleware đòi quyền `edit`, như
+      lệnh tính lại: ai tự tay tính lại được thì được dặn nó tự tính lại. */
+   Route::post('part-prices/edit/lich', 'admin/partprices/postLich');
 
    /* =========================================================
     * CMS NỘI DUNG — Tin tức + Danh mục tin + Dự án (portfolio) + Thư viện

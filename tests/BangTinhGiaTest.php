@@ -159,14 +159,23 @@ ok(strpos($view, '$soCot') !== false,
    'Viet cung thi gara them mot nhom la dong "chua co du lieu" thieu mot o');
 
 // ---------------------------------------------------------------------------
-section('Cau hinh gara co hai o moi');
+section('Kieu tinh gia von o Cau hinh gara; LICH da chuyen sang man Bang tinh gia');
 
+/* 13/11/2026 — khach: "cho them cai lich dat tu dong theo ngay, tuan, thang ngay
+   tai man nay". Lich (price_schedule) nay dat tren man Bang tinh gia va ghi vao
+   cau hinh RIENG cua gara — xem LichBangGiaTest. Chi con KIEU GIA VON o Cau hinh
+   chung. Khang dinh cu "form.php co o Lich tu tinh" lat nguoc: de lich o ca hai
+   noi la cho gara tong bam Luu o Cau hinh chung chep gia tri rieng cua minh
+   thanh mac dinh cho MOI gara. */
 $ctlSet = codeOnly($goc . 'app/controllers/admin/Settings.php');
-ok(strpos($ctlSet, "'cost_method'") !== false && strpos($ctlSet, "'price_schedule'") !== false,
-   'Settings cho phep luu cost_method + price_schedule');
+ok(strpos($ctlSet, "'cost_method'") !== false, 'Settings cho phep luu cost_method');
+ok(strpos($ctlSet, "'price_schedule'") === false,
+   'Settings KHONG con luu price_schedule (da chuyen sang man Bang tinh gia)');
 $formSet = file_get_contents($goc . 'app/views/admin/settings/form.php');
 ok(strpos($formSet, 'name="cost_method"') !== false,    'form.php: co o Kieu tinh gia von');
-ok(strpos($formSet, 'name="price_schedule"') !== false, 'form.php: co o Lich tu tinh');
+ok(strpos($formSet, 'name="price_schedule"') === false, 'form.php: KHONG con o Lich tu tinh');
+ok(strpos(file_get_contents($goc . 'app/views/admin/part-prices/lists.php'), 'name="price_schedule"') !== false,
+   'Man Bang tinh gia: co o chon lich');
 
 // ---------------------------------------------------------------------------
 section('Bon man lap chung tu deu lay gia theo loai khach');

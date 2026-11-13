@@ -107,7 +107,9 @@ foreach (['site_name', 'site_slogan', 'site_short_name', 'logo',
 }
 
 /* Nhung o quyet dinh GARA LAM VIEC THE NAO: khong hien tren trang khach, o lai. */
-foreach (['linh_vuc', 'dien_tich_xuong', 'cost_method', 'price_schedule',
+/* `price_schedule` KHONG con o day: lich tu cap nhat gia chuyen sang man Bang tinh gia
+   (13/11/2026, LichBangGiaTest). No cung khong duoc nam trong whitelist cua Settings. */
+foreach (['linh_vuc', 'dien_tich_xuong', 'cost_method',
           'bank_name', 'bank_account', 'bank_holder'] as $k){
     ok(in_array($k, $oChung, true) && !in_array($k, $oWeb, true),
        "`$k` o lai Cau hinh chung (khong phai thu trang khach hien thi)");

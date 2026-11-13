@@ -44,6 +44,10 @@ class PartPricesModel extends Model {
     const LICH = ['tat' => 'Không tự chạy', 'ngay' => 'Hằng ngày',
                   'tuan' => 'Hằng tuần', 'thang' => 'Hằng tháng'];
 
+    /** Một chu kỳ dài bao nhiêu giây. `thang` = 30 ngày chứ không phải "đúng một
+     *  tháng lịch": lịch chạy theo kiểu "quá ngần ấy giây kể từ lần chạy trước". */
+    const HAN = ['ngay' => 86400, 'tuan' => 604800, 'thang' => 2592000];
+
     // ----------------------------------------------------------------- cấu hình
 
     /** Kiểu tính giá vốn của gara đang làm việc (mặc định bình quân = cách kho vẫn chạy) */
@@ -55,6 +59,46 @@ class PartPricesModel extends Model {
     public function chuKyLich(){
         $v = (string) Load::model('GarageSettingsModel')->val('price_schedule', 'tat');
         return isset(self::LICH[$v]) ? $v : 'tat';
+    }
+
+    /**
+     * ĐẶT LỊCH cho GARA ĐANG LÀM VIỆC — ghi vào cấu hình RIÊNG của gara, kể cả
+     * gara tổng (khách yêu cầu 13/11/2026: đặt ngay trên màn Bảng tính giá).
+     *
+     * LUÔN LÀ CẤU HÌNH RIÊNG, không bao giờ ghi vào `site_settings`. Bảng giá,
+     * giá vốn và `price_last_run` đều là dữ liệu của TỪNG gara, nên lịch cập
+     * nhật nó cũng là chuyện của từng gara. Ghi vào cấu hình chung thì Tân Phát
+     * chọn "Hằng ngày" cho bảng giá của mình là mọi gara chưa tự đặt cũng bắt
+     * đầu tự tính lại hằng ngày — một người bấm một ô ở một màn, đổi hành vi của
+     * mười gara khác, mà màn đó không hề nói điều ấy.
+     *
+     * @return bool false nếu chu kỳ không thuộc bốn giá trị cho phép
+     */
+    public function datChuKyLich($chuKy){
+        if (!isset(self::LICH[$chuKy])) return false;
+        return (bool) Load::model('GarageSettingsModel')->saveMany(['price_schedule' => $chuKy]);
+    }
+
+    /**
+     * Lần tự chạy tới của lịch, để màn hình nói thẳng "khi nào" thay vì bắt
+     * người dùng tự cộng ngày.
+     *
+     * @return array ['kieu' => tat|chua_chay|den_han|cho, 'luc' => timestamp|null]
+     *   tat        không đặt lịch
+     *   chua_chay  có lịch nhưng chưa tính lần nào -> chạy ngay lần mở tới
+     *   den_han    đã quá hạn -> chạy ngay lần mở tới
+     *   cho        còn chờ; 'luc' là thời điểm tới hạn
+     */
+    public function kyKeTiep(){
+        $chuKy = $this->chuKyLich();
+        if ($chuKy === 'tat') return ['kieu' => 'tat', 'luc' => null];
+
+        $lan = $this->tinhLanCuoi();
+        $moc = $lan === '' ? false : strtotime($lan);
+        if ($moc === false) return ['kieu' => 'chua_chay', 'luc' => null];
+
+        $luc = $moc + self::HAN[$chuKy];
+        return $luc <= time() ? ['kieu' => 'den_han', 'luc' => $luc] : ['kieu' => 'cho', 'luc' => $luc];
     }
 
     // ------------------------------------------------------------------ giá vốn
@@ -210,8 +254,7 @@ class PartPricesModel extends Model {
         $moc = strtotime($lan);
         if ($moc === false) { $this->tinhLai(); return true; }
 
-        $han = ['ngay' => 86400, 'tuan' => 7 * 86400, 'thang' => 30 * 86400];
-        if (time() - $moc < $han[$chuKy]) return false;
+        if (time() - $moc < self::HAN[$chuKy]) return false;
 
         $this->tinhLai();
         return true;

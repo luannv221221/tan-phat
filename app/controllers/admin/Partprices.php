@@ -50,6 +50,7 @@ class Partprices extends Controller {
         $this->__data['content']['chuKy']      = $this->__model->chuKyLich();
         $this->__data['content']['tenChuKy']   = PartPricesModel::LICH;
         $this->__data['content']['tinhLanCuoi']= $this->__model->tinhLanCuoi();
+        $this->__data['content']['kyKeTiep']   = $this->__model->kyKeTiep();
         $this->__data['content']['coQuyenTinh']= $this->coQuyenTinh();
         $this->__data['content']['msg']        = Session::flash('msg');
         $this->__data['content']['msgError']   = Session::flash('msgError');
@@ -85,12 +86,12 @@ class Partprices extends Controller {
          * Staff (chỉ có quyền `view`) gửi POST thẳng vào đây thì bảng giá vẫn
          * bị tính lại.
          *
-         * Đây là cách 15 tuyến POST khác trong hệ đang tự giữ mình (xem
-         * Settings::save, Themnhanh::danhMuc). Vá ở core/Route.php thì sửa
-         * được cả 15 cùng lúc, nhưng KHÔNG phải một dòng: có tuyến không khớp
-         * module nào (`them-nhanh/danh-muc`), mà RoleMiddleware gặp đường dẫn
-         * không khớp module thì trả về null = CHẶN — bật lên là gãy nút thêm
-         * nhanh ở mọi màn. Việc đó tách riêng, không làm lẫn vào đây.
+         * CẬP NHẬT 11/11/2026 (cùng ngày, sau đó): lỗ này đã được VÁ ở gốc —
+         * core/Route.php::post() nay ghi tuyến vào nhóm `admin/*`, và
+         * RoleMiddleware có nhánh riêng cho đường dẫn không thuộc module nào.
+         * Đoạn trên giữ lại để biết VÌ SAO có chốt này; chốt vẫn nên ở đây như
+         * lớp thứ hai (phòng ai đó gỡ middleware), nhưng không còn là chốt DUY
+         * NHẤT như lúc viết.
          */
         if (!$this->coQuyenTinh()){
             $this->__response->redirect('admin/khong-co-quyen'); return;
@@ -113,6 +114,44 @@ class Partprices extends Controller {
                   . ' mặt hàng chưa có giá vốn (chưa từng nhập kho) nên chưa ra được giá bán.';
         }
         Session::flash('msg', $tin);
+        $this->__response->redirect('admin/' . $this->routeBase);
+    }
+
+    /**
+     * ĐẶT LỊCH TỰ CẬP NHẬT GIÁ (ngày / tuần / tháng) ngay trên màn này — khách
+     * yêu cầu 13/11/2026: "chỗ này cho thêm cái lịch đặt tự động theo ngày, tuần,
+     * tháng, như cái báo cáo kế toán".
+     *
+     * CÙNG QUYỀN VỚI VIỆC BẤM "CẬP NHẬT GIÁ" (`edit` trên part-prices): ai tự
+     * tay tính lại được bảng giá thì được dặn nó tự tính lại. Ai chỉ có quyền
+     * xem thì chỉ thấy lịch, không đặt được.
+     *
+     * Lệnh đăng ký dưới `part-prices/edit/lich` (không phải `part-prices/lich`)
+     * vì RoleMiddleware chỉ đòi quyền `edit` cho đường dẫn có dạng `.../edit/*`;
+     * đặt tên khác là nó chỉ đòi quyền `view`. Chốt `coQuyenTinh()` ở đầu hàm là
+     * lớp thứ hai, như postTinhlai().
+     *
+     * KHÔNG nhận mã gara từ form: model ghi cho gara ĐANG LÀM VIỆC của phiên
+     * đăng nhập (xem PartPricesModel::datChuKyLich).
+     */
+    public function postLich(){
+        if (!$this->coQuyenTinh()){
+            $this->__response->redirect('admin/khong-co-quyen'); return;
+        }
+
+        $f  = $this->__request->getFields();
+        $ck = isset($f['price_schedule']) ? (string) $f['price_schedule'] : '';
+
+        /* Giá trị lạ -> TỪ CHỐI, không lặng lẽ đổi thành "tắt". Người gõ tay một
+           giá trị lạ không nên làm tắt lịch mà họ đã đặt từ trước. */
+        if (!$this->__model->datChuKyLich($ck)){
+            Session::flash('msgError', 'Lịch không hợp lệ — chọn một trong: ' . implode(', ', PartPricesModel::LICH) . '.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+
+        Session::flash('msg', $ck === 'tat'
+            ? 'Đã tắt lịch tự cập nhật. Bảng giá chỉ đổi khi bấm "Cập nhật giá".'
+            : 'Đã đặt lịch tự cập nhật: ' . mb_strtolower(PartPricesModel::LICH[$ck]) . '.');
         $this->__response->redirect('admin/' . $this->routeBase);
     }
 

@@ -40,11 +40,57 @@ $tien = function($v){
                 <p class="mb-1">
                     <span class="text-muted">Kiểu tính giá vốn:</span>
                     <span class="badge badge-info">{{isset($tenKieu[$kieu]) ? $tenKieu[$kieu] : $kieu}}</span>
-                    <span class="text-muted ml-3">Lịch tự tính:</span>
-                    <span class="badge badge-secondary">{{isset($tenChuKy[$chuKy]) ? $tenChuKy[$chuKy] : $chuKy}}</span>
                     @if (route('admin/settings'))
-                    <a href="{{_WEB_URL.'/admin/settings'}}" class="ml-2 small"><i class="fas fa-cog mr-1"></i>Đổi ở Cấu hình gara</a>
+                    <?php /* Chỉ KIỂU GIÁ VỐN còn đặt ở Cấu hình gara. Lịch tự cập nhật đã
+                             chuyển xuống ngay dưới (13/11/2026) — xem Partprices::postLich. */ ?>
+                    <a href="{{_WEB_URL.'/admin/settings'}}" class="ml-2 small"><i class="fas fa-cog mr-1"></i>Đổi kiểu giá vốn ở Cấu hình gara</a>
                     @endif
+                </p>
+
+                <?php /* LỊCH TỰ CẬP NHẬT — đặt NGAY TRÊN MÀN NÀY, khách yêu cầu 13/11/2026
+                         ("chỗ này cho thêm cái lịch đặt tự động theo ngày, tuần, tháng như
+                         cái báo cáo kế toán"). Bộ chọn dựng giống ô "Gom theo" của màn Báo
+                         cáo kế toán: một ô chọn + một nút.
+
+                         Người chỉ có quyền XEM thì thấy lịch dạng chữ, không có ô chọn:
+                         đặt lịch cùng quyền với việc bấm "Cập nhật giá". */ ?>
+                @if (!empty($coQuyenTinh))
+                <form action="{{_WEB_URL.'/admin/'.$routeBase.'/edit/lich'}}" method="post" class="form-inline mb-1">
+                    <?php echo csrf_field(); ?>
+                    <label for="o-lich" class="text-muted mr-2 mb-1">Lịch tự cập nhật giá:</label>
+                    <select name="price_schedule" id="o-lich" class="form-control form-control-sm mr-2 mb-1" style="width:auto">
+                        @foreach ($tenChuKy as $ma => $ten)
+                        <option value="{{$ma}}" {{$chuKy === $ma ? 'selected' : ''}}>{{$ten}}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-outline-primary mb-1"><i class="fas fa-clock mr-1"></i> Lưu lịch</button>
+                </form>
+                @else
+                <p class="mb-1">
+                    <span class="text-muted">Lịch tự cập nhật giá:</span>
+                    <span class="badge badge-secondary">{{isset($tenChuKy[$chuKy]) ? $tenChuKy[$chuKy] : $chuKy}}</span>
+                </p>
+                @endif
+
+                <?php /* NÓI RÕ KHI NÀO CHẠY, không bắt người dùng tự cộng ngày. Không có
+                         cron trên hosting này nên "tới kỳ" nghĩa là lần đầu có người MỞ màn
+                         này sau mốc đó — nói luôn ở đây, đừng để họ chờ một giờ cụ thể. */ ?>
+                <?php /* PHP thuần chứ không dùng nhánh elseif của template: bộ dựng template của
+                         dự án (core/Template.php) chỉ hiểu if / else / endif. Viết elseif kiểu
+                         template thì nó biên dịch ra mã PHP sai ("unexpected token else") và
+                         trang chết giữa chừng — `php -l` không bắt được vì lỗi chỉ xuất hiện
+                         lúc biên dịch template. */ ?>
+                <p class="mb-2 small text-muted">
+                    <?php if ($kyKeTiep['kieu'] === 'tat'): ?>
+                    Đang tắt — bảng giá chỉ đổi khi bấm <b>Cập nhật giá</b>.
+                    <?php elseif ($kyKeTiep['kieu'] === 'chua_chay'): ?>
+                    Chưa tính lần nào — sẽ tự tính ngay khi có người mở màn này.
+                    <?php elseif ($kyKeTiep['kieu'] === 'den_han'): ?>
+                    Đã tới kỳ — sẽ tự tính ngay khi có người mở màn này.
+                    <?php else: ?>
+                    Lần tự tính tiếp theo: <b><?php echo e(date('d/m/Y H:i', $kyKeTiep['luc'])); ?></b>
+                    (chạy khi có người mở màn này sau mốc đó).
+                    <?php endif; ?>
                 </p>
                 <p class="mb-0 text-muted small">
                     Giá bán = (giá vốn + chi phí) × (1 + hệ số lãi của nhóm). Hệ số lãi đặt ở

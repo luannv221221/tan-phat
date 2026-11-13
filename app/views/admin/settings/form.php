@@ -86,20 +86,12 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                         không đụng tới giá vốn đã ghi trên các phiếu cũ.
                     </small>
                 </div>
-                <div class="form-group">
-                    <label>Lịch tự tính lại bảng giá</label>
-                    <?php $ps = $s('price_schedule', 'tat'); ?>
-                    <select name="price_schedule" class="form-control">
-                        <?php foreach (['tat' => 'Không tự chạy', 'ngay' => 'Hằng ngày',
-                                        'tuan' => 'Hằng tuần', 'thang' => 'Hằng tháng'] as $k => $ten): ?>
-                        <option value="<?php echo e($k); ?>" <?php echo $ps === $k ? 'selected' : ''; ?>><?php echo e($ten); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <small class="form-text text-muted">
-                        Tới kỳ thì bảng giá tự tính lại khi có người mở màn Bảng tính giá. Lúc nào cũng bấm
-                        <b>Cập nhật giá</b> ở màn đó được, không cần chờ tới kỳ.
-                    </small>
-                </div>
+                <?php /* LỊCH TỰ TÍNH LẠI BẢNG GIÁ ĐÃ CHUYỂN SANG MÀN BẢNG TÍNH GIÁ (13/11/2026).
+                         Khách: "chỗ này cho thêm cái lịch đặt tự động theo ngày, tuần, tháng".
+                         KHÔNG để cả hai nơi: form này điền sẵn giá trị đã trộn, và khi gara
+                         tổng bấm Lưu thì giá trị riêng của Tân Phát bị chép thành mặc định
+                         cho MỌI gara — đặt "Hằng ngày" cho mình ở màn giá, rồi sửa số tài
+                         khoản ở đây là cả hệ thống tự tính lại giá hằng ngày. */ ?>
                 <p class="text-muted small mb-0">
                     <i class="fas fa-info-circle mr-1"></i>
                     Tên website, logo, hotline, email, địa chỉ, mã số thuế, Facebook / Zalo / Messenger

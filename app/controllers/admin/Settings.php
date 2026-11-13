@@ -56,7 +56,12 @@ class Settings extends Controller {
                         ngày, tuần, tháng". Giá trị lạ bị PartPricesModel kéo
                         về mặc định, nên dù form có bị sửa tay cũng không sinh
                         ra kiểu tính giá vốn thứ ba. */
-                     'cost_method', 'price_schedule',
+                     /* `price_schedule` ĐÃ RA KHỎI DANH SÁCH NÀY (13/11/2026): lịch tự
+                        cập nhật giá nay đặt trên màn Bảng tính giá, ghi vào cấu hình RIÊNG
+                        của gara (xem PartPricesModel::datChuKyLich). Còn ở đây thì bấm Lưu
+                        ở Cấu hình chung sẽ ghi đè nó — và với gara tổng còn chép nó thành
+                        mặc định cho mọi gara. */
+                     'cost_method',
                      /* Frontend muc 7: "Phan footer: cung la 1 bai viet co
                         ckeditor, nguoi dung tu them". Luu HTML da loc; xem
                         xu ly rieng trong save(). */
