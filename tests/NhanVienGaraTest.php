@@ -354,19 +354,74 @@ ok(strpos($bang($r), '<th>Gara</th>') !== false && strpos($bang($r), 'Gara mẫu
 ok(strpos($bang($r), 'chưa gán (không đăng nhập được)') !== false,
    'Tai khoan chua gan gara ghi ro "chua gan (khong dang nhap duoc)"');
 
+/* NHOM CUA DUNG GARA (sua 14/11/2026). Tu 000093 moi gara co bo Manager/Staff
+   rieng, cung TEN. O chon nhom cua Admin chi ghi ten nhom -> ba dong "Manager"
+   giong het nhau, va luu thi khong ai kiem nhom co thuoc gara da chon khong.
+   Ban truoc cua chinh test nay con KHANG DINH Admin tao duoc tai khoan gara Da
+   Nang trong nhom Manager CUA TAN PHAT — viet truoc 000093, chot dung cai loi.
+   Tai khoan nhu vay lay bang quyen cua gara khac, va nhomGiaoDuoc() cua no tra
+   nhom Tan Phat, nen no cap tiep nhom Tan Phat cho nhan vien Da Nang. */
+$nhomCuaGara = function($ten, $gara) use ($pdo){
+    $st = $pdo->prepare("SELECT id FROM `groups` WHERE name = ? AND garage_id = ?");
+    $st->execute([$ten, $gara]);
+    return (int) $st->fetchColumn();
+};
+$M_SG = $nhomCuaGara('Manager', $G2);
+$M_DN = $nhomCuaGara('Manager', $G3);
+
 $r = $http('GET', "$base/admin/users/add", $jarAD);
 $tk = $token($r['body']) ?: $tk;
 $oNhom = preg_match('~<select name="group_id".*?</select>~s', $r['body'], $mm) ? $mm[0] : '';
 ok(strpos($oNhom, 'value="' . $A . '"') !== false && strpos($oNhom, 'value="' . $M . '"') !== false,
    'Admin van chon duoc moi nhom');
+$oNhomChu = html_entity_decode($oNhom, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+ok($M_SG > 0 && preg_match('~<option value="' . $M_SG . '"[^>]*>[^<]*Gara mẫu Sài Gòn~u', $oNhomChu),
+   'O chon nhom cua Admin ghi TEN GARA canh nhom (Manager — Gara mau Sai Gon)',
+   'Ba dong "Manager" giong het nhau thi khong biet chon dong nao');
+
 $http('POST', "$base/admin/users/add", $jarAD, [
-    '_token' => $tk, 'name' => 'ZZ Quan ly DN', 'email' => 'zz-moi-ql-dn@local.test',
+    '_token' => $tk, 'name' => 'ZZ Nhom nham gara', 'email' => 'zz-moi-nham@local.test',
     'password' => 'ZzMoi#2026', 'confirm_password' => 'ZzMoi#2026',
     'status' => 1, 'group_id' => $M, 'garage_id' => $G3,
 ]);
+ok(empty($userTheoEmail('zz-moi-nham@local.test')),
+   'Admin chon nhom Manager CUA TAN PHAT cho tai khoan gara Da Nang -> KHONG tao',
+   'Nhom phai thuoc dung gara cua tai khoan');
+
+$r = $http('GET', "$base/admin/users/add", $jarAD);
+$tk = $token($r['body']) ?: $tk;
+$http('POST', "$base/admin/users/add", $jarAD, [
+    '_token' => $tk, 'name' => 'ZZ Quan ly DN', 'email' => 'zz-moi-ql-dn@local.test',
+    'password' => 'ZzMoi#2026', 'confirm_password' => 'ZzMoi#2026',
+    'status' => 1, 'group_id' => $M_DN, 'garage_id' => $G3,
+]);
 $moi = $userTheoEmail('zz-moi-ql-dn@local.test');
-ok(!empty($moi) && (int) $moi['group_id'] === $M && (int) $moi['garage_id'] === $G3,
-   'Admin tao duoc Manager cho gara Da Nang (chon gara tu do)');
+ok($M_DN > 0 && !empty($moi) && (int) $moi['group_id'] === $M_DN && (int) $moi['garage_id'] === $G3,
+   'Admin tao duoc Manager cho gara Da Nang bang nhom Manager CUA DA NANG');
+
+/* Nhom he thong (Admin, garage_id NULL) khong thuoc gara nao — gan cho tai khoan
+   gara nao cung duoc, nhu truoc. */
+$r = $http('GET', "$base/admin/users/add", $jarAD);
+$tk = $token($r['body']) ?: $tk;
+$http('POST', "$base/admin/users/add", $jarAD, [
+    '_token' => $tk, 'name' => 'ZZ Admin SG', 'email' => 'zz-moi-admin-sg@local.test',
+    'password' => 'ZzMoi#2026', 'confirm_password' => 'ZzMoi#2026',
+    'status' => 1, 'group_id' => $A, 'garage_id' => $G2,
+]);
+ok(!empty($userTheoEmail('zz-moi-admin-sg@local.test')),
+   'Admin van gan duoc nhom he thong Admin cho tai khoan gara bat ky');
+
+/* Sua: doi gara ma giu nhom cua gara cu -> cung phai chan */
+if (!empty($moi)){
+    $r = $http('GET', "$base/admin/users/edit/" . (int) $moi['id'], $jarAD);
+    $tk = $token($r['body']) ?: $tk;
+    $http('POST', "$base/admin/users/edit/" . (int) $moi['id'], $jarAD, [
+        '_token' => $tk, 'name' => 'ZZ Quan ly DN', 'email' => 'zz-moi-ql-dn@local.test',
+        'status' => 1, 'group_id' => $M_DN, 'garage_id' => $G2,
+    ]);
+    ok((int) $user($moi['id'])['garage_id'] === $G3,
+       'Sua: chuyen sang gara Sai Gon ma giu nhom Manager Da Nang -> KHONG luu');
+}
 
 foreach ([$jarQL, $jarTrong, $jarAD] as $j) @unlink($j);
 

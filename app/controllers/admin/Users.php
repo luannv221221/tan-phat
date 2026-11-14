@@ -407,6 +407,21 @@ class Users extends Controller{
             $gara = $this->garaTuForm();
             $g    = $gara !== null ? $this->model('GaragesModel')->getDetail($gara) : null;
             if (empty($g) || (int) $g['status'] !== 1) $errors['garage_id'] = 'Chưa chọn gara cho tài khoản';
+
+            /* NHÓM PHẢI CÙNG GARA VỚI TÀI KHOẢN (thêm 14/11/2026). Từ 000093 mỗi
+               gara có bộ Manager/Staff riêng, cùng tên. Thiếu chốt này thì Admin
+               chọn nhầm "Manager" của Tân Phát cho người Đà Nẵng vẫn lưu được:
+               người đó dùng bảng quyền của gara khác, và nhomGiaoDuoc() của họ
+               trả nhóm Tân Phát — họ cấp tiếp nhóm Tân Phát cho nhân viên mình.
+               Nhóm hệ thống (Admin, garage_id NULL) không thuộc gara nào: cho qua.
+               Người bị giới hạn không cần chốt này: nhomGiaoDuoc() đã chỉ trả
+               nhóm cùng gara của họ, và gara ghi vào luôn là gara của họ. */
+            if ($gid > 0 && empty($errors['group_id']) && !empty($g)){
+                $garaNhom = $this->__groupModel->garaCua($gid);
+                if ($garaNhom !== null && $garaNhom !== (int) $g['id']){
+                    $errors['group_id'] = 'Nhóm này thuộc gara khác — chọn nhóm của ' . $g['name'];
+                }
+            }
         }
         return $errors;
     }

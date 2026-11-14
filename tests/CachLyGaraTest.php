@@ -51,6 +51,9 @@ $donSach = function() use ($pdo){
     $cau = array_merge($cau, [
         "DELETE t FROM login_tokens t JOIN users u ON u.id = t.user_id WHERE u.email LIKE 'zz-cl-%@local.test'",
         "DELETE FROM users WHERE email LIKE 'zz-cl-%@local.test'",
+        // Nhóm quyền riêng của gara tạm (tạo ở cuối file) — sau users, trước garages
+        "DELETE p FROM permissions p JOIN `groups` gr ON gr.id = p.group_id WHERE gr.garage_id IN ($g)",
+        "DELETE FROM `groups` WHERE garage_id IN ($g)",
         /* Chứng từ trỏ vào kho / hàng riêng của gara tạm mà KHÔNG mang gara tạm
            (chỉ có khi chặn gara đang hỏng — thử phá): không dọn thì khoá ngoại
            giữ kho / hàng / gara tạm lại và lần chạy sau không dựng được gara. */
@@ -1229,13 +1232,20 @@ $pdo->prepare("UPDATE garages SET status = 1 WHERE id = ?")->execute([$GB]);
 $r = $http('GET', "$base/admin", $jarB2);
 ok($r['code'] === 302, 'Mo khoa lai thi phien cu van da bi huy — phai dang nhap lai', 'HTTP ' . $r['code']);
 
-/* Admin tạo tài khoản: bắt buộc chọn gara */
+/* Admin tạo tài khoản: bắt buộc chọn gara.
+   Nhóm phải là nhóm CỦA GARA B (sửa 14/11/2026): Users::loiForm() giờ chặn gán
+   nhóm của gara khác — $S là Staff của gara tổng. Gara tạm B không có nhóm nào
+   (không đi qua màn Mở gara), nên dựng một nhóm Staff cho nó ở đây. */
+$pdo->prepare("INSERT INTO `groups` (name, garage_id, create_at) VALUES ('Staff', ?, NOW())")->execute([$GB]);
+$S_B = (int) $pdo->lastInsertId();
+$pdo->exec("INSERT INTO permissions (module_id, group_id, role)
+            SELECT module_id, $S_B, role FROM permissions WHERE group_id = " . (int) $S);
 list($jarAD) = $dangNhap('zz-cl-ad@local.test');
-$them = function($email, $gara) use ($http, $token, $base, $jarAD, $S, $MK){
+$them = function($email, $gara, $nhomId = null) use ($http, $token, $base, $jarAD, $S_B, $MK){
     $f = $http('GET', "$base/admin/users/add", $jarAD);   // mở form: xoá flash `old`, lấy token
     return $http('POST', "$base/admin/users/add", $jarAD, [
         '_token' => $token($f['body']), 'name' => 'ZZ Tai khoan moi', 'email' => $email,
-        'password' => $MK, 'confirm_password' => $MK, 'group_id' => $S, 'status' => 1, 'garage_id' => $gara,
+        'password' => $MK, 'confirm_password' => $MK, 'group_id' => $nhomId ?: $S_B, 'status' => 1, 'garage_id' => $gara,
     ]);
 };
 $them('zz-cl-moi1@local.test', '');
@@ -1246,5 +1256,9 @@ ok(strpos($f['text'], 'Chưa chọn gara') !== false, 'Form bao loi "Chua chon g
 $them('zz-cl-moi2@local.test', (string) $GB);
 $moi = $mot("SELECT garage_id FROM users WHERE email = 'zz-cl-moi2@local.test'");
 ok(!empty($moi) && (int) $moi['garage_id'] === $GB, 'Admin tao tai khoan cho gara B: tai khoan thuoc gara B');
+$them('zz-cl-moi3@local.test', (string) $GB, $S);
+ok($so("SELECT COUNT(*) FROM users WHERE email = 'zz-cl-moi3@local.test'") === 0,
+   'Admin gan nhom Staff CUA GARA TONG cho tai khoan gara B -> KHONG tao',
+   'Nhom gara khac = bang quyen gara khac, va cap tiep nhom gara khac cho nhan vien');
 
 exit(summary());

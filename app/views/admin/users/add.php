@@ -45,7 +45,9 @@
                 <option value="0">Chọn nhóm</option>
                 @if (!empty($listGroup))
                     @foreach ($listGroup as $item)
-                        <option value="{{$item['id']}}" {{!empty($old['group_id']) && $old['group_id']==$item['id']?'selected':false}}>{{$item['name']}}</option>
+                        <?php /* Mỗi gara có Manager/Staff riêng, cùng tên — ghi tên gara
+                                 kèm theo, không thì Admin thấy ba dòng "Manager" giống hệt. */ ?>
+                        <option value="{{$item['id']}}" {{!empty($old['group_id']) && $old['group_id']==$item['id']?'selected':false}}>{{$item['name'] . (!empty($item['garage_name']) ? ' — ' . $item['garage_name'] : '')}}</option>
                     @endforeach
                 @endif
             </select>
