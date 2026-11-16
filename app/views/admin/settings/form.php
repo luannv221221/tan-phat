@@ -5,6 +5,9 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
     @if (!empty($msg))
     <div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fas fa-check-circle mr-1"></i> {{$msg}}</div>
     @endif
+    @if (!empty($msgError))
+    <div class="alert alert-danger alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fas fa-exclamation-triangle mr-1"></i> {{$msgError}}</div>
+    @endif
 
     <?php /* Nói rõ đang sửa CÁI GÌ. Cùng một màn nhưng gara tổng sửa mặc định
              chung cho mọi gara, còn gara khác chỉ sửa của riêng mình — không
@@ -103,11 +106,39 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
         <div class="card card-outline card-success">
             <div class="card-header"><h3 class="card-title"><i class="fas fa-university mr-2"></i>Tài khoản ngân hàng (hướng dẫn chuyển khoản)</h3></div>
             <div class="card-body">
+                <?php /* NGÂN HÀNG LÀ Ô CHỌN (16/11/2026) — mã BIN của NAPAS, để hoá đơn
+                         dựng được mã QR chuyển khoản (VietQR). Gõ tay tên ngân hàng thì
+                         không suy ra được mã cho chắc, mà mã sai là tiền đi sai ngân hàng.
+                         Không có nút "+ thêm nhanh": BIN do NAPAS cấp, không tự đặt được
+                         (xem App\core\VietQr::NGAN_HANG).
+                         Gara KHÔNG thừa hưởng tài khoản của Tân Phát: ô trống = gara chưa
+                         khai = hoá đơn chưa có mã QR. */ ?>
+                <?php $binHt = (string) $s('bank_bin'); $tenCu = (string) $s('bank_name'); ?>
                 <div class="form-row">
-                    <div class="form-group col-md-4"><label>Ngân hàng</label><input type="text" name="bank_name" class="form-control" value="{{$s('bank_name')}}"/></div>
-                    <div class="form-group col-md-4"><label>Số tài khoản</label><input type="text" name="bank_account" class="form-control" value="{{$s('bank_account')}}"/></div>
-                    <div class="form-group col-md-4"><label>Chủ tài khoản</label><input type="text" name="bank_holder" class="form-control" value="{{$s('bank_holder')}}"/></div>
+                    <div class="form-group col-md-4">
+                        <label>Ngân hàng</label>
+                        <select name="bank_bin" class="form-control js-search" data-placeholder="Gõ tên ngân hàng để tìm...">
+                            <option value="">— Chưa chọn —</option>
+                            <?php foreach ((array) $nganHang as $bin => $nh): ?>
+                            <option value="<?php echo e($bin); ?>" <?php echo (string) $bin === $binHt ? 'selected' : ''; ?>><?php echo e($nh['ten'] . ' — ' . $nh['ten_day_du']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if ($binHt === '' && $tenCu !== ''): ?>
+                        <small class="form-text text-danger">
+                            Đang ghi tay: <b><?php echo e($tenCu); ?></b>. Chọn lại ngân hàng trong danh sách
+                            để hoá đơn in được mã QR chuyển khoản.
+                        </small>
+                        <?php endif; ?>
+                    </div>
+                    <div class="form-group col-md-4"><label>Số tài khoản</label><input type="text" name="bank_account" class="form-control" inputmode="numeric" value="<?php echo e($s('bank_account')); ?>"/></div>
+                    <div class="form-group col-md-4"><label>Chủ tài khoản</label><input type="text" name="bank_holder" class="form-control" placeholder="VD: CONG TY TNHH GARA ABC" value="<?php echo e($s('bank_holder')); ?>"/></div>
                 </div>
+                <small class="form-text text-muted">
+                    <i class="fas fa-qrcode mr-1"></i>
+                    Khai đủ ba ô thì hoá đơn bán in thêm <b>mã QR chuyển khoản</b>: khách mở app ngân hàng quét
+                    là ra sẵn số tài khoản, số tiền của hoá đơn và nội dung là số hoá đơn.
+                    Để trống số tài khoản thì hoá đơn không in mã QR.
+                </small>
             </div>
             <div class="card-footer"><button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Lưu cấu hình</button></div>
         </div>

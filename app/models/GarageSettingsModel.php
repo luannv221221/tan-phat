@@ -19,6 +19,22 @@ class GarageSettingsModel extends Model {
     protected $_theoGara = true;
 
     /**
+     * TÀI KHOẢN NHẬN TIỀN — KHÔNG THỪA HƯỞNG từ Cấu hình chung (16/11/2026).
+     *
+     * Mọi ô khác ở đây gara chưa khai thì dùng mặc định của Tân Phát (tên,
+     * hotline, chu kỳ bảo trì...). Riêng bốn ô này thì KHÔNG: thừa hưởng tài
+     * khoản ngân hàng nghĩa là gara chưa khai mà màn Cấu hình của họ hiện sẵn
+     * số tài khoản của Tân Phát — bấm Lưu một lần là chép nó thành của mình, và
+     * từ khi hoá đơn in mã QR thì khách quét là chuyển tiền sang Tân Phát.
+     * Gara chưa khai = trống = hoá đơn không in mã QR.
+     *
+     * Cũng vì vậy Settings::chiKhacMacDinh() không lọc bốn ô này: gara chọn
+     * CÙNG ngân hàng với Tân Phát (Vietcombank cả hai) là chuyện thường, bỏ đi
+     * vì "giống mặc định" là gara đó mất ngân hàng.
+     */
+    const KHOA_NGAN_HANG = ['bank_bin', 'bank_name', 'bank_account', 'bank_holder'];
+
+    /**
      * CHỈ những ô GARA NÀY TỰ KHAI — không trộn Cấu hình chung làm nền.
      *
      * map() trộn `site_settings` xuống dưới, tiện cho trang bán hàng (ô nào
@@ -60,7 +76,14 @@ class GarageSettingsModel extends Model {
      * cách riêng khi có người thật sự cần.
      */
     public function map(){
-        $chung = \App\core\Load::model('SettingsModel')->map();
+        $chung = (array) \App\core\Load::model('SettingsModel')->map();
+
+        /* Tài khoản ngân hàng không thừa hưởng — xem KHOA_NGAN_HANG. Gara tổng
+           thì Cấu hình chung CHÍNH LÀ của nó, giữ nguyên. laGaraTongLoc() chứ
+           không la_gara_tong(): phải tôn trọng Model::trongGara(). */
+        if (!$this->laGaraTongLoc()){
+            foreach (self::KHOA_NGAN_HANG as $k) unset($chung[$k]);
+        }
 
         $rieng = [];
         foreach ((array) $this->bangGara()->select('`skey`, `svalue`')->get() as $r){

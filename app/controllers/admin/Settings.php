@@ -4,6 +4,7 @@ use App\core\Controller;
 use App\core\Request;
 use App\core\Response;
 use App\core\Session;
+use App\core\VietQr;
 
 /**
  * Cấu hình (1 form key-value): liên hệ, mã số thuế, ngân hàng, giao diện, SEO.
@@ -41,7 +42,11 @@ class Settings extends Controller {
                         phải lúc nào cũng suy ra được nhau. Dùng cho ba nút nổi
                         "Hỗ trợ trực tuyến" ở trang khách (tài liệu 05/11/2026). */
                      'facebook', 'zalo', 'messenger',
-                     'bank_name', 'bank_account', 'bank_holder',
+                     /* NGÂN HÀNG LÀ Ô CHỌN (16/11/2026, mã QR trên hoá đơn):
+                        gửi lên `bank_bin` (mã NAPAS), còn `bank_name` KHÔNG
+                        nằm trong danh sách — nó được ĐẶT THEO ô chọn lúc lưu
+                        (xem luu()), không nhận chữ gõ tay nữa. */
+                     'bank_bin', 'bank_account', 'bank_holder',
                      'show_car_filter', 'show_topbar',
                      /* Linh vuc (gara / phu_tung) — quyet dinh man Lap bao gia
                         co hien khoi bao hiem + xe hay khong. Yeu cau 29/10/2026. */
@@ -144,7 +149,9 @@ class Settings extends Controller {
         $this->__data['content']['garaTen']   = !$chung && ($g = gara_hien_tai()) ? $g['name'] : '';
         /* Đọc bản đã trộn: ô gara chưa khai hiện sẵn mặc định chung. */
         $this->__data['content']['settings']  = $this->__gara->map();
+        $this->__data['content']['nganHang']  = VietQr::nganHang();
         $this->__data['content']['msg']       = Session::flash('msg');
+        $this->__data['content']['msgError']  = Session::flash('msgError');
         $this->render('layouts/admin/master_admin', $this->__data);
     }
 
@@ -219,6 +226,23 @@ class Settings extends Controller {
             elseif (isset($f['logo'])) $kv['logo'] = trim($f['logo']);
         }
 
+        /* NGÂN HÀNG: chọn từ danh sách NAPAS (VietQr::NGAN_HANG). Tên ngân hàng
+           in trên hoá đơn đặt THEO ô chọn — cùng một nguồn với mã BIN trong mã
+           QR, nên chữ in cạnh mã không thể nói một ngân hàng còn mã chuyển tới
+           ngân hàng khác.
+           BIN lạ (form bị sửa tay) thì từ chối cả lần lưu: lưu nửa vời là mã QR
+           trỏ tới ngân hàng không tồn tại.
+           Ô chọn để trống thì KHÔNG đụng `bank_name`: tên gõ tay từ trước
+           16/11/2026 vẫn in như cũ cho tới khi gara chọn lại ngân hàng. */
+        if (array_key_exists('bank_bin', $kv)){
+            if ($kv['bank_bin'] !== '' && VietQr::tenNganHang($kv['bank_bin']) === ''){
+                Session::flash('msgError', 'Ngân hàng không có trong danh sách — chưa lưu gì. Hãy chọn lại ngân hàng.');
+                $this->__response->redirect($veDau); return;
+            }
+            if ($kv['bank_bin'] !== '') $kv['bank_name'] = VietQr::tenNganHang($kv['bank_bin']);
+        }
+        if (array_key_exists('bank_account', $kv)) $kv['bank_account'] = preg_replace('~\s+~', '', $kv['bank_account']);
+
         /* GARA TỔNG ghi vào cấu hình CHUNG (mặc định cho mọi gara).
            GARA KHÁC ghi vào cấu hình RIÊNG của chính nó — không đụng được vào
            mặc định chung. Ghi nhầm chỗ là một gara bấm Lưu làm đổi nhận diện
@@ -228,8 +252,13 @@ class Settings extends Controller {
             Session::flash('msg', 'Đã lưu cấu hình chung');
         } else {
             /* GARA CHỈ LƯU NHỮNG Ô KHÁC MẶC ĐỊNH CHUNG — xem chiKhacMacDinh().
-               Ghi tất là chép nhận diện của Tân Phát thành của gara. */
-            $this->__gara->saveMany($this->chiKhacMacDinh($kv));
+               Ghi tất là chép nhận diện của Tân Phát thành của gara.
+               TRỪ tài khoản ngân hàng: không thừa hưởng nên lưu đúng như gara
+               khai, kể cả khi trùng ngân hàng của Tân Phát — xem
+               GarageSettingsModel::KHOA_NGAN_HANG. */
+            $nganHang = array_intersect_key($kv, array_flip(GarageSettingsModel::KHOA_NGAN_HANG));
+            $this->__gara->saveMany($this->chiKhacMacDinh(array_diff_key($kv, $nganHang)));
+            $this->luuNganHangGara($nganHang);
             Session::flash('msg', 'Đã lưu cấu hình của gara');
         }
         $this->__response->redirect($veDau);
@@ -276,5 +305,23 @@ class Settings extends Controller {
         if (!empty($boDi)) $this->__gara->xoaKhoa($boDi);
 
         return $luu;
+    }
+
+    /**
+     * Tài khoản ngân hàng của GARA: ô có giá trị thì ghi, ô để trống thì xoá
+     * dòng riêng (trống = gara thôi khai, hoá đơn thôi in mã QR).
+     *
+     * Không qua chiKhacMacDinh(): ô này không thừa hưởng nên "bằng mặc định"
+     * không có nghĩa là "không khai" — gara và Tân Phát cùng dùng Vietcombank
+     * là chuyện thường, lọc đi là gara đó mất ngân hàng.
+     */
+    private function luuNganHangGara(array $kv){
+        $ghi = $xoa = [];
+        foreach ($kv as $k => $v){
+            if ((string) $v === '') $xoa[] = $k;
+            else                    $ghi[$k] = $v;
+        }
+        if (!empty($xoa)) $this->__gara->xoaKhoa($xoa);
+        if (!empty($ghi)) $this->__gara->saveMany($ghi);
     }
 }

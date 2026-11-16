@@ -109,8 +109,10 @@ foreach (['site_name', 'site_slogan', 'site_short_name', 'logo',
 /* Nhung o quyet dinh GARA LAM VIEC THE NAO: khong hien tren trang khach, o lai. */
 /* `price_schedule` KHONG con o day: lich tu cap nhat gia chuyen sang man Bang tinh gia
    (13/11/2026, LichBangGiaTest). No cung khong duoc nam trong whitelist cua Settings. */
+/* `bank_bin` thay cho `bank_name` (16/11/2026): ngan hang la O CHON theo ma
+   NAPAS de hoa don in duoc ma QR; ten ngan hang dat theo o chon luc luu. */
 foreach (['linh_vuc', 'dien_tich_xuong', 'cost_method',
-          'bank_name', 'bank_account', 'bank_holder'] as $k){
+          'bank_bin', 'bank_account', 'bank_holder'] as $k){
     ok(in_array($k, $oChung, true) && !in_array($k, $oWeb, true),
        "`$k` o lai Cau hinh chung (khong phai thu trang khach hien thi)");
 }
@@ -220,12 +222,17 @@ if ($tokW !== '' && $tokC !== ''){
     $dau2 = $doc();
     $post = ['_token' => $tokC];
     foreach ($chung as $k) $post[$k] = isset($dau2[$k]) ? $dau2[$k] : '';
-    $moi = 'Thu Ngan Hang ' . random_int(1000, 9999);
-    $post['bank_name'] = $moi;
+    /* Ngan hang la o chon theo ma BIN (16/11/2026) — doi sang mot BIN KHAC
+       BIN hien co de chac la lan luu nay thuc su ghi. */
+    $moi = (isset($dau2['bank_bin']) && $dau2['bank_bin'] === '970407') ? '970418' : '970407';
+    $post['bank_bin'] = $moi;
     $http('POST', "$base/admin/settings/save", $jar, $post);
 
     $sau2 = $doc();
-    ok(isset($sau2['bank_name']) && $sau2['bank_name'] === $moi, 'Luu man chung: ngan hang doi dung');
+    ok(isset($sau2['bank_bin']) && $sau2['bank_bin'] === $moi, 'Luu man chung: ngan hang doi dung');
+    ok(isset($sau2['bank_name']) && $sau2['bank_name'] === \App\core\VietQr::tenNganHang($moi),
+       'Luu man chung: ten ngan hang dat theo o chon',
+       var_export(isset($sau2['bank_name']) ? $sau2['bank_name'] : null, true));
 
     $mat2 = [];
     foreach ($web as $k){

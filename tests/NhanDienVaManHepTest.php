@@ -257,9 +257,14 @@ section('`garage_settings` chi giu phan KHAC mac dinh chung');
    Dong trung nhu vay khong lam doi thu gara nhin thay (map() tron chung lam
    nen), nhung no la DAU VET cua viec chep nham — va no lam gara dong bang o
    mot ban chup: Tan Phat sua Cau hinh chung thi gara khong theo nua. */
+/* TRU tai khoan ngan hang (16/11/2026): bon o nay KHONG thua huong (xem
+   GarageSettingsModel::KHOA_NGAN_HANG), nen dong rieng trung mac dinh la gara
+   khai that — gara va Tan Phat cung dung Vietcombank la chuyen thuong. So TK /
+   chu TK trung Tan Phat thi van bi bat o chot ngay duoi. */
 $trung = (array) $pdo->query(
     "SELECT gs.garage_id, gs.skey FROM `garage_settings` gs
-       JOIN `site_settings` ss ON ss.`skey` = gs.`skey` AND ss.`svalue` = gs.`svalue`"
+       JOIN `site_settings` ss ON ss.`skey` = gs.`skey` AND ss.`svalue` = gs.`svalue`
+      WHERE gs.`skey` NOT IN ('bank_bin', 'bank_name', 'bank_account', 'bank_holder')"
 )->fetchAll(PDO::FETCH_ASSOC);
 $mo = [];
 foreach ($trung as $r) $mo[] = 'gara ' . $r['garage_id'] . '/' . $r['skey'];
@@ -272,7 +277,7 @@ ok(empty($trung),
 $nhay = (array) $pdo->query(
     "SELECT gs.garage_id, gs.skey, gs.svalue FROM `garage_settings` gs
        JOIN `site_settings` ss ON ss.`skey` = gs.`skey` AND ss.`svalue` = gs.`svalue`
-      WHERE gs.`skey` IN ('bank_account','bank_holder','bank_name','tax_code','site_name','email')"
+      WHERE gs.`skey` IN ('bank_account','bank_holder','tax_code','site_name','email')"
 )->fetchAll(PDO::FETCH_ASSOC);
 ok(empty($nhay),
    'Khong gara nao mang so tai khoan / MST / ten cua Tan Phat',

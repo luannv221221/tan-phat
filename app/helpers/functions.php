@@ -664,8 +664,10 @@ function cau_hinh_in_an($garaId = null){
     /* `site_short_name` KHÔNG có cột tương ứng trong bảng `garages` — nó chỉ
        tồn tại ở Cấu hình. Để trong danh sách này để gara tự khai được; chưa
        khai thì rỗng, nơi dùng tự rơi về tên đầy đủ. */
+    /* `bank_bin` (16/11/2026): mã ngân hàng NAPAS gara chọn ở màn Cấu hình —
+       thiếu nó thì hoá đơn của gara không dựng được mã QR chuyển khoản. */
     $khoa = ['site_name', 'site_short_name', 'address', 'hotline', 'email', 'tax_code', 'logo',
-             'bank_name', 'bank_account', 'bank_holder'];
+             'bank_bin', 'bank_name', 'bank_account', 'bank_holder'];
     /* trongGara(): rieng() lọc theo gara ĐANG LÀM VIỆC, mà hàm này in phiếu của
        gara $g — hai cái đó khác nhau khi in lại phiếu cũ của gara đã chuyển. Gọi
        thẳng là lấy nhầm nhận diện của gara đang mở màn hình dán lên phiếu người
@@ -786,6 +788,15 @@ function in_chung_tu(array $ct, $khach, array $dong, array $settings, $urlWord =
     $tong['baoHiem']  = isset($ct['baoHiem']) ? (float) $ct['baoHiem'] : 0.0;
     if ($tong['baoHiem'] > $tong['total']) $tong['baoHiem'] = $tong['total'];
     $tong['khachTra'] = $tong['total'] - $tong['baoHiem'];
+
+    /* MÃ QR CHUYỂN KHOẢN (VietQR, 16/11/2026) — chỉ trên chứng từ đòi tiền
+       (hienNganHang: hoá đơn có, báo giá không). Số tiền là số KHÁCH trả, cùng
+       lý do với dòng "bằng chữ": quét ra tổng cộng là khách chuyển luôn phần
+       bảo hiểm chịu. Gara chưa chọn ngân hàng / chưa có số TK -> null, mẫu in
+       chỉ in chữ như cũ. Bản Word không vẽ được (không chạy JS) — mẫu in tự bỏ. */
+    $qr = !empty($ct['hienNganHang'])
+        ? \App\core\VietQr::choHoaDon($settings, $tong['khachTra'], isset($ct['so']) ? $ct['so'] : '')
+        : null;
 
     require __DIR__ . '/../views/admin/print/chung-tu.php';
 }

@@ -89,6 +89,17 @@ tr.tong-cuoi td { font-weight: bold; font-size: 13.5pt; }
 .ky-ten .ghi { font-style: italic; font-size: 10.5pt; }
 .ky-ten .cho-ky { height: 24mm; }
 
+/* Khối chuyển khoản có mã QR: mã bên trái, chữ bên phải. 32mm ở khổ A4 là
+   ~0,6mm mỗi ô với chuỗi VietQR thường gặp — camera điện thoại đọc thoải mái
+   ở khoảng cách cầm tay, kể cả máy in phun. */
+table.khoi-ck { width: auto; margin-bottom: 6mm; page-break-inside: avoid; }
+table.khoi-ck td { border: 0; vertical-align: top; padding: 0; font-size: 11.5pt; line-height: 1.6; }
+table.khoi-ck td.o-qr { width: 34mm; padding-right: 5mm; text-align: center; }
+.vietqr { width: 32mm; height: 32mm; margin: 0 auto; }
+.vietqr svg { display: block; width: 32mm; height: 32mm; }
+.vietqr .qr-loi { display: block; padding-top: 8mm; font-size: 9pt; font-style: italic; color: #555; }
+.nhan-qr { font-size: 9pt; font-style: italic; margin-top: 1mm; }
+
 @media print {
     body { background: #fff; padding: 0; font-size: 12pt; }
     .to-in { padding: 0; width: auto; max-width: none; box-shadow: none; }
@@ -236,7 +247,32 @@ tr.tong-cuoi td { font-weight: bold; font-size: 13.5pt; }
              đọc tổng cộng là khách tưởng mình phải trả cả phần hãng chịu. */ ?>
     <div class="bang-chu">Số tiền bằng chữ: <b><?php echo e(doc_so_tien($tong['khachTra'])); ?></b></div>
 
-    <?php if (!empty($ct['hienNganHang']) && $s('bank_account') !== ''): ?>
+    <?php /* MÃ QR CHUYỂN KHOẢN (VietQR, 16/11/2026). $qr do in_chung_tu() dựng
+             từ tài khoản của GARA LẬP PHIẾU; null khi gara chưa chọn ngân hàng /
+             chưa có số TK — lúc đó rơi xuống khối chữ cũ bên dưới.
+             Chữ cạnh mã đọc từ CHÍNH $qr (cùng nguồn với chuỗi trong mã), để giấy
+             không thể ghi một số tiền mà mã chuyển số khác.
+             Bản Word không chạy JS nên không vẽ được mã: chỉ in phần chữ. */ ?>
+    <?php if (!empty($qr)): ?>
+    <table class="khoi-ck">
+        <tr>
+            <?php if (empty($laWord)): ?>
+            <td class="o-qr">
+                <div class="vietqr" data-vietqr="<?php echo e($qr['chuoi']); ?>"><span class="qr-loi">Không vẽ được mã QR — chuyển khoản theo thông tin bên cạnh.</span></div>
+                <div class="nhan-qr">Quét bằng app ngân hàng</div>
+            </td>
+            <?php endif; ?>
+            <td class="chu-ck">
+                <b>Thông tin chuyển khoản</b><br/>
+                Ngân hàng: <b><?php echo e($qr['ngan_hang']); ?></b> — <?php echo e($qr['ngan_hang_day_du']); ?><br/>
+                Số tài khoản: <b><?php echo e($qr['so_tk']); ?></b><br/>
+                <?php if ($qr['chu_tk'] !== ''): ?>Chủ tài khoản: <b><?php echo e($qr['chu_tk']); ?></b><br/><?php endif; ?>
+                Số tiền: <b><?php echo e($tien($qr['so_tien'])); ?> đ</b><br/>
+                Nội dung: <b><?php echo e($qr['noi_dung']); ?></b>
+            </td>
+        </tr>
+    </table>
+    <?php elseif (!empty($ct['hienNganHang']) && $s('bank_account') !== ''): ?>
     <div class="khoi-nh">
         <b>Thông tin chuyển khoản</b><br/>
         Ngân hàng: <?php echo e($s('bank_name')); ?><br/>
@@ -266,6 +302,36 @@ tr.tong-cuoi td { font-weight: bold; font-size: 13.5pt; }
     </table>
 
 </div>
+
+<?php if (empty($laWord) && !empty($qr)): ?>
+<?php /* VẼ MÃ QR TẠI CHỖ — qrcode-generator 1.4.4 (Kazuhiko Arase, MIT) từ cdnjs,
+         ghim phiên bản + integrity: cdnjs có bị tráo file thì trình duyệt từ
+         chối chạy, chứ không chạy một đoạn mã lạ đọc được số tài khoản và số
+         tiền. Chuỗi VietQR dựng ở máy chủ (App\core\VietQr); thư viện chỉ vẽ,
+         không gửi gì đi đâu — khác img.vietqr.io là phải gửi số tiền + số TK
+         cho họ để lấy ảnh về.
+         SVG chứ không phải ảnh điểm: in ra giấy nét ở mọi cỡ, máy in nào cũng
+         quét được. Mức sửa lỗi M, lề trắng 4 ô theo chuẩn QR.
+         Chạy TRƯỚC đoạn tự mở hộp thoại In bên dưới (thẻ <script src> chặn
+         trang tới khi tải xong), nên lúc in mã đã có trên giấy. */ ?>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"
+        integrity="sha384-mZT2gIty7ZDdOGkxfP6joZcYdMW1Jvj9dRlfpTmaJAKKXTqzygtB22k7FLe+KZC1"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+(function () {
+    if (typeof qrcode !== 'function') return; // không tải được thư viện: giữ dòng chữ báo, phần chữ bên cạnh vẫn đủ
+    var o = document.querySelectorAll('[data-vietqr]');
+    for (var i = 0; i < o.length; i++) {
+        try {
+            var qr = qrcode(0, 'M');
+            qr.addData(o[i].getAttribute('data-vietqr'));
+            qr.make();
+            o[i].innerHTML = qr.createSvgTag({ cellSize: 4, scalable: true });
+        } catch (e) { /* để nguyên dòng chữ báo lỗi */ }
+    }
+})();
+</script>
+<?php endif; ?>
 
 <?php if (empty($laWord) && !empty($ct['tuMoHopIn'])): ?>
 <script>
