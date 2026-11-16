@@ -88,6 +88,7 @@ $tests = [
     'LoiTatTest.php'              => 'GIAO DIEN — loi tat tren thanh tren cung: moi nguoi tu dat, chan quyen + tan cong',
     'LichBangGiaTest.php'         => 'KE TOAN — lich tu cap nhat gia (ngay/tuan/thang) dat tren man Bang tinh gia',
     'VietQrTest.php'              => 'HOA DON — ma QR chuyen khoan VietQR: dung chuan + CRC, tai khoan rieng tung gara',
+    'DatHangChuyenKhoanGaraTest.php' => 'GIAN HANG — trang Dat hang thanh cong hien tai khoan CUA GARA (khong phai Tan Phat) + QR',
 ];
 
 $php      = PHP_BINARY;

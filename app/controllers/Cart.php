@@ -12,7 +12,7 @@ use App\core\Session;
 class Cart extends Controller {
 
     private $__data = [];
-    private $__part, $__quote, $__quoteItem, $__member, $__order, $__orderItem, $__reservation, $__settings, $__request, $__response;
+    private $__part, $__quote, $__quoteItem, $__member, $__order, $__orderItem, $__reservation, $__request, $__response;
     private $__stock;
 
     function __construct(){
@@ -24,7 +24,6 @@ class Cart extends Controller {
         $this->__orderItem = $this->model('OrderItemsModel');
         $this->__reservation = $this->model('StockReservationsModel');
         $this->__stock     = $this->model('StocksModel');
-        $this->__settings  = $this->model('SettingsModel');
         $this->__request   = new Request();
         $this->__response  = new Response();
     }
@@ -410,7 +409,24 @@ class Cart extends Controller {
         $c['orderNo'] = Session::flash('lastOrderNo');
         $c['pay']     = Session::flash('lastOrderPay');
         $c['total']   = Session::flash('lastOrderTotal');
-        $c['settings']= $this->__settings->map();
+
+        /* TÀI KHOẢN NHẬN TIỀN CỦA GARA ĐANG BÁN — sửa 16/11/2026.
+           Trước đây đọc `SettingsModel->map()`: Cấu hình CHUNG, tức tài khoản của
+           Tân Phát. Khách đặt hàng trên web của gara B, làm đúng theo hướng dẫn
+           chuyển khoản là chuyển tiền cho Tân Phát.
+
+           cau_hinh_in_an() — cùng nguồn với hoá đơn của gara: gara theo tên miền
+           đang mở (gara_hien_tai()), tài khoản do CHÍNH gara khai, KHÔNG rơi về
+           tài khoản Tân Phát; số điện thoại là của gara (bảng `garages`). Web của
+           Tân Phát thì nó trả đúng Cấu hình chung như trước.
+
+           Gara đã khai đủ thì kèm mã QR VietQR (số tiền + mã đơn) — khách đặt
+           trên máy tính quét bằng điện thoại, đặt trên điện thoại thì chụp màn
+           hình rồi mở ảnh trong app ngân hàng. */
+        $c['taiKhoan'] = cau_hinh_in_an();
+        $c['qr'] = ($c['pay'] === 'bank_transfer' && !empty($c['orderNo']))
+            ? \App\core\VietQr::choHoaDon($c['taiKhoan'], $c['total'], $c['orderNo'])
+            : null;
         $this->render('layouts/storefront/master', $this->__data);
     }
 }
