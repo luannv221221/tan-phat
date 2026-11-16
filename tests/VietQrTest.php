@@ -348,6 +348,33 @@ $hCu = $inHd($cu, 500000, 'ZZQR-CLI-5');
 ok($layQr($hCu) === null && strpos($hCu, '0011000999888') !== false,
    'Du lieu cu (ten ngan hang go tay, chua chon BIN): van in chu nhu truoc, chi khong co QR');
 
+/* DONG NHAC TREN MAN HINH (16/11/2026) — anh mo hoa don gara Sai Gon tren dien
+   thoai, khong thay QR, hoi "qr cho nay dau". Gara chua chon ngan hang thi hoa
+   don im lang khong co QR, khong ai biet vi sao. Nhac nam trong thanh cong cu
+   (an khi in), KHONG in ra giay. */
+$nhac = function($html){
+    return preg_match('~<div class="nhac-qr"[^>]*>(.*?)</div>~s', $html, $m)
+        ? html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8') : null;
+};
+$trongThanhCongCu = function($html){
+    $a = strpos($html, '<div class="thanh-cong-cu">');
+    $b = strpos($html, '<div class="nhac-qr"');
+    $c = strpos($html, '<div class="to-in">');
+    return $a !== false && $b !== false && $c !== false && $a < $b && $b < $c;
+};
+$nB = $nhac($hB);
+ok($nB !== null && mb_strpos($nB, 'Chưa có mã QR chuyển khoản') !== false,
+   'Hoa don gara chua khai tai khoan: man hinh NHAC "Chua co ma QR chuyen khoan"', var_export($nB, true));
+ok($nB !== null && mb_strpos($nB, 'Cấu hình') !== false && mb_strpos($nB, 'ngân hàng') !== false,
+   'Loi nhac chi cho: vao Cau hinh chon ngan hang');
+ok($trongThanhCongCu($hB), 'Loi nhac nam trong thanh cong cu (an khi in, khong ra giay)');
+ok($nhac($hA) === null, 'Hoa don da co QR: khong nhac');
+ok($nhac($hBg) === null, 'Bao gia: khong nhac (bao gia khong in QR la dung)');
+ok($nhac($hKhong) === null, 'Hoa don 0d: khong nhac (khong co gi de chuyen)');
+$nCu = $nhac($hCu);
+ok($nCu !== null && mb_strpos($nCu, 'chọn lại') !== false,
+   'Du lieu cu (ngan hang go tay): nhac CHON LAI ngan hang tu danh sach', var_export($nCu, true));
+
 ok(empty($canhBao), 'In 5 kieu hoa don khong phat ra canh bao PHP nao', implode(' | ', $canhBao));
 
 // ===========================================================================
@@ -525,6 +552,14 @@ ok($layQr($r['body']) === null, 'Gara 3 chua khai tai khoan: hoa don KHONG co ma
 ok(strpos($r['text'], $stk2) === false && ($stkTP === '' || strpos($r['text'], $stkTP) === false),
    'Hoa don gara 3 khong in so TK cua gara 2, cung khong in cua Tan Phat');
 ok(!preg_match('~(Warning|Notice|Fatal error|Deprecated)\b~', $r['body']), 'Hoa don gara 3 khong co loi PHP');
+$n3 = $nhac($r['body']);
+ok($n3 !== null && mb_strpos($n3, 'Chưa có mã QR chuyển khoản') !== false,
+   'Hoa don gara 3 (chua khai): trang in nhac vi sao khong co QR', var_export($n3, true));
+ok(preg_match('~<div class="nhac-qr"[^>]*>.*?href="[^"]*/admin/settings"~s', $r['body']) === 1,
+   'Chu gara co quyen Cau hinh: loi nhac kem link mo man Cau hinh');
+ok($nhac($http('GET', "$base/admin/sales-invoices/print/$hd2", $jar2)['body']) === null,
+   'Hoa don gara 2 (da co QR): khong nhac');
+ok($nhac($w['body']) === null, 'Ban Word: khong co loi nhac');
 
 $r = $http('GET', "$base/admin/sales-invoices/print/$hd2", $jar3);
 ok(strpos($r['text'], $stk2) === false && $layQr($r['body']) === null,

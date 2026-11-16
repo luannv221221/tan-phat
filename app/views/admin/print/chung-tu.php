@@ -59,6 +59,10 @@ body { font-family: "Times New Roman", Times, serif; font-size: 13pt; color: #00
     display: inline-block; padding: 8px 16px; margin-right: 6px; border: 0; border-radius: 4px;
     background: #2f6fbf; color: #fff; text-decoration: none; cursor: pointer; font-size: 11pt; }
 .thanh-cong-cu .phu { background: #6c757d; }
+.thanh-cong-cu .nhac-qr { margin-top: 8px; padding: 8px 10px; background: #fff3cd; border: 1px solid #ffe08a;
+                          border-radius: 4px; color: #664d03; line-height: 1.5; }
+.thanh-cong-cu .nhac-qr a { display: inline; background: none; color: #0d6efd; padding: 0; margin: 0;
+                            text-decoration: underline; border: 0; }
 
 table { width: 100%; border-collapse: collapse; }
 .dau-trang td { vertical-align: top; border: 0; padding: 0; }
@@ -118,6 +122,23 @@ table.khoi-ck td.o-qr { width: 34mm; padding-right: 5mm; text-align: center; }
     <a class="phu" href="<?php echo e($urlWord); ?>">Tải file Word</a>
     <a class="phu" href="javascript:window.close()">Đóng</a>
     <span style="margin-left:10px;color:#555">Muốn ra PDF: bấm <b>In</b> rồi chọn máy in <b>“Lưu thành PDF”</b>.</span>
+    <?php /* Vì sao hoá đơn không có mã QR — in_chung_tu() quyết $nhacQr. Nằm
+             trong thanh công cụ nên ẩn khi in, không ra giấy. */ ?>
+    <?php if (!empty($nhacQr)): ?>
+    <div class="nhac-qr">
+        <b>Chưa có mã QR chuyển khoản.</b>
+        <?php if ($nhacQr === 'chon-lai'): ?>
+        Ngân hàng của gara đang ghi tay — vào <b>Cấu hình</b>, chọn lại ngân hàng từ danh sách rồi Lưu.
+        <?php else: ?>
+        Gara chưa khai tài khoản nhận tiền — vào <b>Cấu hình</b>, chọn ngân hàng, nhập số tài khoản, chủ tài khoản rồi Lưu.
+        <?php endif; ?>
+        <?php if (!empty($urlCauHinh)): ?>
+        <a href="<?php echo e($urlCauHinh); ?>" target="_blank" rel="noopener">Mở Cấu hình</a>
+        <?php else: ?>
+        (Nhờ chủ gara làm.)
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
 </div>
 <?php endif; ?>
 

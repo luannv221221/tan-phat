@@ -798,6 +798,22 @@ function in_chung_tu(array $ct, $khach, array $dong, array $settings, $urlWord =
         ? \App\core\VietQr::choHoaDon($settings, $tong['khachTra'], isset($ct['so']) ? $ct['so'] : '')
         : null;
 
+    /* NHẮC VÌ SAO KHÔNG CÓ QR (16/11/2026). Gara chưa chọn ngân hàng thì hoá đơn
+       im lặng không có mã — anh mở hoá đơn gara Sài Gòn trên điện thoại, hỏi
+       "qr chỗ này đâu". Chỉ nhắc ở chứng từ đòi tiền, có tiền để chuyển; mẫu in
+       đặt câu nhắc trong thanh công cụ (ẩn khi in), không ra giấy.
+         'chua-khai' : chưa có số tài khoản
+         'chon-lai'  : có số tài khoản nhưng ngân hàng gõ tay, chưa chọn từ danh
+                       sách (dữ liệu cũ) — không có mã NAPAS thì không dựng QR. */
+    $nhacQr = null;
+    if (!empty($ct['hienNganHang']) && empty($qr) && $tong['khachTra'] > 0){
+        $nhacQr = trim((string) ($settings['bank_account'] ?? '')) === '' ? 'chua-khai' : 'chon-lai';
+    }
+    /* Link sang màn Cấu hình chỉ khi người đang xem có quyền vào đó (route() hỏi
+       middleware). Chạy từ dòng lệnh (test) thì không có request để hỏi. */
+    $urlCauHinh = ($nhacQr !== null && empty($laWord) && isset($_SERVER['REQUEST_METHOD']))
+        ? route('admin/settings') : false;
+
     require __DIR__ . '/../views/admin/print/chung-tu.php';
 }
 
