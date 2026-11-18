@@ -52,6 +52,50 @@ class SalesInvoicesModel extends Model {
     }
 
     /**
+     * MÃ LINK THANH TOÁN của hoá đơn (18/11/2026 — nút "Gửi" ở danh sách hoá đơn).
+     *
+     * 32 ký tự hex ngẫu nhiên (random_bytes, 128 bit), KHÔNG phải id: id tăng
+     * dần, sửa /thanh-toan/112 thành /113 là xem được hoá đơn người khác.
+     *
+     * Sinh lần đầu được hỏi, GIỮ NGUYÊN về sau — link đã gửi cho khách không chết.
+     * Chỉ trả cho hoá đơn thuộc GARA ĐANG LÀM VIỆC (bangGara()): gara khác hỏi
+     * thì null, không lấy được link của nhau. Ghi kèm `pay_token IS NULL` để hai
+     * lần bấm cùng lúc không đè mã của nhau (lần sau đọc lại mã lần trước).
+     *
+     * @return string|null
+     */
+    public function maThanhToan($id){
+        $r = $this->bangGara()->select('`sales_invoices`.`id`, `sales_invoices`.`garage_id`, `sales_invoices`.`pay_token`')
+            ->where('sales_invoices.id', '=', (int) $id)->first();
+        if (empty($r)) return null;
+        if (!empty($r['pay_token'])) return (string) $r['pay_token'];
+
+        $this->query('UPDATE `sales_invoices` SET `pay_token` = ? WHERE `id` = ? AND `garage_id` = ? AND `pay_token` IS NULL',
+                     [bin2hex(random_bytes(16)), (int) $r['id'], (int) $r['garage_id']]);
+        $lai = $this->firstRaw('SELECT `pay_token` FROM `sales_invoices` WHERE `id` = ?', [(int) $r['id']]);
+        return !empty($lai['pay_token']) ? (string) $lai['pay_token'] : null;
+    }
+
+    /**
+     * Hoá đơn theo MÃ LINK THANH TOÁN — cho trang công khai /thanh-toan/<mã>.
+     *
+     * KHÔNG lọc theo gara đang mở (truy vấn thô): khách mở link trên tên miền nào
+     * cũng phải ra đúng hoá đơn, và trang đó đọc tài khoản theo `garage_id` CỦA
+     * HOÁ ĐƠN — tiền phải về gara lập hoá đơn. Mã sai hình dạng thì trả null
+     * luôn, không chạm CSDL.
+     *
+     * Chỉ lấy những cột trang công khai cần: không tên khách, không số điện
+     * thoại, không dòng hàng — link có thể bị chuyển tiếp cho người khác.
+     */
+    public function theoMaThanhToan($ma){
+        $ma = (string) $ma;
+        if (!preg_match('~^[a-f0-9]{32}$~', $ma)) return null;
+        $r = $this->firstRaw('SELECT `id`, `garage_id`, `invoice_no`, `invoice_date`, `total_amount`, `status`, `bien_so`
+                                FROM `sales_invoices` WHERE `pay_token` = ? LIMIT 1', [$ma]);
+        return !empty($r) ? $r : null;
+    }
+
+    /**
      * HOÁ ĐƠN ĐÃ SINH RA TỪ MỘT BÁO GIÁ — để chặn chuyển hai lần.
      *
      * Không có chốt này thì bấm "Chuyển thành hoá đơn" hai lần ra HAI hoá đơn

@@ -338,20 +338,10 @@ table.khoi-ck td.o-qr { width: 34mm; padding-right: 5mm; text-align: center; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"
         integrity="sha384-mZT2gIty7ZDdOGkxfP6joZcYdMW1Jvj9dRlfpTmaJAKKXTqzygtB22k7FLe+KZC1"
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script>
-(function () {
-    if (typeof qrcode !== 'function') return; // không tải được thư viện: giữ dòng chữ báo, phần chữ bên cạnh vẫn đủ
-    var o = document.querySelectorAll('[data-vietqr]');
-    for (var i = 0; i < o.length; i++) {
-        try {
-            var qr = qrcode(0, 'M');
-            qr.addData(o[i].getAttribute('data-vietqr'));
-            qr.make();
-            o[i].innerHTML = qr.createSvgTag({ cellSize: 4, scalable: true });
-        } catch (e) { /* để nguyên dòng chữ báo lỗi */ }
-    }
-})();
-</script>
+<?php /* Vẽ: public/assets/js/vietqr.js — một chỗ vẽ chung cho mẫu in, trang đặt hàng,
+         trang thanh toán công khai và danh sách hoá đơn. Không tải được thư viện thì
+         giữ dòng chữ báo, phần chữ bên cạnh vẫn đủ để chuyển khoản. */ ?>
+<script src="<?php echo asset('public/assets/js/vietqr.js'); ?>"></script>
 <?php endif; ?>
 
 <?php if (empty($laWord) && !empty($ct['tuMoHopIn'])): ?>

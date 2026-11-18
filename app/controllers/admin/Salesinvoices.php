@@ -208,6 +208,9 @@ class Salesinvoices extends Controller {
         $this->__data['content']['filterStatus'] = $status;
         $this->__data['content']['filterFrom']   = $from;
         $this->__data['content']['filterTo']     = $to;
+        /* Cột "Thanh toán" (18/11/2026): mã QR nhỏ + nút Gửi. Tài khoản đọc MỘT lần
+           cho cả trang — mọi dòng đều là hoá đơn của gara đang làm việc. */
+        $this->__data['content']['cfGara']       = cau_hinh_in_an();
         $this->__data['content']['msg']          = Session::flash('msg');
         $this->__data['content']['msgError']     = Session::flash('msgError');
 
@@ -670,6 +673,60 @@ class Salesinvoices extends Controller {
             cau_hinh_in_an(!empty($item['garage_id']) ? (int) $item['garage_id'] : null),
             _WEB_URL . '/admin/' . $this->routeBase . '/print/' . (int) $id . '?word=1',
             $laWord);
+    }
+
+    /**
+     * LINK THANH TOÁN — nút "Gửi" ở danh sách hoá đơn. Anh yêu cầu 18/11/2026:
+     * "cho anh cái nút gửi link qrcode luôn không phải vào in".
+     *
+     * Trả JSON: link công khai /thanh-toan/<mã>, tin nhắn soạn sẵn, số điện thoại
+     * khách (cho nút Zalo / SMS) và chuỗi QR để hộp thoại vẽ mã to.
+     *
+     * getDetail() lọc theo gara đang làm việc: gara khác gõ id hoá đơn của nhau
+     * thì 404, không sinh mã, không lộ mã. Gara chưa khai tài khoản thì TỪ CHỐI
+     * tạo link — gửi cho khách một trang chẳng có gì để chuyển khoản chỉ làm
+     * khách gọi lại hỏi.
+     */
+    public function linkThanhToan($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){ $this->jsonLoi('Không tìm thấy hoá đơn', 404); return; }
+
+        $cf = cau_hinh_in_an(!empty($item['garage_id']) ? (int) $item['garage_id'] : null);
+        $qr = \App\core\VietQr::choHoaDon($cf, $item['total_amount'], $item['invoice_no']);
+        if ($qr === null){
+            $this->jsonLoi(empty($cf['bank_bin']) || empty($cf['bank_account'])
+                ? 'Gara chưa khai tài khoản ngân hàng. Vào Hệ thống › Cấu hình, chọn ngân hàng và nhập số tài khoản rồi gửi lại.'
+                : 'Hoá đơn không còn số tiền nào phải trả.', 409);
+            return;
+        }
+
+        $ma = $this->__model->maThanhToan((int) $id);
+        if ($ma === null){ $this->jsonLoi('Không tạo được link thanh toán, thử lại.', 500); return; }
+
+        $link  = _WEB_URL . '/thanh-toan/' . $ma;
+        $ngay  = date_create((string) $item['invoice_date']);
+        $tenGara = !empty($cf['site_name']) ? $cf['site_name'] : 'Gara';
+        $tin = $tenGara . ' gửi anh/chị hoá đơn ' . $item['invoice_no']
+             . ($ngay ? ' ngày ' . $ngay->format('d/m/Y') : '')
+             . ', số tiền ' . number_format((float) $qr['so_tien'], 0, ',', '.') . ' đ.'
+             . ' Mở link để quét mã QR chuyển khoản: ' . $link;
+
+        $sdt = '';
+        if (!empty($item['customer_id'])){
+            $kh = $this->__partner->getDetail((int) $item['customer_id']);
+            if (!empty($kh['phone'])) $sdt = preg_replace('~[^0-9+]~', '', (string) $kh['phone']);
+        }
+
+        $this->json([
+            'link'     => $link,
+            'so'       => $item['invoice_no'],
+            'soTien'   => (int) $qr['so_tien'],
+            'tinNhan'  => $tin,
+            'sdt'      => $sdt,
+            'tenKhach' => !empty($item['customer_full']) ? $item['customer_full']
+                        : (!empty($item['customer_name']) ? $item['customer_name'] : ''),
+            'qr'       => $qr,
+        ]);
     }
 
     public function delete($id){

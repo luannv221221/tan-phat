@@ -124,6 +124,11 @@ Route::group('admin', function(){
       không tham số -> mở trang in (Ctrl+P ra PDF); ?word=1 -> tải file .doc. */
    Route::get('quotations/print/(\d+)', 'admin/quotations/inAn/$1');
    Route::get('sales-invoices/print/(\d+)', 'admin/salesinvoices/inAn/$1');
+   /* Nút "Gửi" ở danh sách hoá đơn (18/11/2026): trả JSON link thanh toán công khai
+      + tin nhắn soạn sẵn. GET để tự đi qua Auth + quyền XEM hoá đơn như các tuyến
+      GET khác của nhóm admin; việc ghi duy nhất là sinh mã link lần đầu, gọi lại
+      ra đúng mã cũ. */
+   Route::get('sales-invoices/link-thanh-toan/(\d+)', 'admin/salesinvoices/linkThanhToan/$1');
 
    //Route products (Quản lý phụ tùng — CRUD đầy đủ + gán đời xe)
    Route::get('products', 'admin/products');
@@ -655,6 +660,11 @@ Route::get('thu-vien/([a-z0-9\-]+)', 'thuvien/detail/$1');
    /tai-ve/<slug>    link GIÁN TIẾP — kiểm đăng nhập, đếm lượt
    /tai-ve/<slug>?k= link TRỰC TIẾP — tải thẳng, không kiểm, không đếm
    Cả hai cùng một đường: khác nhau ở query ?k=, xem Taive::file(). */
+/* LINK THANH TOÁN HOÁ ĐƠN (18/11/2026) — khách mở không cần đăng nhập: mã QR
+   chuyển khoản + số TK + số tiền + nội dung. Mã 32 hex ngẫu nhiên, không phải id
+   (xem SalesInvoicesModel::maThanhToan). */
+Route::get('thanh-toan/([a-f0-9]{32})', 'thanhtoan/hoaDon/$1');
+
 Route::get('tai-ve', 'taive/index');
 Route::get('tai-ve/([a-z0-9\-]+)', 'taive/file/$1');
 Route::get('sitemap.xml', 'sitemap/index');
