@@ -165,6 +165,12 @@ $laTong = (int) $item['is_master'] === 1;
                 <p class="small text-muted mb-0">
                     Suy từ <strong>tên miền chính của gara tổng</strong>. Gara mở mới sẽ tự nhận
                     địa chỉ <code>&lt;mã gara&gt;.{{$tenMienGoc}}</code>.
+                    @if (!empty($duoiPhu))
+                    <br>Kèm tên miền phụ trên các đuôi gara tổng đang chạy:
+                    @foreach ($duoiPhu as $dp)
+                    <code>&lt;mã gara&gt;.{{$dp}}</code>
+                    @endforeach
+                    @endif
                     @if ($laTong)
                     <br><strong class="text-warning">Đổi tên miền chính ở trang này là đổi địa chỉ của
                     mọi gara mở sau.</strong>

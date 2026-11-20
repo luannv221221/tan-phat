@@ -67,18 +67,35 @@ class MoGaraModel extends Model {
         }
 
         if ($goc !== ''){
-            $host = $nhan . '.' . $goc;
-            $D    = Load::model('GarageDomainsModel');
-            if (empty($D->theoHost($host))){
+            /* MỘT TÊN MIỀN TRÊN MỖI ĐUÔI gara tổng đang chạy, không chỉ đuôi chính.
+               Lỗi thật 20/11/2026: gara tổng chạy song song tp01.etek.rikkeiedu.org
+               (chính) và tp01.etek.eteksofts.vn; gara cũ có cả hai đuôi (migration
+               000112), gara mở mới chỉ nhận ml.etek.rikkeiedu.org — vào
+               ml.etek.eteksofts.vn ra "Không tìm thấy gara".
+               Đuôi chính cho tên miền CHÍNH, các đuôi kia cho tên miền phụ. */
+            $D       = Load::model('GarageDomainsModel');
+            $hostMoi = [];
+            foreach (array_merge([$goc], $this->cacDuoiPhu()) as $i => $duoi){
+                $host = $nhan . '.' . $duoi;
+                /* aiGiuHost() thấy cả dòng ĐANG TẮT — theoHost() thì không, và
+                   chèn trùng một host đang tắt là vỡ khoá UNIQUE giữa chừng. */
+                $giu = $D->aiGiuHost($host);
+                if (!empty($giu)){
+                    if ((int) $giu['garage_id'] !== $garaId){   // của gara khác: không giành
+                        $thieu[] = 'Tên miền ' . $host . ' đã thuộc gara ' . $giu['garage_name'] . ', bỏ qua.';
+                    }
+                    continue;                                   // của chính gara này: chạy lại
+                }
                 $this->chen('garage_domains', [
                     'garage_id'  => $garaId,
                     'host'       => $host,
-                    'is_primary' => 1,
+                    'is_primary' => $i === 0 ? 1 : 0,
                     'status'     => 1,
                     'create_at'  => date('Y-m-d H:i:s'),
                 ]);
-                $da[] = 'Tên miền ' . $host;
+                $hostMoi[] = $host;
             }
+            if (!empty($hostMoi)) $da[] = 'Tên miền ' . implode(', ', $hostMoi);
         }
 
         Model::trongGara($garaId, function() use ($garaId, $gara, &$da, &$thieu, $chu){
@@ -182,6 +199,37 @@ class MoGaraModel extends Model {
             return substr($host, strlen($ma) + 1);
         }
         return $host;
+    }
+
+    /**
+     * CÁC ĐUÔI PHỤ: những đuôi khác (ngoài tenMienGoc()) mà gara tổng đang chạy
+     * tên miền phụ theo mã — gara mở mới nhận thêm `<mã>.<đuôi>` trên mỗi đuôi.
+     *
+     *     tp01.etek.rikkeiedu.org (chính)  ->  gốc  etek.rikkeiedu.org
+     *     tp01.etek.eteksofts.vn           ->  phụ  etek.eteksofts.vn
+     *     tp01.localhost                   ->  phụ  localhost
+     *     eteksofts.vn                     ->  (không mở đầu bằng mã: trang của
+     *                                           chính gara tổng, không phải đuôi)
+     *
+     * Chỉ lấy host ĐANG BẬT: tắt một đuôi ở màn Tên miền là gara mở sau thôi nhận.
+     */
+    public function cacDuoiPhu(){
+        $tong = Load::model('GaragesModel')->getMaster();
+        if (empty($tong['id'])) return [];
+        $ma = slugify((string) $tong['code']);
+        if ($ma === '') return [];
+
+        $goc  = $this->tenMienGoc();
+        $duoi = [];
+        foreach ((array) Load::model('GarageDomainsModel')->theoGara((int) $tong['id']) as $r){
+            if ((int) $r['status'] !== 1) continue;
+            $host = (string) $r['host'];
+            if (strpos($host, $ma . '.') !== 0) continue;
+            $d = substr($host, strlen($ma) + 1);
+            if ($d === '' || $d === $goc || in_array($d, $duoi, true)) continue;
+            $duoi[] = $d;
+        }
+        return $duoi;
     }
 
     /**

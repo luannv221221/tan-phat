@@ -294,6 +294,9 @@ class Garages extends Controller {
            đổi luôn tên miền của mọi gara mở sau — không nói thì không ai đoán ra. */
         $goc = $this->model('MoGaraModel')->tenMienGoc();
         $c['tenMienGoc'] = $goc;
+        /* Gara mở sau nhận thêm tên miền phụ trên mỗi đuôi gara tổng đang chạy
+           (tp01.etek.eteksofts.vn -> <mã>.etek.eteksofts.vn) — nói ra luôn. */
+        $c['duoiPhu']    = $goc !== '' ? $this->model('MoGaraModel')->cacDuoiPhu() : [];
         $c['hostGoiY']   = $goc !== '' ? slugify((string) $item['code']) . '.' . $goc : '';
 
         $c['msg']       = Session::flash('msg');
