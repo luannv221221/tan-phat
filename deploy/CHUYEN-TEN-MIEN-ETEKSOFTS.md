@@ -225,37 +225,90 @@ nên không cần tầng đó: **`tp01.eteksofts.vn`** là đúng (anh chốt 13
 
 Làm theo **đúng thứ tự**. Bước nào chưa chạy thì đừng làm bước sau.
 
+> **Đo lại ngày 20/11/2026** (từ ngoài, không đăng nhập máy chủ):
+> - `tp01.eteksofts.vn`, `ml.eteksofts.vn` → *Non-existent domain*: **chưa có** bản ghi `*`.
+> - `ml.etek.eteksofts.vn` → đúng IP (bản ghi `*.etek` phủ), nhưng ứng dụng trả
+>   "Không tìm thấy gara" vì chưa khai tên đó cho gara MinhLong (mã `ML`, mở 20/11,
+>   chỉ được cấp `ml.etek.rikkeiedu.org`).
+> - Chứng chỉ đang chạy: `CN=eteksofts.vn`, hạn 11/02/2027, đúng 5 tên như 13/11.
+>
+> **Bước 6 không cần đẩy code mới.** Màn Tên miền và cách suy tên miền gốc đã có
+> trên máy chủ từ tháng 10.
+
 **6.1. DNS (Mắt Bão):** thêm một bản ghi: Host `*`, loại `A`, giá trị `103.74.101.148`.
-Giữ nguyên `@`, `www`, `*.etek`. Bản ghi `*` không đè lên `www` hay bản ghi thư nào
-đã khai riêng. Kiểm tra: `nslookup tp01.eteksofts.vn 8.8.8.8` phải ra `103.74.101.148`
-(13/11 đang báo *Non-existent domain*).
-
-**6.2. Apache:** trong `httpd-vhosts.conf`, thêm `*.eteksofts.vn` vào cuối dòng
-`ServerAlias` của **cả hai** khối 80 và 443. Chạy `httpd.exe -t`, rồi restart Apache.
-
-**6.3. Cấp lại chứng chỉ, thêm tên mới.** Giữ cả tên cũ để link đã gửi không bị lỗi:
+Giữ nguyên `@`, `www`, `*.etek`. Bản ghi `*` không đè lên `www`, `crm` hay bản ghi thư
+nào đã khai riêng. Chờ 5–30 phút rồi kiểm tra:
 
 ```bat
-C:\win-acme\wacs.exe --target manual --host "eteksofts.vn,www.eteksofts.vn,tp01.eteksofts.vn,dmsg.eteksofts.vn,dmdn.eteksofts.vn,tp01.etek.eteksofts.vn,dmsg.etek.eteksofts.vn,dmdn.etek.eteksofts.vn" --validation filesystem --webroot "C:\xampp\htdocs\tan-phat" --store pemfiles --pemfilespath "C:\ssl" --installation none --accepttos
+nslookup tp01.eteksofts.vn 8.8.8.8
+nslookup ml.eteksofts.vn 8.8.8.8
 ```
+
+Cả hai phải ra `103.74.101.148`. Còn *Non-existent domain* thì chờ thêm, đừng làm 6.3.
+
+**6.2. Apache:** trong `C:\xampp\apache\conf\extra\httpd-vhosts.conf`, thêm
+`*.eteksofts.vn` vào **cuối** dòng `ServerAlias` của **cả hai** khối 80 và 443. Ví dụ
+khối 80 thành:
+
+```apache
+    ServerAlias  www.eteksofts.vn *.etek.eteksofts.vn etek.rikkeiedu.org *.etek.rikkeiedu.org *.eteksofts.vn
+```
+
+Chạy `C:\xampp\apache\bin\httpd.exe -t`, phải ra `Syntax OK`, rồi restart Apache.
+Mở `http://tp01.eteksofts.vn/`: lúc này ra **"Không tìm thấy gara"** là **đúng** (đường
+đã thông, chỉ chưa khai ở 6.4). Ra trang XAMPP (`/dashboard/`) là file vhosts mất
+khối 80 — xem lại cảnh báo ở 5.3.
+
+**6.3. Cấp lại chứng chỉ, thêm tên mới.** Kê **mọi gara đang có** ở màn Quản lý gara
+(mỗi gara một tên `<mã>.eteksofts.vn`), và giữ các tên cũ đang có trong chứng chỉ
+để link đã gửi không bị lỗi. Với 4 gara TP01, DMSG, DMDN, ML:
+
+```bat
+C:\win-acme\wacs.exe --target manual --host "eteksofts.vn,www.eteksofts.vn,tp01.eteksofts.vn,dmsg.eteksofts.vn,dmdn.eteksofts.vn,ml.eteksofts.vn,tp01.etek.eteksofts.vn,dmsg.etek.eteksofts.vn,dmdn.etek.eteksofts.vn" --validation filesystem --webroot "C:\xampp\htdocs\tan-phat" --store pemfiles --pemfilespath "C:\ssl" --installation none --accepttos
+```
+
+Có gara nào khác thì thêm `<mã>.eteksofts.vn` của nó vào chuỗi (cách nhau dấu phẩy,
+không dấu cách). Một tên chưa có DNS là **cả lệnh** thất bại, nên làm 6.1 xong hẳn đã.
 
 Restart Apache. Sau đó chạy `C:\win-acme\wacs.exe --list`. Phải còn **một** lịch gia
 hạn. Nếu có hai, lịch cũ 5 tên sẽ ghi đè chứng chỉ mới khi gia hạn, nên phải huỷ
-lịch cũ.
+lịch cũ: `C:\win-acme\wacs.exe --cancel --id <id của lịch cũ>` (id in ở `--list`).
 
-**6.4. Khai tên trong ứng dụng.** Vào **Quản lý gara**, bấm nút quả địa cầu (Tên miền)
-của từng gara. Ở ô *Khai thêm tên miền*, nhập `tp01.eteksofts.vn`, tích *Đặt làm tên
-miền chính*, rồi bấm Khai. Làm tương tự với `dmsg.eteksofts.vn` và `dmdn.eteksofts.vn`.
+**6.4. Khai tên trong ứng dụng.** Vào **Quản lý gara**, bấm nút quả địa cầu (Tên miền).
+Ở ô *Khai thêm tên miền*, nhập tên, **tích *Đặt làm tên miền chính***, bấm *Khai tên
+miền*. Làm **Tân Phát trước**:
 
-Hệ thống lấy tên miền chính của gara tổng để suy ra "tên miền gốc" cho các gara mở
-sau. Đặt `tp01.eteksofts.vn` làm chính thì tên miền gốc thành `eteksofts.vn`, và gara
-mở mới sẽ nhận `<mã>.eteksofts.vn`. Thẻ *Tên miền gốc của hệ thống* trên màn đó hiện
-đúng giá trị này, anh xem lại sau khi bấm. Đừng làm bước này trước 6.1–6.3:
-nếu làm sớm, hệ thống sẽ phát ra địa chỉ chưa ai mở được. Vì vậy migration không tự
-đặt tên chính.
+| Gara | Nhập | Tích "chính" |
+|---|---|---|
+| Tân Phát (TP01) — **làm đầu tiên** | `tp01.eteksofts.vn` | Có |
+| Gara mẫu Sài Gòn (DMSG) | `dmsg.eteksofts.vn` | Có |
+| Gara mẫu Đà Nẵng (DMDN) | `dmdn.eteksofts.vn` | Có |
+| MinhLong (ML) | `ml.eteksofts.vn` | Có |
 
-Không có nút "sửa" một tên miền: muốn đổi thì khai tên mới, đặt làm chính, rồi
-**tắt** tên cũ (nút cấm). Tắt rồi bật lại được, còn xoá thì mất hẳn.
+Vì sao Tân Phát trước: hệ thống lấy tên miền chính của gara tổng để suy ra "tên
+miền gốc". Đặt `tp01.eteksofts.vn` làm chính thì tên miền gốc thành `eteksofts.vn`,
+thẻ *Tên miền gốc của hệ thống* hiện `eteksofts.vn`, và ở các gara còn lại dòng
+*Gợi ý theo mã gara* hiện sẵn đúng tên cần gõ (`dmsg.eteksofts.vn`...). Đừng làm
+bước này trước 6.1–6.3: làm sớm là hệ thống phát ra địa chỉ chưa ai mở được. Vì vậy
+migration không tự đặt tên chính.
+
+Tên cũ (`<mã>.etek.rikkeiedu.org`, `<mã>.etek.eteksofts.vn`) **vẫn chạy** sau bước
+này, chỉ thôi là tên chính. Không có nút "sửa" một tên miền: muốn bỏ tên cũ thì
+**tắt** nó (nút cấm) — tắt rồi bật lại được, còn xoá thì mất hẳn.
+
+**6.5. Mở thử bằng `https://`** — mỗi tên phải có ổ khoá, ra đúng trang gara:
+`https://tp01.eteksofts.vn/`, `https://dmsg.eteksofts.vn/`, `https://dmdn.eteksofts.vn/`,
+`https://ml.eteksofts.vn/`, và `https://eteksofts.vn/` vẫn ra trang Tân Phát.
+
+**Mở gara MỚI sau khi đổi xong:** gara mới tự nhận `<mã>.eteksofts.vn` làm tên chính
+— không phải khai tay. Với code từ commit `f24994c` trở đi, nó nhận thêm cả tên phụ
+`<mã>.etek.eteksofts.vn` và `<mã>.etek.rikkeiedu.org`. Còn **một việc tay mỗi lần mở
+gara**: chạy lại lệnh 6.3, thêm `<mã>.eteksofts.vn` của gara mới vào chuỗi, rồi restart
+Apache — chứng chỉ kê từng tên, chưa thêm thì `https://` của gara mới báo lỗi (dùng
+`http://` vẫn được). Muốn bỏ hẳn việc này phải dùng chứng chỉ wildcard `*.eteksofts.vn`,
+mà wildcard bắt buộc xác minh qua DNS: Mắt Bão không cho win-acme làm tự động, nên
+phải chuyển quản lý DNS sang nơi có API (vd. Cloudflare, miễn phí) — việc riêng, chỉ
+làm khi số gara nhiều lên.
 
 ## Bước 7 — Chuyển hẳn khách sang tên mới (tuỳ anh, làm sau cùng)
 
