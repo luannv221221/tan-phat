@@ -2,23 +2,19 @@
 /**
  * Thanh trên cùng.
  *
- * Bên trái: tên hệ thống + tên trang hiện tại (lấy từ $page_name/$page_title).
- * Bên phải: avatar -> dropdown đăng xuất.
+ * Bên trái: lối tắt. Bên phải: công ty của tài khoản + avatar -> dropdown.
+ *
+ * KHÔNG còn chữ "Tân Phát <tên trang>" (anh khoanh trên ảnh chụp 25/11/2026: "bỏ
+ * 2 cái này đi"). Chữ "Tân Phát" viết cứng nên công ty khác đăng nhập cũng thấy;
+ * tên trang đã có ngay trong thẻ nội dung bên dưới và trên tab trình duyệt.
+ * Trước đó (13/11) mới chỉ ẩn dưới 992px.
  */
-$__pageLabel = '';
-if (!empty($page_name))       { $__pageLabel = $page_name; }
-elseif (!empty($page_title))  { $__pageLabel = $page_title; }
 ?>
 <header class="adm-topbar">
 
     <button type="button" class="adm-topbar__burger" aria-label="Mở menu">
         <?php echo icon('menu'); ?>
     </button>
-
-    <span class="adm-topbar__title">Tân Phát</span>
-    <?php if ($__pageLabel !== ''): ?>
-        <span class="adm-topbar__sep"><?php echo e($__pageLabel); ?></span>
-    <?php endif; ?>
 
     <?php
     /* THAO TÁC NHANH — mỗi người TỰ ĐẶT (khách yêu cầu 12/11/2026).
@@ -38,19 +34,16 @@ elseif (!empty($page_title))  { $__pageLabel = $page_title; }
         isset($listModules) ? $listModules : []
     );
     ?>
-    <?php /* LUÔN vẽ thanh, kể cả khi không còn nút nào: nút bánh răng là cách DUY
-             NHẤT để người đã bỏ hết lối tắt tìm lại chỗ đặt. Ẩn cả thanh khi
-             rỗng thì họ không còn lối nào quay lại. */ ?>
+    <?php /* Không còn nút bánh răng "Tuỳ chỉnh lối tắt" ở cuối dải (anh gạch chân
+             trên ảnh chụp 25/11/2026: "bỏ 2 cái này đi"). Chỗ đặt lối tắt vẫn ở
+             menu tài khoản -> "Lối tắt của tôi", kể cả khi đã bỏ hết lối tắt.
+             Dải vẫn vẽ khi rỗng để cụm tài khoản giữ nguyên chỗ bên phải. */ ?>
     <nav class="adm-topbar__nhanh" aria-label="Thao tác nhanh">
         <?php foreach ($__nhanh as $__n): ?>
             <a href="<?php echo e($__n[0]); ?>" title="<?php echo e($__n[2]); ?>">
                 <?php echo icon($__n[1]); ?><span><?php echo e($__n[2]); ?></span>
             </a>
         <?php endforeach; ?>
-        <a href="<?php echo e(_WEB_URL . '/admin/loi-tat'); ?>" class="adm-topbar__nhanh-cfg"
-           title="Tuỳ chỉnh lối tắt" aria-label="Tuỳ chỉnh lối tắt">
-            <?php echo icon('settings'); ?>
-        </a>
     </nav>
 
     <div class="adm-topbar__right">
@@ -97,9 +90,8 @@ elseif (!empty($page_title))  { $__pageLabel = $page_title; }
                          khác: màn này cố ý không có module nên không có quyền
                          nào để hỏi, và mọi tài khoản đăng nhập được đều phải
                          thấy nó. Xem app/controllers/admin/Hoso.php. */ ?>
-                <?php /* "Lối tắt của tôi" cũng nằm ở đây vì thanh lối tắt ẩn dưới 992px
-                         (xem admin-theme.css): trên điện thoại đây là lối DUY NHẤT tới
-                         màn đặt lối tắt. */ ?>
+                <?php /* "Lối tắt của tôi": lối DUY NHẤT tới màn đặt lối tắt, từ khi bỏ
+                         nút bánh răng trên thanh (25/11/2026). Đừng gỡ. */ ?>
                 <a href="<?php echo _WEB_URL.'/admin/loi-tat'; ?>" class="dropdown-item">
                     <?php echo icon('star'); ?> Lối tắt của tôi
                 </a>

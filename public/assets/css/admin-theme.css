@@ -268,8 +268,6 @@ body.adm-collapsed .adm-collapse-btn .ic { transform: rotate(180deg); }
     border-radius: 6px;
     cursor: pointer;
 }
-.adm-topbar__title { font-size: 17px; font-weight: 700; color: #1f2937; }
-.adm-topbar__sep   { font-size: 17px; font-weight: 700; color: #1f2937; }
 .adm-topbar__right { margin-left: auto; display: flex; align-items: center; }
 
 .adm-avatar {
@@ -717,21 +715,10 @@ body.adm-auth { background: var(--bg-page); }
     body.adm-sidebar-open .adm-sidebar { transform: translateX(0); }
     .adm-topbar__burger { display: inline-flex; }
 
-    /* BỎ "TÂN PHÁT <TÊN TRANG>" TRÊN MÀN HẸP — khách yêu cầu 13/11/2026 ("em bỏ
-       chữ Tân Phát Tổng quan đi, cho hiện ra đấy"; ảnh chụp từ điện thoại). Hai
-       chữ này chiếm gần nửa thanh mà không cho thông tin gì: tên hệ thống đã ở
-       đầu menu trượt, còn tên trang lặp lại ngay trong thẻ nội dung bên dưới.
-       Chỗ đó giờ là của lối tắt. Màn rộng (>= 992px) có đủ chỗ cho cả hai nên
-       giữ nguyên.
-
-       ẨN BẰNG CSS chứ không bỏ khỏi HTML: tên trang vẫn nằm trong cây DOM cho
-       trình đọc màn hình và cho tab trình duyệt. */
-    .adm-topbar__title,
-    .adm-topbar__sep { display: none; }
-
-    /* Dải lối tắt ăn hết phần còn lại giữa nút menu và cụm gara/tài khoản. Chữ
-       đã tự ẩn dưới 1200px (chỉ còn hình), sáu hình + bánh răng rộng chừng 230px
-       nên vừa khổ 375px. */
+    /* Chữ "Tân Phát <tên trang>" đã bỏ hẳn khỏi thanh (13/11 ẩn ở màn hẹp, 25/11
+       bỏ ở mọi khổ — xem header.php). Dải lối tắt ăn hết phần còn lại giữa nút
+       menu và cụm công ty/tài khoản. Chữ đã tự ẩn dưới 1200px (chỉ còn hình),
+       sáu hình rộng chừng 200px nên vừa khổ 375px. */
     .adm-topbar__nhanh { flex: 1 1 auto; min-width: 0; margin-left: 4px; justify-content: flex-start; }
     .adm-topbar__nhanh a { padding: 6px 8px; }
     .adm-topbar__nhanh a > svg { width: 19px; height: 19px; }
@@ -883,7 +870,7 @@ select.o-vat, select[name$="vat[]"] { min-width: 96px; }
    thoại: "cái menu tắt ko ra đây em ơi". Chỗ thì có: tiêu đề "Tân Phát <tên
    trang>" chiếm đúng chỗ đó (xem khối màn hẹp ở mục 16), mà tiêu đề đã lặp lại
    ngay trong thẻ nội dung bên dưới. */
-.adm-topbar__nhanh { display: inline-flex; gap: 2px; margin-left: 18px; }
+.adm-topbar__nhanh { display: inline-flex; gap: 2px; margin-left: 0; }   /* đứng đầu thanh từ khi bỏ tiêu đề (25/11) */
 .adm-topbar__nhanh a {
     display: inline-flex;
     align-items: center;
@@ -899,10 +886,6 @@ select.o-vat, select[name$="vat[]"] { min-width: 96px; }
 }
 .adm-topbar__nhanh a:hover { opacity: 1; background: rgba(0, 0, 0, .06); text-decoration: none; }
 .adm-topbar__nhanh a > svg { width: 16px; height: 16px; }
-/* Nút bánh răng "Tuỳ chỉnh lối tắt": mờ hơn các nút lối tắt để không giành mắt
-   với việc người ta đang làm, nhưng đủ rõ để tìm thấy khi cần. */
-.adm-topbar__nhanh .adm-topbar__nhanh-cfg { padding: 5px 8px; opacity: .42; }
-.adm-topbar__nhanh .adm-topbar__nhanh-cfg:hover { opacity: .9; }
 /* Dưới 1200px chỉ giữ hình, ẩn chữ (chữ vẫn nằm trong title): sáu lối tắt kèm
    chữ rộng chừng 600px, đè lên tên trang và tên gara ở khổ laptop nhỏ. */
 @media (max-width: 1199.98px) { .adm-topbar__nhanh a > span { display: none; } }

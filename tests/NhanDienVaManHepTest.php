@@ -610,13 +610,18 @@ ok(preg_match('~\.adm-topbar__nhanh\s*\{\s*display:\s*none~', $css) !== 1,
 
 $m991 = strpos($css, '@media (max-width: 991.98px)');
 $khoi991 = $m991 !== false ? substr($css, $m991, 2600) : '';
-ok(preg_match('~\.adm-topbar__title,\s*\.adm-topbar__sep\s*\{\s*display:\s*none~', $khoi991) === 1,
-   'Duoi 992px: BO chu "Tan Phat <ten trang>" tren thanh (nhuong cho loi tat)');
+/* 25/11/2026 anh khoanh chu "Tân Phát  Phiếu chi" tren man rong: "bo 2 cai nay di".
+   Gio bo han khoi HTML o MOI kho man (truoc chi an duoi 992px). Chu "Tân Phát"
+   con viet cung — cong ty khac dang nhap cung thay "Tân Phát"; ten trang da co
+   trong the noi dung ngay ben duoi va tren tab trinh duyet. */
+$hdrTop = file_get_contents($goc . 'app/views/layouts/admin/header.php');
+ok(strpos($hdrTop, 'adm-topbar__title') === false && strpos($hdrTop, 'adm-topbar__sep') === false,
+   'Thanh tren KHONG con chu "Tan Phat <ten trang>" (bo han, moi kho man)');
+ok(mb_strpos($hdrTop, '>Tân Phát<') === false, 'Khong con chu "Tân Phát" viet cung tren thanh tren');
+ok(strpos($css, '.adm-topbar__title') === false && strpos($css, '.adm-topbar__sep') === false,
+   'CSS khong con luat thua cho tieu de da bo');
 ok(preg_match('~\.adm-topbar__nhanh\s*\{[^}]*flex:\s*1~', $khoi991) === 1,
    'Duoi 992px: dai loi tat an het phan con lai giua nut menu va cum tai khoan');
-/* Chu van nam trong HTML — chi an bang CSS, de trinh doc man hinh va tab van thay. */
-ok(strpos(file_get_contents($goc . 'app/views/layouts/admin/header.php'), 'adm-topbar__sep') !== false,
-   'Ten trang van nam trong HTML (chi an bang CSS)');
 ok(preg_match('~@media \(max-width: 1199\.98px\)\s*\{\s*\.adm-topbar__nhanh a > span\s*\{\s*display:\s*none~', $css) === 1,
    'Duoi 1200px chi giu hinh cho loi tat (chu van nam trong title)');
 

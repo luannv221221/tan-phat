@@ -98,7 +98,12 @@ $hdr = file_get_contents($goc . 'app/views/layouts/admin/header.php');
 ok(strpos($hdr, 'loi_tat_cua_toi(') !== false, 'Header ve nut tu loi_tat_cua_toi() (khong con ba nut viet cung)');
 ok(strpos($hdr, "'admin/quotations/add',      'shopping-cart'") === false,
    'Ba nut viet cung da duoc go khoi header');
-ok(strpos($hdr, 'admin/loi-tat') !== false, 'Header co nut banh rang toi man dat loi tat');
+/* Nut banh rang tren thanh BO theo yeu cau anh 25/11/2026 (anh chup thanh tren,
+   gach chan banh rang: "bo 2 cai nay di"). Loi vao man dat loi tat con o menu tai
+   khoan ("Lối tắt của tôi") — co tu 12/11 cho dien thoai. */
+ok(strpos($hdr, 'adm-topbar__nhanh-cfg') === false, 'Thanh tren KHONG con nut banh rang (anh bao bo 25/11/2026)');
+ok(preg_match('~/admin/loi-tat\'; \?>" class="dropdown-item"~', $hdr) === 1,
+   'Van toi duoc man dat loi tat qua menu tai khoan ("Lối tắt của tôi")');
 
 // ===========================================================================
 section('Chay that: dat, quen, tan cong');
@@ -162,6 +167,8 @@ $nutTrenThanh = function($body){
     return $t[1];
 };
 $coBanhRang = function($body){ return strpos($body, 'adm-topbar__nhanh-cfg') !== false; };
+/* Loi vao man dat loi tat o menu tai khoan — con lai sau khi bo banh rang. */
+$coLoiVaoMenu = function($body){ return preg_match('~/admin/loi-tat" class="dropdown-item"~', $body) === 1; };
 
 try {
     // --------------------------------------------------- mac dinh khong doi
@@ -171,7 +178,10 @@ try {
     ok($nut === ['Bán hàng', 'Mua hàng', 'Chăm sóc'],
        'Chua tuy chinh (NULL): van thay DUNG ba nut cu — khong ai bi doi gi sau lung',
        json_encode($nut, JSON_UNESCAPED_UNICODE));
-    ok($coBanhRang($r['body']), 'Co nut banh rang tuy chinh loi tat');
+    ok(!$coBanhRang($r['body']), 'Thanh tren KHONG con nut banh rang');
+    ok(strpos($r['body'], 'adm-topbar__title') === false && strpos($r['body'], 'adm-topbar__sep') === false,
+       'Thanh tren KHONG con chu "Tan Phat <ten trang>" (anh bao bo 25/11/2026)');
+    ok($coLoiVaoMenu($r['body']), 'Menu tai khoan co "Lối tắt của tôi" toi man dat');
 
     // ---------------------------------------------------------- man dat
     $r = $http('GET', "$base/admin/loi-tat", $jarM);
@@ -252,7 +262,7 @@ try {
     ok($docCot($idM) === '[]', "Bo het -> luu '[]', KHONG phai NULL", var_export($docCot($idM), true));
     $r = $http('GET', "$base/admin", $jarM);
     ok($nutTrenThanh($r['body']) === [], 'Bo het: thanh tren KHONG con nut nao (khong mọc lai ba nut mac dinh)');
-    ok($coBanhRang($r['body']), 'Bo het roi VAN con nut banh rang — lối duy nhat de quay lai dat');
+    ok($coLoiVaoMenu($r['body']), 'Bo het roi VAN quay lai dat duoc: "Lối tắt của tôi" trong menu tai khoan');
     $man = $http('GET', "$base/admin/loi-tat", $jarM)['body'];
     ok(strpos($man, 'chưa tuỳ chỉnh') === false, "Da bo het chu dong: man dat khong noi la 'chua tuy chinh / dang dung mac dinh'");
 
