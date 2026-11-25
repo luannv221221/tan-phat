@@ -10,7 +10,7 @@ tắc lâu dài nằm ở [`CLAUDE.md`](../CLAUDE.md) ở gốc repo. File này 
 |---|---|
 | Nhánh | `ban-giao-khach` = `origin/ban-giao-khach`, cây sạch |
 | Đợt cuối | 25/11/2026 — sửa theo file Tracking của khách (mục 2a) |
-| Test | **5017 PASS / 0 FAIL / 0 bỏ qua** — chạy toàn bộ 25/11/2026 sau khi gộp đợt này |
+| Test | **5035 PASS / 0 FAIL / 0 bỏ qua** — chạy toàn bộ 25/11/2026 sau khi gộp đợt này |
 | Migration mới nhất | `000121` (`2026_11_25_000121_ten_man_gara_thanh_cong_ty.php`). Đợt 25/11 thêm `000114` → `000121`, **chạy TRƯỚC khi đẩy code** (mục 4) |
 
 Worktree cũ dọn được (đã merge hết vào `ban-giao-khach`): `.claude/worktrees/kind-mendel-d5ca2f`,
