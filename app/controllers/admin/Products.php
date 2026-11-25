@@ -773,7 +773,10 @@ class Products extends Controller {
             'cost_extra'      => (isset($f['cost_extra']) && $f['cost_extra'] !== '')
                                  ? max(0, $this->parseMoney($f['cost_extra'])) : 0,
             'warranty_month'  => (isset($f['warranty_month']) && $f['warranty_month'] !== '') ? (int) $f['warranty_month'] : null,
-            'description'     => !empty($f['description']) ? trim($f['description']) : null,
+            /* Bộ soạn thảo (25/11/2026, khách: "các mô tả thiếu bộ ckeditor") gửi
+               HTML — lọc ở cửa vào như Tin tức. Trang khách lọc thêm lúc in
+               (mo_ta_hang_hoa) cho dữ liệu cũ và đường nhập Excel. */
+            'description'     => !empty($f['description']) ? loc_html_an_toan(trim($f['description'])) : null,
             /* META SEO — tài liệu khách 05/11/2026, Frontend mục 5: "chọn sửa
                để bổ sung thêm các trường meta seo".
 

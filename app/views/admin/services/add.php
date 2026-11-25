@@ -102,4 +102,12 @@ $o = function($key, $default = '') use ($old){ return isset($old[$key]) ? $old[$
         </div>
     </div>
 </div>
+<script src="{{asset('public/assets/js/soan-thao.js')}}"></script>
+<script>
+/* Ô Mô tả thành bộ soạn thảo — khách ghi 25/11/2026 "các mô tả thiếu bộ ckeditor
+   hoặc tương đương". Thiếu file js thì ô vẫn là textarea gõ được. */
+(function(){
+    if (window.oSoanThao) window.oSoanThao(document.querySelector('[name="description"]'));
+})();
+</script>
 <script src="{{asset('public/assets/js/them-nhanh.js')}}"></script>

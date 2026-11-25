@@ -110,7 +110,7 @@ $avgRound = (int) round($avg);
             <div class="tab-content" id="pills-tabContent">
                 <div class="tab-pane fade show active" id="tab-desc" role="tabpanel">
                     @if (!empty($part['description']))
-                        {!! nl2br(e($part['description'])) !!}
+                        {!! mo_ta_hang_hoa($part['description']) !!}
                     @else
                         <p class="text-muted">Đang cập nhật thông tin sản phẩm.</p>
                     @endif

@@ -1607,6 +1607,23 @@ function html_url_an_toan($url){
  * đâu cũng chỉ mất phần hỏng, vì ném lỗi ở đây nghĩa là người viết bấm Lưu
  * và mất cả bài.
  */
+/**
+ * MÔ TẢ HÀNG HOÁ in ra trang khách. Từ 25/11/2026 ô Mô tả có bộ soạn thảo
+ * (khách: "các mô tả thiếu bộ ckeditor hoặc tương đương"), nên có hai loại dữ
+ * liệu cùng nằm trong một cột:
+ *   - MỚI: HTML từ bộ soạn thảo -> in sau khi lọc (loc_html_an_toan) để giữ
+ *     in đậm, gạch đầu dòng, bảng thông số.
+ *   - CŨ / nhập Excel: chữ trơn có xuống dòng -> escape + nl2br như trước.
+ *     Chữ trơn có dấu "<" ("a<b", "<3") không được thành thẻ.
+ * Phân biệt bằng có thẻ thật hay không (<p>, <strong>, </li>...).
+ */
+function mo_ta_hang_hoa($s){
+    $s = trim((string) $s);
+    if ($s === '') return '';
+    if (preg_match('~</?[a-z][a-z0-9]*(\s[^<>]*)?/?>~i', $s)) return loc_html_an_toan($s);
+    return nl2br(e($s));
+}
+
 function loc_html_an_toan($html){
     $html = (string) $html;
     if (trim($html) === '') return '';

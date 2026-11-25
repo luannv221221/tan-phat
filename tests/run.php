@@ -97,6 +97,7 @@ $tests = [
     'ChanTrangKhongThuaTest.php'  => 'STOREFRONT — chan trang tu soan THAY khoi mac dinh; menu chan trang khong lap link',
     'ChuGaraTaoNhomTest.php'      => 'PHAN QUYEN — chu gara tu them / doi ten / xoa nhom; khong trung ten nhom trong gara',
     'DoiXeGapTheoHangTest.php'    => 'HANG HOA — o Lap cho doi xe gap theo hang, bam hang moi hien model + nam',
+    'MoTaSoanThaoTest.php'        => 'HANG HOA — o Mo ta hang hoa / dich vu co bo soan thao; luu loc HTML, trang khach in an toan',
 ];
 
 $php      = PHP_BINARY;

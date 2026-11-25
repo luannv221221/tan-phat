@@ -112,11 +112,14 @@ ok(e('<b>x</b> & "y"') === '&lt;b&gt;x&lt;/b&gt; &amp; &quot;y&quot;',
 // ---------------------------------------------------------------------------
 section('Cac loi in THO duoc chot danh sach');
 
-// Chỉ ba ô nội dung có định dạng mới được in thô. Thêm chỗ thứ tư là test đỏ.
+// Chỉ bốn ô nội dung có định dạng mới được in thô. Thêm chỗ thứ năm là test đỏ.
+// Mô tả hàng hoá (25/11/2026, khách: "các mô tả thiếu bộ ckeditor"): in qua
+// mo_ta_hang_hoa() — lọc loc_html_an_toan() lúc in, chữ trơn cũ thì e() + nl2br.
 $choChoPhep = [
     'app/views/storefront/about.php'          => '$about',
     'app/views/storefront/news_detail.php'    => "\$news['content']",
     'app/views/storefront/project_detail.php' => "\$project['content']",
+    'app/views/storefront/detail.php'         => "mo_ta_hang_hoa(\$part['description'])",
 ];
 
 $thoLa = [];
@@ -135,7 +138,7 @@ foreach (glob($goc . 'app/views/storefront/*.php') as $f){
     }
 }
 ok(empty($thoLa),
-   'Khong co loi in tho nao ngoai 3 o noi dung co dinh dang',
+   'Khong co loi in tho nao ngoai 4 o noi dung co dinh dang',
    implode(' | ', $thoLa));
 
 foreach ($choChoPhep as $f => $bt){

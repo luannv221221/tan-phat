@@ -213,7 +213,8 @@ class Services extends Controller {
             'category_id' => $this->validCat(isset($f['category_id']) ? $f['category_id'] : null),
             'unit_id'     => $this->validUnit(isset($f['unit_id']) ? $f['unit_id'] : null),
             'price'       => $this->parseMoney(isset($f['price']) ? $f['price'] : 0),
-            'description' => !empty($f['description']) ? trim($f['description']) : null,
+            // Bộ soạn thảo gửi HTML — lọc ở cửa vào (khách 25/11/2026)
+            'description' => !empty($f['description']) ? loc_html_an_toan(trim($f['description'])) : null,
             'status'      => !empty($f['status']) ? 1 : 0,
             'show_on_web' => !empty($f['show_on_web']) ? 1 : 0,
         ];
