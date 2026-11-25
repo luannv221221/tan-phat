@@ -11,7 +11,7 @@ tắc lâu dài nằm ở [`CLAUDE.md`](../CLAUDE.md) ở gốc repo. File này 
 | Nhánh | `ban-giao-khach` = `origin/ban-giao-khach`, cây sạch |
 | Đợt cuối | 25/11/2026 — sửa theo file Tracking của khách (mục 2a) |
 | Test | **5035 PASS / 0 FAIL / 0 bỏ qua** — chạy toàn bộ 25/11/2026 sau khi gộp đợt này |
-| Migration mới nhất | `000121` (`2026_11_25_000121_ten_man_gara_thanh_cong_ty.php`). Đợt 25/11 thêm `000114` → `000121`, **chạy TRƯỚC khi đẩy code** (mục 4) |
+| Migration mới nhất | `000122` (`2026_11_25_000122_ten_mien_chinh_ma_eteksofts.php`). Đợt 25/11 thêm `000114` → `000122`, **chạy TRƯỚC khi đẩy code** (mục 4) |
 
 Worktree cũ dọn được (đã merge hết vào `ban-giao-khach`): `.claude/worktrees/kind-mendel-d5ca2f`,
 `competent-herschel-09e8e5`, `sua-loi-khach-2511`, `agent-ab2024cf2229f66b0`,
@@ -103,8 +103,9 @@ trên form); hai ghi chú chờ khách — xem mục 5.
       restart Apache. Đường đã thông (xem mục 3) — nếu chưa thêm thì vẫn nên thêm.
    3. **Đang ở bước này:** chạy lại win-acme kê thêm `<mã>.eteksofts.vn` của mọi gara
       (giữ tên cũ; **nhớ cả `lotus`**); `wacs --list` chỉ được còn một lịch gia hạn.
-   4. Màn Tên miền: khai `<mã>.eteksofts.vn` + tích "Đặt làm tên miền chính", **Tân
-      Phát trước**, rồi các gara còn lại.
+   4. ~~Màn Tên miền: khai `<mã>.eteksofts.vn` làm chính~~ → **migration `000122` tự làm**
+      cho mọi công ty (anh hỏi 25/11: "sao không làm mặc định ... mã.eteksofts.vn luôn").
+      Máy chủ: **chưa chạy 000122** lúc viết (đã chạy tới 000121).
    5. Mở thử `https://<mã>.eteksofts.vn`.
 
    Khi anh gửi ảnh / báo xong một bước: đo lại từ ngoài (`nslookup <tên> 8.8.8.8`,

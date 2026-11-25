@@ -94,7 +94,11 @@ foreach (['etek.rikkeiedu.org', 'tp01.etek.rikkeiedu.org', 'dmsg.etek.rikkeiedu.
 $st = $pdo->prepare("SELECT host FROM garage_domains WHERE garage_id = ? AND is_primary = 1");
 $st->execute([(int) $tong['id']]);
 $chinh = $st->fetchAll(PDO::FETCH_COLUMN);
-ok($chinh === ['tp01.etek.rikkeiedu.org'], 'Host CHINH cua gara tong KHONG bi doi', json_encode($chinh));
+/* 000112 khong doi host chinh. 25/11/2026 migration 000122 doi CO CHU Y sang
+   <ma>.eteksofts.vn (anh: "mac dinh ... ma.eteksofts.vn luon") — xem
+   TenMienChinhMaEteksoftsTest. Chinh chi duoc la mot trong hai. */
+ok(in_array($chinh, [['tp01.etek.rikkeiedu.org'], ['tp01.eteksofts.vn']], true),
+   'Host CHINH cua gara tong: tp01.etek.rikkeiedu.org (000112) hoac tp01.eteksofts.vn (000122)', json_encode($chinh));
 $st = $pdo->query("SELECT garage_id, COUNT(*) c FROM garage_domains WHERE is_primary = 1 GROUP BY garage_id HAVING c <> 1");
 ok($st->fetch() === false, 'Moi gara van co dung MOT host chinh');
 

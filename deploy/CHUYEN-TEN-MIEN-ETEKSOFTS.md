@@ -274,6 +274,11 @@ Restart Apache. Sau đó chạy `C:\win-acme\wacs.exe --list`. Phải còn **m�
 hạn. Nếu có hai, lịch cũ 5 tên sẽ ghi đè chứng chỉ mới khi gia hạn, nên phải huỷ
 lịch cũ: `C:\win-acme\wacs.exe --cancel --id <id của lịch cũ>` (id in ở `--list`).
 
+> **25/11/2026: bước 6.4 đã TỰ ĐỘNG** — migration `000122` khai `<mã>.eteksofts.vn` và
+> đặt làm tên chính cho MỌI công ty (Tân Phát trước), tên cũ giữ làm tên phụ. Công ty
+> mở sau tự nhận `<mã>.eteksofts.vn`. Chỉ cần chạy migration như mọi đợt; phần tay
+> dưới đây giữ lại để tra khi cần sửa một công ty riêng.
+
 **6.4. Khai tên trong ứng dụng.** Vào **Quản lý công ty (tên cũ: Quản lý gara)**, bấm nút quả địa cầu (Tên miền).
 Ở ô *Khai thêm tên miền*, nhập tên, **tích *Đặt làm tên miền chính***, bấm *Khai tên
 miền*. Làm **Tân Phát trước**:

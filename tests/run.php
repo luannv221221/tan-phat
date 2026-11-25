@@ -105,6 +105,7 @@ $tests = [
     'SoQuyTest.php'               => 'KE TOAN — so quy tien mat + tien gui ngan hang: ton dau ky, ton sau phieu, rieng tung gara',
     'VideoHangHoaTest.php'        => 'HANG HOA — video YouTube cho hang hoa: form, Excel nhap / xuat, tab Video o trang khach',
     'GaraThanhCongTyTest.php'     => 'GIAO DIEN — chu "gara" (don vi) doi thanh "cong ty"; nghia nganh nghe + ma noi bo giu nguyen',
+    'TenMienChinhMaEteksoftsTest.php' => 'TEN MIEN — moi cong ty chinh = <ma>.eteksofts.vn; cong ty mo moi tu nhan (000122)',
 ];
 
 $php      = PHP_BINARY;
