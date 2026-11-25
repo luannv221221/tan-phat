@@ -300,13 +300,14 @@ $this->render($sub_content, $content);
 
 <footer class="footer py-4">
     <div class="container">
-        <div class="footer__logo">
-            <p><a href="<?php echo _WEB_URL; ?>/"><img src="<?php echo e($logoUrl); ?>" alt="" style="max-height:70px;width:auto"/></a></p>
-            <h2><?php echo e($siteName); ?></h2>
-        </div>
         <?php
         /* CHÂN TRANG DO GARA TỰ SOẠN — tài liệu khách 05/11/2026, Frontend 7.
-           Khai ở Hệ thống › Cấu hình gara › Chân trang website.
+           Khai ở Quản lý website › Cấu hình website › Chân trang website.
+
+           CÓ THÌ NÓ THAY khối mặc định (logo + tên + Địa chỉ / Liên hệ / Giới
+           thiệu) chứ không in thêm — khách ghi 25/11/2026 "Phần footer thì thừa
+           chân trang hiện tại (bỏ đi)": cùng một địa chỉ, số điện thoại in hai
+           lần. Menu + đăng ký bản tin bên dưới vẫn giữ.
 
            In bằng {!! !!} (không escape) vì nếu escape thì <strong> hiện ra
            nguyên chữ "<strong>" chứ không in đậm — mà in đậm chính là lý do
@@ -321,14 +322,17 @@ $this->render($sub_content, $content);
             ? trim(loc_html_an_toan($settings['footer_html'])) : '';
         ?>
         <?php if ($chanTuSoan !== ''): ?>
-        <hr/>
         <?php /* echo THẲNG, không qua e(): nội dung này PHẢI giữ thẻ HTML thì
                  <strong> mới in đậm — xem ghi chú ngay trên. Và phải là PHP
                  thuần chứ không phải {!! !!}: file layout storefront KHÔNG đi
                  qua bộ biên dịch view (cả file dùng <?php echo e(...)), viết
                  {!! !!} ở đây thì nó in ra nguyên văn dấu ngoặc. */ ?>
         <div class="footer__tu-soan"><?php echo $chanTuSoan; ?></div>
-        <?php endif; ?>
+        <?php else: ?>
+        <div class="footer__logo">
+            <p><a href="<?php echo _WEB_URL; ?>/"><img src="<?php echo e($logoUrl); ?>" alt="" style="max-height:70px;width:auto"/></a></p>
+            <h2><?php echo e($siteName); ?></h2>
+        </div>
         <hr/>
         <div class="footer__address">
             <div class="row g-3">
@@ -353,6 +357,7 @@ $this->render($sub_content, $content);
                 </div>
             </div>
         </div>
+        <?php endif; ?>
         <div class="footer__inner pt-4">
             <div class="row">
                 <div class="col-12 col-md-9">
@@ -369,11 +374,28 @@ $this->render($sub_content, $content);
                             <li><a href="<?php echo _WEB_URL; ?>/thanh-vien">Tài khoản thành viên</a></li>
                             <li><a href="<?php echo _WEB_URL; ?>/thanh-vien/dang-ky">Đăng ký thành viên</a></li>
                         </ul>
+                        <?php
+                        /* Cột ba lấy từ menu chính — BỎ link hai cột đầu đã có. Bản cũ in
+                           Sản phẩm / Dự án / Thư viện hai lần (khách ghi 25/11/2026 "phần
+                           footer thì thừa"). */
+                        $__daCo = [];
+                        foreach (['san-pham', 'tin-tuc', 'du-an', 'thu-vien', 'lien-he', 'gio-hang',
+                                  'thanh-vien', 'thanh-vien/dang-ky'] as $__u) $__daCo[rtrim(_WEB_URL . '/' . $__u, '/')] = 1;
+                        $__them = [];
+                        foreach (array_slice($navMenu, 0, 6) as $mItem){
+                            $__url = rtrim(nav_url($mItem['url']), '/');
+                            if (isset($__daCo[$__url])) continue;
+                            $__daCo[$__url] = 1;
+                            $__them[] = $mItem;
+                        }
+                        ?>
+                        <?php if (!empty($__them)): ?>
                         <ul>
-                            <?php foreach (array_slice($navMenu, 0, 6) as $mItem): ?>
+                            <?php foreach ($__them as $mItem): ?>
                                 <li><a href="<?php echo e(nav_url($mItem['url'])); ?>"><?php echo e($mItem['label']); ?></a></li>
                             <?php endforeach; ?>
                         </ul>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="col-12 col-md-3">
