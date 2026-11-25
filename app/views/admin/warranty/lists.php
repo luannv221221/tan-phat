@@ -40,9 +40,10 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
                     @endforeach
                 </select>
             </div>
-            <div class="form-group col-md-3 mb-2">
-                <label class="mb-1 small">Tìm (số phiếu / khách / SĐT / serial / BIỂN SỐ XE)</label>
-                <input type="text" name="q" class="form-control form-control-sm" value="{{$filterKeyword}}"/>
+            <div class="form-group col-md-2 mb-2">
+                <label class="mb-1 small">Tìm</label>
+                <input type="text" name="q" class="form-control form-control-sm" value="{{$filterKeyword}}"
+                       placeholder="Số phiếu, khách, SĐT, serial, BIỂN SỐ XE" title="Tìm theo số phiếu / khách / SĐT / serial / BIỂN SỐ XE"/>
             </div>
             <div class="form-group col-md-2 mb-2">
                 <label class="mb-1 small">Từ ngày</label>
@@ -52,8 +53,8 @@ $badge = ['received' => 'secondary', 'processing' => 'warning', 'done' => 'succe
                 <label class="mb-1 small">Đến ngày</label>
                 <input type="date" name="to" class="form-control form-control-sm" value="{{$filterTo}}"/>
             </div>
-            <div class="form-group col-md-1 mb-2 text-nowrap">
-                <button type="submit" class="btn btn-sm btn-info"><i class="fas fa-search"></i></button>
+            <div class="form-group col-md-2 mb-2 text-nowrap">
+                <button type="submit" class="btn btn-sm btn-info"><i class="fas fa-search mr-1"></i> Lọc</button>
                 <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-sm btn-default">Xoá</a>
             </div>
         </form>

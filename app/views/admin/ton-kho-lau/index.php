@@ -23,7 +23,7 @@
                 <input type="date" name="as_of" class="form-control form-control-sm" value="{{$filterAsOf}}"/>
             </div>
             <div class="form-group col-md-3 mb-2">
-                <button type="submit" class="btn btn-sm btn-warning"><i class="fas fa-filter mr-1"></i> Lọc</button>
+                <button type="submit" class="btn btn-sm btn-info"><i class="fas fa-search mr-1"></i> Lọc</button>
                 <a href="{{_WEB_URL.'/admin/ton-kho-lau'}}" class="btn btn-sm btn-default">Xoá</a>
             </div>
         </form>

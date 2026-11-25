@@ -45,7 +45,7 @@ $laThu = $loai === 'thu';
                 <label class="small mb-1">Đến ngày</label>
                 <input type="date" name="den" class="form-control form-control-sm" value="<?php echo e($loc['den']); ?>">
             </div>
-            <div class="form-group col-md-3 mb-2">
+            <div class="form-group col-md-2 mb-2">
                 <label class="small mb-1">Loại phiếu</label>
                 <select name="vtype_id" class="form-control form-control-sm">
                     <option value="">— Tất cả —</option>
@@ -68,8 +68,12 @@ $laThu = $loai === 'thu';
                 <input type="text" name="keyword" class="form-control form-control-sm"
                        value="<?php echo e($loc['keyword']); ?>" placeholder="Số phiếu, tên, lý do">
             </div>
-            <div class="form-group col-md-1 mb-2">
-                <button type="submit" class="btn btn-sm btn-default btn-block"><i class="fas fa-filter"></i></button>
+            <?php /* Nút lọc CÓ CHỮ, cùng kiểu các màn khác (anh chỉ vào nút cũ 25/11/2026:
+                     "mấy cái nút" — nút trắng chỉ có hình phễu, dài hết cột, trông như ô
+                     nhập bị trống). Xoá = bỏ lọc, về đúng danh sách đang xem (thu / chi). */ ?>
+            <div class="form-group col-md-2 mb-2 text-nowrap">
+                <button type="submit" class="btn btn-sm btn-info"><i class="fas fa-search mr-1"></i> Lọc</button>
+                <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-sm btn-default">Xoá</a>
             </div>
         </form>
     </div>

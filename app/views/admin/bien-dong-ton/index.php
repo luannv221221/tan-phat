@@ -4,7 +4,7 @@
     </div>
     <div class="card-body border-bottom">
         <form method="get" class="form-row align-items-end">
-            <div class="form-group col-md-4 mb-2">
+            <div class="form-group col-md-3 mb-2">
                 <label class="mb-1 small">Hàng hoá <span class="text-danger">*</span></label>
                 <select name="part_id" class="form-control form-control-sm">
                     <option value="0">— Chọn hàng hoá —</option>
@@ -30,8 +30,8 @@
                 <label class="mb-1 small">Đến ngày</label>
                 <input type="date" name="to" class="form-control form-control-sm" value="{{$filterTo}}"/>
             </div>
-            <div class="form-group col-md-1 mb-2">
-                <button type="submit" class="btn btn-sm btn-danger btn-block"><i class="fas fa-search"></i></button>
+            <div class="form-group col-md-2 mb-2">
+                <button type="submit" class="btn btn-sm btn-info"><i class="fas fa-search mr-1"></i> Lọc</button>
             </div>
         </form>
     </div>
