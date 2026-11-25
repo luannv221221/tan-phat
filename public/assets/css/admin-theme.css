@@ -794,6 +794,12 @@ body.adm-auth { background: var(--bg-page); }
     .bang-dong-mua > thead > tr > th:first-child,
     .bang-dong-mua > tbody > tr > td:first-child { min-width: 240px; }
 
+    /* Phiếu kho (nhập / xuất / chuyển / kiểm kê) — khách 25/11/2026: "trên mobile
+       nhất quán giống bán hàng, mua hàng". Đo được ô chọn hàng còn ~80px. */
+    .bang-dong-kho > thead > tr > th:first-child,
+    .bang-dong-kho > tbody > tr > td:first-child { min-width: 240px; }
+    .bang-dong-kho > tfoot { display: none; }
+
     /* Khối tổng đổi chỗ: <tfoot> chạy theo lưới cột nên nhãn "Tổng cộng"
        nằm ở mốc 515px, ngoài vùng 333px nhìn thấy — người dùng thấy mấy
        dòng trống trơn dưới bảng. Màn hẹp đổi sang khối xếp dọc nằm NGOÀI
@@ -838,7 +844,8 @@ body.adm-auth { background: var(--bg-page); }
    lần mới trúng. 34x34 là mức nhỏ nhất còn bấm được bằng ngón tay.
    ========================================================================== */
 .bang-dong-mua .nut-xoa-dong,
-.bang-dong-hang .nut-xoa-dong {
+.bang-dong-hang .nut-xoa-dong,
+.bang-dong-kho .nut-xoa-dong {
     width: 34px;
     height: 34px;
     padding: 0;

@@ -2,7 +2,7 @@
 $partJs = [];
 foreach ($parts as $p){
     $label = $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : '');
-    $partJs[] = ['id' => (int) $p['id'], 'label' => $label];
+    $partJs[] = ['id' => (int) $p['id'], 'label' => $label, 'img' => !empty($p['image']) ? _WEB_URL . '/public/assets/uploads/parts/' . $p['image'] : ''];
 }
 $initRows = [];
 if (!empty($old['line_part']) && is_array($old['line_part'])){
@@ -141,7 +141,7 @@ $sel = function($field, $default = '') use ($old, $item){
                 <div class="card-tools"><button type="button" id="add-line" class="btn btn-sm btn-info"><i class="fas fa-plus mr-1"></i> Thêm dòng</button></div>
             </div>
             <div class="card-body table-responsive p-0">
-                <table class="table table-sm mb-0">
+                <table class="table table-sm mb-0 bang-dong-kho">
                     <thead><tr>
                         <th style="width:32%">Hàng hoá</th>
                         <th style="width:12%" class="text-right">Số lượng</th>
@@ -158,6 +158,9 @@ $sel = function($field, $default = '') use ($old, $item){
                     </tr></tfoot>
                 </table>
             </div>
+            <?php /* Màn hẹp: "Tổng cộng" trong <tfoot> chạy theo lưới cột, nằm ngoài vùng nhìn
+                     thấy — hiện khối này ngoài vùng cuộn (như báo giá / đơn mua). */ ?>
+            <div class="tong-man-hep px-3 py-2 border-top"><div class="tong-man-hep__cuoi"><span>Tổng cộng</span><span><span id="lines-total-hep">0</span> ₫</span></div></div>
             {!! !empty($errors['lines'])?'<div class="card-body py-2"><small class="text-danger">'.e($errors['lines']).'</small></div>':false !!}
         </div>
 
@@ -173,6 +176,8 @@ $sel = function($field, $default = '') use ($old, $item){
         </div></div>
     </form>
 
+    <?php /* Gộp dòng trùng mặt hàng — dùng chung 8 màn phiếu kho (khách 25/11/2026). */ ?>
+    <script src="{{asset('public/assets/js/dong-hang-kho.js')}}"></script>
     <script>
     (function () {
         var PARTS = {!! json_encode($partJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
@@ -198,12 +203,12 @@ $sel = function($field, $default = '') use ($old, $item){
                 var amt = Math.round(num(r.querySelector('.qty').value) * money(r.querySelector('.cost').value));
                 r.querySelector('.amt').textContent = fmt(amt); t += amt;
             });
-            totalEl.textContent = fmt(t);
+            totalEl.textContent = fmt(t); var tHep = document.getElementById('lines-total-hep'); if (tHep) tHep.textContent = fmt(t);
         }
         function buildSelect(name, opts, selected){
-            var s = document.createElement('select'); s.name=name; s.className='form-control form-control-sm';
+            var s = document.createElement('select'); s.name=name; s.className='form-control form-control-sm js-search'; s.setAttribute('data-placeholder','— Chọn hàng hoá —');
             var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn hàng hoá —'; s.appendChild(o0);
-            opts.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
+            opts.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; if (op.img) o.setAttribute('data-img', op.img); if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
             return s;
         }
         function td(child, cls){ var t=document.createElement('td'); if (cls) t.className=cls; if (child) t.appendChild(child); return t; }
@@ -220,12 +225,12 @@ $sel = function($field, $default = '') use ($old, $item){
             var loc = document.createElement('select'); loc.name='line_loc_id[]'; loc.className='form-control form-control-sm loc-sel mr-1'; loc.style.maxWidth='150px'; fillLocSelect(loc, data.loc_id);
             var note = inp('line_note[]','',data.note); note.placeholder='Ghi chú';
             wrap.appendChild(loc); wrap.appendChild(note); tr.appendChild(td(wrap));
-            var rm = document.createElement('button'); rm.type='button'; rm.className='btn btn-sm btn-outline-danger rm-row'; rm.innerHTML='&times;';
+            var rm = document.createElement('button'); rm.type='button'; rm.className='btn btn-sm btn-outline-danger rm-row nut-xoa-dong'; rm.innerHTML='<i class="fas fa-trash-alt"></i>'; rm.title='Xoá dòng';
             tr.appendChild(td(rm,'text-center'));
             tbody.appendChild(tr); recompute();
         }
         document.getElementById('add-line').addEventListener('click', function (){ addRow(); });
-        tbody.addEventListener('click', function (e){ if (e.target && e.target.classList.contains('rm-row')){ var r=e.target.closest('.line-row'); if (r) r.remove(); recompute(); } });
+        tbody.addEventListener('click', function (e){ var nutX = e.target && e.target.closest ? e.target.closest('.rm-row') : null; if (nutX){ var r=nutX.closest('.line-row'); if (r) r.remove(); recompute(); } });
         if (whSelect){ whSelect.addEventListener('change', function (){ tbody.querySelectorAll('.loc-sel').forEach(function (sel){ fillLocSelect(sel, sel.value); }); }); }
         if (INIT.length){ INIT.forEach(addRow); } else { addRow(); }
     })();

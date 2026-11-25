@@ -1,7 +1,7 @@
 <?php
 $partJs = [];
 foreach ($parts as $p){
-    $partJs[] = ['id' => (int) $p['id'], 'label' => $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : '')];
+    $partJs[] = ['id' => (int) $p['id'], 'label' => $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : ''), 'img' => !empty($p['image']) ? _WEB_URL . '/public/assets/uploads/parts/' . $p['image'] : ''];
 }
 $initRows = [];
 if (!empty($old['line_part']) && is_array($old['line_part'])){
@@ -60,7 +60,7 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
             <div class="card-tools"><button type="button" id="add-line" class="btn btn-sm btn-info"><i class="fas fa-plus mr-1"></i> Thêm dòng</button></div>
         </div>
         <div class="card-body table-responsive p-0">
-            <table class="table table-sm mb-0">
+            <table class="table table-sm mb-0 bang-dong-kho">
                 <thead><tr><th style="width:45%">Hàng hoá</th><th style="width:18%" class="text-right">Số lượng</th><th>Ghi chú</th><th style="width:44px"></th></tr></thead>
                 <tbody id="lines"></tbody>
             </table>
@@ -74,15 +74,17 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
     </div></div>
 </form>
 
+<?php /* Gộp dòng trùng mặt hàng — dùng chung 8 màn phiếu kho (khách 25/11/2026). */ ?>
+<script src="{{asset('public/assets/js/dong-hang-kho.js')}}"></script>
 <script>
 (function () {
     var PARTS = {!! json_encode($partJs, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
     var INIT  = {!! json_encode($initRows, JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
     var tbody = document.getElementById('lines');
     function buildSelect(name, opts, selected){
-        var s = document.createElement('select'); s.name=name; s.className='form-control form-control-sm';
+        var s = document.createElement('select'); s.name=name; s.className='form-control form-control-sm js-search'; s.setAttribute('data-placeholder','— Chọn hàng hoá —');
         var o0 = document.createElement('option'); o0.value=''; o0.textContent='— Chọn hàng hoá —'; s.appendChild(o0);
-        opts.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
+        opts.forEach(function (op){ var o=document.createElement('option'); o.value=op.id; o.textContent=op.label; if (op.img) o.setAttribute('data-img', op.img); if (String(op.id)===String(selected)) o.selected=true; s.appendChild(o); });
         return s;
     }
     function td(child, cls){ var t=document.createElement('td'); if (cls) t.className=cls; if (child) t.appendChild(child); return t; }
@@ -93,12 +95,12 @@ if (!empty($old['line_part']) && is_array($old['line_part'])){
         tr.appendChild(td(buildSelect('line_part[]', PARTS, data.part_id)));
         tr.appendChild(td(soLuong(inp('line_qty[]','text-right',data.qty))));
         tr.appendChild(td(inp('line_note[]','',data.note)));
-        var rm = document.createElement('button'); rm.type='button'; rm.className='btn btn-sm btn-outline-danger rm-row'; rm.innerHTML='&times;';
+        var rm = document.createElement('button'); rm.type='button'; rm.className='btn btn-sm btn-outline-danger rm-row nut-xoa-dong'; rm.innerHTML='<i class="fas fa-trash-alt"></i>'; rm.title='Xoá dòng';
         tr.appendChild(td(rm,'text-center'));
         tbody.appendChild(tr);
     }
     document.getElementById('add-line').addEventListener('click', function (){ addRow(); });
-    tbody.addEventListener('click', function (e){ if (e.target && e.target.classList.contains('rm-row')){ var r=e.target.closest('.line-row'); if (r) r.remove(); } });
+    tbody.addEventListener('click', function (e){ var nutX = e.target && e.target.closest ? e.target.closest('.rm-row') : null; if (nutX){ var r=nutX.closest('.line-row'); if (r) r.remove(); } });
     if (INIT.length){ INIT.forEach(addRow); } else { addRow(); }
 })();
 </script>

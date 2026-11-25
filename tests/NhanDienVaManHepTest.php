@@ -532,7 +532,11 @@ ok(strpos($js, 'new MutationObserver') !== false && strpos($js, 'addedNodes.forE
    'Theo doi DOM: dong hang them sau cung tu co nut (cac view dung bang JS)');
 ok(preg_match('~o\.readOnly\s*\|\|\s*o\.disabled~', $js) === 1,
    'Khong gan cho o chi doc / vo hieu (don da khoa) — nut bam duoc ma o khong doi la nut noi doi');
-ok(preg_match('~huong\s*<\s*0\s*&&\s*kq\s*<\s*1~', $js) === 1, 'Nut giam khong xuong duoi 1');
+/* So luong: san 1. Rieng so DEM kiem ke (`actual[]`, 25/11/2026) san 0 — "so ghi 5,
+   dem duoc 0" la con so quan trong nhat cua kiem ke. */
+ok(strpos($js, 'var san = /actual\[\]$/.test(o.name) ? 0 : 1;') !== false
+   && preg_match('~huong\s*<\s*0\s*&&\s*kq\s*<\s*san~', $js) === 1,
+   'Nut giam khong xuong duoi 1 (so dem kiem ke: duoi 0)');
 ok(strpos($js, "new Event('input', { bubbles: true })") !== false,
    'Doi xong ban su kien `input` — cac view nghe dung su kien nay de tinh lai tong tien');
 ok(strpos($js, "b.type = 'button'") !== false, 'Nut la type=button (khong lam nop form khi bam)');

@@ -447,7 +447,10 @@
 (function () {
     'use strict';
 
-    var CHON = 'input[name$="qty[]"]';
+    /* `actual[]` = số ĐẾM của phiếu kiểm kê (khách 25/11/2026: phiếu kho trên
+       điện thoại giống bán hàng). Ô đó được giảm về 0 — "sổ ghi 5, đếm được
+       0" là con số quan trọng nhất của kiểm kê. */
+    var CHON = 'input[name$="qty[]"], input[name$="actual[]"]';
 
     function lam3(n) { return Math.round(n * 1000) / 1000; }
 
@@ -455,7 +458,8 @@
         if (o.readOnly || o.disabled) return;
         var n = parseFloat(String(o.value).replace(',', '.')) || 0;
         var kq = huong > 0 ? n + 1 : n - 1;
-        if (huong < 0 && kq < 1) kq = Math.min(n, 1);
+        var san = /actual\[\]$/.test(o.name) ? 0 : 1;
+        if (huong < 0 && kq < san) kq = Math.min(n, san);
         var max = parseFloat(o.max);
         if (isFinite(max) && kq > max) kq = max;
         o.value = String(lam3(kq));
