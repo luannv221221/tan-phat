@@ -570,8 +570,14 @@ section('Don mua — chon trung mot mat hang thi CONG SO LUONG, khong de thanh h
 foreach (['add', 'edit'] as $m){
     $v = file_get_contents($goc . "app/views/admin/purchase-orders/$m.php");
     ok(strpos($v, 'function gopNeuTrung(tr, sel)') !== false, "$m.php: co ham gop dong trung");
-    ok(strpos($v, "sel.addEventListener('change', function (){ gopNeuTrung(tr, sel); });") !== false,
+    /* 25/11/2026 (VAT tung dong): doi o chon con phai lay VAT theo hang moi, nen
+       than ham nghe dai ra — `if (gopNeuTrung(tr, sel)) return;` roi moi dat VAT.
+       Van bat buoc: gop chay DAU TIEN trong su kien doi o chon, va ham gop tra
+       true khi da bo dong (khong thi dong da xoa con bi dat VAT). */
+    ok(preg_match("~sel\.addEventListener\('change', function \(\)\{\s*(?:if \()?gopNeuTrung\(tr, sel\)~", $v) === 1,
        "$m.php: ham gop chay khi NGUOI DUNG doi o chon");
+    ok(strpos(substr($v, (int) strpos($v, 'function gopNeuTrung'), 2600), 'return true;') !== false,
+       "$m.php: ham gop bao lai la da bo dong (return true)");
     $thanGop = substr($v, (int) strpos($v, 'function gopNeuTrung'), 2600);
     ok(strpos($thanGop, 'oCu.value = String(nay)') !== false && strpos($thanGop, 'soLuongO(oCu.value) + them') !== false,
        "$m.php: so luong cua dong vua chon duoc CONG vao dong cu");
