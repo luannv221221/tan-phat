@@ -43,6 +43,19 @@ $tick = function($key) use ($old, $item){
                         </div>
                     </div>
 
+                    <?php /* VAT NHẬP / VAT XUẤT — khách 25/11/2026. Xem ghi chú ở add.php. */ ?>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>VAT nhập (%)</label>
+                            {!! o_chon_vat('vat_in', $v('vat_in', null), ['theo_phieu' => true]) !!}
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>VAT xuất (%)</label>
+                            {!! o_chon_vat('vat_out', $v('vat_out', null), ['theo_phieu' => true]) !!}
+                            <small class="form-text text-muted">"Theo phiếu" = lấy VAT mặc định của báo giá / hoá đơn.</small>
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group col-md-4">
                             <label>Mã dịch vụ</label>

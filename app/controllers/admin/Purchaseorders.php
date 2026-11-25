@@ -359,6 +359,13 @@ class Purchaseorders extends Controller {
     private function ghiDongVaSerial($id, array $f){
         $rows = [];
         $parts = isset($f['part']) && is_array($f['part']) ? $f['part'] : [];
+        /* VAT TỪNG DÒNG (khách 25/11/2026): dòng chọn thuế suất nào thì lấy
+           đó; không chọn / chọn số ngoài danh sách thì lấy VAT NHẬP riêng của
+           mặt hàng, chưa khai thì VAT mặc định đầu đơn. Máy chủ tự quyết, không
+           tin con số JS gửi kèm. */
+        $vatMacDinh = $this->docVat($f);
+        $vatHang    = $this->__part->vatTheoHang($parts, 'vat_in');
+        $vatGui     = isset($f['vat']) && is_array($f['vat']) ? $f['vat'] : [];
         foreach ($parts as $i => $p){
             $rows[] = ['part_id'    => (int) $p,
                        'quantity'   => isset($f['qty'][$i]) ? (float) preg_replace('/[^\d.]/', '', (string) $f['qty'][$i]) : 0,
@@ -373,6 +380,8 @@ class Purchaseorders extends Controller {
                           chấm ở đây thì 7.5% thành 75%. */
                        'discount_percent' => isset($f['disc'][$i])
                             ? (float) preg_replace('/[^\d.]/', '', (string) $f['disc'][$i]) : 0,
+                       'vat_rate'   => vat_cho_dong(isset($vatGui[$i]) ? $vatGui[$i] : null,
+                                                    isset($vatHang[(int) $p]) ? $vatHang[(int) $p] : null, $vatMacDinh),
                        'note'       => isset($f['line_note'][$i]) ? trim((string) $f['line_note'][$i]) : ''];
         }
         /* GIỮ LẠI SERIAL ĐÃ KHAI. syncForPo() dưới đây XOÁ SẠCH dòng hàng rồi
@@ -388,7 +397,7 @@ class Purchaseorders extends Controller {
            tại sau khi ghi lại. */
         $serialCu = $this->__serial->theoHang($id);
 
-        $daGhi = $this->__item->syncForPo($id, $rows);
+        $daGhi = $this->__item->syncForPo($id, $rows, $vatMacDinh);
 
         /* Khớp lại poi_id mới với thứ tự dòng trên form. syncForPo bỏ qua dòng
            trống nên hai danh sách không cùng chỉ số — phải đi song song. */
@@ -495,20 +504,23 @@ class Purchaseorders extends Controller {
      *
      * ĐỌC LẠI TỪ CSDL chứ không cộng từ mảng vừa gửi lên: syncForPo() bỏ qua
      * dòng trống và làm tròn thành tiền, nên cộng ở hai nơi là có ngày lệch.
+     *
+     * THUẾ = TỔNG THUẾ TỪNG DÒNG (khách 25/11/2026), không còn là thuế suất đầu
+     * đơn nhân với tổng. `vat_rate` đầu đơn giờ là "VAT mặc định cho dòng".
      */
     private function chotTong($id, $vatRate = null){
         $subtotal = (float) $this->__item->tongTheoPo($id);
 
-        /* $vatRate = null nghĩa là "giữ nguyên thuế suất đang lưu" — dùng ở
-           những đường không đi qua form (khai serial, mở lại đơn). Đọc lại từ
-           CSDL thay vì mặc định 0: mặc định 0 là mỗi lần khai serial lại âm
-           thầm xoá mất thuế của đơn. */
+        /* $vatRate = null nghĩa là "giữ nguyên thuế suất mặc định đang lưu" —
+           dùng ở những đường không đi qua form (khai serial, mở lại đơn). Đọc
+           lại từ CSDL thay vì mặc định 0: mặc định 0 là mỗi lần khai serial lại
+           âm thầm đổi mặc định của đơn. */
         if ($vatRate === null){
             $cu = $this->__model->getDetail($id);
             $vatRate = !empty($cu['vat_rate']) ? (float) $cu['vat_rate'] : 0;
         }
         $vatRate = max(0, min(100, (float) $vatRate));
-        $thue    = round($subtotal * $vatRate / 100, 2);
+        $thue    = (float) $this->__item->thueTheoPo($id);
 
         $this->__model->edit([
             'vat_rate'     => $vatRate,
@@ -518,11 +530,13 @@ class Purchaseorders extends Controller {
         ], $id);
     }
 
-    /** Thuế suất người dùng vừa gõ trên form, kẹp trong 0–100 */
+    /**
+     * VAT mặc định cho dòng người dùng vừa CHỌN trên form. Chỉ nhận mức trong
+     * muc_vat() — số khác (POST tự soạn) thành 0, đúng mặc định của đơn mua.
+     */
     private function docVat(array $f){
-        if (!isset($f['vat_rate'])) return 0.0;
-        $v = (float) preg_replace('/[^\d.]/', '', (string) $f['vat_rate']);
-        return max(0, min(100, $v));
+        $v = vat_hop_le(isset($f['vat_rate']) ? $f['vat_rate'] : null);
+        return $v !== null ? $v : 0.0;
     }
 
     private function bao($thanhCong, array $tuChoi){

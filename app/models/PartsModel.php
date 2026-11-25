@@ -698,6 +698,7 @@ class PartsModel extends Model {
                            END AS `sale_price`,
                            `parts`.`price` AS `gia_tong`,
                            `gpp`.`price`   AS `gia_rieng`,
+                           `parts`.`vat_in`, `parts`.`vat_out`,
                            (`parts`.`garage_id` IS NOT NULL) AS `hang_rieng`,
                            `part_units`.`name` AS `unit_name`
                       FROM `parts`
@@ -716,6 +717,7 @@ class PartsModel extends Model {
             $sql = 'SELECT `parts`.`id`, `parts`.`code`, `parts`.`name`, `parts`.`item_type`,
                            `parts`.`price`, `parts`.`sale_price`,
                            `parts`.`price` AS `gia_tong`,
+                           `parts`.`vat_in`, `parts`.`vat_out`,
                            NULL AS `gia_rieng`,
                            0 AS `hang_rieng`,
                            `part_units`.`name` AS `unit_name`
@@ -922,6 +924,28 @@ class PartsModel extends Model {
         if (empty($ids)) return [];
         $q = $this->locKhoTongVaGara($this->table($this->_table)->select('`id`')->whereIn('id', $ids));
         return array_map('intval', array_column((array) $q->get(), 'id'));
+    }
+
+    /**
+     * VAT riêng của nhiều mặt hàng một lượt (khách 25/11/2026).
+     *
+     * @param string $cot 'vat_in' (đơn mua) | 'vat_out' (báo giá, hoá đơn)
+     * @return array [part_id => float|null] — null = "theo phiếu"
+     *
+     * Lọc kho tổng + hàng riêng của gara làm việc như getDetail(): hàng riêng
+     * của gara khác thì coi như không có VAT riêng (nó cũng đã bị dungDuoc()
+     * chặn khỏi chứng từ).
+     */
+    public function vatTheoHang(array $ids, $cot = 'vat_out'){
+        $cot = $cot === 'vat_in' ? 'vat_in' : 'vat_out';
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($ids)) return [];
+        $q = $this->locKhoTongVaGara($this->table($this->_table)->select('`id`, `' . $cot . '`')->whereIn('id', $ids));
+        $ra = [];
+        foreach ((array) $q->get() as $r){
+            $ra[(int) $r['id']] = $r[$cot] !== null ? (float) $r[$cot] : null;
+        }
+        return $ra;
     }
 
     /**

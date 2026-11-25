@@ -100,6 +100,7 @@ $tests = [
     'MoTaSoanThaoTest.php'        => 'HANG HOA — o Mo ta hang hoa / dich vu co bo soan thao; luu loc HTML, trang khach in an toan',
     'HangBanChayTest.php'         => 'BAO CAO — hang ban chay trong man Bao cao ban hang: hoa don ghi so, rieng tung gara',
     'PhieuKhoMobileTest.php'      => 'KHO — 8 man phieu kho tren dien thoai giong don mua: o chon tim duoc, gop dong trung, nut xoa to, tong ngoai vung cuon',
+    'VatTheoHangHoaTest.php'      => 'THUE — VAT nhap / VAT xuat theo hang hoa, VAT tung dong don mua / bao gia / hoa don',
 ];
 
 $php      = PHP_BINARY;

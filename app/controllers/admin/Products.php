@@ -444,6 +444,8 @@ class Products extends Controller {
         'origin_slug'       => ['origin_slug', 'xuat_xu'],
         'unit_slug'         => ['unit_slug', 'don_vi', 'don_vi_tinh'],
         'description'       => ['description', 'mo_ta'],
+        'vat_in'            => ['vat_in', 'vat_nhap'],
+        'vat_out'           => ['vat_out', 'vat_xuat'],
     ];
 
     public function import(){
@@ -555,6 +557,12 @@ class Products extends Controller {
                 'origin_id'       => $this->fkBySlug($this->__originModel, $get($row, 'origin_slug')),
                 'unit_id'         => $this->fkBySlug($this->__unitModel,   $get($row, 'unit_slug')),
             ];
+            /* VAT nhập / xuất (25/11/2026) — CHỈ ghi khi file có cột đó: file cũ
+               không có cột thì nhập lại không được xoá mất VAT đã khai. Ô trống
+               hoặc số ngoài 0/5/8/10 -> NULL (theo phiếu). */
+            foreach (['vat_in', 'vat_out'] as $cotVat){
+                if (isset($colMap[$cotVat])) $data[$cotVat] = vat_hop_le(rtrim($get($row, $cotVat), '%'));
+            }
 
             $existing = $this->__model->findByCode($code);
 
@@ -603,9 +611,9 @@ class Products extends Controller {
     public function importTemplate(){
         $headers = ['code', 'name', 'oem_code', 'price', 'sale_price', 'warranty_month',
                     'status', 'category_slug', 'brand_slug', 'manufacturer_slug',
-                    'origin_slug', 'unit_slug', 'description'];
+                    'origin_slug', 'unit_slug', 'description', 'vat_in', 'vat_out'];
         $sample  = ['PT-0001', 'Lọc gió động cơ Vios', 'OEM-17801', '350000', '', '12',
-                    '1', 'loc-gio', 'bosch', '', 'nhat-ban', 'cai', 'Lọc gió chính hãng'];
+                    '1', 'loc-gio', 'bosch', '', 'nhat-ban', 'cai', 'Lọc gió chính hãng', '10', '10'];
 
         header('Content-Type: text/csv; charset=UTF-8');
         header('Content-Disposition: attachment; filename="mau-import-phu-tung.csv"');
@@ -639,7 +647,7 @@ class Products extends Controller {
         echo "\xEF\xBB\xBF"; // BOM để Excel mở đúng tiếng Việt
         $out = fopen('php://output', 'w');
         fputcsv($out, ['code', 'oem_code', 'name', 'category', 'brand', 'origin', 'unit',
-                       'price', 'sale_price', 'warranty_month', 'status']);
+                       'price', 'sale_price', 'warranty_month', 'status', 'vat_in', 'vat_out']);
         foreach ($rows as $r){
             fputcsv($out, [
                 $r['code'],
@@ -653,6 +661,9 @@ class Products extends Controller {
                 $r['sale_price'] !== null ? (int) $r['sale_price'] : '',
                 $r['warranty_month'],
                 (int) $r['status'] === 1 ? 'hiện' : 'ẩn',
+                // Để trống = "theo phiếu" — nhập lại file này thì vẫn ra NULL
+                isset($r['vat_in'])  && $r['vat_in']  !== null ? vat_chu($r['vat_in'])  : '',
+                isset($r['vat_out']) && $r['vat_out'] !== null ? vat_chu($r['vat_out']) : '',
             ]);
         }
         fclose($out);
@@ -772,6 +783,12 @@ class Products extends Controller {
                Để trống = 0, và khi đó giá bán ra đúng bằng công thức khách vẽ. */
             'cost_extra'      => (isset($f['cost_extra']) && $f['cost_extra'] !== '')
                                  ? max(0, $this->parseMoney($f['cost_extra'])) : 0,
+            /* VAT NHẬP / VAT XUẤT — khách 25/11/2026: "thêm vào hàng hóa 2 trường
+               (VAT nhập, VAT xuất) dùng cho các phiếu mua hàng và bán hàng".
+               Chỉ nhận mức trong muc_vat(); để trống / số khác -> NULL = "theo
+               phiếu" (dòng lấy VAT mặc định đầu phiếu). */
+            'vat_in'          => vat_hop_le(isset($f['vat_in']) ? $f['vat_in'] : null),
+            'vat_out'         => vat_hop_le(isset($f['vat_out']) ? $f['vat_out'] : null),
             'warranty_month'  => (isset($f['warranty_month']) && $f['warranty_month'] !== '') ? (int) $f['warranty_month'] : null,
             /* Bộ soạn thảo (25/11/2026, khách: "các mô tả thiếu bộ ckeditor") gửi
                HTML — lọc ở cửa vào như Tin tức. Trang khách lọc thêm lúc in

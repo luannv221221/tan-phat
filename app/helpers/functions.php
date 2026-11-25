@@ -747,6 +747,168 @@ function doc_so_tien($so){
     return mb_strtoupper(mb_substr($ket, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($ket, 1, null, 'UTF-8');
 }
 
+/* ==========================================================================
+ * THUẾ GTGT THEO HÀNG HOÁ + TỪNG DÒNG PHIẾU — khách yêu cầu 25/11/2026:
+ * "thêm vào hàng hóa 2 trường (VAT nhập, VAT xuất) dùng cho các phiếu mua hàng
+ * và bán hàng (các phiếu thêm trường này)". Migration 000117.
+ *
+ *   `parts`.`vat_in` / `vat_out`   NULL = "theo phiếu" (dùng VAT mặc định đầu phiếu)
+ *   `*_items`.`vat_rate` / `tax_amount`   thuế suất + tiền thuế của TỪNG DÒNG
+ *   thuế đầu phiếu = TỔNG thuế các dòng (máy chủ tự tính lại, không tin JS)
+ *
+ * Thuế suất là giá trị lặp lại nên chỉ CHỌN, không gõ tay (luật anh chốt
+ * 28/09/2026). Mọi ô chọn thuế suất — đầu phiếu, từng dòng, form hàng hoá —
+ * lấy chung danh sách muc_vat(); máy chủ cũng chỉ nhận đúng danh sách đó.
+ * ========================================================================== */
+
+/** Các mức thuế suất GTGT được chọn. Đổi danh sách là đổi ở MỌI ô chọn + chốt máy chủ. */
+function muc_vat(){
+    return [0, 5, 8, 10];
+}
+
+/** 8.00 -> "8", 7.50 -> "7.5" — cách viết thuế suất trên màn hình / giấy in. */
+function vat_chu($m){
+    return rtrim(rtrim(number_format((float) $m, 2, '.', ''), '0'), '.');
+}
+
+/** Nhãn của một mức trong ô chọn. Mức 0 ghi rõ nghĩa để khỏi lẫn với "quên chọn". */
+function nhan_muc_vat($m){
+    return (float) $m == 0 ? '0% (không chịu thuế)' : vat_chu($m) . '%';
+}
+
+/** Số cho JSON xuống JS: "8.00" -> 8, null / '' -> null (= "theo phiếu"). */
+function vat_so($m){
+    if ($m === null || $m === '') return null;
+    $f = (float) $m;
+    return $f == (int) $f ? (int) $f : $f;
+}
+
+/**
+ * Thuế suất gửi lên có nằm trong danh sách được chọn không.
+ * @return float|null  mức đã chuẩn hoá (8.0), hoặc null nếu không hợp lệ / để trống
+ */
+function vat_hop_le($v){
+    if ($v === null || is_array($v) || is_bool($v)) return null;
+    $s = str_replace(',', '.', trim((string) $v));
+    if ($s === '' || !is_numeric($s)) return null;
+    $f = round((float) $s, 2);
+    foreach (muc_vat() as $m){
+        if (abs($f - $m) < 0.001) return (float) $m;
+    }
+    return null;
+}
+
+/**
+ * Thuế suất của MỘT DÒNG phiếu, theo thứ tự ưu tiên:
+ *   1. người dùng chọn trên dòng (hợp lệ)
+ *   2. VAT riêng của mặt hàng (`vat_in` với đơn mua, `vat_out` với phiếu bán)
+ *   3. VAT mặc định đầu phiếu
+ * Gửi số ngoài danh sách (POST tự soạn) thì coi như không gửi — rơi xuống 2, 3.
+ */
+function vat_cho_dong($guiLen, $cuaHang, $macDinh){
+    $v = vat_hop_le($guiLen);
+    if ($v !== null) return $v;
+    $v = vat_hop_le($cuaHang);
+    if ($v !== null) return $v;
+    $v = vat_hop_le($macDinh);
+    return $v !== null ? $v : 0.0;
+}
+
+/** Tiền thuế của một dòng, làm tròn tới đồng — JS trên form tính đúng y như vậy. */
+function thue_dong($thanhTien, $thueSuat){
+    return round((float) $thanhTien * (float) $thueSuat / 100);
+}
+
+/** Danh sách mức cho JS dựng ô chọn của từng dòng: [{v: "8", n: "8%"}, ...] */
+function muc_vat_js(){
+    $ra = [];
+    foreach (muc_vat() as $m) $ra[] = ['v' => vat_chu($m), 'n' => nhan_muc_vat($m)];
+    return $ra;
+}
+
+/**
+ * Ô CHỌN thuế suất (HTML đã escape — in bằng {!! !!}).
+ *
+ * @param array $tuyChon 'theo_phieu' => true thêm lựa chọn đầu "— Theo phiếu —"
+ *                       (giá trị rỗng = NULL, dùng ở form hàng hoá);
+ *                       'id', 'class', 'khoa' (disabled)
+ */
+function o_chon_vat($ten, $dangChon, array $tuyChon = []){
+    $chon = vat_hop_le($dangChon);
+    $h = '<select name="' . e($ten) . '"';
+    if (!empty($tuyChon['id'])) $h .= ' id="' . e($tuyChon['id']) . '"';
+    $h .= ' class="' . e(isset($tuyChon['class']) ? $tuyChon['class'] : 'form-control') . '"';
+    if (!empty($tuyChon['khoa'])) $h .= ' disabled';
+    $h .= '>';
+    if (!empty($tuyChon['theo_phieu'])){
+        $h .= '<option value=""' . ($chon === null ? ' selected' : '') . '>— Theo phiếu —</option>';
+    }
+    foreach (muc_vat() as $m){
+        $h .= '<option value="' . e(vat_chu($m)) . '"' . ($chon !== null && $chon == $m ? ' selected' : '') . '>'
+            . e(nhan_muc_vat($m)) . '</option>';
+    }
+    return $h . '</select>';
+}
+
+/**
+ * Gom thuế theo từng mức thuế suất của các dòng — cho bản in, HĐĐT, màn xem.
+ *
+ * Dòng không mang `vat_rate` (dữ liệu dựng tay, phiếu rất cũ) thì theo thuế
+ * suất đầu phiếu; không mang `tax_amount` thì tính bằng thue_dong().
+ *
+ * @return array [ "8" => ['rate' => 8.0, 'tien' => Σ thành tiền, 'thue' => Σ thuế], ... ]
+ *               xếp theo thuế suất tăng dần
+ */
+function muc_thue_theo_dong(array $dong, $vatDauPhieu){
+    $ra = [];
+    foreach ($dong as $d){
+        $rate = isset($d['vat_rate']) ? (float) $d['vat_rate'] : (float) $vatDauPhieu;
+        $tien = isset($d['amount']) ? (float) $d['amount'] : 0.0;
+        $thue = isset($d['tax_amount']) ? (float) $d['tax_amount'] : thue_dong($tien, $rate);
+        $k = vat_chu($rate);
+        if (!isset($ra[$k])) $ra[$k] = ['rate' => $rate, 'tien' => 0.0, 'thue' => 0.0];
+        $ra[$k]['tien'] += $tien;
+        $ra[$k]['thue'] += $thue;
+    }
+    uasort($ra, function($a, $b){ return $a['rate'] <=> $b['rate']; });
+    return $ra;
+}
+
+/**
+ * Dòng của phiếu lập TRƯỚC KHI có VAT từng dòng — đọc ra theo thuế suất đầu phiếu.
+ *
+ * Migration 000117 điền sẵn VAT cho dòng phiếu cũ. Nhưng máy chủ chạy migration
+ * TRƯỚC rồi mới đẩy code: phiếu nào code CŨ lập trong khoảng giữa thì dòng mang
+ * VAT 0 (mặc định của cột) trong khi đầu phiếu có thuế 10%. Không xử lý thì mở
+ * ra sửa thấy mọi dòng 0%, bấm Lưu là mất thuế; ghi sổ hoá đơn là thuế đầu ra
+ * về 0; bản in ghi "Thuế GTGT (0%)" cạnh số thuế 10%.
+ *
+ * Nhận ra phiếu đó: đầu phiếu có thuế suất, có tiền thuế (hoặc chưa có tiền
+ * hàng), mà KHÔNG dòng nào mang thuế suất / tiền thuế. Code mới luôn ghi thuế
+ * đầu phiếu = tổng thuế dòng nên không bao giờ sinh ra phiếu như vậy — dòng
+ * người dùng cố ý chọn 0% (thuế đầu phiếu 0) không bị đụng. Cùng điều kiện với
+ * bước điền của migration 000117.
+ *
+ * Chỉ đổi dữ liệu ĐỌC RA; lần Lưu kế tiếp mới ghi xuống CSDL.
+ */
+function vat_dong_phieu_cu($dong, $dauPhieu){
+    if (empty($dong) || !is_array($dong) || empty($dauPhieu)) return $dong;
+    $rate = isset($dauPhieu['vat_rate']) ? (float) $dauPhieu['vat_rate'] : 0.0;
+    if ($rate == 0) return $dong;
+    $thueDau = isset($dauPhieu['tax_amount']) ? (float) $dauPhieu['tax_amount'] : 0.0;
+    $tienDau = isset($dauPhieu['subtotal']) ? (float) $dauPhieu['subtotal'] : 0.0;
+    if ($thueDau == 0 && $tienDau != 0) return $dong;
+    foreach ($dong as $d){
+        if (!array_key_exists('vat_rate', $d)) return $dong;
+        if ((float) $d['vat_rate'] != 0 || (float) (isset($d['tax_amount']) ? $d['tax_amount'] : 0) != 0) return $dong;
+    }
+    foreach ($dong as $i => $d){
+        $dong[$i]['vat_rate']   = number_format($rate, 2, '.', '');
+        $dong[$i]['tax_amount'] = number_format(thue_dong(isset($d['amount']) ? $d['amount'] : 0, $rate), 2, '.', '');
+    }
+    return $dong;
+}
+
 /**
  * Dựng biểu mẫu in cho một chứng từ (báo giá / hoá đơn).
  *
@@ -778,6 +940,18 @@ function in_chung_tu(array $ct, $khach, array $dong, array $settings, $urlWord =
     $tong['vat_rate'] = (float) $ct['vatRate'];
     $tong['tax']      = (float) $ct['tax'];
     $tong['total']    = (float) $ct['total'];
+
+    /* VAT TỪNG DÒNG (khách 25/11/2026). Cột `vat_rate` đầu phiếu nay chỉ là
+       "mặc định cho dòng" — in nó ra là in sai khi mọi dòng cùng 8% mà mặc định
+       để 10%. Nên:
+         - mọi dòng CÙNG một mức -> một dòng "Thuế GTGT (x%)" như cũ, x là mức
+           THẬT của các dòng, số thuế vẫn là số đã lưu ở đầu phiếu;
+         - NHIỀU mức -> mỗi mức một dòng "Thuế GTGT x%" với thuế của mức đó. */
+    $tong['mucThue'] = muc_thue_theo_dong($dong, $tong['vat_rate']);
+    if (count($tong['mucThue']) === 1){
+        $__m = reset($tong['mucThue']);
+        $tong['vat_rate'] = $__m['rate'];
+    }
 
     /* BẢO HIỂM: báo giá đi qua hãng bảo hiểm thì phần hãng trả và phần khách
        trả là hai số khác nhau, khách chỉ phải xem số của mình. Chứng từ không

@@ -18,13 +18,17 @@ class PurchaseOrderItemsModel extends Model {
 
     /** Dòng hàng của một đơn, kèm tên + đơn vị tính của mặt hàng */
     public function getByPo($poId){
-        return $this->table($this->_table)
+        $dong = $this->table($this->_table)
             ->select('`purchase_order_items`.*, `parts`.`code` AS part_code, '
                    . '`parts`.`name` AS part_name, `part_units`.`name` AS unit_name')
             ->joinOn('parts', 'purchase_order_items.part_id', 'parts.id')
             ->leftJoinOn('part_units', 'parts.unit_id', 'part_units.id')
             ->where('purchase_order_items.po_id', '=', (int) $poId)
             ->orderBy('purchase_order_items.id', 'ASC')->get();
+        /* Đơn lập trước khi có VAT từng dòng -> dòng đọc ra theo thuế suất đầu
+           đơn (xem vat_dong_phieu_cu). Đọc đầu đơn thẳng theo id như dòng ở trên. */
+        return vat_dong_phieu_cu($dong, $this->firstRaw(
+            'SELECT `vat_rate`, `tax_amount`, `subtotal` FROM `purchase_orders` WHERE `id` = ?', [(int) $poId]));
     }
 
     /**
@@ -35,10 +39,17 @@ class PurchaseOrderItemsModel extends Model {
      * CASCADE), nên controller phải ghi serial LẠI SAU khi gọi hàm này. Nếu
      * không thì sửa số lượng một dòng là bay hết serial đã nhập.
      *
+     * VAT TỪNG DÒNG (khách 25/11/2026): `vat_rate` của dòng phải nằm trong
+     * muc_vat(), không thì lấy $vatMacDinh. Thuế dòng tính trên thành tiền ĐÃ
+     * TRỪ chiết khấu. Thuế ở đây chỉ để tính tổng đơn — phiếu nhập kho sinh từ
+     * đơn KHÔNG đọc nó (VAT đầu vào không bao giờ vào giá vốn).
+     *
      * @return array [poi_id => dòng] để controller gắn serial vào đúng dòng
      */
-    public function syncForPo($poId, array $rows){
+    public function syncForPo($poId, array $rows, $vatMacDinh = 0){
         $poId = (int) $poId;
+        $macDinh = vat_hop_le($vatMacDinh);
+        if ($macDinh === null) $macDinh = 0.0;
         $this->delete($this->_table, '`po_id` = ?', [$poId]);
 
         $ra = [];
@@ -63,6 +74,9 @@ class PurchaseOrderItemsModel extends Model {
 
             $tt  = round($gia * $qty * (1 - $ck / 100), 2);
 
+            $vat = vat_hop_le(isset($r['vat_rate']) ? $r['vat_rate'] : null);
+            if ($vat === null) $vat = $macDinh;
+
             $this->insert($this->_table, [
                 'po_id'            => $poId,
                 'part_id'          => $partId,
@@ -70,6 +84,8 @@ class PurchaseOrderItemsModel extends Model {
                 'unit_price'       => $gia,
                 'discount_percent' => $ck,
                 'amount'           => $tt,
+                'vat_rate'         => $vat,
+                'tax_amount'       => thue_dong($tt, $vat),
                 'note'             => isset($r['note']) && $r['note'] !== '' ? mb_substr($r['note'], 0, 255) : null,
             ]);
             $ra[(int) $this->lastId()] = ['part_id' => $partId, 'quantity' => $qty,
@@ -89,6 +105,13 @@ class PurchaseOrderItemsModel extends Model {
      */
     public function tongTheoPo($poId){
         $r = $this->firstRaw('SELECT COALESCE(SUM(`amount`), 0) AS t FROM `purchase_order_items` WHERE `po_id` = ?',
+                             [(int) $poId]);
+        return (float) (isset($r['t']) ? $r['t'] : 0);
+    }
+
+    /** TỔNG THUẾ của một đơn = cộng thuế từng dòng, đọc lại từ CSDL như tongTheoPo(). */
+    public function thueTheoPo($poId){
+        $r = $this->firstRaw('SELECT COALESCE(SUM(`tax_amount`), 0) AS t FROM `purchase_order_items` WHERE `po_id` = ?',
                              [(int) $poId]);
         return (float) (isset($r['t']) ? $r['t'] : 0);
     }

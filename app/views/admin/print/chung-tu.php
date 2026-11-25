@@ -271,9 +271,16 @@ table.khoi-ck td.o-qr { width: 34mm; padding-right: 5mm; text-align: center; }
         <?php endif; ?>
         <?php /* Thuế 0% thì hai dòng này chỉ lặp lại đúng số tổng — bỏ (khách báo
                  "thừa dòng" 25/11/2026). Có thuế thì in như cũ. */ ?>
-        <?php if ((float) $tong['vat_rate'] != 0 || (float) $tong['tax'] != 0): ?>
+        <?php /* VAT từng dòng (25/11/2026): nhiều mức thuế suất thì in mỗi mức một
+                 dòng kèm thuế của mức đó — xem in_chung_tu(). */ ?>
+        <?php if (count($tong['mucThue']) > 1): ?>
         <tr class="tong"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">Cộng tiền hàng chưa thuế</td><td class="phai"><?php echo e($tien($tong['subtotal'])); ?></td></tr>
-        <tr class="tong"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">Thuế GTGT (<?php echo e(rtrim(rtrim(number_format((float) $tong['vat_rate'], 2, '.', ''), '0'), '.')); ?>%)</td><td class="phai"><?php echo e($tien($tong['tax'])); ?></td></tr>
+        <?php foreach ($tong['mucThue'] as $__muc): ?>
+        <tr class="tong"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">Thuế GTGT <?php echo e(vat_chu($__muc['rate'])); ?>%</td><td class="phai"><?php echo e($tien($__muc['thue'])); ?></td></tr>
+        <?php endforeach; ?>
+        <?php elseif ((float) $tong['vat_rate'] != 0 || (float) $tong['tax'] != 0): ?>
+        <tr class="tong"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">Cộng tiền hàng chưa thuế</td><td class="phai"><?php echo e($tien($tong['subtotal'])); ?></td></tr>
+        <tr class="tong"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">Thuế GTGT (<?php echo e(vat_chu($tong['vat_rate'])); ?>%)</td><td class="phai"><?php echo e($tien($tong['tax'])); ?></td></tr>
         <?php endif; ?>
         <tr class="tong-cuoi"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">TỔNG CỘNG THANH TOÁN</td><td class="phai"><?php echo e($tien($tong['total'])); ?></td></tr>
         <?php /* Hai dòng dưới chỉ in khi chứng từ có bảo hiểm trả — xem in_chung_tu(). */ ?>

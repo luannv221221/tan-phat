@@ -28,6 +28,9 @@ foreach ((array) $parts as $p){
         'id'    => (int) $p['id'],
         'label' => $p['code'] . ' - ' . $p['name'] . (!empty($p['unit_name']) ? ' (' . $p['unit_name'] . ')' : ''),
         'img'   => !empty($p['image']) ? _WEB_URL . '/public/assets/uploads/parts/' . $p['image'] : '',
+        /* VAT NHẬP riêng của mặt hàng (khách 25/11/2026) — chọn hàng là dòng tự
+           lấy mức này; null = "theo phiếu" (VAT mặc định đầu đơn). */
+        'vat'   => vat_so(isset($p['vat_in']) ? $p['vat_in'] : null),
     ];
 }
 ?>
@@ -99,12 +102,17 @@ foreach ((array) $parts as $p){
             <?php /* THUẾ GTGT — tờ hoá đơn đỏ của NCC dán ngay bên trên luôn có
                      con số này. Mặc định 0 chứ không phải 10: nhiều gara mua của
                      hộ kinh doanh không xuất hoá đơn GTGT, đặt sẵn 10% là mỗi đơn
-                     phải nhớ xoá đi. */ ?>
+                     phải nhớ xoá đi.
+
+                     TỪ 25/11/2026 thuế suất nằm ở TỪNG DÒNG (khách: "VAT nhập, VAT
+                     xuất ... các phiếu thêm trường này"). Ô này thành "VAT mặc định
+                     cho dòng": dòng có mặt hàng đã khai VAT nhập thì theo mặt hàng,
+                     còn lại theo ô này. Chỉ CHỌN 0 / 5 / 8 / 10, không gõ tay. */ ?>
             <div class="form-group">
-                <label>Thuế GTGT (%)</label>
-                <input type="number" name="vat_rate" class="form-control" min="0" max="100" step="0.01"
-                       style="max-width:160px" value="<?php echo e($gt('vat_rate', '0')); ?>"/>
+                <label>VAT mặc định cho dòng (%)</label>
+                {!! o_chon_vat('vat_rate', $gt('vat_rate', '0'), ['id' => 'vat_rate', 'class' => 'form-control o-vat-mac-dinh']) !!}
                 <small class="form-text text-muted">
+                    Dòng có mặt hàng đã khai <b>VAT nhập</b> thì lấy theo mặt hàng; đổi ô này chỉ đổi các dòng còn lại.
                     Để 0 nếu nhà cung cấp không xuất hoá đơn GTGT.
                     Thuế <b>không</b> tính vào giá vốn khi nhập kho — nó là khoản được khấu trừ.
                 </small>
@@ -133,19 +141,23 @@ foreach ((array) $parts as $p){
                     <th style="width:150px" class="text-right">Đơn giá</th>
                     <th style="width:90px" class="text-right">CK %</th>
                     <th style="width:140px" class="text-right">Thành tiền</th>
+                    <?php /* VAT % TỪNG DÒNG (25/11/2026) — đứng SAU "Thành tiền" vì thành
+                             tiền là tiền chưa thuế; hai ô cuối của hàng tổng vì thế
+                             trải 2 cột (VAT % + nút xoá). */ ?>
+                    <th style="width:150px" class="text-right">VAT %</th>
                     <th style="width:56px"></th>
                 </tr></thead>
                 <tbody id="dong-mua"></tbody>
                 <tfoot>
                     <tr><th colspan="4" class="text-right font-weight-normal">Cộng chưa thuế</th>
                         <th class="text-right font-weight-normal"><span id="tong-truoc-thue">0</span> đ</th>
-                        <th></th></tr>
-                    <tr><th colspan="4" class="text-right font-weight-normal">Thuế GTGT (<span id="nhan-vat">0</span>%)</th>
+                        <th colspan="2"></th></tr>
+                    <tr><th colspan="4" class="text-right font-weight-normal">Thuế GTGT<span id="nhan-vat"></span></th>
                         <th class="text-right font-weight-normal"><span id="tien-thue">0</span> đ</th>
-                        <th></th></tr>
+                        <th colspan="2"></th></tr>
                     <tr><th colspan="4" class="text-right">Tổng cộng</th>
                         <th class="text-right"><span id="tong-tien">0</span> đ</th>
-                        <th></th></tr>
+                        <th colspan="2"></th></tr>
                 </tfoot>
             </table>
         </div>
@@ -173,6 +185,40 @@ foreach ((array) $parts as $p){
     var BAN_DAU = {!! json_encode(array_values((array) $lines), JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
     var tbody = document.getElementById('dong-mua');
     var oTong = document.getElementById('tong-tien');
+    /* VAT TỪNG DÒNG (khách 25/11/2026). Danh sách mức lấy từ muc_vat() — cùng
+       nguồn với chốt ở máy chủ, nên ô chọn không bao giờ có mức máy chủ từ chối. */
+    var MUC_VAT = {!! json_encode(muc_vat_js(), JSON_HEX_TAG|JSON_UNESCAPED_UNICODE) !!};
+    var oVatMacDinh = document.getElementById('vat_rate');
+
+    /* VAT NHẬP riêng của mặt hàng đang chọn ở dòng (data-vat), hoặc null nếu
+       mặt hàng chưa khai -> dòng theo VAT mặc định đầu đơn. */
+    function vatCuaHang(sel){
+        var o = sel.options[sel.selectedIndex];
+        var v = o ? o.getAttribute('data-vat') : null;
+        return (v === null || v === '') ? null : v;
+    }
+    function vatMacDinh(){ return oVatMacDinh ? oVatMacDinh.value : '0'; }
+    /* Đặt ô VAT của dòng về mức giaTri; mức lạ (không có trong danh sách) thì
+       về VAT mặc định — ô chọn không có mức đó, để trống là gửi lên thứ khác. */
+    function datVat(s, giaTri){
+        var f = parseFloat(giaTri), khop = false;
+        Array.prototype.forEach.call(s.options, function (o){
+            if (!khop && parseFloat(o.value) === f){ s.value = o.value; khop = true; }
+        });
+        if (!khop) s.value = vatMacDinh();
+    }
+    function oVat(giaTri){
+        var s = document.createElement('select');
+        s.name = 'vat[]';
+        s.className = 'form-control form-control-sm o-vat';
+        MUC_VAT.forEach(function (m){
+            var o = document.createElement('option');
+            o.value = m.v; o.textContent = m.n;
+            s.appendChild(o);
+        });
+        datVat(s, giaTri);
+        return s;
+    }
 
     /* SỐ TIỀN ĐỌC TỪ Ô đúng kiểu màn Phiếu nhập kho đang làm: bỏ mọi ký tự
        không phải chữ số. Tiền Việt tính theo đồng, không có phần lẻ. */
@@ -191,39 +237,48 @@ foreach ((array) $parts as $p){
     }
 
     function tinhLai(){
-        var t = 0;
+        var t = 0, thue = 0, cacMuc = {};
         Array.prototype.forEach.call(tbody.querySelectorAll('tr'), function (r){
             var oSl = r.querySelector('.o-sl'), oGia = r.querySelector('.o-gia'),
-                oCk = r.querySelector('.o-ck'), oTt = r.querySelector('.o-tt');
+                oCk = r.querySelector('.o-ck'), oTt = r.querySelector('.o-tt'),
+                oV  = r.querySelector('.o-vat');
             if (!oSl || !oGia || !oTt) return;
             var g  = soTien(oGia.value);
             var ck = oCk ? phanTram(oCk.value) : 0;
             var tt = Math.round(soLuongO(oSl.value) * g * (1 - ck / 100));
             oTt.textContent = g > 0 ? tt.toLocaleString('vi-VN') : '—';
             t += tt;
+
+            /* THUẾ TỪNG DÒNG, làm tròn từng dòng rồi mới cộng — ĐÚNG cách máy
+               chủ làm (thue_dong() rồi cộng). Lệch cách là màn hình và CSDL chênh
+               nhau vài đồng, đủ để người dùng mất tin vào cả con số. */
+            var v = oV ? phanTram(oV.value) : 0;
+            thue += Math.round(tt * v / 100);
+            if (g > 0) cacMuc[String(v)] = true;
         });
 
-        /* Làm tròn thuế ĐÚNG CÁCH máy chủ làm (round trên tổng chưa thuế, không
-           cộng dồn thuế từng dòng) — lệch cách là màn hình và CSDL chênh nhau
-           vài đồng, đủ để người dùng mất tin vào cả con số. */
-        var oVat = document.querySelector('[name="vat_rate"]');
-        var vat  = oVat ? phanTram(oVat.value) : 0;
-        var thue = Math.round(t * vat / 100);
-
+        var muc    = Object.keys(cacMuc);
         var oTruoc = document.getElementById('tong-truoc-thue');
         var oThue  = document.getElementById('tien-thue');
         var oNhan  = document.getElementById('nhan-vat');
         if (oTruoc) oTruoc.textContent = t.toLocaleString('vi-VN');
         if (oThue)  oThue.textContent  = thue.toLocaleString('vi-VN');
-        if (oNhan)  oNhan.textContent  = String(vat).replace(/\.0+$/, '');
+        if (oNhan)  oNhan.textContent  = muc.length === 1 ? ' (' + muc[0] + '%)'
+                                       : (muc.length > 1 ? ' (nhiều mức)' : '');
         oTong.textContent = (t + thue).toLocaleString('vi-VN');
     }
 
-    /* Đổi thuế suất thì tính lại ngay, không đợi gõ vào dòng hàng */
-    (function(){
-        var o = document.querySelector('[name="vat_rate"]');
-        if (o) o.addEventListener('input', tinhLai);
-    })();
+    /* ĐỔI VAT MẶC ĐỊNH: dòng nào mặt hàng CHƯA khai VAT nhập (hoặc chưa chọn
+       hàng) thì theo mức mới; dòng có VAT riêng của mặt hàng giữ nguyên. */
+    if (oVatMacDinh) oVatMacDinh.addEventListener('change', function (){
+        Array.prototype.forEach.call(tbody.querySelectorAll('tr'), function (r){
+            var s = r.querySelector('select[name="part[]"]'), v = r.querySelector('.o-vat');
+            if (!v) return;
+            if (s && s.value && vatCuaHang(s) !== null) return;
+            datVat(v, vatMacDinh());
+        });
+        tinhLai();
+    });
 
     /* CHỌN TRÙNG MỘT MẶT HÀNG -> CỘNG VÀO SỐ LƯỢNG DÒNG ĐÃ CÓ, KHÔNG ĐẺ DÒNG THỨ HAI.
 
@@ -239,7 +294,7 @@ foreach ((array) $parts as $p){
        chiết khấu giữ của dòng cũ; riêng khi dòng cũ để trống mà dòng mới đã gõ
        thì lấy của dòng mới, để không mất con số người dùng vừa nhập. */
     function gopNeuTrung(tr, sel){
-        if (!sel.value) return;
+        if (!sel.value) return false;
         var dongCu = null, thuTu = 0, i = 0;
         Array.prototype.forEach.call(tbody.querySelectorAll('tr'), function (r){
             i++;
@@ -247,7 +302,7 @@ foreach ((array) $parts as $p){
             var s = r.querySelector('select[name="part[]"]');
             if (s && s.value === sel.value){ dongCu = r; thuTu = i; }
         });
-        if (!dongCu) return;
+        if (!dongCu) return false;
 
         var oCu = dongCu.querySelector('.o-sl'), oMoi = tr.querySelector('.o-sl');
         var them = soLuongO(oMoi && oMoi.value) || 1;
@@ -275,6 +330,7 @@ foreach ((array) $parts as $p){
             clearTimeout(bao.__an);
             bao.__an = setTimeout(function (){ bao.style.display = 'none'; }, 6000);
         }
+        return true;   // dòng tr đã gộp vào dòng cũ và không còn nữa
     }
 
     function oChon(chon){
@@ -289,6 +345,7 @@ foreach ((array) $parts as $p){
             var o = document.createElement('option');
             o.value = op.id; o.textContent = op.label;
             if (op.img) o.setAttribute('data-img', op.img);
+            if (op.vat !== null && op.vat !== undefined) o.setAttribute('data-vat', op.vat);
             if (String(op.id) === String(chon)) o.selected = true;
             s.appendChild(o);
         });
@@ -339,6 +396,13 @@ foreach ((array) $parts as $p){
         oTt.textContent = '—';
         tdT.appendChild(oTt);
 
+        /* VAT % của dòng: dòng đã lưu mang mức của nó; dòng mới lấy VAT nhập
+           của mặt hàng, mặt hàng chưa khai thì VAT mặc định đầu đơn. */
+        var tdV = document.createElement('td');
+        var vat = oVat((r && r.vat !== undefined && r.vat !== null && r.vat !== '') ? r.vat
+                       : (vatCuaHang(sel) !== null ? vatCuaHang(sel) : vatMacDinh()));
+        tdV.appendChild(vat);
+
         var td4 = document.createElement('td');
         var xoa = document.createElement('button');
         xoa.type = 'button';
@@ -349,13 +413,20 @@ foreach ((array) $parts as $p){
         td4.appendChild(xoa);
 
         tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(tdG);
-        tr.appendChild(tdC); tr.appendChild(tdT); tr.appendChild(td4);
+        tr.appendChild(tdC); tr.appendChild(tdT); tr.appendChild(tdV); tr.appendChild(td4);
         tbody.appendChild(tr);
 
         qty.addEventListener('input', tinhLai);
         gia.addEventListener('input', tinhLai);
         ck.addEventListener('input', tinhLai);
-        sel.addEventListener('change', function (){ gopNeuTrung(tr, sel); });
+        vat.addEventListener('change', tinhLai);
+        sel.addEventListener('change', function (){
+            if (gopNeuTrung(tr, sel)) return;   // đã cộng vào dòng cũ, dòng này không còn
+            /* Chọn / đổi mặt hàng thì VAT dòng đi theo mặt hàng mới — như giá. */
+            var vh = vatCuaHang(sel);
+            datVat(vat, vh !== null ? vh : vatMacDinh());
+            tinhLai();
+        });
         tinhLai();
 
         /* Ô chọn mới thêm phải được gắn ô tìm kiếm — admin.js theo dõi DOM nên

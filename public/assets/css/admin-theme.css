@@ -780,7 +780,9 @@ body.adm-auth { background: var(--bg-page); }
 .tong-man-hep__cuoi { font-weight: 700; }
 
 @media (max-width: 767.98px) {
-    .bang-dong-hang { min-width: 900px; }
+    /* 25/11/2026 — 900px lên 1000px: thêm cột "VAT %" (ô chọn ~96px, xem mục
+       cuối file). Bảng vốn đã cuộn ngang nên chỉ là cuộn xa hơn một chút. */
+    .bang-dong-hang { min-width: 1000px; }
     /* Cột đầu = tên hàng hoá / dịch vụ. Đặt cả trên th lẫn td: ô chọn bên
        trong là .form-control nên tự co theo ô, không tự giữ bề ngang. */
     .bang-dong-hang > thead > tr > th:first-child,
@@ -1034,6 +1036,10 @@ body.adm-auth { background: var(--bg-page); }
        Bảng đã cuộn ngang sẵn nên nới rộng được (xem mục 17 ở trên). */
     input[name$="disc[]"] { min-width: 76px; }
     input[name$="note[]"] { min-width: 150px; }
+    /* Ô VAT % của từng dòng (25/11/2026): ô CHỌN, chữ 16px — "10%" + mũi tên
+       cần ~90px, hẹp hơn là cắt số. Cũng nhắm theo đuôi tên (vat[], line_vat[],
+       sv_vat[]) như hai ô trên. */
+    select[name$="vat[]"] { min-width: 96px; }
 
     /* Nút xoá dòng: mục trước để 34px cho màn rộng, trên điện thoại cần 40 */
     .bang-dong-mua .nut-xoa-dong,

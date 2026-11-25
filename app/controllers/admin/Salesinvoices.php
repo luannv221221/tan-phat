@@ -152,6 +152,8 @@ class Salesinvoices extends Controller {
                 'gia_cu'   => (int) $d['unit_price'],
                 'gia_moi'  => (int) $d['gia_bay_gio'],
                 'disc'     => (float) $d['discount_percent'],
+                // Thuế suất của dòng chép y nguyên, như chiết khấu (25/11/2026)
+                'vat'      => vat_so($d['vat_rate']),
                 'note'     => (string) $d['note'],
                 'ten'      => $d['part_code'] . ' - ' . $d['part_name'],
             ];
@@ -395,7 +397,6 @@ class Salesinvoices extends Controller {
 
         $date = $item['invoice_date'];
         $no   = $item['invoice_no'];
-        $rate = (float) $item['vat_rate'];
 
         // Chặn ghi sổ lùi ngày — báo trước cho tử tế, engine cũng chặn lần nữa.
         $lui = $this->__stock->kiemLuiNgay($wh, array_column($items, 'part_id'), $date, $this->__part);
@@ -404,10 +405,16 @@ class Salesinvoices extends Controller {
             $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id); return;
         }
 
-        $this->__model->transaction(function($db) use ($id, $item, $items, $wh, $date, $no, $rate, $loai){
-            $subtotal = 0.0; $cost = 0.0;
+        $this->__model->transaction(function($db) use ($id, $item, $items, $wh, $date, $no, $loai){
+            /* THUẾ GTGT ĐẦU RA (Có 3331 — báo cáo đọc `tax_amount`) = TỔNG THUẾ
+               TỪNG DÒNG (khách 25/11/2026). Bản cũ tính lại thuế suất đầu phiếu
+               x tổng ngay lúc ghi sổ: hoá đơn có dòng 8% lẫn 10% sẽ ghi sai thuế.
+               $items đã qua vat_dong_phieu_cu(): hoá đơn lập trước khi có VAT
+               dòng vẫn ra đúng thuế đầu phiếu của nó. */
+            $subtotal = 0.0; $cost = 0.0; $tax = 0.0;
             foreach ($items as $it){
                 $pid = (int) $it['part_id'];
+                $tax += (float) (isset($it['tax_amount']) ? $it['tax_amount'] : 0);
 
                 // Dịch vụ: không trừ kho, không sinh thẻ kho. Giá vốn = 0 —
                 // công thợ chưa được theo dõi ở đâu cả, ghi bừa một con số vào
@@ -425,7 +432,6 @@ class Salesinvoices extends Controller {
                 $subtotal += (float) $it['amount'];
                 $cost     += $costAmt;
             }
-            $tax   = round($subtotal * $rate / 100, 2);
             $total = $subtotal + $tax;
 
             $this->__model->edit(['status' => 1, 'subtotal' => $subtotal, 'tax_amount' => $tax,
@@ -572,11 +578,17 @@ class Salesinvoices extends Controller {
         $sellerTel  = isset($dv['hotline']) ? (string) $dv['hotline'] : '';
         $buyerName  = !empty($item['customer_name']) ? $item['customer_name'] : 'Khách lẻ';
 
+        /* THUẾ SUẤT THEO TỪNG DÒNG (khách 25/11/2026): mỗi <HHDVu> mang <TSuat> +
+           <TThue> của chính nó; phần tổng có thêm bảng tổng hợp theo từng mức
+           (<THTTLTSuat>). Tổng thuế đầu hoá đơn đã là tổng thuế dòng (syncTotals /
+           post), nên phần tổng khớp với cộng các dòng. */
         $lines = '';
         $stt = 0;
         foreach ($items as $it){
             $stt++;
             $disc = (float) ($it['discount_percent'] ?? 0);
+            $rate = isset($it['vat_rate']) ? (float) $it['vat_rate'] : (float) $item['vat_rate'];
+            $thue = isset($it['tax_amount']) ? (float) $it['tax_amount'] : thue_dong($it['amount'], $rate);
             $lines .= '      <HHDVu>' . "\n"
                 . '        <STT>' . $stt . '</STT>' . "\n"
                 . '        <THHDVu>' . $x($it['part_name']) . '</THHDVu>' . "\n"
@@ -586,8 +598,24 @@ class Salesinvoices extends Controller {
                 . '        <DGia>' . (float) $it['unit_price'] . '</DGia>' . "\n"
                 . '        <TLCKhau>' . $disc . '</TLCKhau>' . "\n"
                 . '        <ThTien>' . (float) $it['amount'] . '</ThTien>' . "\n"
+                . '        <TSuat>' . $x(vat_chu($rate)) . '</TSuat>' . "\n"
+                . '        <TThue>' . $thue . '</TThue>' . "\n"
                 . '      </HHDVu>' . "\n";
         }
+
+        $mucThue = muc_thue_theo_dong($items, $item['vat_rate']);
+        $tongHop = '';
+        foreach ($mucThue as $m){
+            $tongHop .= '          <LTSuat>' . "\n"
+                . '            <TSuat>' . $x(vat_chu($m['rate'])) . '</TSuat>' . "\n"
+                . '            <ThTien>' . (float) $m['tien'] . '</ThTien>' . "\n"
+                . '            <TThue>' . (float) $m['thue'] . '</TThue>' . "\n"
+                . '          </LTSuat>' . "\n";
+        }
+        /* <TSuat> ở phần tổng giữ như cũ khi cả hoá đơn chung MỘT mức; nhiều mức
+           thì không có một con số chung nào đúng — xem bảng tổng hợp. */
+        $tSuatChung = count($mucThue) === 1 ? reset($mucThue)['rate']
+                    : (count($mucThue) === 0 ? (float) $item['vat_rate'] : null);
 
         $subtotal = (float) $item['subtotal'];
         $tax      = (float) $item['tax_amount'];
@@ -615,9 +643,10 @@ class Salesinvoices extends Controller {
         $xml .= '      </NMua>' . "\n";
         $xml .= '      <DSHHDVu>' . "\n" . $lines . '      </DSHHDVu>' . "\n";
         $xml .= '      <TToan>' . "\n";
+        $xml .= '        <THTTLTSuat>' . "\n" . $tongHop . '        </THTTLTSuat>' . "\n";
         $xml .= '        <TgTCThue>' . $subtotal . '</TgTCThue>' . "\n";
         $xml .= '        <TgTThue>' . $tax . '</TgTThue>' . "\n";
-        $xml .= '        <TSuat>' . (float) $item['vat_rate'] . '</TSuat>' . "\n";
+        if ($tSuatChung !== null) $xml .= '        <TSuat>' . $x(vat_chu($tSuatChung)) . '</TSuat>' . "\n";
         $xml .= '        <TgTTTBSo>' . $total . '</TgTTTBSo>' . "\n";
         $xml .= '      </TToan>' . "\n";
         $xml .= '    </NDHDon>' . "\n";
@@ -766,7 +795,8 @@ class Salesinvoices extends Controller {
             // báo cáo kho nhìn như có phát sinh ở đó.
             'warehouse_id'  => !empty($f['warehouse_id']) ? (int) $f['warehouse_id'] : null,
             'invoice_date'  => $f['invoice_date'],
-            'vat_rate'      => $this->parseRate(isset($f['vat_rate']) ? $f['vat_rate'] : 0),
+            // "VAT mặc định cho dòng" — chỉ nhận mức trong muc_vat() (25/11/2026)
+            'vat_rate'      => $this->vatMacDinh($f),
 
             /* Xe của phiếu — để trống được (bán lẻ phụ tùng qua quầy).
                `vehicle_id` nối vào bản ghi xe: lịch sử xe lấy theo mã xe, nên
@@ -778,12 +808,37 @@ class Salesinvoices extends Controller {
         ];
     }
 
+    /**
+     * THUẾ = TỔNG THUẾ TỪNG DÒNG (khách 25/11/2026), đọc lại từ CSDL sau khi ghi
+     * dòng — không tin tổng JS gửi lên, không nhân thuế suất đầu phiếu với tổng.
+     */
     private function syncTotals($id, $lines, $f){
-        $subtotal = $this->__itemModel->syncForInvoice($id, $lines);
-        $rate = $this->parseRate(isset($f['vat_rate']) ? $f['vat_rate'] : 0);
-        $tax  = round($subtotal * $rate / 100, 2);
+        $subtotal = $this->__itemModel->syncForInvoice($id, $lines, $this->vatMacDinh($f));
+        $tax      = $this->__itemModel->tongThue($id);
         $this->__model->edit(['subtotal' => $subtotal, 'tax_amount' => $tax,
             'total_amount' => $subtotal + $tax], $id);
+    }
+
+    /** VAT mặc định cho dòng — mức trong muc_vat(), số khác (POST tự soạn) thành 0 */
+    private function vatMacDinh($f){
+        $v = vat_hop_le(isset($f['vat_rate']) ? $f['vat_rate'] : null);
+        return $v !== null ? $v : 0.0;
+    }
+
+    /**
+     * Thuế suất từng dòng: dòng chọn gì lấy đó; không chọn / chọn số ngoài danh
+     * sách thì lấy VAT XUẤT riêng của mặt hàng, chưa khai thì mặc định đầu phiếu.
+     */
+    private function ganVat(array $lines){
+        if (empty($lines)) return $lines;
+        $macDinh = $this->vatMacDinh($this->__request->getFields());
+        $cuaHang = $this->__part->vatTheoHang(array_column($lines, 'part_id'), 'vat_out');
+        foreach ($lines as $i => $l){
+            $lines[$i]['vat_rate'] = vat_cho_dong($l['vat_gui'],
+                isset($cuaHang[(int) $l['part_id']]) ? $cuaHang[(int) $l['part_id']] : null, $macDinh);
+            unset($lines[$i]['vat_gui']);
+        }
+        return $lines;
     }
 
     private function customerId(){
@@ -844,7 +899,7 @@ class Salesinvoices extends Controller {
      * nhảy sang mặt hàng khác mà chẳng có lỗi nào báo.
      */
     private function buildLines(){
-        return array_merge($this->docDong('line_'), $this->docDong('sv_'));
+        return $this->ganVat(array_merge($this->docDong('line_'), $this->docDong('sv_')));
     }
 
     /** Đọc một bảng dòng hàng theo tiền tố tên ô ('line_' hoặc 'sv_') */
@@ -860,6 +915,7 @@ class Salesinvoices extends Controller {
         $prices = $lay('price');
         $discs  = $lay('disc');
         $notes  = $lay('note');
+        $vats   = $lay('vat');
 
         $lines = [];
         foreach ($parts as $i => $p){
@@ -869,7 +925,9 @@ class Salesinvoices extends Controller {
             if ($partId <= 0 || $qty <= 0) continue;
             $lines[] = ['part_id' => $partId, 'quantity' => $qty, 'unit_price' => $price,
                         'discount_percent' => $this->parseRate(isset($discs[$i]) ? $discs[$i] : 0),
-                        'note' => isset($notes[$i]) ? trim($notes[$i]) : ''];
+                        'note' => isset($notes[$i]) ? trim($notes[$i]) : '',
+                        // thuế suất THÔ người dùng chọn — ganVat() mới quyết định
+                        'vat_gui' => isset($vats[$i]) ? $vats[$i] : null];
         }
         return $lines;
     }

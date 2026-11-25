@@ -156,6 +156,8 @@ class Quotations extends Controller {
                 'gia_cu'   => (int) $d['unit_price'],
                 'gia_moi'  => (int) $d['gia_bay_gio'],
                 'disc'     => (float) $d['discount_percent'],
+                // Thuế suất của dòng chép y nguyên, như chiết khấu (25/11/2026)
+                'vat'      => vat_so($d['vat_rate']),
                 'note'     => (string) $d['note'],
                 'ten'      => $d['part_code'] . ' - ' . $d['part_name'],
             ];
@@ -414,12 +416,15 @@ class Quotations extends Controller {
         ]);
         $lines = [];
         foreach ($items as $it){
+            /* VAT TỪNG DÒNG đi theo sang hoá đơn (25/11/2026) — khách đồng ý
+               báo giá với thuế nào thì hoá đơn mang đúng thuế đó. */
             $lines[] = ['part_id' => (int) $it['part_id'], 'quantity' => (float) $it['quantity'],
                         'unit_price' => (float) $it['unit_price'],
-                        'discount_percent' => (float) ($it['discount_percent'] ?? 0), 'note' => $it['note']];
+                        'discount_percent' => (float) ($it['discount_percent'] ?? 0), 'note' => $it['note'],
+                        'vat_rate' => isset($it['vat_rate']) ? $it['vat_rate'] : null];
         }
-        $subtotal = $invItem->syncForInvoice($invId, $lines);
-        $tax = round($subtotal * (float) $item['vat_rate'] / 100, 2);
+        $subtotal = $invItem->syncForInvoice($invId, $lines, $item['vat_rate']);
+        $tax = $invItem->tongThue($invId);
         $this->__invoice->edit(['subtotal' => $subtotal, 'tax_amount' => $tax,
             'total_amount' => $subtotal + $tax], $invId);
 
@@ -520,7 +525,8 @@ class Quotations extends Controller {
             'customer_id'   => $this->customerId(),
             'quote_date'    => $f['quote_date'],
             'valid_until'   => !empty($f['valid_until']) ? $f['valid_until'] : null,
-            'vat_rate'      => $this->parseRate(isset($f['vat_rate']) ? $f['vat_rate'] : 0),
+            // "VAT mặc định cho dòng" — chỉ nhận mức trong muc_vat() (25/11/2026)
+            'vat_rate'      => $this->vatMacDinh($f),
 
             /* Xe của phiếu. Cả ba để trống được — bán lẻ phụ tùng qua quầy thì
                không có xe nào cả. `vehicle_id` nối vào bản ghi xe để lịch sử
@@ -539,12 +545,37 @@ class Quotations extends Controller {
         ];
     }
 
+    /**
+     * THUẾ = TỔNG THUẾ TỪNG DÒNG (khách 25/11/2026), đọc lại từ CSDL sau khi ghi
+     * dòng — không tin tổng JS gửi lên, không nhân thuế suất đầu phiếu với tổng.
+     */
     private function syncTotals($id, $lines, $f){
-        $subtotal = $this->__itemModel->syncForQuotation($id, $lines);
-        $rate = $this->parseRate(isset($f['vat_rate']) ? $f['vat_rate'] : 0);
-        $tax  = round($subtotal * $rate / 100, 2);
+        $subtotal = $this->__itemModel->syncForQuotation($id, $lines, $this->vatMacDinh($f));
+        $tax      = $this->__itemModel->tongThue($id);
         $this->__model->edit(['subtotal' => $subtotal, 'tax_amount' => $tax,
             'total_amount' => $subtotal + $tax], $id);
+    }
+
+    /** VAT mặc định cho dòng — mức trong muc_vat(), số khác (POST tự soạn) thành 0 */
+    private function vatMacDinh($f){
+        $v = vat_hop_le(isset($f['vat_rate']) ? $f['vat_rate'] : null);
+        return $v !== null ? $v : 0.0;
+    }
+
+    /**
+     * Thuế suất từng dòng: dòng chọn gì lấy đó; không chọn / chọn số ngoài danh
+     * sách thì lấy VAT XUẤT riêng của mặt hàng, chưa khai thì mặc định đầu phiếu.
+     */
+    private function ganVat(array $lines){
+        if (empty($lines)) return $lines;
+        $macDinh = $this->vatMacDinh($this->__request->getFields());
+        $cuaHang = $this->__part->vatTheoHang(array_column($lines, 'part_id'), 'vat_out');
+        foreach ($lines as $i => $l){
+            $lines[$i]['vat_rate'] = vat_cho_dong($l['vat_gui'],
+                isset($cuaHang[(int) $l['part_id']]) ? $cuaHang[(int) $l['part_id']] : null, $macDinh);
+            unset($lines[$i]['vat_gui']);
+        }
+        return $lines;
     }
 
     /**
@@ -601,7 +632,7 @@ class Quotations extends Controller {
      * thêm một thẻ là số lượng lệch sang mặt hàng khác mà không báo lỗi gì.
      */
     private function buildLines(){
-        return array_merge($this->docDong('line_'), $this->docDong('sv_'));
+        return $this->ganVat(array_merge($this->docDong('line_'), $this->docDong('sv_')));
     }
 
     /** Đọc một bảng dòng hàng theo tiền tố tên ô ('line_' hoặc 'sv_') */
@@ -617,6 +648,7 @@ class Quotations extends Controller {
         $prices = $lay('price');
         $discs  = $lay('disc');
         $notes  = $lay('note');
+        $vats   = $lay('vat');
 
         $lines = [];
         foreach ($parts as $i => $p){
@@ -626,7 +658,9 @@ class Quotations extends Controller {
             if ($partId <= 0 || $qty <= 0) continue;
             $lines[] = ['part_id' => $partId, 'quantity' => $qty, 'unit_price' => $price,
                         'discount_percent' => $this->parseRate(isset($discs[$i]) ? $discs[$i] : 0),
-                        'note' => isset($notes[$i]) ? trim($notes[$i]) : ''];
+                        'note' => isset($notes[$i]) ? trim($notes[$i]) : '',
+                        // thuế suất THÔ người dùng chọn — ganVat() mới quyết định
+                        'vat_gui' => isset($vats[$i]) ? $vats[$i] : null];
         }
         return $lines;
     }

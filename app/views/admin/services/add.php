@@ -35,6 +35,21 @@ $o = function($key, $default = '') use ($old){ return isset($old[$key]) ? $old[$
                         </div>
                     </div>
 
+                    <?php /* VAT NHẬP / VAT XUẤT — khách 25/11/2026: "thêm vào hàng hóa 2 trường
+                             (VAT nhập, VAT xuất) dùng cho các phiếu mua hàng và bán hàng".
+                             Dịch vụ cũng lên báo giá / hoá đơn nên có đủ hai ô như hàng hoá. */ ?>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>VAT nhập (%)</label>
+                            {!! o_chon_vat('vat_in', $o('vat_in', null), ['theo_phieu' => true]) !!}
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>VAT xuất (%)</label>
+                            {!! o_chon_vat('vat_out', $o('vat_out', null), ['theo_phieu' => true]) !!}
+                            <small class="form-text text-muted">"Theo phiếu" = lấy VAT mặc định của báo giá / hoá đơn.</small>
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group col-md-4">
                             <label>Mã dịch vụ</label>

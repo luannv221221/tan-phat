@@ -165,9 +165,14 @@ ok(preg_match('~input\[name\$="note\[\]"\]~', $khoi) === 1
    'O ghi chu / chiet khau nham theo DUOI TEN o',
    'Dung nth-child thi sai mot bang la sai am tham — thu tu cot khac nhau '
    . 'giua bao gia, hoa don, don mua, phieu nhap');
-ok(strpos($khoi, 'min-width: 900px') !== false
-   || strpos($css, '.bang-dong-hang { min-width: 900px; }') !== false,
-   'Bang dong hang noi rong de chua chu 16px');
+/* 25/11/2026 (khach yeu cau VAT nhap / VAT xuat theo hang hoa): bang dong hang
+   them cot "VAT %" nen noi tu 900px len 1000px. Van la mot nguong CO DINH —
+   chi doi con so, khong noi long dieu kien. */
+ok(strpos($khoi, 'min-width: 1000px') !== false
+   || strpos($css, '.bang-dong-hang { min-width: 1000px; }') !== false,
+   'Bang dong hang noi rong de chua chu 16px (+ cot VAT %)');
+ok(preg_match('~select\[name\$="vat\[\]"\]\s*\{[^}]*min-width~', $khoi) === 1,
+   'O chon VAT % cua dong co be ngang toi thieu tren dien thoai');
 
 // ===========================================================================
 section('Chay that tren MySQL');

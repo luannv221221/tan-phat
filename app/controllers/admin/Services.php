@@ -213,6 +213,11 @@ class Services extends Controller {
             'category_id' => $this->validCat(isset($f['category_id']) ? $f['category_id'] : null),
             'unit_id'     => $this->validUnit(isset($f['unit_id']) ? $f['unit_id'] : null),
             'price'       => $this->parseMoney(isset($f['price']) ? $f['price'] : 0),
+            /* VAT nhập / VAT xuất (khách 25/11/2026) — dịch vụ cũng là dòng của
+               `parts` và lên báo giá / hoá đơn như hàng hoá. Chỉ nhận mức trong
+               muc_vat(); trống / số khác -> NULL = "theo phiếu". */
+            'vat_in'      => vat_hop_le(isset($f['vat_in']) ? $f['vat_in'] : null),
+            'vat_out'     => vat_hop_le(isset($f['vat_out']) ? $f['vat_out'] : null),
             // Bộ soạn thảo gửi HTML — lọc ở cửa vào (khách 25/11/2026)
             'description' => !empty($f['description']) ? loc_html_an_toan(trim($f['description'])) : null,
             'status'      => !empty($f['status']) ? 1 : 0,

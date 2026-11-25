@@ -180,6 +180,20 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                         </div>
                     </div>
 
+                    <?php /* VAT NHẬP / VAT XUẤT — khách 25/11/2026. Xem ghi chú ở add.php. */ ?>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label>VAT nhập (%)</label>
+                            {!! o_chon_vat('vat_in', isset($old['vat_in']) ? $old['vat_in'] : (isset($item['vat_in']) ? $item['vat_in'] : null), ['theo_phieu' => true]) !!}
+                            <small class="form-text text-muted">Thuế suất khi mua — tự điền vào dòng đơn mua.</small>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>VAT xuất (%)</label>
+                            {!! o_chon_vat('vat_out', isset($old['vat_out']) ? $old['vat_out'] : (isset($item['vat_out']) ? $item['vat_out'] : null), ['theo_phieu' => true]) !!}
+                            <small class="form-text text-muted">Thuế suất khi bán — tự điền vào dòng báo giá, hoá đơn.</small>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label>Mô tả</label>
                         <textarea class="form-control" name="description" rows="3">{{!empty($vDesc)?$vDesc:''}}</textarea>

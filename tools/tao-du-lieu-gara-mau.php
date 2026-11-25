@@ -439,8 +439,9 @@ foreach ($kichBan as $code => $k){
             'vat_rate' => $bg['vat'], 'status' => $bg['status'],
             'note' => isset($bg['note']) ? $bg['note'] : null, 'created_by' => $nguoiLapId,
         ]));
-        $tong = $BGD->syncForQuotation($id, $dong);
-        $thue = round($tong * $bg['vat'] / 100, 2);
+        // VAT từng dòng (25/11/2026): dòng theo mặc định của phiếu, thuế = tổng thuế dòng
+        $tong = $BGD->syncForQuotation($id, $dong, $bg['vat']);
+        $thue = $BGD->tongThue($id);
         $BG->edit(['subtotal' => $tong, 'tax_amount' => $thue, 'total_amount' => $tong + $thue], $id);
         echo "  bao gia " . $BG->getDetail($id)['quote_no'] . " (" . $bg['status'] . ", "
            . number_format($tong + $thue, 0, ',', '.') . " d)\n";
@@ -454,8 +455,8 @@ foreach ($kichBan as $code => $k){
             'invoice_date' => $ngay($hd['ngayLui']), 'vat_rate' => $hd['vat'], 'status' => 0,
             'created_by' => $nguoiLapId,
         ]));
-        $tong = $HDD->syncForInvoice($id, $dong);
-        $thue = round($tong * $hd['vat'] / 100, 2);
+        $tong = $HDD->syncForInvoice($id, $dong, $hd['vat']);
+        $thue = $HDD->tongThue($id);
         $HD->edit(['subtotal' => $tong, 'tax_amount' => $thue, 'total_amount' => $tong + $thue], $id);
 
         if (!empty($hd['ghiSo'])){
