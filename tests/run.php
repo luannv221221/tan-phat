@@ -95,6 +95,7 @@ $tests = [
     'LoaiPhieuXuatTest.php'       => 'KHO — loai phieu xuat: them xuat bao hanh, xuat dung noi bo; khong con ma la',
     'InKhongThuaDongTest.php'     => 'IN AN — bao gia / hoa don khong thua dong: cot Ten du rong, CK + thue 0% chi in khi co',
     'ChanTrangKhongThuaTest.php'  => 'STOREFRONT — chan trang tu soan THAY khoi mac dinh; menu chan trang khong lap link',
+    'ChuGaraTaoNhomTest.php'      => 'PHAN QUYEN — chu gara tu them / doi ten / xoa nhom; khong trung ten nhom trong gara',
 ];
 
 $php      = PHP_BINARY;

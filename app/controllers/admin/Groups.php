@@ -97,7 +97,19 @@ class Groups extends Controller{
             'name.min' => 'Tên nhóm không được nhỏ hơn 4 ký tự',
         ]);
 
-        if ( $this->__request->validate()){
+        $f = $this->__request->getFields();
+        $g = self::garaHienTai();
+        $hopLe = $this->__request->validate();
+        if ($hopLe && isset($f['name'])
+            && $this->__groupModel->trungTen($f['name'], $g)){
+            Session::flash('errors', ['name' => 'Gara đã có nhóm tên "' . trim($f['name']) . '" — đặt tên khác.']);
+            Session::flash('msg', 'Vui lòng kiểm tra các lỗi bên dưới');
+            Session::flash('old', $f);
+            $this->__response->redirect('admin/groups/add');
+            return;
+        }
+
+        if ($hopLe){
 
             $dataInsert = [
                 'name' => $this->__request->getFields()['name'],
@@ -159,7 +171,18 @@ class Groups extends Controller{
             'name.min' => 'Tên nhóm không được nhỏ hơn 4 ký tự',
         ]);
 
-        if ( $this->__request->validate()){
+        $f = $this->__request->getFields();
+        $hopLe = $this->__request->validate();
+        if ($hopLe && isset($f['name'])
+            && $this->__groupModel->trungTen($f['name'], $this->__groupModel->garaCua($id), (int) $id)){
+            Session::flash('errors', ['name' => 'Gara đã có nhóm tên "' . trim($f['name']) . '" — đặt tên khác.']);
+            Session::flash('msg', 'Vui lòng kiểm tra các lỗi bên dưới');
+            Session::flash('old', $f);
+            $this->__response->redirect();
+            return;
+        }
+
+        if ($hopLe){
 
             $dataUpdate = [
                 'name' => $this->__request->getFields()['name'],
@@ -345,6 +368,12 @@ class Groups extends Controller{
      *
      * Nơi gọi chỉ cần `if (empty(...)) return;`.
      */
+    /** Gara mà nhóm thêm mới sẽ thuộc về — đúng cách GroupsModel::add() gán. */
+    private static function garaHienTai(){
+        $g = \App\core\Model::garaLoc();
+        return ($g !== null && $g > 0) ? (int) $g : null;
+    }
+
     private function layNhom($id, $phaiSoHuu = false){
         $id = (int) $id;
         $g  = $id > 0 ? $this->__groupModel->getDetail($id) : null;

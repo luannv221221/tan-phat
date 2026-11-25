@@ -26,7 +26,9 @@
  *        c. Manager KHÔNG sửa được nhóm của CHÍNH MÌNH (Groups::layNhom).
  *        d. Manager chỉ tick được quyền nhóm mình ĐANG CÓ
  *           (Groups::postPermission).
- *      Manager vẫn KHÔNG có `add` / `edit` / `delete` trên `groups`.
+ *      Manager có cả `add` / `edit` / `delete` trên `groups` từ 25/11/2026
+ *      (khách: "thiếu nhóm và phân quyền cho nhóm", migration 000116) — ba chốt
+ *      trên + nhóm rỗng không vào được màn nào + không xoá nhóm còn người.
  *
  *   2. Thiếu `view` thì ba role kia vô nghĩa — RoleMiddleware chặn ngay ở
  *      cửa, không vào được màn hình thì add/edit/delete không bao giờ chạy tới.
@@ -104,14 +106,15 @@ foreach (['Manager', 'Staff'] as $n){
         ok(isset($qNhom['view']) && isset($qNhom['permission']),
            "$n phan quyen duoc cho nhan vien gara minh (000093)",
            'Dang co: ' . implode(',', array_keys($qNhom)));
-        /* KHONG `add` / `edit` / `delete`:
-             add    -> sinh nhom rong, ma nhom rong tung la nhom vao duoc moi man
-             edit   -> doi TEN nhom, ma nhan ban nhom cho gara moi nhan nhau
-                       bang ten (MoGaraModel::nhanBanNhom)
-             delete -> xoa nhom la `users`.`group_id` SET NULL, nguoi mat nhom */
+        /* CO `add` / `edit` / `delete` tu 25/11/2026 — khach ghi "Quan ly tai khoan
+           nguoi dung: thieu nhom va phan quyen cho nhom" (gara can them nhom Ke
+           toan, Tho...). Ba lo ngai cu nay da co chot khac:
+             add    -> nhom rong KHONG vao duoc man nao (RoleMiddleware)
+             edit   -> chi sua nhom YEU HON minh (suaQuyenDuoc); trung ten bi chan
+             delete -> nhom con nguoi khong xoa duoc (Groups::delete) */
         foreach (['add', 'edit', 'delete'] as $r){
-            ok(!isset($qNhom[$r]), "$n KHONG co `$r` tren man hinh Nhom",
-               'Hai nhom Manager/Staff cua gara da du; them hay xoa chi sinh nhom rong nguoi');
+            ok(isset($qNhom[$r]), "$n CO `$r` tren man hinh Nhom (tu them nhom cho gara)",
+               'Dang co: ' . implode(',', array_keys($qNhom)));
         }
     } else {
         ok(empty($qNhom),

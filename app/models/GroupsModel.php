@@ -239,6 +239,25 @@ class GroupsModel extends Model{
     }
 
     /** Gara của nhóm $id, hoặc null khi là nhóm hệ thống / không có nhóm đó */
+    /**
+     * Tên nhóm đã có trong gara $garaId chưa (không phân biệt hoa thường, bỏ
+     * khoảng trắng hai đầu). $boQuaId: nhóm đang sửa — giữ nguyên tên mình
+     * không tính là trùng. $garaId null = nhóm hệ thống.
+     *
+     * Từ 25/11/2026 chủ gara tự thêm / đổi tên nhóm. Hai nhóm cùng tên trong
+     * một gara thì không phân biệt được trên ô chọn nhóm, và code tìm "nhóm
+     * Manager của gara" theo TÊN (MoGaraModel: tạo / sửa tài khoản chủ gara)
+     * sẽ chọn bừa một trong hai.
+     */
+    public function trungTen($ten, $garaId, $boQuaId = 0){
+        $ten = mb_strtolower(trim((string) $ten));
+        $sql = 'SELECT `id` FROM `groups` WHERE LOWER(TRIM(`name`)) = ? AND `id` <> ? AND '
+             . ($garaId === null ? '`garage_id` IS NULL' : '`garage_id` = ?') . ' LIMIT 1';
+        $bd  = [$ten, (int) $boQuaId];
+        if ($garaId !== null) $bd[] = (int) $garaId;
+        return !empty($this->firstRaw($sql, $bd));
+    }
+
     public function garaCua($id){
         $r = $this->firstRaw('SELECT `garage_id` FROM `groups` WHERE `id` = ?', [(int) $id]);
         if (empty($r) || $r['garage_id'] === null || $r['garage_id'] === '') return null;
