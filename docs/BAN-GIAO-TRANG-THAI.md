@@ -74,10 +74,12 @@ trên form); hai ghi chú chờ khách — xem mục 5.
 ## 3. Máy chủ thật — đo từ ngoài ngày 25/11/2026
 
 - `eteksofts.vn` và `etek.rikkeiedu.org` đều trỏ `103.74.101.148`.
-- Code trên máy chủ có ít nhất tới `b992996`: `http://eteksofts.vn/public/assets/js/vietqr.js`
-  trả 200 (file này sinh ra ở `b992996`). Vậy migration `000113` gần như chắc đã chạy
-  — **chưa kiểm** trong CSDL. `f24994c` đã lên chưa: **chưa kiểm** (không có tệp công
-  khai nào để dò).
+- **25/11/2026 chiều anh đã đẩy đợt này** (ảnh cmd): `migrate.php` chạy 9 migration
+  `000113` → `000121` (batch 96 trên máy chủ) — tức là `000113` (link thanh toán) TRƯỚC
+  ĐÓ CHƯA CHẠY dù code `b992996` đã lên, nút Gửi ở danh sách hoá đơn khi ấy lỗi.
+  `git pull` báo "Already up to date" (code đã kéo từ trước khi chạy migration).
+  Đo từ ngoài sau đó: `public/assets/js/dong-hang-kho.js` trả 200, trang lỗi tên miền
+  ghi "Không tìm thấy công ty", menu chân trang hết lặp link → code mới nhất đã chạy.
 - Chứng chỉ SSL: Let's Encrypt `CN=eteksofts.vn`, hạn **11/02/2027**, đúng 5 tên:
   `eteksofts.vn`, `www.eteksofts.vn`, `tp01` / `dmsg` / `dmdn` `.etek.eteksofts.vn`.
 - DNS `*.eteksofts.vn` **ĐÃ CÓ** (đo chiều 25/11): `tp01` / `ml` `.eteksofts.vn` → `103.74.101.148`.
@@ -108,11 +110,10 @@ trên form); hai ghi chú chờ khách — xem mục 5.
    Khi anh gửi ảnh / báo xong một bước: đo lại từ ngoài (`nslookup <tên> 8.8.8.8`,
    `curl`, `openssl s_client -connect eteksofts.vn:443 -servername <tên>`) trước khi
    bảo anh làm bước sau.
-2. **Đẩy đợt 25/11 lên máy chủ**: 8 migration `000114` → `000121` (đều chỉ thêm cột /
+2. ~~Đẩy đợt 25/11 lên máy chủ~~ **XONG 25/11** (mục 3). Ghi lại cách làm: 8 migration `000114` → `000121` (đều chỉ thêm cột /
    thêm dòng / điền dữ liệu, chạy được khi code cũ còn chạy). Lệnh đúng thứ tự ở
    `deploy/CHUYEN-TEN-MIEN-ETEKSOFTS.md` Bước 2 (`git checkout origin/ban-giao-khach --
-   database/migrations` → `migrate.php` → `git pull --ff-only`). **Chưa kiểm** anh đã
-   đẩy chưa.
+   database/migrations` → `migrate.php` → `git pull --ff-only`).
 3. Mỗi gara tự chọn **ngân hàng** + số tài khoản ở Cấu hình thì hoá đơn mới có QR.
 3. Gara chưa khai cấu hình website riêng thì trang khách vẫn mang tên, hotline, địa
    chỉ, email của Tân Phát — gara tự điền ở Cấu hình (không phải lỗi code; muốn đổi
