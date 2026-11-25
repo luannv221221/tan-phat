@@ -20,9 +20,14 @@ class ChatConversationsModel extends Model {
 
     public function getDetail($id){ return $this->getFirst($id); }
 
+    /* addNew(), KHÔNG insert() thô: addNew() điền `garage_id` của gara đang mở.
+       Bản cũ ghi insert() thô nên từ 07/10 hội thoại mới mang gara NULL — đọc
+       lại (lọc theo gara) không ra: admin không thấy, khách không nhận được trả
+       lời, tin thứ hai đụng khoá duy nhất `session_key` và báo lỗi. Khách báo
+       "chat không chạy" 25/11/2026 (tests/ChatTheoGaraTest.php). */
     public function create($key, $memberId = null, $name = null, $phone = null){
         $now = date('Y-m-d H:i:s');
-        $this->insert('chat_conversations', [
+        $this->addNew([
             'session_key' => $key, 'member_id' => !empty($memberId) ? (int) $memberId : null,
             'guest_name' => $name, 'guest_phone' => $phone, 'status' => 'open',
             'unread' => 0, 'last_message_at' => $now, 'create_at' => $now,
