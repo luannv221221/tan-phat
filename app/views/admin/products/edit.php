@@ -1,10 +1,11 @@
 <?php
-// Nhóm đời xe + trạng thái tick sẵn
-$fitGroups = [];
+// Đời xe gom theo HÃNG -> MODEL. Khách ghi 25/11/2026 "Bỏ phần dài này đi, click
+// vào công ty mới hiện ra": bản cũ in mọi cặp hãng–model thành một cột dài phải
+// cuộn mãi. Nay mỗi hãng một khối gập, bấm mới hiện (tests/DoiXeGapTheoHangTest.php).
+$fitBrands = [];
 if (!empty($carYears)){
     foreach ($carYears as $cy){
-        $g = $cy['brand_name'] . ' — ' . $cy['model_name'];
-        $fitGroups[$g][] = $cy;
+        $fitBrands[$cy['brand_name']][$cy['model_name']][] = $cy;
     }
 }
 $sel = !empty($selFitments) ? $selFitments : [];
@@ -224,25 +225,39 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
             <div class="card card-outline card-info js-theo-loai" data-loai="part">
                 <div class="card-header"><h3 class="card-title"><i class="fas fa-link mr-2"></i>Lắp cho đời xe</h3></div>
                 <div class="card-body">
-                    @if (empty($fitGroups))
+                    @if (empty($fitBrands))
                     <p class="text-muted mb-0"><i class="fas fa-info-circle mr-1"></i> Chưa có đời xe nào. Hãy tạo <b>Hãng → Model → Đời xe</b> trước.</p>
                     @else
                     <input type="text" id="fit-filter" class="form-control form-control-sm mb-2" placeholder="Lọc nhanh: gõ hãng / model / năm..."/>
+                    <p class="text-muted small mb-1">Bấm vào hãng xe để chọn model, đời xe.</p>
                     <div style="max-height:460px;overflow:auto">
-                        @foreach ($fitGroups as $gname => $rows)
-                        <div class="fit-group mb-2 border rounded p-2">
-                            <div class="font-weight-bold text-primary small mb-1">{{$gname}}</div>
-                            @foreach ($rows as $cy)
-                                <?php
-                                $label   = $cy['year_from'] . (!empty($cy['year_to']) ? '–' . $cy['year_to'] : '+');
-                                $checked = in_array((int) $cy['id'], $sel, true) ? 'checked' : '';
-                                ?>
-                                <div class="custom-control custom-checkbox fit-item" data-label="{{ strtolower($gname.' '.$label) }}">
-                                    <input type="checkbox" class="custom-control-input" name="fitments[]" value="{{$cy['id']}}" id="fit-{{$cy['id']}}" {!! $checked !!}/>
-                                    <label class="custom-control-label" for="fit-{{$cy['id']}}">{{$label}}</label>
-                                </div>
+                        @foreach ($fitBrands as $hang => $models)
+                        <?php
+                        $demTick = 0;
+                        foreach ($models as $__rs) foreach ($__rs as $__cy) if (in_array((int) $__cy['id'], $sel, true)) $demTick++;
+                        ?>
+                        <details class="fit-brand border rounded mb-1">
+                            <summary class="px-2 py-1 font-weight-bold text-primary" style="cursor:pointer">{{$hang}}
+                                <span class="badge badge-info ml-1 fit-dem" {!! $demTick > 0 ? '' : 'style="display:none"' !!}>{{$demTick}} đã chọn</span>
+                            </summary>
+                            <div class="px-2 pb-2">
+                            @foreach ($models as $model => $rows)
+                            <div class="fit-group mb-1">
+                                <div class="small font-weight-bold mb-1">{{$model}}</div>
+                                @foreach ($rows as $cy)
+                                    <?php
+                                    $label   = $cy['year_from'] . (!empty($cy['year_to']) ? '–' . $cy['year_to'] : '+');
+                                    $checked = in_array((int) $cy['id'], $sel, true) ? 'checked' : '';
+                                    ?>
+                                    <div class="custom-control custom-checkbox fit-item" data-label="{{ mb_strtolower($hang.' '.$model.' '.$label) }}">
+                                        <input type="checkbox" class="custom-control-input" name="fitments[]" value="{{$cy['id']}}" id="fit-{{$cy['id']}}" {!! $checked !!}/>
+                                        <label class="custom-control-label" for="fit-{{$cy['id']}}">{{$label}}</label>
+                                    </div>
+                                @endforeach
+                            </div>
                             @endforeach
-                        </div>
+                            </div>
+                        </details>
                         @endforeach
                     </div>
                     @endif
@@ -359,6 +374,14 @@ document.addEventListener('change', function (e) {
 (function () {
     var box = document.getElementById('fit-filter');
     if (!box) return;
+    /* Số đời đã tick hiện ngay trên dòng hãng — gập lại vẫn biết hãng nào đã chọn. */
+    document.querySelectorAll('.fit-brand').forEach(function (b) {
+        b.addEventListener('change', function () {
+            var n = b.querySelectorAll('input[name="fitments[]"]:checked').length;
+            var t = b.querySelector('.fit-dem');
+            if (t){ t.textContent = n + ' đã chọn'; t.style.display = n ? '' : 'none'; }
+        });
+    });
     box.addEventListener('input', function () {
         var q = this.value.toLowerCase().trim();
         document.querySelectorAll('.fit-item').forEach(function (el) {
@@ -367,6 +390,12 @@ document.addEventListener('change', function (e) {
         document.querySelectorAll('.fit-group').forEach(function (g) {
             var any = g.querySelector('.fit-item:not([style*="none"])');
             g.style.display = any ? '' : 'none';
+        });
+        /* Gõ lọc thì tự mở hãng có kết quả; xoá ô lọc thì gập lại hết. */
+        document.querySelectorAll('.fit-brand').forEach(function (b) {
+            var any = b.querySelector('.fit-item:not([style*="none"])');
+            b.style.display = any ? '' : 'none';
+            b.open = q !== '' && !!any;
         });
     });
 })();
