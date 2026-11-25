@@ -29,6 +29,14 @@
  *
  *   5. ĐĂNG KÝ VÀO BẢNG `modules`. Sinh ra một ô tick ở màn Phân quyền, và chỉ
  *      cần ai bỏ tick là cả nhóm đó không đổi được mật khẩu của chính mình.
+ *
+ * 25/11/2026 — KHÔNG CÒN TRANG ĐỔI MẬT KHẨU RIÊNG. Khách: "cho sửa profile
+ * thay cho đổi mật khẩu, ảnh, tên, địa chỉ…". Form đổi mật khẩu chuyển vào
+ * trang Hồ sơ của tôi (admin/ho-so), menu tài khoản đổi "Đổi mật khẩu" thành
+ * "Hồ sơ của tôi", GET admin/doi-mat-khau chỉ còn chuyển hướng sang đó. Việc
+ * đổi VẪN chỉ ở POST admin/doi-mat-khau (Doimatkhau::postDoi), nên năm mục
+ * trên giữ nguyên — chỉ đổi CHỖ đọc form / đọc kết quả. Phần hồ sơ có test
+ * riêng: HoSoNguoiDungTest.php.
  */
 
 require_once __DIR__ . '/_helpers.php';
@@ -49,11 +57,15 @@ ok(strpos($rt, "Route::post('doi-mat-khau', 'admin/doimatkhau/postDoi')") !== fa
    'Dat ten khac thi tuyen POST khong co AuthMiddleware — xem muc 4 dau file');
 
 $hd = file_get_contents($goc . 'app/views/layouts/admin/header.php');
-ok(strpos($hd, "admin/doi-mat-khau") !== false, 'Menu tai khoan co muc Doi mat khau');
-ok(strpos($hd, "icon('lock')") !== false,
-   'Dung bieu tuong `lock`',
+/* 25/11/2026: muc "Doi mat khau" DOI THANH "Ho so cua toi" theo yeu cau khach
+   ("cho sua profile thay cho doi mat khau") — doi mat khau la mot khung trong
+   trang ho so. Truoc day hai dong nay kiem `admin/doi-mat-khau` + icon('lock'). */
+ok(strpos($hd, "admin/ho-so") !== false, 'Menu tai khoan co muc Ho so cua toi (cho doi mat khau)');
+$sprite = (string) @file_get_contents($goc . 'public/assets/vendor/lucide/lucide.svg');
+ok(strpos($hd, "icon('user'); ?> Hồ sơ của tôi") !== false && strpos($sprite, 'id="i-user"') !== false,
+   'Bieu tuong cua muc menu (`user`) CO trong sprite Lucide',
    'Sprite Lucide trong du an KHONG co `key`; icon() thieu hinh thi in o trong chu khong bao loi');
-ok(strpos($hd, "route('admin/doi-mat-khau')") === false,
+ok(strpos($hd, "route('admin/doi-mat-khau')") === false && strpos($hd, "route('admin/ho-so')") === false,
    'Muc menu KHONG hoi route()',
    'Man nay co y khong co module nen khong co quyen nao de hoi; hoi la luon rong');
 
@@ -77,7 +89,10 @@ ok(strpos($ctl, 'Session::regenerate()') !== false,
    'Cap session id moi sau khi doi mat khau');
 ok(strpos($ctl, 'Hash::make($moi)') !== false, 'Mat khau moi duoc bam truoc khi luu');
 
-$view = file_get_contents($goc . 'app/views/admin/doi-mat-khau/form.php');
+/* 25/11/2026: form doi mat khau nam trong trang Ho so cua toi (view cu
+   admin/doi-mat-khau/form.php da bo). Trang ho so khong co o mat khau nao
+   khac, nen "dung ba o" van dem chinh xac. */
+$view = file_get_contents($goc . 'app/views/admin/ho-so/form.php');
 ok(strpos($view, 'csrf_field()') !== false, 'Form co CSRF');
 ok(substr_count($view, 'type="password"') === 3,
    'Du ba o mat khau (hien tai / moi / nhap lai)');
@@ -153,13 +168,15 @@ $dangNhap = function($jar, $mk) use ($http, $token, $base, $EMAIL){
                  ['email' => $EMAIL, 'password' => $mk, '_token' => $token($r['text'])]);
 };
 
-/* Gui form doi mat khau; tra ve trang SAU khi doi (de doc thong bao / loi) */
+/* Gui form doi mat khau; tra ve trang SAU khi doi (de doc thong bao / loi).
+   25/11/2026: form + thong bao nam o trang ho so (admin/ho-so); van POST vao
+   dung admin/doi-mat-khau nhu truoc. */
 $doi = function($jar, $cu, $moi, $lai) use ($http, $token, $base){
-    $t = $token($http('GET', "$base/admin/doi-mat-khau", $jar)['text']);
+    $t = $token($http('GET', "$base/admin/ho-so", $jar)['text']);
     $http('POST', "$base/admin/doi-mat-khau", $jar,
           ['_token' => $t, 'current_password' => $cu,
            'new_password' => $moi, 'new_password2' => $lai]);
-    return $http('GET', "$base/admin/doi-mat-khau", $jar)['text'];
+    return $http('GET', "$base/admin/ho-so", $jar)['text'];
 };
 $mkTrongCsdl = function($mk) use ($pdo, $EMAIL){
     $h = $pdo->query("SELECT password FROM users WHERE email = " . $pdo->quote($EMAIL))->fetchColumn();
@@ -178,9 +195,15 @@ ok($http('GET', "$base/admin", $mayB)['code'] === 200,
    'May B (thiet bi thu hai) cung dang nhap duoc',
    'Khong co khang dinh nay thi phan "da may khac ra" xanh chi vi B von da vao khong duoc');
 
+/* 25/11/2026: GET admin/doi-mat-khau chuyen sang trang ho so (dau trang cu
+   van dung); trang ho so moi la noi co form. */
 $r = $http('GET', "$base/admin/doi-mat-khau", $mayA);
-ok($r['code'] === 200,
-   'Tai khoan Staff (vai thap nhat) MO DUOC man doi mat khau',
+ok($r['code'] === 302 && strpos($r['loc'], 'admin/ho-so') !== false,
+   'Duong dan cu admin/doi-mat-khau chuyen sang trang Ho so cua toi',
+   'HTTP ' . $r['code'] . ' ' . $r['loc']);
+$r = $http('GET', "$base/admin/ho-so", $mayA);
+ok($r['code'] === 200 && strpos($r['text'], 'name="current_password"') !== false,
+   'Tai khoan Staff (vai thap nhat) MO DUOC trang co form doi mat khau',
    'Man nay khong co module nen khong phu thuoc quyen — HTTP ' . $r['code']);
 
 // --- Bon duong tu choi ---

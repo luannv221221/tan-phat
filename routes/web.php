@@ -487,8 +487,18 @@ Route::group('admin', function(){
    Route::post('loi-tat',           'admin/loitat/postLuu');
    Route::post('loi-tat/mac-dinh',  'admin/loitat/postMacDinh');
 
+   /* Từ 25/11/2026 GET `doi-mat-khau` chỉ còn chuyển sang trang Hồ sơ của tôi
+      (dấu trang cũ vẫn dùng được); POST `doi-mat-khau` vẫn là NƠI DUY NHẤT đổi
+      mật khẩu — form trong trang hồ sơ gửi thẳng vào đây. */
    Route::get('doi-mat-khau',  'admin/doimatkhau');
    Route::post('doi-mat-khau', 'admin/doimatkhau/postDoi');
+
+   /* HỒ SƠ CỦA TÔI — khách ghi 25/11/2026: "Cho sửa profile thay cho đổi mật
+      khẩu, ảnh, tên, địa chỉ…". Người đang đăng nhập tự sửa tên / điện thoại /
+      địa chỉ / ảnh đại diện của CHÍNH mình, cùng trang có phần đổi mật khẩu.
+      KHÔNG có module `ho-so`, cùng lý do với đổi mật khẩu và lối tắt. */
+   Route::get('ho-so',  'admin/hoso');
+   Route::post('ho-so', 'admin/hoso/postLuu');
 
    /* Tỉnh / phường cho các ô chọn địa chỉ. Server gọi API ngoài rồi nhớ tạm;
       không có module `dia-gioi` trong bảng modules nên chỉ cần đăng nhập. */

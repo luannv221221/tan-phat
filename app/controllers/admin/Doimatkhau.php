@@ -16,6 +16,10 @@ use App\core\Session;
  * mật khẩu mới đi qua tay người khác. Trang khách (Member) đã có chỗ đổi từ
  * lâu; trang quản trị thì chưa.
  *
+ * TỪ 25/11/2026 form đổi mật khẩu nằm trong trang Hồ sơ của tôi (Hoso.php),
+ * nhưng việc đổi VẪN chỉ xảy ra ở postDoi() dưới đây — một nơi duy nhất hỏi
+ * mật khẩu hiện tại và đá các phiên khác ra.
+ *
  * ──────────────────────────────────────────────────────────────────────────
  *  VÌ SAO MÀN NÀY KHÔNG ĐĂNG KÝ VÀO BẢNG `modules`
  * ──────────────────────────────────────────────────────────────────────────
@@ -43,7 +47,11 @@ class Doimatkhau extends Controller {
      *  vừa chấp nhận cho chính họ — hai luật cho một thứ. */
     const DAI_TOI_THIEU = 6;
 
-    private $__data = [];
+    /** Trang đổi mật khẩu nay là một khung trong trang Hồ sơ của tôi
+     *  (app/views/admin/ho-so/form.php); đổi xong — thành công hay lỗi — đều
+     *  quay về đúng khung đó. */
+    const QUAY_VE = 'admin/ho-so#doi-mat-khau';
+
     private $__model, $__request, $__response;
 
     function __construct(){
@@ -52,19 +60,15 @@ class Doimatkhau extends Controller {
         $this->__response = new Response();
     }
 
+    /**
+     * TỪ 25/11/2026 KHÔNG CÒN TRANG RIÊNG. Khách: "cho sửa profile thay cho đổi
+     * mật khẩu" — đổi mật khẩu nằm trong trang Hồ sơ của tôi (admin/ho-so).
+     * Đường dẫn cũ vẫn giữ để dấu trang người dùng đã lưu không thành trang lỗi.
+     */
     public function index(){
         $u = nguoi_dang_nhap();
         if (empty($u)){ $this->__response->redirect('dang-nhap'); return; }
-
-        $this->__data['sub_content'] = 'admin/doi-mat-khau/form';
-        $this->__data['page_title']  = 'Đổi mật khẩu';
-        $this->__data['content']['page_name'] = 'Đổi mật khẩu';
-        $this->__data['content']['nguoiDung'] = $u;
-        $this->__data['content']['toiThieu']  = self::DAI_TOI_THIEU;
-        $this->__data['content']['msg']       = Session::flash('msg');
-        $this->__data['content']['msgError']  = Session::flash('msgError');
-        $this->__data['content']['errors']    = Session::flash('errors');
-        $this->render('layouts/admin/master_admin', $this->__data);
+        $this->__response->redirect(self::QUAY_VE);
     }
 
     public function postDoi(){
@@ -102,10 +106,12 @@ class Doimatkhau extends Controller {
             $errors['new_password2'] = 'Mật khẩu nhập lại không khớp';
         }
 
+        /* Khoá flash RIÊNG (mk…): trang hồ sơ còn một form khác cũng báo lỗi;
+           thông báo đổi mật khẩu phải in ngay trong khung đổi mật khẩu. */
         if (!empty($errors)){
-            Session::flash('errors', $errors);
-            Session::flash('msgError', 'Vui lòng kiểm tra các lỗi bên dưới');
-            $this->__response->redirect('admin/doi-mat-khau'); return;
+            Session::flash('mkErrors', $errors);
+            Session::flash('mkMsgError', 'Vui lòng kiểm tra các lỗi bên dưới');
+            $this->__response->redirect(self::QUAY_VE); return;
         }
 
         $this->__model->edit(['password' => Hash::make($moi)], (int) $u['id']);
@@ -122,7 +128,7 @@ class Doimatkhau extends Controller {
         /* Cấp session id mới: mật khẩu vừa đổi thì phiên cũng nên mới. */
         Session::regenerate();
 
-        Session::flash('msg', 'Đã đổi mật khẩu. Các thiết bị khác đang đăng nhập tài khoản này đã bị đăng xuất.');
-        $this->__response->redirect('admin/doi-mat-khau');
+        Session::flash('mkMsg', 'Đã đổi mật khẩu. Các thiết bị khác đang đăng nhập tài khoản này đã bị đăng xuất.');
+        $this->__response->redirect(self::QUAY_VE);
     }
 }

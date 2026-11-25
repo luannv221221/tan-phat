@@ -70,8 +70,14 @@ elseif (!empty($page_title))  { $__pageLabel = $page_title; }
         <?php endif; ?>
 
         <div class="dropdown">
-            <a href="#" class="adm-user-toggle" data-toggle="dropdown" aria-expanded="false">
+            <a href="#" class="adm-user-toggle" data-toggle="dropdown" aria-expanded="false" aria-label="Tài khoản">
+                <?php /* ẢNH ĐẠI DIỆN tự đặt ở Hồ sơ của tôi (25/11/2026); chưa có
+                         ảnh thì vẫn là biểu tượng người như trước. */ ?>
+                <?php if (!empty($infoUser['avatar'])): ?>
+                <span class="adm-avatar adm-avatar--anh"><img src="<?php echo e(media_url($infoUser['avatar'])); ?>" alt=""/></span>
+                <?php else: ?>
                 <span class="adm-avatar"><?php echo icon('circle-user'); ?></span>
+                <?php endif; ?>
             </a>
             <div class="dropdown-menu dropdown-menu-right">
                 <span class="dropdown-header">
@@ -84,22 +90,23 @@ elseif (!empty($page_title))  { $__pageLabel = $page_title; }
                 <a href="<?php echo _WEB_URL; ?>" target="_blank" class="dropdown-item">
                     <?php echo icon('external-link'); ?> Xem trang chủ
                 </a>
-                <?php /* ĐỔI MẬT KHẨU — khách nhắn 11/11/2026 "thiếu đổi
-                         password em nhé". Không hỏi route() như các mục khác:
-                         màn này cố ý không có module nên không có quyền nào
-                         để hỏi, và mọi tài khoản đăng nhập được đều phải thấy
-                         nó. Xem app/controllers/admin/Doimatkhau.php. */ ?>
+                <?php /* HỒ SƠ CỦA TÔI — khách ghi 25/11/2026 "cho sửa profile
+                         thay cho đổi mật khẩu, ảnh, tên, địa chỉ…". Thay mục
+                         "Đổi mật khẩu" cũ (11/11/2026): đổi mật khẩu nay là một
+                         khung trong trang hồ sơ. Không hỏi route() như các mục
+                         khác: màn này cố ý không có module nên không có quyền
+                         nào để hỏi, và mọi tài khoản đăng nhập được đều phải
+                         thấy nó. Xem app/controllers/admin/Hoso.php. */ ?>
                 <?php /* "Lối tắt của tôi" cũng nằm ở đây vì thanh lối tắt ẩn dưới 992px
                          (xem admin-theme.css): trên điện thoại đây là lối DUY NHẤT tới
                          màn đặt lối tắt. */ ?>
                 <a href="<?php echo _WEB_URL.'/admin/loi-tat'; ?>" class="dropdown-item">
                     <?php echo icon('star'); ?> Lối tắt của tôi
                 </a>
-                <a href="<?php echo _WEB_URL.'/admin/doi-mat-khau'; ?>" class="dropdown-item">
-                    <?php /* `lock` chứ không phải `key`: bộ sprite Lucide nhúng
-                             trong dự án không có biểu tượng `key`, mà icon()
-                             thiếu hình thì in ra một ô trống chứ không báo lỗi. */ ?>
-                    <?php echo icon('lock'); ?> Đổi mật khẩu
+                <a href="<?php echo _WEB_URL.'/admin/ho-so'; ?>" class="dropdown-item">
+                    <?php /* `user` có trong bộ sprite Lucide nhúng trong dự án;
+                             icon() thiếu hình thì in ra một ô trống chứ không báo lỗi. */ ?>
+                    <?php echo icon('user'); ?> Hồ sơ của tôi
                 </a>
                 <a href="<?php echo _WEB_URL.'/dang-xuat'; ?>" class="dropdown-item">
                     <?php echo icon('log-out'); ?> Đăng xuất

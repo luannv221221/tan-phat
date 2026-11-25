@@ -303,7 +303,9 @@ foreach ($loiAo as $khoa => $a) {
         </span>
         <?php endif; ?>
         <div class="adm-brand__name"><?php echo e($__ten); ?></div>
-        <div class="adm-brand__role"><?php echo e(!empty($infoUser['name']) ? $infoUser['name'] : 'Quản trị viên'); ?></div>
+        <?php /* Ảnh đại diện (Hồ sơ của tôi, 25/11/2026) đứng trước tên người dùng;
+                 chưa đặt ảnh thì chỉ có tên như trước. */ ?>
+        <div class="adm-brand__role"><?php if (!empty($infoUser['avatar'])): ?><img class="adm-brand__avatar" src="<?php echo e(media_url($infoUser['avatar'])); ?>" alt=""/><?php endif; ?><?php echo e(!empty($infoUser['name']) ? $infoUser['name'] : 'Quản trị viên'); ?></div>
     </a>
 
     <nav class="adm-nav">

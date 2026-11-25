@@ -62,6 +62,9 @@ public/assets/uploads/banners/*
 !public/assets/uploads/banners/.gitkeep
 public/assets/uploads/categories/*
 !public/assets/uploads/categories/.gitkeep
+# Anh dai dien nguoi dung tu tai len o Ho so cua toi (25/11/2026) — anh that cua nhan vien
+public/assets/uploads/avatars/*
+!public/assets/uploads/avatars/.gitkeep
 
 # NGOAI LE cho anh minh hoa tai bang tools/tai-anh-commons.php
 # va tools/tai-anh-san-pham.php.
