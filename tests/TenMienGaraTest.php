@@ -167,7 +167,8 @@ ok($r['code'] === 200, 'Ten mien cua gara khac cung vao duoc (HTTP ' . $r['code'
 $r = $http("$base/", 'khong-co-that.example.com');
 ok($r['code'] === 404, 'Host LA bi chan voi ma 404 (HTTP ' . $r['code'] . ')',
    '404 chu khong phai 500: dia chi khong co that, khong phai may chu hong');
-ok(mb_strpos($r['body'], 'Không tìm thấy gara') !== false,
+ok(mb_strpos($r['body'], 'Không tìm thấy công ty') !== false,   // chữ "gara" -> "công ty" (khách 25/11/2026)
+   
    'Va noi ro la khong tim thay gara cho dia chi do');
 ok(mb_strpos($r['body'], 'khong-co-that.example.com') !== false,
    'Trang bao in ra chinh dia chi dang go',

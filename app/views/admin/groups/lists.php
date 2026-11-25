@@ -29,7 +29,7 @@
             <tr>
                 <th width="5%">STT</th>
                 <th>Tên nhóm</th>
-                <th width="20%">Gara</th>
+                <th width="20%">Công ty</th>
                 <th width="8%">Người</th>
                 <th width="15%">Phân quyền</th>
                 <th width="10%">Sửa</th>
@@ -82,7 +82,7 @@
 
     @if (empty($toanQuyen))
     <p class="text-muted">
-        Bạn chỉ thấy và sửa được nhóm của gara mình, và chỉ cấp được những quyền
+        Bạn chỉ thấy và sửa được nhóm của công ty mình, và chỉ cấp được những quyền
         nhóm của chính bạn đang có. Nhóm của bạn thì Tân Phát sửa.
     </p>
     @endif

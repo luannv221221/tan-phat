@@ -32,7 +32,7 @@
     @if (!empty($datTruoc))
     <div class="alert alert-warning">
         <b><i class="fa fa-clock-o mr-1"></i> Có mặt hàng phải đặt trước.</b>
-        Gara chưa có sẵn mấy món dưới đây, đơn vẫn nhận và gara sẽ liên hệ hẹn ngày giao:
+        Công ty chưa có sẵn mấy món dưới đây, đơn vẫn nhận và công ty sẽ liên hệ hẹn ngày giao:
         <ul class="mb-0 mt-1">
             @foreach ($datTruoc as $d)
             <li>{{$d}}</li>

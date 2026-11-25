@@ -191,8 +191,8 @@ class Accvouchertypes extends Controller {
         }
         if (!dong_cua_gara($item)){
             Session::flash('msgError', 'Loại phiếu ' . $item['code']
-                . ' thuộc danh mục dùng chung, gara không sửa được. '
-                . 'Cần định khoản khác thì thêm một loại phiếu của gara.');
+                . ' thuộc danh mục dùng chung, công ty không sửa được. '
+                . 'Cần định khoản khác thì thêm một loại phiếu của công ty.');
             $this->__response->redirect('admin/' . $this->routeBase);
             return null;
         }

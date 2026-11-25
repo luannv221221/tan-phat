@@ -122,7 +122,7 @@ class Settings extends Controller {
 
     public function index(){
         $chung = la_gara_tong();
-        $this->man('admin/settings/form', $chung ? 'Cấu hình chung' : 'Cấu hình gara', $chung);
+        $this->man('admin/settings/form', $chung ? 'Cấu hình chung' : 'Cấu hình công ty', $chung);
     }
 
     /**
@@ -260,7 +260,7 @@ class Settings extends Controller {
             $nganHang = array_intersect_key($kv, array_flip(GarageSettingsModel::KHOA_NGAN_HANG));
             $this->__gara->saveMany($this->chiKhacMacDinh(array_diff_key($kv, $nganHang)));
             $this->luuNganHangGara($nganHang);
-            Session::flash('msg', 'Đã lưu cấu hình của gara');
+            Session::flash('msg', 'Đã lưu cấu hình của công ty');
         }
         $this->__response->redirect($veDau);
     }

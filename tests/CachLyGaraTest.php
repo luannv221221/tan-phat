@@ -1173,7 +1173,8 @@ foreach (['applyIn'  => [$khoAId, $ptTong, 1, 1000, 'receipt', 0, 'ZZCL-THU', $h
           'applyOut' => [$khoAId, $ptTong, 1, 'issue', 0, 'ZZCL-THU', $homNay]] as $ham => $thamSo){
     $loi = '';
     try { $SM->$ham(...$thamSo); } catch (\RuntimeException $e){ $loi = $e->getMessage(); }
-    ok(strpos($loi, 'khong thuoc gara') !== false, "Ghi so vao kho cua gara khac ($ham): dong co ton kho tu choi (lop chan thu hai)",
+    ok(strpos($loi, 'khong thuoc cong ty') !== false,   // "gara" -> "cong ty" (khach 25/11/2026)
+    "Ghi so vao kho cua gara khac ($ham): dong co ton kho tu choi (lop chan thu hai)",
        $loi === '' ? 'khong nem loi' : $loi);
 }
 ok((float) ($mot("SELECT quantity FROM stocks WHERE warehouse_id = ? AND part_id = ?", [$khoAId, $ptTong])['quantity'] ?? 0) == 77
@@ -1218,7 +1219,8 @@ foreach (['zz-cl-trong@local.test' => 'chua gan gara', 'zz-cl-khoa@local.test' =
     ok($r['code'] === 302 && strpos($r['loc'], 'dang-nhap') !== false,
        "Tai khoan $ly KHONG vao duoc trang quan tri", 'HTTP ' . $r['code'] . ' ' . $r['loc']);
     $r = $http('GET', "$base/dang-nhap", $jar);
-    ok(strpos($r['text'], 'chưa được gán gara') !== false, "Trang dang nhap bao ro ly do ($ly)");
+    ok(strpos($r['text'], 'chưa được gán công ty') !== false,   // chữ "gara" -> "công ty" (khách 25/11/2026)
+    "Trang dang nhap bao ro ly do ($ly)");
 }
 
 /* Khoá gara GIỮA CHỪNG: phiên đang mở phải bị huỷ ở request kế tiếp */
@@ -1252,7 +1254,8 @@ $them('zz-cl-moi1@local.test', '');
 ok($so("SELECT COUNT(*) FROM users WHERE email = 'zz-cl-moi1@local.test'") === 0,
    'Admin KHONG tao duoc tai khoan khong co gara', 'Tai khoan khong gara thi khong dang nhap duoc — tao ra chi de nam do');
 $f = $http('GET', "$base/admin/users/add", $jarAD);
-ok(strpos($f['text'], 'Chưa chọn gara') !== false, 'Form bao loi "Chua chon gara"');
+ok(strpos($f['text'], 'Chưa chọn công ty') !== false,   // chữ "gara" -> "công ty" (khách 25/11/2026)
+    'Form bao loi "Chua chon gara"');
 $them('zz-cl-moi2@local.test', (string) $GB);
 $moi = $mot("SELECT garage_id FROM users WHERE email = 'zz-cl-moi2@local.test'");
 ok(!empty($moi) && (int) $moi['garage_id'] === $GB, 'Admin tao tai khoan cho gara B: tai khoan thuoc gara B');

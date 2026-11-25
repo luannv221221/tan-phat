@@ -42,7 +42,7 @@ class MoGaraModel extends Model {
     public function dungBoKhung($garaId, array $chu = []){
         $garaId = (int) $garaId;
         $gara   = Load::model('GaragesModel')->getDetail($garaId);
-        if (empty($gara['id'])) return ['da' => [], 'thieu' => ['Không tìm thấy gara.']];
+        if (empty($gara['id'])) return ['da' => [], 'thieu' => ['Không tìm thấy công ty.']];
 
         $da = $thieu = [];
 
@@ -60,7 +60,7 @@ class MoGaraModel extends Model {
                slugify(): bỏ dấu, hạ chữ thường, dấu cách thành gạch nối. */
             $nhan = slugify((string) $gara['code']);
             if ($nhan === ''){
-                $thieu[] = 'Chưa đặt được tên miền: mã gara "' . $gara['code']
+                $thieu[] = 'Chưa đặt được tên miền: mã công ty "' . $gara['code']
                          . '" không gột được thành tên miền (cần có chữ hoặc số).';
                 $goc = '';   // bỏ qua bước tên miền
             }
@@ -82,7 +82,7 @@ class MoGaraModel extends Model {
                 $giu = $D->aiGiuHost($host);
                 if (!empty($giu)){
                     if ((int) $giu['garage_id'] !== $garaId){   // của gara khác: không giành
-                        $thieu[] = 'Tên miền ' . $host . ' đã thuộc gara ' . $giu['garage_name'] . ', bỏ qua.';
+                        $thieu[] = 'Tên miền ' . $host . ' đã thuộc công ty ' . $giu['garage_name'] . ', bỏ qua.';
                     }
                     continue;                                   // của chính gara này: chạy lại
                 }
@@ -137,7 +137,7 @@ class MoGaraModel extends Model {
             if (!empty($gara['email']))    $kv['email']   = $gara['email'];
             if (!empty($gara['tax_code'])) $kv['tax_code'] = $gara['tax_code'];
             Load::model('GarageSettingsModel')->saveMany($kv);
-            $da[] = 'Cấu hình website mang tên gara';
+            $da[] = 'Cấu hình website mang tên công ty';
         });
 
         // --- 5. Nhóm quyền riêng của gara ---
@@ -151,7 +151,7 @@ class MoGaraModel extends Model {
         $mk  = isset($chu['password']) ? (string) $chu['password'] : '';
         if ($ten !== '' || $mail !== '' || $mk !== ''){
             $loi = $this->taoChuGara($garaId, $ten, $mail, $mk);
-            if ($loi === '') $da[] = 'Tài khoản chủ gara ' . $mail;
+            if ($loi === '') $da[] = 'Tài khoản chủ công ty ' . $mail;
             else             $thieu[] = $loi;
         }
 
@@ -255,14 +255,14 @@ class MoGaraModel extends Model {
 
         $tong = Load::model('GaragesModel')->getMaster();
         if (empty($tong['id'])){
-            return ['da' => [], 'thieu' => ['Chưa dựng được nhóm quyền: hệ thống chưa có gara tổng.']];
+            return ['da' => [], 'thieu' => ['Chưa dựng được nhóm quyền: hệ thống chưa có công ty tổng.']];
         }
         $tongId = (int) $tong['id'];
 
         $mau = (array) $this->getRaw(
             'SELECT `id`, `name` FROM `groups` WHERE `garage_id` = ? ORDER BY `name` ASC', [$tongId]);
         if (empty($mau)){
-            return ['da' => [], 'thieu' => ['Chưa dựng được nhóm quyền: gara tổng chưa có nhóm nào '
+            return ['da' => [], 'thieu' => ['Chưa dựng được nhóm quyền: công ty tổng chưa có nhóm nào '
                                           . 'để làm mẫu (chạy migration 000093).']];
         }
 
@@ -292,19 +292,19 @@ class MoGaraModel extends Model {
     /** Tạo tài khoản chủ gara (nhóm Manager CỦA GARA ĐÓ). Trả về '' nếu xong, hoặc câu báo lỗi. */
     private function taoChuGara($garaId, $ten, $mail, $mk){
         if ($ten === '' || $mail === '' || $mk === ''){
-            return 'Chưa tạo tài khoản chủ gara: cần đủ họ tên, email và mật khẩu.';
+            return 'Chưa tạo tài khoản chủ công ty: cần đủ họ tên, email và mật khẩu.';
         }
         if (!filter_var($mail, FILTER_VALIDATE_EMAIL)){
-            return 'Chưa tạo tài khoản chủ gara: email không đúng định dạng.';
+            return 'Chưa tạo tài khoản chủ công ty: email không đúng định dạng.';
         }
         if (mb_strlen($mk) < 6){
-            return 'Chưa tạo tài khoản chủ gara: mật khẩu cần từ 6 ký tự.';
+            return 'Chưa tạo tài khoản chủ công ty: mật khẩu cần từ 6 ký tự.';
         }
 
         /* Email là tên đăng nhập của CẢ HỆ THỐNG, không phải của riêng gara —
            tìm khắp các gara chứ không chỉ gara này. */
         $co = $this->firstRaw('SELECT `id` FROM `users` WHERE `email` = ? LIMIT 1', [$mail]);
-        if (!empty($co)) return 'Chưa tạo tài khoản chủ gara: email ' . $mail . ' đã có người dùng.';
+        if (!empty($co)) return 'Chưa tạo tài khoản chủ công ty: email ' . $mail . ' đã có người dùng.';
 
         /* NHÓM MANAGER CỦA CHÍNH GARA NÀY, không phải nhóm Manager đầu tiên tìm
            thấy. Từ migration 000093 mỗi gara có nhóm Manager riêng; lấy nhầm
@@ -316,7 +316,7 @@ class MoGaraModel extends Model {
             // Chưa chạy migration 000093 (cột `garage_id` còn NULL hết) thì lùi về cách cũ
             $nhom = $this->firstRaw("SELECT `id` FROM `groups` WHERE `name` = 'Manager' LIMIT 1");
         }
-        if (empty($nhom['id'])) return 'Chưa tạo tài khoản chủ gara: hệ thống chưa có nhóm Manager.';
+        if (empty($nhom['id'])) return 'Chưa tạo tài khoản chủ công ty: hệ thống chưa có nhóm Manager.';
 
         $this->chen('users', [
             'name'      => $ten,
@@ -373,11 +373,11 @@ class MoGaraModel extends Model {
             if ($ten === '' && $mail === '' && $mk === '') return ['loi' => '', 'da' => ''];
             $loi = $this->taoChuGara($garaId, $ten, $mail, $mk);
             return $loi === ''
-                ? ['loi' => '', 'da' => 'Đã tạo tài khoản chủ gara ' . $mail . '.']
+                ? ['loi' => '', 'da' => 'Đã tạo tài khoản chủ công ty ' . $mail . '.']
                 : ['loi' => $loi, 'da' => ''];
         }
 
-        $tien = 'Chưa lưu tài khoản chủ gara: ';
+        $tien = 'Chưa lưu tài khoản chủ công ty: ';
         if ($ten === '' || $mail === ''){
             return ['loi' => $tien . 'cần đủ họ tên và email.', 'da' => ''];
         }
@@ -407,7 +407,7 @@ class MoGaraModel extends Model {
            nghi lộ mật khẩu mà phiên "ghi nhớ đăng nhập" cũ vẫn sống là vô ích. */
         if ($mk !== '') Load::model('LoginToken')->removeByUser((int) $chu['id']);
 
-        return ['loi' => '', 'da' => 'Đã cập nhật tài khoản chủ gara ' . $mail
+        return ['loi' => '', 'da' => 'Đã cập nhật tài khoản chủ công ty ' . $mail
                                    . ($mk !== '' ? ' (đặt mật khẩu mới).' : '.')];
     }
 

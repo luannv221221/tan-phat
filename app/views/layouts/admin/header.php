@@ -63,7 +63,7 @@ elseif (!empty($page_title))  { $__pageLabel = $page_title; }
         $garaHienTai = isset($garaHienTai) ? $garaHienTai : null;
         ?>
         <?php if (!empty($garaHienTai['name'])): ?>
-        <span class="adm-user-toggle px-2 adm-topbar__gara" title="Gara của tài khoản">
+        <span class="adm-user-toggle px-2 adm-topbar__gara" title="Công ty của tài khoản">
             <?php echo icon('map-pin'); ?>
             <span class="d-none d-md-inline ml-1"><?php echo e($garaHienTai['name']); ?></span>
         </span>

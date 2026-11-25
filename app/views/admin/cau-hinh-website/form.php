@@ -22,13 +22,13 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
     @if (!empty($laChung))
     <div class="alert alert-warning py-2">
         <i class="fas fa-globe mr-1"></i>
-        Đây là <b>cấu hình chung</b> — làm mặc định cho website của mọi gara chưa tự khai.
-        Gara nào đã tự đặt thì giữ giá trị của họ.
+        Đây là <b>cấu hình chung</b> — làm mặc định cho website của mọi công ty chưa tự khai.
+        Công ty nào đã tự đặt thì giữ giá trị của họ.
     </div>
     @else
     <div class="alert alert-info py-2">
         <i class="fas fa-store mr-1"></i>
-        Đây là cấu hình website <b>riêng của gara {{$garaTen}}</b>.
+        Đây là cấu hình website <b>riêng của công ty {{$garaTen}}</b>.
         Ô nào để nguyên thì dùng mặc định chung.
     </div>
     @endif
@@ -37,7 +37,7 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
         <i class="fas fa-info-circle mr-1"></i>
         Lĩnh vực, diện tích xưởng, cách tính giá vốn và tài khoản ngân hàng nằm ở
         <a href="{{_WEB_URL.'/admin/settings'}}">Cấu hình chung</a> — mấy ô đó quyết định
-        gara làm việc thế nào chứ không hiện trên trang khách.
+        công ty làm việc thế nào chứ không hiện trên trang khách.
     </p>
 
     <form action="{{_WEB_URL.'/admin/cau-hinh-website/save'}}" method="post" enctype="multipart/form-data">
@@ -173,10 +173,10 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
             <div class="card-header"><h3 class="card-title"><i class="fas fa-shoe-prints mr-2"></i>Chân trang website</h3></div>
             <div class="card-body">
                 <div class="form-group mb-1">
-                    <label>Nội dung gara tự soạn</label>
+                    <label>Nội dung công ty tự soạn</label>
                     <textarea name="footer_html" class="form-control" rows="6">{{$s('footer_html')}}</textarea>
                     <small class="form-text text-muted">
-                        Hiện ở <b>chân trang website của gara</b>, phía trên khối địa chỉ.
+                        Hiện ở <b>chân trang website của công ty</b>, phía trên khối địa chỉ.
                         Để trống thì chân trang giữ nguyên như cũ.
                         Thẻ <code>&lt;script&gt;</code> và mã chạy được sẽ bị loại bỏ khi lưu.
                     </small>

@@ -587,7 +587,7 @@ class Products extends Controller {
                dòng", nên người nhập tưởng xong rồi. */
             if (!empty($existing) && empty($this->__model->cuaToi($existing['id']))){
                 $result['errors'][] = "Dòng $line ($code): mã này đang là hàng của kho tổng, "
-                                    . "gara không sửa được — đổi mã khác hoặc bỏ dòng này.";
+                                    . "công ty không sửa được — đổi mã khác hoặc bỏ dòng này.";
                 continue;
             }
 
@@ -724,8 +724,8 @@ class Products extends Controller {
            "không tìm thấy" làm người ta tưởng dữ liệu mất và đi tìm. */
         $co = $this->__model->getDetail($id);
         Session::flash('msgError', !empty($co)
-            ? 'Mặt hàng "' . $co['name'] . '" thuộc kho tổng, gara không sửa được. '
-            . 'Muốn bán mặt hàng này thì chọn nó ở màn Hàng hoá › Danh mục của gara.'
+            ? 'Mặt hàng "' . $co['name'] . '" thuộc kho tổng, công ty không sửa được. '
+            . 'Muốn bán mặt hàng này thì chọn nó ở màn Hàng hoá › Danh mục của công ty.'
             : 'Không tìm thấy ' . $this->labelOne);
         $this->__response->redirect('admin/' . $this->routeBase . ngu_canh_qs());
         return null;

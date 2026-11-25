@@ -102,7 +102,7 @@ $daNhap = !empty($item['goods_receipt_id']);
                     <i class="fas fa-arrow-left mr-1"></i> Quay lại
                 </a>
                 <span class="text-muted small ml-2">
-                    Serial <strong>không được trùng</strong> trong cùng một gara.
+                    Serial <strong>không được trùng</strong> trong cùng một công ty.
                     Chưa có tem thì để trống — lưu được, bổ sung sau.
                     @if ($daNhap)
                         Đơn này đã nhập kho, nhưng vẫn khai serial được.

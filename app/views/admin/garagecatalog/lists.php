@@ -18,7 +18,7 @@ $tien = function ($v){ return $v === null || $v === '' ? '' : number_format((flo
 @if (empty($gara))
 <div class="alert alert-warning">
     <i class="fas fa-exclamation-triangle mr-1"></i>
-    Hệ thống chưa khai gara nào. Vào <b>Hệ thống → Quản lý gara</b> để thêm trước đã.
+    Hệ thống chưa khai công ty nào. Vào <b>Hệ thống → Quản lý công ty</b> để thêm trước đã.
 </div>
 @else
 
@@ -26,12 +26,12 @@ $tien = function ($v){ return $v === null || $v === '' ? '' : number_format((flo
 <div class="alert alert-info">
     <i class="fas fa-info-circle mr-1"></i>
     <b>Kho tổng không dùng màn này.</b>
-    Danh mục của một gara là <i>“trong hàng chung, gara tôi làm những món nào”</i> —
+    Danh mục của một công ty là <i>“trong hàng chung, công ty tôi làm những món nào”</i> —
     còn hàng chung thì chính kho tổng là chủ, nên không phải chọn lại của mình.
     <div class="mt-2">
         Thêm, sửa, đặt giá hàng của kho tổng ở
         <b>Hàng hoá → Quản lý hàng hoá</b>.
-        Muốn dựng danh mục cho một gara thì đổi sang gara đó bằng ô chọn ở góc trên bên phải.
+        Muốn dựng danh mục cho một công ty thì đổi sang công ty đó bằng ô chọn ở góc trên bên phải.
     </div>
 </div>
 @else
@@ -39,7 +39,7 @@ $tien = function ($v){ return $v === null || $v === '' ? '' : number_format((flo
 <div class="alert alert-info py-2">
     <i class="fas fa-map-pin mr-1"></i>
     Đang sửa danh mục của <b>{{$gara['name']}}</b>.
-    Đổi chi nhánh bằng ô chọn gara ở góc trên bên phải.
+    Đổi chi nhánh bằng ô chọn công ty ở góc trên bên phải.
 </div>
 
 <?php /* ================= KHỐI 1: danh mục hiện có ================= */ ?>
@@ -96,7 +96,7 @@ $tien = function ($v){ return $v === null || $v === '' ? '' : number_format((flo
             @else
                 <tr><td colspan="8" class="text-center text-muted py-4">
                     <i class="fas fa-clipboard fa-2x d-block mb-2"></i>
-                    Gara này chưa chọn mặt hàng nào. Tick ở bảng bên dưới để thêm.
+                    Công ty này chưa chọn mặt hàng nào. Tick ở bảng bên dưới để thêm.
                 </td></tr>
             @endif
             </tbody>
@@ -107,7 +107,7 @@ $tien = function ($v){ return $v === null || $v === '' ? '' : number_format((flo
 <?php /* ================= KHỐI 2: thêm hàng riêng ================= */ ?>
 <div class="card card-outline card-warning">
     <div class="card-header">
-        <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>Thêm mặt hàng chỉ gara này có</h3>
+        <h3 class="card-title"><i class="fas fa-plus-circle mr-2"></i>Thêm mặt hàng chỉ công ty này có</h3>
     </div>
     <form action="{{_WEB_URL.'/admin/'.$routeBase.'/them-rieng'}}" method="post">
         <?php echo csrf_field(); ?>
@@ -150,7 +150,7 @@ $tien = function ($v){ return $v === null || $v === '' ? '' : number_format((flo
                 </div>
             </div>
             <small class="form-text text-muted mt-2">
-                Mã hàng tự sinh theo mã gara. Mặt hàng riêng <b>không hiện trên website</b> —
+                Mã hàng tự sinh theo mã công ty. Mặt hàng riêng <b>không hiện trên website</b> —
                 trang bán hàng là trang chung cho cả hệ thống. Cần khai đầy đủ danh mục, hãng,
                 ảnh, thông số thì dùng màn <b>Hàng hoá</b>.
             </small>
@@ -175,7 +175,7 @@ $tien = function ($v){ return $v === null || $v === '' ? '' : number_format((flo
                     <th>Tên</th>
                     <th style="width:100px">Loại</th>
                     <th style="width:140px" class="text-right">Giá tổng</th>
-                    <th style="width:180px">Giá riêng của gara</th>
+                    <th style="width:180px">Giá riêng của công ty</th>
                 </tr></thead>
                 <tbody>
                 @if (!empty($dsTong))
@@ -218,7 +218,7 @@ $tien = function ($v){ return $v === null || $v === '' ? '' : number_format((flo
             <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Lưu danh mục</button>
             <span class="text-muted small ml-2">
                 Bỏ trống ô giá riêng = vẫn làm mặt hàng đó nhưng lấy giá tổng.
-                Bỏ tick = gỡ khỏi danh mục gara (không ảnh hưởng danh mục tổng).
+                Bỏ tick = gỡ khỏi danh mục công ty (không ảnh hưởng danh mục tổng).
             </span>
         </div>
     </form>

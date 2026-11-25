@@ -56,10 +56,10 @@
             @endif
         </div>
         <div class="form-group">
-            <label for="">Gara</label>
+            <label for="">Công ty</label>
             @if ($toanQuyen)
             <select name="garage_id" class="form-control">
-                <option value="">— Chọn gara —</option>
+                <option value="">— Chọn công ty —</option>
                 @if (!empty($listGarage))
                 @foreach ($listGarage as $g)
                 <option value="{{$g['id']}}" {{!empty($old['garage_id']) && $old['garage_id']==$g['id']?'selected':false}}>{{$g['name']}}</option>
@@ -68,11 +68,11 @@
             </select>
             {!! !empty($errors['garage_id'])?'<span style="color:red">'.$errors['garage_id'].'</span>':false !!}
             <small class="form-text text-muted">
-                Mỗi tài khoản thuộc đúng một gara và chỉ thấy dữ liệu của gara đó. Không có gara thì không đăng nhập được.
+                Mỗi tài khoản thuộc đúng một công ty và chỉ thấy dữ liệu của công ty đó. Không có công ty thì không đăng nhập được.
             </small>
             @else
             <input type="text" class="form-control" value="{{!empty($garaCuaToi['name']) ? $garaCuaToi['name'] : ''}}" disabled/>
-            <small class="form-text text-muted">Chỉ Admin chuyển được nhân viên sang gara khác.</small>
+            <small class="form-text text-muted">Chỉ Admin chuyển được nhân viên sang công ty khác.</small>
             @endif
         </div>
 

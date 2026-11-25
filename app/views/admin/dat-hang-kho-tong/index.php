@@ -18,9 +18,9 @@
 <div class="card card-outline card-secondary">
     <div class="card-body text-center py-5">
         <div class="h1 text-muted mb-3"><i class="fas fa-warehouse"></i></div>
-        <h4 class="mb-2">Màn này dành cho gara</h4>
+        <h4 class="mb-2">Màn này dành cho công ty</h4>
         <p class="text-muted mb-0">Kho tổng là nơi <b>bán ra</b>, không đặt hàng của chính mình.<br/>
-           Đơn các gara đặt sẽ về <b>Kho › Phiếu xuất kho</b> ở trạng thái nháp, chờ ghi sổ.</p>
+           Đơn các công ty đặt sẽ về <b>Kho › Phiếu xuất kho</b> ở trạng thái nháp, chờ ghi sổ.</p>
     </div>
 </div>
 @else
@@ -37,8 +37,8 @@
             <div class="alert alert-info py-2 mb-2">
                 <i class="fas fa-info-circle mr-1"></i>
                 Điền số lượng vào những món cần lấy rồi bấm <b>Đặt hàng</b>. Hệ thống lập
-                <b>phiếu xuất</b> bên kho tổng và <b>phiếu nhập</b> bên gara, đều ở dạng
-                <b>nháp</b>. Kho tổng ghi sổ phiếu xuất là duyệt; hàng về tới nơi thì gara
+                <b>phiếu xuất</b> bên kho tổng và <b>phiếu nhập</b> bên công ty, đều ở dạng
+                <b>nháp</b>. Kho tổng ghi sổ phiếu xuất là duyệt; hàng về tới nơi thì công ty
                 ghi sổ phiếu nhập — lúc đó tồn mới đổi.
             </div>
             <label class="mb-1 small">Ghi chú cho đơn này <span class="text-muted">(không bắt buộc)</span></label>
@@ -91,7 +91,7 @@
         @if (!empty($hang))
         <div class="card-footer">
             <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane mr-1"></i> Đặt hàng</button>
-            <a href="{{_WEB_URL.'/admin/goods-receipts'}}" class="btn btn-default">Xem phiếu nhập của gara</a>
+            <a href="{{_WEB_URL.'/admin/goods-receipts'}}" class="btn btn-default">Xem phiếu nhập của công ty</a>
         </div>
         @endif
     </div>

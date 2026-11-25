@@ -93,7 +93,7 @@
 
     <div class="card-footer text-muted small">
         Hệ thống tài khoản chuẩn do Tân Phát dựng sẵn (Thông tư 133, rút gọn) —
-        mọi gara đều dùng được. Gara thêm <strong>tài khoản chi tiết của mình</strong>
-        thì chỉ gara mình thấy.
+        mọi công ty đều dùng được. Công ty thêm <strong>tài khoản chi tiết của mình</strong>
+        thì chỉ công ty mình thấy.
     </div>
 </div>

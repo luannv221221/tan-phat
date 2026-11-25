@@ -17,7 +17,7 @@
     @if (!$toanQuyen && !empty($garaCuaToi))
     <div class="alert alert-info">
         Bạn đang quản lý nhân viên của <strong>{{$garaCuaToi['name']}}</strong>.
-        Tài khoản bạn tạo luôn thuộc gara này; nhóm bạn cấp được: <strong>{{$tenNhomGiaoDuoc}}</strong>.
+        Tài khoản bạn tạo luôn thuộc công ty này; nhóm bạn cấp được: <strong>{{$tenNhomGiaoDuoc}}</strong>.
     </div>
     @endif
 
@@ -52,7 +52,7 @@
             <div class="col-3">
                 <div class="form-group">
                     <select name="garage_id" class="form-control">
-                        <option value="">Tất cả gara</option>
+                        <option value="">Tất cả công ty</option>
                         @if (!empty($listGarage))
                         @foreach ($listGarage as $g)
                         <option value="{{$g['id']}}" {{$locGara===(string)$g['id']?'selected':''}}>{{$g['name']}}</option>
@@ -60,7 +60,7 @@
                         @endif
                         <?php /* Chưa gán gara thì không đăng nhập được — lọc riêng
                                  ra để còn biết mà gán. */ ?>
-                        <option value="none" {{$locGara==='none'?'selected':''}}>Chưa gán gara (không đăng nhập được)</option>
+                        <option value="none" {{$locGara==='none'?'selected':''}}>Chưa gán công ty (không đăng nhập được)</option>
                     </select>
                 </div>
             </div>
@@ -87,7 +87,7 @@
             <th>Email</th>
             <th>Trạng thái</th>
             <th>Nhóm</th>
-            <th>Gara</th>
+            <th>Công ty</th>
             <th width="10%">Sửa</th>
             <th width="10%">Xoá</th>
         </tr>

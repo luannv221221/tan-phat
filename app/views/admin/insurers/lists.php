@@ -97,7 +97,7 @@ $pg = phan_trang((array) $dataList); $rows = $pg['rows'];
 <?php endif; ?>
     <div class="card-footer text-muted small">
         Bản dùng chung chỉ có mã và tên. Cần khai <strong>số tài khoản ngân hàng</strong> hay
-        <strong>người liên hệ</strong> của riêng gara mình thì thêm một dòng mới —
-        thông tin đó khác nhau theo từng gara.
+        <strong>người liên hệ</strong> của riêng công ty mình thì thêm một dòng mới —
+        thông tin đó khác nhau theo từng công ty.
     </div>
 </div>

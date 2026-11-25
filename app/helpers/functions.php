@@ -1687,7 +1687,7 @@ function dong_cua_gara($row){
  *                      sẽ đi tìm xem nó liên quan gì tới kho.
  * @param string $giaiThich chữ hiện khi rê chuột
  */
-function nhan_kho_tong($row, $nhan = 'Kho tổng', $giaiThich = 'Của kho tổng — gara không sửa được'){
+function nhan_kho_tong($row, $nhan = 'Kho tổng', $giaiThich = 'Của kho tổng — công ty không sửa được'){
     if (dong_cua_gara($row)) return '';
     $cua = isset($row['garage_id']) && $row['garage_id'] !== null && $row['garage_id'] !== ''
          ? (int) $row['garage_id'] : null;
@@ -1696,7 +1696,7 @@ function nhan_kho_tong($row, $nhan = 'Kho tổng', $giaiThich = 'Của kho tổn
        sai là người dùng đi tìm nó ở chỗ không có. */
     return $cua === null
         ? ' <span class="badge badge-info" title="' . e($giaiThich) . '">' . e($nhan) . '</span>'
-        : ' <span class="badge badge-secondary" title="Của gara khác">Gara khác</span>';
+        : ' <span class="badge badge-secondary" title="Của công ty khác">Công ty khác</span>';
 }
 
 /* ==========================================================================

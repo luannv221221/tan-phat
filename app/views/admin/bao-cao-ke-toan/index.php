@@ -362,7 +362,7 @@ $the = ['ky' => 'Thu / chi theo kỳ', 'quy' => 'Sổ quỹ', 'khach' => 'Khách
             <tfoot>
                 <tr class="bg-light">
                     <th colspan="5" class="text-right">
-                        Tổng <?php echo $laKhach ? 'khách còn nợ gara' : 'gara còn nợ nhà cung cấp'; ?>
+                        Tổng <?php echo $laKhach ? 'khách còn nợ công ty' : 'công ty còn nợ nhà cung cấp'; ?>
                     </th>
                     <th class="text-right text-danger"><?php echo e($tien($d['tong'])); ?> ₫</th>
                 </tr>

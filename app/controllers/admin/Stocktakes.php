@@ -247,7 +247,7 @@ class Stocktakes extends Controller {
         // Mặt hàng phải thuộc kho tổng hoặc danh mục riêng CỦA GARA NÀY
         $ids  = array_values(array_unique(array_map('intval', array_column($this->buildLines(), 'part_id'))));
         $lech = array_diff($ids, $this->__part->dungDuoc($ids));
-        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của gara — chọn lại dòng hàng';
+        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của công ty — chọn lại dòng hàng';
         return $errors;
     }
 

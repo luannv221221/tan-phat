@@ -82,9 +82,9 @@ class AuthMiddleware extends Middleware {
                    cookie ghi nhớ; ghi lời nhắn sau đó thì nó rơi vào phiên vừa
                    bị bỏ, và người dùng bị đá ra mà không thấy lý do gì. */
                 Session::flash('msg', $viSaiTenMien
-                    ? 'Tài khoản này không thuộc gara "' . $cuaTenMien['name'] . '". '
-                      . 'Đăng nhập tại địa chỉ của gara mình.'
-                    : 'Tài khoản chưa được gán gara, hoặc gara đang bị khoá. Liên hệ quản trị Tân Phát.');
+                    ? 'Tài khoản này không thuộc công ty "' . $cuaTenMien['name'] . '". '
+                      . 'Đăng nhập tại địa chỉ của công ty mình.'
+                    : 'Tài khoản chưa được gán công ty, hoặc công ty đang bị khoá. Liên hệ quản trị Tân Phát.');
                 $this->huyPhien();
                 $response->redirect('dang-nhap');
             }

@@ -102,7 +102,7 @@ class Groups extends Controller{
         $hopLe = $this->__request->validate();
         if ($hopLe && isset($f['name'])
             && $this->__groupModel->trungTen($f['name'], $g)){
-            Session::flash('errors', ['name' => 'Gara đã có nhóm tên "' . trim($f['name']) . '" — đặt tên khác.']);
+            Session::flash('errors', ['name' => 'Công ty đã có nhóm tên "' . trim($f['name']) . '" — đặt tên khác.']);
             Session::flash('msg', 'Vui lòng kiểm tra các lỗi bên dưới');
             Session::flash('old', $f);
             $this->__response->redirect('admin/groups/add');
@@ -175,7 +175,7 @@ class Groups extends Controller{
         $hopLe = $this->__request->validate();
         if ($hopLe && isset($f['name'])
             && $this->__groupModel->trungTen($f['name'], $this->__groupModel->garaCua($id), (int) $id)){
-            Session::flash('errors', ['name' => 'Gara đã có nhóm tên "' . trim($f['name']) . '" — đặt tên khác.']);
+            Session::flash('errors', ['name' => 'Công ty đã có nhóm tên "' . trim($f['name']) . '" — đặt tên khác.']);
             Session::flash('msg', 'Vui lòng kiểm tra các lỗi bên dưới');
             Session::flash('old', $f);
             $this->__response->redirect();
@@ -392,7 +392,7 @@ class Groups extends Controller{
         if (!$this->__groupModel->soHuu($id)){
             Session::flash('msgError', 'Nhóm "' . $g['name'] . '" thuộc '
                 . (!empty($g['garage_name']) ? $g['garage_name'] : 'hệ thống')
-                . ', bạn chỉ sửa được nhóm của gara mình.');
+                . ', bạn chỉ sửa được nhóm của công ty mình.');
             $this->__response->redirect('admin/groups');
             return null;
         }

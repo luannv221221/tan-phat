@@ -279,7 +279,7 @@ $tabs = [
                 <button type="button" data-nguon="gara"
                         class="btn btn-outline-primary <?php echo $nguonMacDinh === 'gara' ? 'active' : ''; ?>"
                         <?php echo $__garaTrong
-                            ? 'disabled title="Gara này chưa chọn mặt hàng nào — vào Hàng hoá → Danh mục của gara để dựng"'
+                            ? 'disabled title="Công ty này chưa chọn mặt hàng nào — vào Hàng hoá → Danh mục của công ty để dựng"'
                             : 'title="Bảng giá của ' . e($garaCuaPhieu['name']) . '"'; ?>>
                     <i class="fas fa-tags mr-1"></i> Công ty
                     <span class="badge badge-light ml-1"><?php echo $__garaTrong ? 'chưa có' : count($partsGara); ?></span>
@@ -878,11 +878,11 @@ $tabs = [
            là "Công ty" (= gara đang lập phiếu), nên mấy câu dưới phải nói "kho
            tổng", không được nói "công ty" — xem chú thích ở khối hai nút. */
         if (nguonDangDung === 'gara'){
-            moTaEl.textContent = 'Bảng giá của gara: những món gara này làm, theo giá riêng của gara.';
+            moTaEl.textContent = 'Bảng giá của công ty: những món công ty này làm, theo giá riêng của công ty.';
         } else if (!NGUON.gara.hang.length && !NGUON.gara.dichvu.length){
             // Nói luôn đường đi tiếp, đừng để người dùng đoán vì sao nút kia mờ
             moTaEl.textContent = 'Bảng giá chung của kho tổng, giá tham khảo (sửa được trên từng dòng). '
-                               + 'Gara này chưa có danh mục riêng — dựng ở Hàng hoá → Danh mục của gara.';
+                               + 'Công ty này chưa có danh mục riêng — dựng ở Hàng hoá → Danh mục của công ty.';
         } else {
             moTaEl.textContent = 'Bảng giá chung của kho tổng, giá tham khảo (sửa được trên từng dòng).';
         }

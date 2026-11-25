@@ -72,7 +72,7 @@ class Auth extends Controller{
                không cho vào. Kiểm SAU khi đúng mật khẩu — kiểm trước là để lộ
                cho người đoán mò biết email nào có tồn tại. */
             if (!empty($dataUser) && !tai_khoan_co_gara($dataUser)){
-                Session::flash('msg', 'Tài khoản chưa được gán gara, hoặc gara đang bị khoá. Liên hệ quản trị Tân Phát.');
+                Session::flash('msg', 'Tài khoản chưa được gán công ty, hoặc công ty đang bị khoá. Liên hệ quản trị Tân Phát.');
                 $this->__response->redirect('dang-nhap');
             }
 

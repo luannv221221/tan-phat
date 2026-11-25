@@ -49,9 +49,9 @@ $dtGara = !empty($tk['hotline']) ? (string) $tk['hotline'] : '';
                      Tân Phát (như bản cũ) là khách chuyển nhầm người; in ô trống là khách
                      không biết làm gì tiếp. */ ?>
             <div class="mt-2">
-                Gara sẽ liên hệ với bạn để hướng dẫn thanh toán — bạn chưa cần chuyển khoản lúc này.
+                Công ty sẽ liên hệ với bạn để hướng dẫn thanh toán — bạn chưa cần chuyển khoản lúc này.
                 <?php if ($dtGara !== ''): ?>
-                <br/>Cần gấp, gọi gara: <b><a href="tel:<?php echo e(preg_replace('~[^0-9+]~', '', $dtGara)); ?>"><?php echo e($dtGara); ?></a></b>
+                <br/>Cần gấp, gọi công ty: <b><a href="tel:<?php echo e(preg_replace('~[^0-9+]~', '', $dtGara)); ?>"><?php echo e($dtGara); ?></a></b>
                 <?php endif; ?>
             </div>
             <?php endif; ?>

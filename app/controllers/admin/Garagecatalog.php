@@ -30,7 +30,7 @@ class Garagecatalog extends Controller {
     private $__part, $__gia, $__gara, $__unit, $__request, $__response;
 
     private $routeBase = 'garage-catalog';
-    private $labelMany = 'Danh mục của gara';
+    private $labelMany = 'Danh mục của công ty';
     private $viewDir   = 'admin/garagecatalog';
 
     function __construct(){
@@ -94,7 +94,7 @@ class Garagecatalog extends Controller {
     public function postChon(){
         $gara = $this->gara();
         if (empty($gara['id'])){
-            Session::flash('msgError', 'Chưa có gara nào để gán danh mục.');
+            Session::flash('msgError', 'Chưa có công ty nào để gán danh mục.');
             $this->__response->redirect('admin/' . $this->routeBase); return;
         }
         $gid = (int) $gara['id'];
@@ -131,7 +131,7 @@ class Garagecatalog extends Controller {
     public function postThemRieng(){
         $gara = $this->gara();
         if (empty($gara['id'])){
-            Session::flash('msgError', 'Chưa có gara nào để thêm hàng riêng.');
+            Session::flash('msgError', 'Chưa có công ty nào để thêm hàng riêng.');
             $this->__response->redirect('admin/' . $this->routeBase); return;
         }
         $gid = (int) $gara['id'];

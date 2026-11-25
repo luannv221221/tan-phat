@@ -29,13 +29,13 @@
             <thead>
                 <tr>
                     <th style="width:60px" class="text-center">STT</th>
-                    <th style="width:110px">Mã gara</th>
-                    <th>Tên gara</th>
+                    <th style="width:110px">Mã công ty</th>
+                    <th>Tên công ty</th>
                     <th>Địa chỉ</th>
                     <th style="width:120px">Điện thoại</th>
                     <th>Tên miền</th>
                     <th>Đang có</th>
-                    <th style="width:110px" class="text-center">Gara tổng</th>
+                    <th style="width:110px" class="text-center">Công ty tổng</th>
                     <th style="width:110px" class="text-center">Trạng thái</th>
                     <th style="width:130px" class="text-center">Thao tác</th>
                 </tr>
@@ -78,14 +78,14 @@
                         ?>
                     </td>
                     <td class="text-center">
-                        {!! $item['is_master']==1 ? '<span class="badge badge-info">Gara tổng</span>' : '' !!}
+                        {!! $item['is_master']==1 ? '<span class="badge badge-info">Công ty tổng</span>' : '' !!}
                     </td>
                     <td class="text-center">
                         {!! $item['status']==1 ? '<span class="badge badge-success">Hoạt động</span>' : '<span class="badge badge-secondary">Ẩn</span>' !!}
                     </td>
                     <td class="text-center">
                         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
-                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/ten-mien/'.$item['id']}}" class="btn btn-info btn-sm" title="Tên miền của gara này"><i class="fas fa-globe"></i></a>
+                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/ten-mien/'.$item['id']}}" class="btn btn-info btn-sm" title="Tên miền của công ty này"><i class="fas fa-globe"></i></a>
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-warning btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
                         @endif
                         <?php /* Gara đã có dữ liệu thì chỉ KHOÁ được, không xoá: xoá đi là
@@ -93,13 +93,13 @@
                                  nhân viên gara không đăng nhập được nữa, dữ liệu còn nguyên. */ ?>
                         @if ($item['is_master']!=1 && !empty($__d) && route('admin/'.$routeBase.'/edit/'.$item['id']))
                             @if ($item['status']==1)
-                            <a onclick="return confirm('Khoá gara {{$item['name']}}? Nhân viên gara sẽ không đăng nhập được nữa, dữ liệu vẫn giữ nguyên.')" href="{{_WEB_URL.'/admin/'.$routeBase.'/toggle/'.$item['id']}}" class="btn btn-secondary btn-sm" title="Khoá gara"><i class="fas fa-lock"></i></a>
+                            <a onclick="return confirm('Khoá công ty {{$item['name']}}? Nhân viên công ty sẽ không đăng nhập được nữa, dữ liệu vẫn giữ nguyên.')" href="{{_WEB_URL.'/admin/'.$routeBase.'/toggle/'.$item['id']}}" class="btn btn-secondary btn-sm" title="Khoá công ty"><i class="fas fa-lock"></i></a>
                             @else
-                            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/toggle/'.$item['id']}}" class="btn btn-success btn-sm" title="Mở khoá gara"><i class="fas fa-lock-open"></i></a>
+                            <a href="{{_WEB_URL.'/admin/'.$routeBase.'/toggle/'.$item['id']}}" class="btn btn-success btn-sm" title="Mở khoá công ty"><i class="fas fa-lock-open"></i></a>
                             @endif
                         @endif
                         @if (route('admin/'.$routeBase.'/delete/'.$item['id']) && $item['is_master']!=1 && empty($__d))
-                        <a onclick="return confirm('Bạn có chắc chắn muốn xoá gara {{$item['name']}}?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
+                        <a onclick="return confirm('Bạn có chắc chắn muốn xoá công ty {{$item['name']}}?')" href="{{_WEB_URL.'/admin/'.$routeBase.'/delete/'.$item['id']}}" class="btn btn-danger btn-sm" title="Xoá"><i class="fas fa-trash"></i></a>
                         @endif
                     </td>
                 </tr>
@@ -107,7 +107,7 @@
             @else
                 <tr>
                     <td colspan="10" class="text-center text-muted py-4">
-                        <i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có gara nào
+                        <i class="fas fa-inbox fa-2x d-block mb-2"></i> Chưa có công ty nào
                     </td>
                 </tr>
             @endif

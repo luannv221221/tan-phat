@@ -724,7 +724,7 @@ class Salesinvoices extends Controller {
         $qr = \App\core\VietQr::choHoaDon($cf, $item['total_amount'], $item['invoice_no']);
         if ($qr === null){
             $this->jsonLoi(empty($cf['bank_bin']) || empty($cf['bank_account'])
-                ? 'Gara chưa khai tài khoản ngân hàng. Vào Hệ thống › Cấu hình, chọn ngân hàng và nhập số tài khoản rồi gửi lại.'
+                ? 'Công ty chưa khai tài khoản ngân hàng. Vào Hệ thống › Cấu hình, chọn ngân hàng và nhập số tài khoản rồi gửi lại.'
                 : 'Hoá đơn không còn số tiền nào phải trả.', 409);
             return;
         }
@@ -734,7 +734,7 @@ class Salesinvoices extends Controller {
 
         $link  = _WEB_URL . '/thanh-toan/' . $ma;
         $ngay  = date_create((string) $item['invoice_date']);
-        $tenGara = !empty($cf['site_name']) ? $cf['site_name'] : 'Gara';
+        $tenGara = !empty($cf['site_name']) ? $cf['site_name'] : 'Công ty';
         $tin = $tenGara . ' gửi anh/chị hoá đơn ' . $item['invoice_no']
              . ($ngay ? ' ngày ' . $ngay->format('d/m/Y') : '')
              . ', số tiền ' . number_format((float) $qr['so_tien'], 0, ',', '.') . ' đ.'
@@ -872,7 +872,7 @@ class Salesinvoices extends Controller {
         // Mặt hàng phải thuộc kho tổng hoặc danh mục riêng CỦA GARA NÀY
         $ids  = array_values(array_unique(array_map('intval', array_column($lines, 'part_id'))));
         $lech = array_diff($ids, $this->__part->dungDuoc($ids));
-        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của gara — chọn lại dòng hàng';
+        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của công ty — chọn lại dòng hàng';
         return $errors;
     }
 

@@ -171,8 +171,8 @@ class GarageDomainsModel extends Model {
         $co = $this->aiGiuHost($h);
         if (!empty($co)){
             return [$h, (int) $co['garage_id'] === $garageId
-                ? 'Gara này đã khai tên miền ' . $h . '.'
-                : 'Tên miền ' . $h . ' đang thuộc gara ' . $co['garage_name']
+                ? 'Công ty này đã khai tên miền ' . $h . '.'
+                : 'Tên miền ' . $h . ' đang thuộc công ty ' . $co['garage_name']
                   . ' (' . $co['garage_code'] . ').'];
         }
 
@@ -238,8 +238,8 @@ class GarageDomainsModel extends Model {
            chẳng nói gì — chỉ thấy một dòng đổi màu. */
         if ($moi === 0 && $this->demDangBat((int) $d['garage_id']) <= 1){
             return [null, 'Đây là tên miền đang bật DUY NHẤT của ' . $d['garage_name']
-                        . '. Tắt nó là website gara đó không ai vào được. Khai thêm một tên miền'
-                        . ' khác trước, hoặc khoá cả gara ở màn Quản lý gara.'];
+                        . '. Tắt nó là website công ty đó không ai vào được. Khai thêm một tên miền'
+                        . ' khác trước, hoặc khoá cả công ty ở màn Quản lý công ty.'];
         }
 
         $this->update($this->_table, ['status' => $moi, 'update_at' => date('Y-m-d H:i:s')],
@@ -254,7 +254,7 @@ class GarageDomainsModel extends Model {
 
         if ($this->demTatCa((int) $d['garage_id']) <= 1){
             return 'Đây là tên miền DUY NHẤT của ' . $d['garage_name']
-                 . '. Xoá nó là gara đó không còn website. Khai tên miền mới trước đã.';
+                 . '. Xoá nó là công ty đó không còn website. Khai tên miền mới trước đã.';
         }
 
         /* Xoá host CHÍNH thì phải chuyển cờ sang host khác, không để gara mất

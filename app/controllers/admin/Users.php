@@ -382,12 +382,12 @@ class Users extends Controller{
         if ($this->trongPhamVi($pv, $u)) return;
         Session::flash('msgError', $pv['gara_id'] === null && !$pv['toan_quyen']
             ? $this->cauChuaCoGara()
-            : 'Bạn chỉ sửa được tài khoản nhân viên thuộc gara của mình.');
+            : 'Bạn chỉ sửa được tài khoản nhân viên thuộc công ty của mình.');
         $this->__response->redirect('admin/users');   // có exit
     }
 
     private function cauChuaCoGara(){
-        return 'Tài khoản của bạn chưa được gán gara nên chưa quản lý được nhân viên nào. Nhờ Admin gán gara cho bạn.';
+        return 'Tài khoản của bạn chưa được gán công ty nên chưa quản lý được nhân viên nào. Nhờ Admin gán công ty cho bạn.';
     }
 
     /** Lỗi của form: lỗi kiểm tra thông thường + nhóm có được phép gán không. */
@@ -406,7 +406,7 @@ class Users extends Controller{
         if ($pv['toan_quyen']){
             $gara = $this->garaTuForm();
             $g    = $gara !== null ? $this->model('GaragesModel')->getDetail($gara) : null;
-            if (empty($g) || (int) $g['status'] !== 1) $errors['garage_id'] = 'Chưa chọn gara cho tài khoản';
+            if (empty($g) || (int) $g['status'] !== 1) $errors['garage_id'] = 'Chưa chọn công ty cho tài khoản';
 
             /* NHÓM PHẢI CÙNG GARA VỚI TÀI KHOẢN (thêm 14/11/2026). Từ 000093 mỗi
                gara có bộ Manager/Staff riêng, cùng tên. Thiếu chốt này thì Admin
@@ -419,7 +419,7 @@ class Users extends Controller{
             if ($gid > 0 && empty($errors['group_id']) && !empty($g)){
                 $garaNhom = $this->__groupModel->garaCua($gid);
                 if ($garaNhom !== null && $garaNhom !== (int) $g['id']){
-                    $errors['group_id'] = 'Nhóm này thuộc gara khác — chọn nhóm của ' . $g['name'];
+                    $errors['group_id'] = 'Nhóm này thuộc công ty khác — chọn nhóm của ' . $g['name'];
                 }
             }
         }

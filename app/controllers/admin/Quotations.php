@@ -616,7 +616,7 @@ class Quotations extends Controller {
            riêng của họ. */
         $ids  = array_values(array_unique(array_map('intval', array_column($lines, 'part_id'))));
         $lech = array_diff($ids, $this->__part->dungDuoc($ids));
-        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của gara — chọn lại dòng hàng';
+        if (!empty($lech)) $errors['lines'] = 'Có mặt hàng không thuộc kho tổng hay danh mục của công ty — chọn lại dòng hàng';
         return $errors;
     }
 

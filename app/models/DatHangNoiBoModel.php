@@ -65,11 +65,11 @@ class DatHangNoiBoModel extends Model {
            của chính mình". */
         $idMua = Model::garaLoc();
         if ($idMua === null || (int) $idMua <= 0){
-            throw new \RuntimeException('Không xác định được gara làm việc.');
+            throw new \RuntimeException('Không xác định được công ty làm việc.');
         }
         $garaMua = Load::model('GaragesModel')->getDetail((int) $idMua);
         if (empty($garaMua['id'])){
-            throw new \RuntimeException('Không xác định được gara làm việc.');
+            throw new \RuntimeException('Không xác định được công ty làm việc.');
         }
         if (!empty($garaMua['is_master'])){
             throw new \RuntimeException('Kho tổng không đặt hàng của chính mình.');
@@ -77,7 +77,7 @@ class DatHangNoiBoModel extends Model {
 
         $garaTong = Load::model('GaragesModel')->getMaster();
         if (empty($garaTong['id'])){
-            throw new \RuntimeException('Hệ thống chưa khai gara tổng.');
+            throw new \RuntimeException('Hệ thống chưa khai công ty tổng.');
         }
 
         $dong = $this->locDong($dong);
@@ -94,7 +94,7 @@ class DatHangNoiBoModel extends Model {
         $khoXuat  = $this->duoiDanhNghia($idTong, function() use ($khoModel){ return $khoModel->getDefault(); });
         $khoNhap  = $this->duoiDanhNghia($idMua,  function() use ($khoModel){ return $khoModel->getDefault(); });
         if (empty($khoXuat['id'])) throw new \RuntimeException('Kho tổng chưa khai kho nào.');
-        if (empty($khoNhap['id'])) throw new \RuntimeException('Gara chưa khai kho nào để nhận hàng.');
+        if (empty($khoNhap['id'])) throw new \RuntimeException('Công ty chưa khai kho nào để nhận hàng.');
 
         // --- Giá và tên hàng lấy từ danh mục chung ---
         $partModel = Load::model('PartsModel');
@@ -157,7 +157,7 @@ class DatHangNoiBoModel extends Model {
                     'partner_id'   => (int) $khachGara['id'],
                     'partner_name' => $garaMua['name'],
                     'issue_date'   => $homNay,
-                    'reason'       => 'Đặt hàng nội bộ — gara ' . $garaMua['name']
+                    'reason'       => 'Đặt hàng nội bộ — công ty ' . $garaMua['name']
                                     . ($ghiChu !== '' ? ' — ' . $ghiChu : ''),
                     /* PHIẾU XUẤT để tổng tiền = 0, cố ý. Phiếu xuất ghi GIÁ VỐN,
                        mà giá vốn bình quân chỉ biết được lúc ghi sổ — chính
@@ -206,7 +206,7 @@ class DatHangNoiBoModel extends Model {
                chưa biết số phiếu nhập. Mở phiếu nào cũng lần ra phiếu kia. */
             $this->duoiDanhNghia($idTong, function() use ($px, $pn, $garaMua, $ghiChu){
                 Load::model('GoodsIssuesModel')->edit([
-                    'reason' => 'Đặt hàng nội bộ — gara ' . $garaMua['name']
+                    'reason' => 'Đặt hàng nội bộ — công ty ' . $garaMua['name']
                               . ' — phiếu nhập ' . $pn['no']
                               . ($ghiChu !== '' ? ' — ' . $ghiChu : ''),
                 ], $px['id']);

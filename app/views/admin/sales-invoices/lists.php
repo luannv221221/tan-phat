@@ -100,7 +100,7 @@ $coTkGara = !empty($cfGara['bank_bin']) && !empty($cfGara['bank_account']);
                             <?php if (route('admin/settings')): ?>
                             <a href="<?php echo e(_WEB_URL . '/admin/settings'); ?>" class="small" title="Chọn ngân hàng + nhập số tài khoản để hoá đơn có mã QR">Khai tài khoản</a>
                             <?php else: ?>
-                            <span class="small text-muted" title="Gara chưa khai tài khoản ngân hàng ở Cấu hình">Khai tài khoản ở Cấu hình</span>
+                            <span class="small text-muted" title="Công ty chưa khai tài khoản ngân hàng ở Cấu hình">Khai tài khoản ở Cấu hình</span>
                             <?php endif; ?>
                         <?php else: ?>
                             <span class="text-muted">—</span>

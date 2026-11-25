@@ -101,7 +101,7 @@ class Partprices extends Controller {
 
         if ((int) $kq['dong'] === 0){
             Session::flash('msgError',
-                'Chưa tính được dòng nào — gara cần có ít nhất một nhóm khách đang bật và một mặt hàng đang bán.');
+                'Chưa tính được dòng nào — công ty cần có ít nhất một nhóm khách đang bật và một mặt hàng đang bán.');
             $this->__response->redirect('admin/' . $this->routeBase); return;
         }
 

@@ -27,7 +27,7 @@ $batStatus = isset($old['status'])    ? (int) $old['status'] === 1    : (int) $i
                              mình đang đụng vào dữ liệu sống, không phải một dòng rỗng. */ ?>
                     @if (!empty($dangDung))
                     <div class="alert alert-info py-2">
-                        <i class="fas fa-info-circle mr-1"></i> Gara này đang có:
+                        <i class="fas fa-info-circle mr-1"></i> Công ty này đang có:
                         <?php
                         $__t = [];
                         foreach ($dangDung as $__nhan => $__n) $__t[] = '<b>' . (int) $__n . '</b> ' . e($__nhan);
@@ -38,12 +38,12 @@ $batStatus = isset($old['status'])    ? (int) $old['status'] === 1    : (int) $i
 
                     <div class="form-row">
                         <div class="form-group col-md-4">
-                            <label>Mã gara <span class="text-danger">*</span></label>
+                            <label>Mã công ty <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="code" value="{{$val('code')}}"/>
                             {!! !empty($errors['code'])?'<small class="text-danger">'.e($errors['code']).'</small>':false !!}
                         </div>
                         <div class="form-group col-md-8">
-                            <label>Tên gara <span class="text-danger">*</span></label>
+                            <label>Tên công ty <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="name" value="{{$val('name')}}"/>
                             {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
                         </div>
@@ -87,8 +87,8 @@ $batStatus = isset($old['status'])    ? (int) $old['status'] === 1    : (int) $i
                     </div>
 
                     @if ($laTong)
-                    <p class="text-muted small"><span class="badge badge-info">Gara tổng</span>
-                        Nơi giữ danh mục hàng hoá dùng chung cho mọi gara.</p>
+                    <p class="text-muted small"><span class="badge badge-info">Công ty tổng</span>
+                        Nơi giữ danh mục hàng hoá dùng chung cho mọi công ty.</p>
                     @endif
 
                     <div class="form-group mb-0">
@@ -108,21 +108,21 @@ $batStatus = isset($old['status'])    ? (int) $old['status'] === 1    : (int) $i
                 $chuMail = isset($old['chu_email']) ? $old['chu_email'] : (!empty($chu) ? $chu['email'] : '');
                 ?>
                 <div class="card-body border-top bg-light">
-                    <h6 class="mb-1"><i class="fas fa-user-shield mr-1"></i> Tài khoản chủ gara
+                    <h6 class="mb-1"><i class="fas fa-user-shield mr-1"></i> Tài khoản chủ công ty
                         @if (empty($chu))
                         <span class="text-muted small">(chưa có — khai đủ ba ô để tạo)</span>
                         @endif
                     </h6>
                     <p class="text-muted small mb-2">
                         @if (!empty($chu))
-                        Đăng nhập bằng email dưới đây, tại địa chỉ riêng của gara.
+                        Đăng nhập bằng email dưới đây, tại địa chỉ riêng của công ty.
                         Mật khẩu đã được mã hoá nên không hiện lại được: <b>bỏ trống</b> ô mật khẩu
-                        để giữ nguyên, <b>gõ mật khẩu mới</b> khi chủ gara quên.
+                        để giữ nguyên, <b>gõ mật khẩu mới</b> khi chủ công ty quên.
                         @if ((int) $chu['status'] !== 1)
                         <br><span class="text-danger">Tài khoản này đang bị tắt — bật lại ở màn Người dùng.</span>
                         @endif
                         @else
-                        Tạo một tài khoản nhóm <b>Manager</b> thuộc gara này. Để trống cả ba ô thì bỏ qua.
+                        Tạo một tài khoản nhóm <b>Manager</b> thuộc công ty này. Để trống cả ba ô thì bỏ qua.
                         @endif
                     </p>
                     <div class="form-row">

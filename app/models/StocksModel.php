@@ -25,7 +25,7 @@ class StocksModel extends Model {
     /** Ghi sổ vào kho của gara khác: từ chối (transaction của controller rollback) */
     private function chanKhoLa($warehouseId){
         if (!$this->khoThuocGara($warehouseId)){
-            throw new \RuntimeException('Kho ' . (int) $warehouseId . ' khong thuoc gara lam viec — khong ghi so.');
+            throw new \RuntimeException('Kho ' . (int) $warehouseId . ' khong thuoc cong ty lam viec — khong ghi so.');
         }
     }
 

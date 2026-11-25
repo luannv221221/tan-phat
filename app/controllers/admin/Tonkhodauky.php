@@ -236,7 +236,7 @@ class Tonkhodauky extends Controller {
 
             $kho = $this->timKho($tenKho);
             if (empty($kho)){
-                $kq['boQua'][] = "Dòng $dong ($ma): không tìm thấy kho \"$tenKho\" của gara. "
+                $kq['boQua'][] = "Dòng $dong ($ma): không tìm thấy kho \"$tenKho\" của công ty. "
                                . "Tên kho phải trùng với Kho › Danh mục kho.";
                 continue;
             }

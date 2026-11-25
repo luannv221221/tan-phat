@@ -162,8 +162,8 @@ class Services extends Controller {
                "không tìm thấy" làm người dùng tưởng dữ liệu mất. */
             $co = $this->__model->getDetail($id);
             Session::flash('msgError', !empty($co) && $co['item_type'] === PartsModel::LOAI_DICH_VU
-                ? 'Dịch vụ "' . $co['name'] . '" thuộc kho tổng, gara không sửa được. '
-                . 'Muốn dùng thì chọn nó ở màn Hàng hoá › Danh mục của gara.'
+                ? 'Dịch vụ "' . $co['name'] . '" thuộc kho tổng, công ty không sửa được. '
+                . 'Muốn dùng thì chọn nó ở màn Hàng hoá › Danh mục của công ty.'
                 : 'Không tìm thấy ' . $this->labelOne);
             $this->__response->redirect('admin/' . $this->routeBase);
             return null;

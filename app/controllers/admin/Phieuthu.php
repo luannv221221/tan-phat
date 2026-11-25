@@ -77,7 +77,7 @@ class Phieuthu extends AccVoucherBase {
         /* Đọc số kiểu Việt ("1.500.000") như ô số tiền của phiếu. Không âm. */
         $soDu = $this->doTien(isset($f['so_du']) ? $f['so_du'] : 0);
         if (!$soQuy->luuSoDuBanDau($quy, $soDu, $ngay)){
-            Session::flash('msgError', 'Không lưu được số dư ban đầu (không xác định được gara).');
+            Session::flash('msgError', 'Không lưu được số dư ban đầu (không xác định được công ty).');
             $this->__response->redirect($ve); return;
         }
 

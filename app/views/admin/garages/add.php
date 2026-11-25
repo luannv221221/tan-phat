@@ -14,13 +14,13 @@
 
                     <div class="form-row">
                         <div class="form-group col-md-4">
-                            <label>Mã gara <span class="text-danger">*</span></label>
+                            <label>Mã công ty <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="code" placeholder="VD: TP02" value="{{!empty($old['code'])?$old['code']:''}}"/>
                             {!! !empty($errors['code'])?'<small class="text-danger">'.e($errors['code']).'</small>':false !!}
                         </div>
                         <div class="form-group col-md-8">
-                            <label>Tên gara <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="name" placeholder="VD: Gara Minh Long" value="{{!empty($old['name'])?$old['name']:''}}"/>
+                            <label>Tên công ty <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="name" placeholder="VD: Công ty Minh Long" value="{{!empty($old['name'])?$old['name']:''}}"/>
                             {!! !empty($errors['name'])?'<small class="text-danger">'.e($errors['name']).'</small>':false !!}
                         </div>
                     </div>
@@ -72,11 +72,11 @@
                          gara vẫn chưa dùng được, và bước đó rất dễ quên. Để trống
                          cũng được: gara vẫn tạo, cấp tài khoản sau ở màn Người dùng. */ ?>
                 <div class="card-body border-top bg-light">
-                    <h6 class="mb-1"><i class="fas fa-user-shield mr-1"></i> Tài khoản chủ gara
+                    <h6 class="mb-1"><i class="fas fa-user-shield mr-1"></i> Tài khoản chủ công ty
                         <span class="text-muted small">(không bắt buộc)</span></h6>
                     <p class="text-muted small mb-2">
-                        Tạo sẵn một tài khoản nhóm <b>Manager</b> thuộc gara này. Người đó đăng nhập
-                        tại địa chỉ riêng của gara.
+                        Tạo sẵn một tài khoản nhóm <b>Manager</b> thuộc công ty này. Người đó đăng nhập
+                        tại địa chỉ riêng của công ty.
                     </p>
                     <div class="form-row">
                         <div class="form-group col-md-4 mb-0">

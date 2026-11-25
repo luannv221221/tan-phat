@@ -17,7 +17,7 @@ $host = isset($host) ? (string) $host : '';
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <title>Không tìm thấy gara</title>
+    <title>Không tìm thấy công ty</title>
     <style>
         :root { color-scheme: light dark; }
         body {
@@ -45,11 +45,11 @@ $host = isset($host) ? (string) $host : '';
 </head>
 <body>
     <div class="hop">
-        <h1>Không tìm thấy gara cho địa chỉ này</h1>
+        <h1>Không tìm thấy công ty cho địa chỉ này</h1>
         <?php if ($host !== ''): ?>
         <p>Địa chỉ đang mở:<br/><code><?php echo htmlspecialchars($host, ENT_QUOTES, 'UTF-8'); ?></code></p>
         <?php endif; ?>
-        <p>Kiểm tra lại địa chỉ, hoặc liên hệ quản trị hệ thống nếu gara vừa được mở.</p>
+        <p>Kiểm tra lại địa chỉ, hoặc liên hệ quản trị hệ thống nếu công ty vừa được mở.</p>
     </div>
 </body>
 </html>

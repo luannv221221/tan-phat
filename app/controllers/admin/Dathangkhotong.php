@@ -71,8 +71,8 @@ class Dathangkhotong extends Controller {
             $kq = $this->__dat->dat($dong, isset($f['ghi_chu']) ? trim((string) $f['ghi_chu']) : '');
             Session::flash('msg',
                 'Đã đặt hàng. Kho tổng nhận phiếu xuất ' . $kq['pxk']['no']
-                . '; phiếu nhập của gara là ' . $kq['pnk']['no']
-                . ' — chờ kho tổng ghi sổ, hàng về tới nơi thì gara ghi sổ phiếu nhập.');
+                . '; phiếu nhập của công ty là ' . $kq['pnk']['no']
+                . ' — chờ kho tổng ghi sổ, hàng về tới nơi thì công ty ghi sổ phiếu nhập.');
         } catch (\Throwable $e){
             Session::flash('msgError', $e->getMessage());
         }

@@ -42,7 +42,7 @@ $laTong = (int) $item['is_master'] === 1;
                 <h3 class="card-title"><i class="fas fa-globe mr-2"></i>{{$page_name}}</h3>
                 <div class="card-tools">
                     <a href="{{_WEB_URL.'/admin/'.$routeBase}}" class="btn btn-default btn-sm">
-                        <i class="fas fa-arrow-left mr-1"></i> Danh sách gara
+                        <i class="fas fa-arrow-left mr-1"></i> Danh sách công ty
                     </a>
                 </div>
             </div>
@@ -101,7 +101,7 @@ $laTong = (int) $item['is_master'] === 1;
                         <tr>
                             <td colspan="4" class="text-center py-4">
                                 <i class="fas fa-exclamation-triangle fa-2x d-block mb-2 text-danger"></i>
-                                <span class="text-danger">Gara này chưa có tên miền nào — website của nó chưa ai vào được.</span>
+                                <span class="text-danger">Công ty này chưa có tên miền nào — website của nó chưa ai vào được.</span>
                             </td>
                         </tr>
                     @endif
@@ -129,12 +129,12 @@ $laTong = (int) $item['is_master'] === 1;
                     </div>
                     <?php if (!empty($hostGoiY)): ?>
                     <p class="mb-2">
-                        Gợi ý theo mã gara: <code>{{$hostGoiY}}</code>
+                        Gợi ý theo mã công ty: <code>{{$hostGoiY}}</code>
                     </p>
                     <?php endif; ?>
                     <div class="form-group form-check">
                         <input type="checkbox" class="form-check-input" id="is_primary" name="is_primary" value="1">
-                        <label class="form-check-label" for="is_primary">Đặt làm tên miền chính của gara này</label>
+                        <label class="form-check-label" for="is_primary">Đặt làm tên miền chính của công ty này</label>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -146,10 +146,10 @@ $laTong = (int) $item['is_master'] === 1;
 
     <div class="col-lg-4">
         <div class="card card-outline card-secondary">
-            <div class="card-header"><h3 class="card-title">Gara</h3></div>
+            <div class="card-header"><h3 class="card-title">Công ty</h3></div>
             <div class="card-body">
                 <p class="mb-1"><strong>{{$item['name']}}</strong>
-                    {!! $laTong ? '<span class="badge badge-info">Gara tổng</span>' : '' !!}
+                    {!! $laTong ? '<span class="badge badge-info">Công ty tổng</span>' : '' !!}
                 </p>
                 <p class="mb-0 text-muted">Mã: <code>{{$item['code']}}</code></p>
             </div>
@@ -163,22 +163,22 @@ $laTong = (int) $item['is_master'] === 1;
                 @if (!empty($tenMienGoc))
                 <p class="mb-2"><code>{{$tenMienGoc}}</code></p>
                 <p class="small text-muted mb-0">
-                    Suy từ <strong>tên miền chính của gara tổng</strong>. Gara mở mới sẽ tự nhận
-                    địa chỉ <code>&lt;mã gara&gt;.{{$tenMienGoc}}</code>.
+                    Suy từ <strong>tên miền chính của công ty tổng</strong>. Công ty mở mới sẽ tự nhận
+                    địa chỉ <code>&lt;mã công ty&gt;.{{$tenMienGoc}}</code>.
                     @if (!empty($duoiPhu))
-                    <br>Kèm tên miền phụ trên các đuôi gara tổng đang chạy:
+                    <br>Kèm tên miền phụ trên các đuôi công ty tổng đang chạy:
                     @foreach ($duoiPhu as $dp)
-                    <code>&lt;mã gara&gt;.{{$dp}}</code>
+                    <code>&lt;mã công ty&gt;.{{$dp}}</code>
                     @endforeach
                     @endif
                     @if ($laTong)
                     <br><strong class="text-warning">Đổi tên miền chính ở trang này là đổi địa chỉ của
-                    mọi gara mở sau.</strong>
+                    mọi công ty mở sau.</strong>
                     @endif
                 </p>
                 @else
                 <p class="text-danger mb-0">
-                    Chưa suy ra được: gara tổng chưa có tên miền nào. Gara mở mới sẽ không được
+                    Chưa suy ra được: công ty tổng chưa có tên miền nào. Công ty mở mới sẽ không được
                     cấp tên miền tự động.
                 </p>
                 @endif
@@ -192,7 +192,7 @@ $laTong = (int) $item['is_master'] === 1;
                    vẫn không mở được (hoặc mở <code>https://</code> bị trình duyệt báo lỗi):</p>
                 <ol class="pl-3 mb-2">
                     <li class="mb-2">
-                        <strong>DNS</strong> — một bản ghi wildcard là đủ cho mọi gara:
+                        <strong>DNS</strong> — một bản ghi wildcard là đủ cho mọi công ty:
                         <br><code>*.{{!empty($tenMienGoc) ? $tenMienGoc : 'tên-miền-gốc'}} &nbsp;A &nbsp;&lt;IP máy chủ&gt;</code>
                     </li>
                     <li class="mb-2">
@@ -209,8 +209,8 @@ $laTong = (int) $item['is_master'] === 1;
                     </li>
                 </ol>
                 <p class="mb-0 text-muted">
-                    DNS và Apache làm một lần là đủ cho mọi gara. Riêng chứng chỉ thì
-                    <strong>mỗi lần mở gara mới hay khai tên mới đều phải cấp lại</strong>.
+                    DNS và Apache làm một lần là đủ cho mọi công ty. Riêng chứng chỉ thì
+                    <strong>mỗi lần mở công ty mới hay khai tên mới đều phải cấp lại</strong>.
                 </p>
             </div>
         </div>

@@ -8,7 +8,7 @@
  *
  * HTML trọn vẹn, không qua Template::run() (không {{ }}, không @if) — giống mẫu in.
  */
-$tenGara = !empty($cf['site_name']) ? $cf['site_name'] : 'Gara';
+$tenGara = !empty($cf['site_name']) ? $cf['site_name'] : 'Công ty';
 $dtGara  = !empty($cf['hotline']) ? (string) $cf['hotline'] : '';
 $logo    = !empty($hd) ? logo_in_an($cf) : '';
 $tien    = function($n){ return number_format((float) $n, 0, ',', '.'); };
@@ -60,7 +60,7 @@ dl { margin: 0; }
 <?php if (empty($hd)): ?>
     <p class="nhan-nho">Link thanh toán</p>
     <h1>Không tìm thấy hoá đơn</h1>
-    <p class="phu">Link không đúng hoặc hoá đơn đã được gara huỷ. Vui lòng liên hệ gara đã gửi link cho bạn.</p>
+    <p class="phu">Link không đúng hoặc hoá đơn đã được công ty huỷ. Vui lòng liên hệ công ty đã gửi link cho bạn.</p>
 <?php else: ?>
 
     <div class="gara">
@@ -100,7 +100,7 @@ dl { margin: 0; }
     </dl>
     <?php else: ?>
     <div class="bao">
-        Gara chưa cài đặt tài khoản nhận chuyển khoản. Vui lòng liên hệ gara để được hướng dẫn thanh toán<?php
+        Công ty chưa cài đặt tài khoản nhận chuyển khoản. Vui lòng liên hệ công ty để được hướng dẫn thanh toán<?php
         if ($dtGara !== ''): ?>: <a href="tel:<?php echo e(preg_replace('~[^0-9+]~', '', $dtGara)); ?>"><?php echo e($dtGara); ?></a><?php endif; ?>.
     </div>
     <?php endif; ?>

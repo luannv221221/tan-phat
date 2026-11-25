@@ -79,7 +79,7 @@ $tien = function($x){ return number_format((float) $x, 0, ',', '.'); };
                         @endif
                     </select>
                     {!! !empty($errors['co_van_id'])?'<small class="text-danger">'.e($errors['co_van_id']).'</small>':false !!}
-                    <small class="form-text text-muted">Chọn từ nhân viên của gara — người chưa có tài khoản thì thêm ở màn Người dùng.</small>
+                    <small class="form-text text-muted">Chọn từ nhân viên của công ty — người chưa có tài khoản thì thêm ở màn Người dùng.</small>
                 </div>
             </div>
 

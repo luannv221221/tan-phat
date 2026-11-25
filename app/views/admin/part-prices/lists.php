@@ -61,7 +61,7 @@ $tien = function($v){
                     <?php /* Chỉ KIỂU GIÁ VỐN còn đặt ở Cấu hình gara. Lịch tự cập nhật đã
                              chuyển lên đầu thẻ, cạnh nút Cập nhật giá (13/11/2026) — xem
                              Partprices::postLich. */ ?>
-                    <a href="{{_WEB_URL.'/admin/settings'}}" class="ml-2 small"><i class="fas fa-cog mr-1"></i>Đổi kiểu giá vốn ở Cấu hình gara</a>
+                    <a href="{{_WEB_URL.'/admin/settings'}}" class="ml-2 small"><i class="fas fa-cog mr-1"></i>Đổi kiểu giá vốn ở Cấu hình công ty</a>
                     @endif
                 </p>
 

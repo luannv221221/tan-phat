@@ -151,7 +151,7 @@ $soCT  = count($chungTu['quotations']) + count($chungTu['sales_invoices']) + cou
                         @endif
                     </select>
                     {!! !empty($errors['co_van_id'])?'<small class="text-danger">'.e($errors['co_van_id']).'</small>':false !!}
-                    <small class="form-text text-muted">Chọn từ nhân viên của gara — người chưa có tài khoản thì thêm ở màn Người dùng.</small>
+                    <small class="form-text text-muted">Chọn từ nhân viên của công ty — người chưa có tài khoản thì thêm ở màn Người dùng.</small>
                 </div>
                 <div class="form-group col-md-4">
                     <label>Trạng thái</label>

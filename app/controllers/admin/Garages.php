@@ -23,8 +23,8 @@ class Garages extends Controller {
     private $__model, $__request, $__response;
 
     private $routeBase = 'garages';
-    private $labelOne  = 'gara';
-    private $labelMany = 'Quản lý gara';
+    private $labelOne  = 'công ty';   // chữ "gara" -> "công ty" (khách 25/11/2026)
+    private $labelMany = 'Quản lý công ty';
     private $viewDir   = 'admin/garages';
 
     function __construct(){
@@ -98,7 +98,7 @@ class Garages extends Controller {
            từ 25/11/2026, trước đó chỉ còn cái nhãn mồ côi). */
         $data['is_master'] = 0;
         if (!empty($this->__model->findByCode($data['code']))){
-            $this->flashOne('code', 'Mã gara này đã tồn tại', 'add');
+            $this->flashOne('code', 'Mã công ty này đã tồn tại', 'add');
             return;
         }
         $loi = '';
@@ -178,7 +178,7 @@ class Garages extends Controller {
         $data     = $this->buildData();
         $existing = $this->__model->findByCode($data['code']);
         if (!empty($existing) && $existing['id'] != $id){
-            $this->flashOne('code', 'Mã gara này đã thuộc về gara khác', 'edit/' . $id);
+            $this->flashOne('code', 'Mã công ty này đã thuộc về công ty khác', 'edit/' . $id);
             return;
         }
         // Chỉ ghi đè logo khi THỰC SỰ có ảnh mới — sửa tên mà xoá mất logo là sai
@@ -209,7 +209,7 @@ class Garages extends Controller {
                 $old = $f;
                 unset($old['chu_password']);
                 Session::flash('old', $old);
-                Session::flash('msg', 'Đã lưu thông tin gara. ' . $kq['loi']);
+                Session::flash('msg', 'Đã lưu thông tin công ty. ' . $kq['loi']);
                 $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
                 return;
             }
@@ -235,7 +235,7 @@ class Garages extends Controller {
            im lặng và không còn gara nào sở hữu danh mục tổng. */
         if ((int) $item['is_master'] === 1){
             Session::flash('msgError',
-                'Không xoá được gara tổng. Đánh dấu gara khác làm gara tổng trước đã.');
+                'Không xoá được công ty tổng. Đánh dấu công ty khác làm công ty tổng trước đã.');
             $this->__response->redirect('admin/' . $this->routeBase);
             return;
         }
@@ -245,8 +245,8 @@ class Garages extends Controller {
             $mo = [];
             foreach ($dung as $nhan => $n) $mo[] = $n . ' ' . $nhan;
             Session::flash('msgError',
-                'Không xoá được: gara này đang có ' . implode(', ', $mo)
-              . '. Gara đã có dữ liệu thì chỉ khoá được (tắt trạng thái hoạt động), không xoá.');
+                'Không xoá được: công ty này đang có ' . implode(', ', $mo)
+              . '. Công ty đã có dữ liệu thì chỉ khoá được (tắt trạng thái hoạt động), không xoá.');
             $this->__response->redirect('admin/' . $this->routeBase);
             return;
         }
@@ -272,13 +272,13 @@ class Garages extends Controller {
             $this->__response->redirect('admin/khong-co-quyen'); return;
         }
         if ((int) $item['is_master'] === 1){
-            Session::flash('msgError', 'Không khoá được gara tổng.');
+            Session::flash('msgError', 'Không khoá được công ty tổng.');
             $this->__response->redirect('admin/' . $this->routeBase); return;
         }
         $moi = (int) $item['status'] === 1 ? 0 : 1;
         $this->__model->edit(['status' => $moi], (int) $id);
-        Session::flash('msg', $moi === 1 ? 'Đã mở khoá gara ' . $item['name']
-                                         : 'Đã khoá gara ' . $item['name'] . ' — nhân viên gara không đăng nhập được nữa.');
+        Session::flash('msg', $moi === 1 ? 'Đã mở khoá công ty ' . $item['name']
+                                         : 'Đã khoá công ty ' . $item['name'] . ' — nhân viên công ty không đăng nhập được nữa.');
         $this->__response->redirect('admin/' . $this->routeBase);
     }
 
@@ -448,10 +448,10 @@ class Garages extends Controller {
             'name' => 'required|min:1',
         ]);
         $this->__request->message([
-            'code.required' => 'Mã gara không được để trống',
-            'code.min'      => 'Mã gara không được để trống',
-            'name.required' => 'Tên gara không được để trống',
-            'name.min'      => 'Tên gara không được để trống',
+            'code.required' => 'Mã công ty không được để trống',
+            'code.min'      => 'Mã công ty không được để trống',
+            'name.required' => 'Tên công ty không được để trống',
+            'name.min'      => 'Tên công ty không được để trống',
         ]);
     }
 

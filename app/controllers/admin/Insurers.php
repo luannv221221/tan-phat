@@ -164,7 +164,7 @@ class Insurers extends Controller {
         }
         if (!dong_cua_gara($item)){
             Session::flash('msgError', $item['name']
-                . ' thuộc danh mục dùng chung, gara không sửa được. '
+                . ' thuộc danh mục dùng chung, công ty không sửa được. '
                 . 'Cần khai số tài khoản hay người liên hệ của riêng mình thì thêm một dòng mới.');
             $this->__response->redirect('admin/' . $this->routeBase);
             return null;

@@ -129,14 +129,14 @@ table.khoi-ck td.o-qr { width: 34mm; padding-right: 5mm; text-align: center; }
     <div class="nhac-qr">
         <b>Chưa có mã QR chuyển khoản.</b>
         <?php if ($nhacQr === 'chon-lai'): ?>
-        Ngân hàng của gara đang ghi tay — vào <b>Cấu hình</b>, chọn lại ngân hàng từ danh sách rồi Lưu.
+        Ngân hàng của công ty đang ghi tay — vào <b>Cấu hình</b>, chọn lại ngân hàng từ danh sách rồi Lưu.
         <?php else: ?>
-        Gara chưa khai tài khoản nhận tiền — vào <b>Cấu hình</b>, chọn ngân hàng, nhập số tài khoản, chủ tài khoản rồi Lưu.
+        Công ty chưa khai tài khoản nhận tiền — vào <b>Cấu hình</b>, chọn ngân hàng, nhập số tài khoản, chủ tài khoản rồi Lưu.
         <?php endif; ?>
         <?php if (!empty($urlCauHinh)): ?>
         <a href="<?php echo e($urlCauHinh); ?>" target="_blank" rel="noopener">Mở Cấu hình</a>
         <?php else: ?>
-        (Nhờ chủ gara làm.)
+        (Nhờ chủ công ty làm.)
         <?php endif; ?>
     </div>
     <?php endif; ?>

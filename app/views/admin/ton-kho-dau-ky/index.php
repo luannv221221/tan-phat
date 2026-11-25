@@ -93,7 +93,7 @@
                             <label>Ngày chốt tồn đầu kỳ</label>
                             <input type="date" name="ngay" class="form-control" value="{{date('Y-m-d')}}">
                             <small class="form-text text-muted">
-                                Ngày gara bắt đầu dùng phần mềm. Mọi phiếu nhập/xuất sau này
+                                Ngày công ty bắt đầu dùng phần mềm. Mọi phiếu nhập/xuất sau này
                                 phải có ngày <strong>từ ngày này trở đi</strong>.
                             </small>
                         </div>
@@ -154,7 +154,7 @@
         <div class="card card-outline card-warning">
             <div class="card-header"><h3 class="card-title">Tồn kho đầu kỳ là gì</h3></div>
             <div class="card-body small">
-                <p>Số lượng hàng gara <strong>đang có trong kho</strong> tại thời điểm bắt đầu
+                <p>Số lượng hàng công ty <strong>đang có trong kho</strong> tại thời điểm bắt đầu
                    dùng phần mềm. Khai một lần, để mọi phiếu nhập / xuất về sau tính ra tồn đúng.</p>
                 <p class="mb-0 text-muted">
                     <strong>Khác với dòng "Tồn đầu kỳ"</strong> ở Thẻ kho và Biến động tồn —
@@ -189,7 +189,7 @@
 
         @if (!empty($dsKho))
         <div class="card card-outline card-light">
-            <div class="card-header"><h3 class="card-title">Kho của gara</h3></div>
+            <div class="card-header"><h3 class="card-title">Kho của công ty</h3></div>
             <div class="card-body small">
                 <p class="text-muted mb-2">Cột <em>Kho</em> trong file phải trùng tên (hoặc mã) một trong các kho sau:</p>
                 <ul class="mb-0">

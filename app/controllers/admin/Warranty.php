@@ -389,7 +389,7 @@ class Warranty extends Controller {
 
         $ktv = !empty($f['technician_id']) ? (int) $f['technician_id'] : 0;
         if ($ktv > 0 && !$this->laNhanVienGara($ktv)){
-            $errors['technician_id'] = 'Kỹ thuật viên không thuộc gara này';
+            $errors['technician_id'] = 'Kỹ thuật viên không thuộc công ty này';
         }
 
         return $errors;

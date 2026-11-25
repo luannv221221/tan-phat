@@ -36,9 +36,9 @@ $isActive  = isset($old['status'])     ? !empty($old['status'])     : ((int) $it
                     <?php /* Kho luôn thuộc GARA CỦA NGƯỜI TẠO (gara độc lập) — không có ô chọn
                              gara: chọn được là tạo được kho cho gara khác. */ ?>
                     <div class="form-group">
-                        <label>Gara</label>
+                        <label>Công ty</label>
                         <input type="text" class="form-control" value="{{!empty($garaHienTai['name']) ? $garaHienTai['name'] : ''}}" disabled/>
-                        <small class="form-text text-muted">Kho thuộc gara của bạn. Một gara có thể có nhiều kho.</small>
+                        <small class="form-text text-muted">Kho thuộc công ty của bạn. Một công ty có thể có nhiều kho.</small>
                     </div>
 
                     <div class="form-group">

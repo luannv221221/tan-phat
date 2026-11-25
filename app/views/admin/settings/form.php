@@ -15,14 +15,14 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
     @if (!empty($laChung))
     <div class="alert alert-warning py-2">
         <i class="fas fa-globe mr-1"></i>
-        Đây là <b>cấu hình chung</b> — làm mặc định cho mọi gara chưa tự khai.
-        Gara nào đã tự đặt thì giữ giá trị của họ.
+        Đây là <b>cấu hình chung</b> — làm mặc định cho mọi công ty chưa tự khai.
+        Công ty nào đã tự đặt thì giữ giá trị của họ.
     </div>
     @else
     <div class="alert alert-info py-2">
         <i class="fas fa-store mr-1"></i>
-        Đây là cấu hình <b>riêng của gara {{$garaTen}}</b> — chỉ đổi trang web và
-        biểu mẫu của gara này. Ô nào để nguyên thì dùng mặc định chung.
+        Đây là cấu hình <b>riêng của công ty {{$garaTen}}</b> — chỉ đổi trang web và
+        biểu mẫu của công ty này. Ô nào để nguyên thì dùng mặc định chung.
     </div>
     @endif
 
@@ -31,7 +31,7 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
 
         <div class="card card-outline card-primary">
         <div class="card card-outline card-primary">
-            <div class="card-header"><h3 class="card-title"><i class="fas fa-cog mr-2"></i>Vận hành gara</h3></div>
+            <div class="card-header"><h3 class="card-title"><i class="fas fa-cog mr-2"></i>Vận hành công ty</h3></div>
             <div class="card-body">
                 <?php /* TÊN, LOGO, LIÊN HỆ ĐÃ CHUYỂN SANG "CẤU HÌNH WEBSITE" (12/11/2026) — khách
                          yêu cầu: "cái này phải ở bên Quản lý website". Ở lại đây là những ô
@@ -80,7 +80,7 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                     <input type="number" name="dien_tich_xuong" class="form-control" min="0" step="1"
                            value="{{$s('dien_tich_xuong')}}" placeholder="VD: 450"/>
                     <small class="form-text text-muted">
-                        Để trống nếu không có xưởng. Dùng cho hồ sơ năng lực của gara.
+                        Để trống nếu không có xưởng. Dùng cho hồ sơ năng lực của công ty.
                     </small>
                 </div>
                 <?php /* BẢNG TÍNH GIÁ — khách chốt 11/11/2026, đúng hai dòng
@@ -147,7 +147,7 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                         <?php endif; ?>
                     </div>
                     <div class="form-group col-md-4"><label>Số tài khoản</label><input type="text" name="bank_account" class="form-control" inputmode="numeric" value="<?php echo e($s('bank_account')); ?>"/></div>
-                    <div class="form-group col-md-4"><label>Chủ tài khoản</label><input type="text" name="bank_holder" class="form-control" placeholder="VD: CONG TY TNHH GARA ABC" value="<?php echo e($s('bank_holder')); ?>"/></div>
+                    <div class="form-group col-md-4"><label>Chủ tài khoản</label><input type="text" name="bank_holder" class="form-control" placeholder="VD: CONG TY TNHH ABC" value="<?php echo e($s('bank_holder')); ?>"/></div>
                 </div>
                 <small class="form-text text-muted">
                     <i class="fas fa-qrcode mr-1"></i>

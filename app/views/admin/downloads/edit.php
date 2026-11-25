@@ -149,7 +149,7 @@ document.addEventListener('change', function (e){
 });
 /* Nút Chép — tài liệu khách ghi "có link cho copy".
    execCommand('copy') chứ không chỉ navigator.clipboard: clipboard API chỉ
-   chạy trên https (hoặc localhost), mà gara nào chưa bật SSL thì mở bằng
+   chạy trên https (hoặc localhost), mà công ty nào chưa bật SSL thì mở bằng
    http — ở đó API kia không tồn tại và nút sẽ im lặng không làm gì. */
 document.addEventListener('click', function (e){
     var nut = e.target.closest ? e.target.closest('.js-chep') : null;

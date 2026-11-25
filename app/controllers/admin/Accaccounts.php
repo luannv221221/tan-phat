@@ -199,8 +199,8 @@ class Accaccounts extends Controller {
            hữu) — ở đây chỉ để nói đúng câu từ chối. */
         if (!dong_cua_gara($item)){
             Session::flash('msgError', 'Tài khoản ' . $item['code']
-                . ' thuộc hệ thống tài khoản dùng chung, gara không sửa được. '
-                . 'Cần tài khoản chi tiết riêng thì thêm mới một tài khoản của gara.');
+                . ' thuộc hệ thống tài khoản dùng chung, công ty không sửa được. '
+                . 'Cần tài khoản chi tiết riêng thì thêm mới một tài khoản của công ty.');
             $this->__response->redirect('admin/' . $this->routeBase);
             return null;
         }

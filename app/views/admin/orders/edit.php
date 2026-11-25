@@ -59,7 +59,7 @@
                         <td>
                             <code>{{$it['part_code']}}</code> {{$it['part_name']}}
                             @if (!empty($it['preorder_qty']) && (float)$it['preorder_qty'] > 0)
-                            <span class="badge badge-warning ml-1" title="Gara chưa có sẵn lúc khách đặt — phải lấy về">
+                            <span class="badge badge-warning ml-1" title="Công ty chưa có sẵn lúc khách đặt — phải lấy về">
                                 Đặt trước {{rtrim(rtrim(number_format((float)$it['preorder_qty'], 3), '0'), '.')}}
                             </span>
                             @endif
