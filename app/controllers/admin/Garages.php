@@ -94,6 +94,9 @@ class Garages extends Controller {
         }
 
         $data = $this->buildData();
+        /* Gara mở mới không bao giờ là gara tổng — form không có ô đó (bỏ hẳn
+           từ 25/11/2026, trước đó chỉ còn cái nhãn mồ côi). */
+        $data['is_master'] = 0;
         if (!empty($this->__model->findByCode($data['code']))){
             $this->flashOne('code', 'Mã gara này đã tồn tại', 'add');
             return;
@@ -145,6 +148,11 @@ class Garages extends Controller {
         $c['page_name'] = 'Sửa ' . $this->labelOne;
         $c['item']      = $item;
         $c['dangDung']  = $this->__model->dangDungODau((int) $id);
+        /* Tài khoản chủ gara — màn Thêm có, màn Sửa trước đây không có, nên
+           không còn chỗ nào cho biết chủ gara đăng nhập bằng email gì (khách
+           báo 25/11/2026). Gara tổng thì không: chủ của nó là quản trị hệ thống. */
+        $c['laTong']    = (int) $item['is_master'] === 1;
+        $c['chu']       = $c['laTong'] ? null : $this->model('MoGaraModel')->chuGara((int) $id);
         $c['msg']       = Session::flash('msg');
         $c['errors']    = Session::flash('errors');
         $c['old']       = Session::flash('old');
@@ -179,21 +187,38 @@ class Garages extends Controller {
         if ($logo === null){ $this->flashOne('logo_file', $loi, 'edit/' . $id); return; }
         if ($logo !== '') $data['logo'] = $logo;
 
-        /* Không cho gỡ cờ gara tổng khi nó là gara tổng DUY NHẤT: mất cờ này
-           thì không còn ai sở hữu danh mục tổng, và getMaster() phải đoán bừa
-           lấy gara có id nhỏ nhất. Muốn chuyển thì đi bật cờ ở gara khác — thao
-           tác đó tự gỡ cờ ở đây. */
-        if ((int) $item['is_master'] === 1 && empty($data['is_master'])){
-            $data['is_master'] = 1;
-            Session::flash('msgError',
-                'Đây đang là gara tổng duy nhất nên không bỏ đánh dấu được. '
-              . 'Muốn chuyển thì mở gara khác rồi đánh dấu ở đó.');
-        }
+        /* Cờ gara tổng KHÔNG đổi từ form. Ô tích đã mất từ 22/09 (b525f98 thay
+           nhầm dòng <input>), chỉ còn cái nhãn — nên lưu gara tổng nào cũng rơi
+           vào nhánh "gỡ cờ" và hiện cảnh báo đỏ dù người dùng không đụng gì.
+           Mất cờ thì không còn ai sở hữu danh mục tổng; chuyển gara tổng là việc
+           nền tảng, không phải một ô tích trên form. */
+        $data['is_master'] = (int) $item['is_master'];
 
         $this->__model->edit($data, $id);
-        if (!empty($data['is_master'])) $this->__model->clearMasterExcept($id);
 
-        Session::flash('msg', 'Cập nhật ' . $this->labelOne . ' thành công');
+        /* Tài khoản chủ gara — sửa họ tên / email, đặt mật khẩu mới; gara chưa
+           có chủ thì tạo. Lỗi ở phần này thì quay lại màn sửa (giữ chữ đã gõ),
+           phần thông tin gara phía trên đã lưu xong. */
+        if (empty($data['is_master'])){
+            $f  = $this->__request->getFields();
+            $kq = $this->model('MoGaraModel')->luuChuGara((int) $id,
+                isset($f['chu_name'])     ? $f['chu_name']     : '',
+                isset($f['chu_email'])    ? $f['chu_email']    : '',
+                isset($f['chu_password']) ? $f['chu_password'] : '');
+            if ($kq['loi'] !== ''){
+                $old = $f;
+                unset($old['chu_password']);
+                Session::flash('old', $old);
+                Session::flash('msg', 'Đã lưu thông tin gara. ' . $kq['loi']);
+                $this->__response->redirect('admin/' . $this->routeBase . '/edit/' . $id);
+                return;
+            }
+            $them = $kq['da'] !== '' ? ' ' . $kq['da'] : '';
+        } else {
+            $them = '';
+        }
+
+        Session::flash('msg', 'Cập nhật ' . $this->labelOne . ' thành công.' . $them);
         $this->__response->redirect('admin/' . $this->routeBase);
     }
 

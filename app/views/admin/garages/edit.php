@@ -86,13 +86,10 @@ $batStatus = isset($old['status'])    ? (int) $old['status'] === 1    : (int) $i
                         <input type="file" class="form-control-file" name="logo_file" accept="image/*"/>
                     </div>
 
-                            <label class="custom-control-label" for="is_master">Đây là gara tổng</label>
-                        </div>
-                        <small class="form-text text-muted">
-                            Chỉ có một gara tổng. Bật ở đây thì gara đang giữ vai trò đó tự nhường lại;
-                            còn nếu đây đang là gara tổng duy nhất thì không bỏ đánh dấu được.
-                        </small>
-                    </div>
+                    @if ($laTong)
+                    <p class="text-muted small"><span class="badge badge-info">Gara tổng</span>
+                        Nơi giữ danh mục hàng hoá dùng chung cho mọi gara.</p>
+                    @endif
 
                     <div class="form-group mb-0">
                         <div class="custom-control custom-switch">
@@ -101,6 +98,50 @@ $batStatus = isset($old['status'])    ? (int) $old['status'] === 1    : (int) $i
                         </div>
                     </div>
                 </div>
+
+                @if (!$laTong)
+                <?php /* TÀI KHOẢN CHỦ GARA — màn Thêm có ba ô này, màn Sửa trước đây
+                         không có: khai xong là không còn chỗ nào xem lại chủ gara đăng
+                         nhập bằng email gì (khách báo 25/11/2026). Mật khẩu đã mã hoá
+                         nên không hiện lại được — ô mật khẩu chỉ để ĐẶT MỚI. */
+                $chuTen  = isset($old['chu_name'])  ? $old['chu_name']  : (!empty($chu) ? $chu['name']  : '');
+                $chuMail = isset($old['chu_email']) ? $old['chu_email'] : (!empty($chu) ? $chu['email'] : '');
+                ?>
+                <div class="card-body border-top bg-light">
+                    <h6 class="mb-1"><i class="fas fa-user-shield mr-1"></i> Tài khoản chủ gara
+                        @if (empty($chu))
+                        <span class="text-muted small">(chưa có — khai đủ ba ô để tạo)</span>
+                        @endif
+                    </h6>
+                    <p class="text-muted small mb-2">
+                        @if (!empty($chu))
+                        Đăng nhập bằng email dưới đây, tại địa chỉ riêng của gara.
+                        Mật khẩu đã được mã hoá nên không hiện lại được: <b>bỏ trống</b> ô mật khẩu
+                        để giữ nguyên, <b>gõ mật khẩu mới</b> khi chủ gara quên.
+                        @if ((int) $chu['status'] !== 1)
+                        <br><span class="text-danger">Tài khoản này đang bị tắt — bật lại ở màn Người dùng.</span>
+                        @endif
+                        @else
+                        Tạo một tài khoản nhóm <b>Manager</b> thuộc gara này. Để trống cả ba ô thì bỏ qua.
+                        @endif
+                    </p>
+                    <div class="form-row">
+                        <div class="form-group col-md-4 mb-0">
+                            <label class="mb-1 small">Họ tên</label>
+                            <input type="text" class="form-control" name="chu_name" value="{{$chuTen}}" autocomplete="off"/>
+                        </div>
+                        <div class="form-group col-md-4 mb-0">
+                            <label class="mb-1 small">Email đăng nhập</label>
+                            <input type="email" class="form-control" name="chu_email" value="{{$chuMail}}" autocomplete="off"/>
+                        </div>
+                        <div class="form-group col-md-4 mb-0">
+                            <label class="mb-1 small">{{!empty($chu) ? 'Mật khẩu mới' : 'Mật khẩu'}} <span class="text-muted">(từ 6 ký tự)</span></label>
+                            <input type="password" class="form-control" name="chu_password" autocomplete="new-password"
+                                   placeholder="{{!empty($chu) ? 'Giữ nguyên' : ''}}"/>
+                        </div>
+                    </div>
+                </div>
+                @endif
 
                 <div class="card-footer">
                     <button type="submit" class="btn btn-warning"><i class="fas fa-save mr-1"></i> Cập nhật</button>

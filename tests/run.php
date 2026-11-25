@@ -90,6 +90,8 @@ $tests = [
     'VietQrTest.php'              => 'HOA DON — ma QR chuyen khoan VietQR: dung chuan + CRC, tai khoan rieng tung gara',
     'DatHangChuyenKhoanGaraTest.php' => 'GIAN HANG — trang Dat hang thanh cong hien tai khoan CUA GARA (khong phai Tan Phat) + QR',
     'LinkThanhToanTest.php'       => 'HOA DON — nut Gui thanh toan o danh sach + link /thanh-toan/<ma> cong khai, rieng tung gara',
+    'ChatTheoGaraTest.php'        => 'WEBCHAT — hoi thoai gan gara dang mo: tin thu hai gui duoc, admin thay, khach nhan tra loi',
+    'SuaGaraChuGaraTest.php'      => 'NEN TANG — man Sua gara xem / sua / dat lai mat khau tai khoan chu gara',
 ];
 
 $php      = PHP_BINARY;

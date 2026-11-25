@@ -59,14 +59,6 @@
                         <input type="file" class="form-control-file" name="logo_file" accept="image/*"/>
                     </div>
 
-                            <label class="custom-control-label" for="is_master">Đây là gara tổng</label>
-                        </div>
-                        <small class="form-text text-muted">
-                            Gara tổng là nơi sở hữu danh mục hàng hoá dùng chung. Chỉ có một gara tổng —
-                            bật ở đây thì gara đang giữ vai trò đó sẽ tự nhường lại.
-                        </small>
-                    </div>
-
                     <div class="form-group mb-0">
                         <div class="custom-control custom-switch">
                             <input type="checkbox" class="custom-control-input" name="status" id="status" value="1" checked/>

@@ -330,6 +330,87 @@ class MoGaraModel extends Model {
         return '';
     }
 
+    /**
+     * Tài khoản CHỦ GARA: người nhóm Manager của chính gara đó, tạo sớm nhất.
+     * Không có thì trả null.
+     *
+     * Cho màn Sửa gara. Khách báo 25/11/2026: "tạo mới thì có mà sửa thì không
+     * thấy đâu" — màn Thêm có ô họ tên / email / mật khẩu chủ gara, màn Sửa thì
+     * không, nên không còn chỗ nào cho biết chủ gara đăng nhập bằng email gì.
+     *
+     * KHÔNG trả hash mật khẩu: màn sửa chỉ cần biết tên, email.
+     */
+    public function chuGara($garaId){
+        $u = $this->firstRaw(
+            "SELECT u.`id`, u.`name`, u.`email`, u.`status`
+               FROM `users` u
+               JOIN `groups` g ON g.`id` = u.`group_id`
+              WHERE u.`garage_id` = ? AND g.`name` = 'Manager'
+              ORDER BY u.`id` ASC LIMIT 1", [(int) $garaId]);
+        return !empty($u) ? $u : null;
+    }
+
+    /**
+     * Lưu tài khoản chủ gara từ màn Sửa gara.
+     *
+     *   - Gara đã có chủ: sửa họ tên, email; ô mật khẩu bỏ trống thì GIỮ mật khẩu
+     *     cũ, gõ vào thì đặt mật khẩu mới (chủ gara quên mật khẩu là ca hay gặp).
+     *   - Gara chưa có chủ: khai đủ ba ô thì tạo (y như lúc mở gara); bỏ trống
+     *     cả ba thì thôi, không phải lỗi.
+     *
+     * Có lỗi thì KHÔNG ghi gì — kể cả phần hợp lệ — để màn hình không nửa đổi
+     * nửa không.
+     *
+     * @return array ['loi' => câu báo lỗi hoặc '', 'da' => câu báo đã làm gì hoặc '']
+     */
+    public function luuChuGara($garaId, $ten, $mail, $mk){
+        $ten  = trim((string) $ten);
+        $mail = trim((string) $mail);
+        $mk   = (string) $mk;
+
+        $chu = $this->chuGara($garaId);
+        if (empty($chu)){
+            if ($ten === '' && $mail === '' && $mk === '') return ['loi' => '', 'da' => ''];
+            $loi = $this->taoChuGara($garaId, $ten, $mail, $mk);
+            return $loi === ''
+                ? ['loi' => '', 'da' => 'Đã tạo tài khoản chủ gara ' . $mail . '.']
+                : ['loi' => $loi, 'da' => ''];
+        }
+
+        $tien = 'Chưa lưu tài khoản chủ gara: ';
+        if ($ten === '' || $mail === ''){
+            return ['loi' => $tien . 'cần đủ họ tên và email.', 'da' => ''];
+        }
+        if (!filter_var($mail, FILTER_VALIDATE_EMAIL)){
+            return ['loi' => $tien . 'email không đúng định dạng.', 'da' => ''];
+        }
+        if ($mk !== '' && mb_strlen($mk) < 6){
+            return ['loi' => $tien . 'mật khẩu cần từ 6 ký tự.', 'da' => ''];
+        }
+        /* Email là tên đăng nhập của CẢ HỆ THỐNG — tìm khắp các gara. */
+        $trung = $this->firstRaw('SELECT `id` FROM `users` WHERE `email` = ? AND `id` <> ? LIMIT 1',
+                                 [$mail, (int) $chu['id']]);
+        if (!empty($trung)){
+            return ['loi' => $tien . 'email ' . $mail . ' đã có người dùng.', 'da' => ''];
+        }
+
+        $doi = [];
+        if ($ten !== $chu['name'])   $doi['name']  = $ten;
+        if ($mail !== $chu['email']) $doi['email'] = $mail;
+        if ($mk !== '')              $doi['password'] = Hash::make($mk);
+        if (empty($doi)) return ['loi' => '', 'da' => ''];
+
+        $doi['update_at'] = date('Y-m-d H:i:s');
+        $this->update('users', $doi, '`id` = ?', [(int) $chu['id']]);
+
+        /* Đặt mật khẩu mới thì đăng xuất mọi phiên cũ của chủ gara — đặt lại vì
+           nghi lộ mật khẩu mà phiên "ghi nhớ đăng nhập" cũ vẫn sống là vô ích. */
+        if ($mk !== '') Load::model('LoginToken')->removeByUser((int) $chu['id']);
+
+        return ['loi' => '', 'da' => 'Đã cập nhật tài khoản chủ gara ' . $mail
+                                   . ($mk !== '' ? ' (đặt mật khẩu mới).' : '.')];
+    }
+
     /** Ghi thẳng, không qua model nào — hai bảng này không có model riêng tiện dùng */
     private function chen($bang, array $data){
         return $this->insert($bang, $data);
