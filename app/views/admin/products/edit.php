@@ -199,6 +199,14 @@ $selOrig  = isset($old['origin_id'])       ? $old['origin_id']       : $item['or
                         <textarea class="form-control" name="description" rows="3">{{!empty($vDesc)?$vDesc:''}}</textarea>
                     </div>
 
+                    <?php /* VIDEO — khách 25/11/2026 "Thêm thông số cơ bản, video". Một link
+                             YouTube; trang sản phẩm có tab Video. */ ?>
+                    <div class="form-group">
+                        <label>Video <span class="text-muted small">(link YouTube — bỏ trống nếu không có)</span></label>
+                        <input type="text" class="form-control" name="video_url" value="{{isset($old['video_url']) ? $old['video_url'] : (isset($item['video_url']) ? $item['video_url'] : '')}}" placeholder="https://www.youtube.com/watch?v=..."/>
+                        {!! !empty($errors['video_url'])?'<small class="text-danger">'.e($errors['video_url']).'</small>':false !!}
+                    </div>
+
                     <?php /* META SEO — tài liệu khách 05/11/2026, Frontend mục 5:
                              "chọn sửa để bổ sung thêm các trường meta seo".
                              Để trống vẫn đúng: trang chi tiết tự lấy tên hàng và mô tả. */ ?>

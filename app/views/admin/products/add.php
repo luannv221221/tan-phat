@@ -184,6 +184,14 @@ if (!empty($old['fitments']) && is_array($old['fitments'])){
                         <textarea class="form-control" name="description" rows="3">{{!empty($old['description'])?$old['description']:''}}</textarea>
                     </div>
 
+                    <?php /* VIDEO — khách 25/11/2026 "Thêm thông số cơ bản, video". Một link
+                             YouTube; trang sản phẩm có tab Video. */ ?>
+                    <div class="form-group">
+                        <label>Video <span class="text-muted small">(link YouTube — bỏ trống nếu không có)</span></label>
+                        <input type="text" class="form-control" name="video_url" value="{{!empty($old['video_url'])?$old['video_url']:''}}" placeholder="https://www.youtube.com/watch?v=..."/>
+                        {!! !empty($errors['video_url'])?'<small class="text-danger">'.e($errors['video_url']).'</small>':false !!}
+                    </div>
+
 
                     <?php /* META SEO — tài liệu khách 05/11/2026, Frontend mục 5:
                              "chọn sửa để bổ sung thêm các trường meta seo".

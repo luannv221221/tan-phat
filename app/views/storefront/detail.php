@@ -106,6 +106,14 @@ $avgRound = (int) round($avg);
                     <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-fit" type="button" role="tab">Xe tương thích</button>
                 </li>
                 @endif
+                <?php /* Video hàng hoá (khách 25/11/2026). Chỉ nhúng MÃ video lấy qua
+                         youtube_id(), không in nguyên link vào iframe. */
+                $maVideo = !empty($part['video_url']) ? youtube_id($part['video_url']) : ''; ?>
+                @if ($maVideo !== '')
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-video" type="button" role="tab">Video</button>
+                </li>
+                @endif
             </ul>
             <div class="tab-content" id="pills-tabContent">
                 <div class="tab-pane fade show active" id="tab-desc" role="tabpanel">
@@ -124,6 +132,13 @@ $avgRound = (int) round($avg);
                         @endforeach
                         </tbody>
                     </table>
+                </div>
+                @endif
+                @if ($maVideo !== '')
+                <div class="tab-pane fade" id="tab-video" role="tabpanel">
+                    <div class="ratio ratio-16x9">
+                        <iframe src="https://www.youtube-nocookie.com/embed/{{$maVideo}}" title="Video {{$part['name']}}" frameborder="0" loading="lazy" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
                 </div>
                 @endif
                 @if (!empty($fitments))

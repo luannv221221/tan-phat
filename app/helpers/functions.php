@@ -266,6 +266,16 @@ function media_url($path){
  * mấy dòng chỉ lưu đúng mã (không kèm tên miền). Không nhận thì mấy video đó
  * hiện ra khung trống — mà nhìn vào CSDL vẫn thấy có dữ liệu, rất khó lần.
  */
+/**
+ * Link YouTube dạng chuẩn https://www.youtube.com/watch?v=<mã>, hoặc '' nếu chuỗi
+ * không phải link / mã YouTube. Video hàng hoá (khách 25/11/2026) chỉ nhận YouTube:
+ * nhúng link bất kỳ vào <iframe> là để người khác quyết định trang khách chạy gì.
+ */
+function link_youtube($url){
+    $ma = youtube_id((string) $url);
+    return $ma !== '' ? 'https://www.youtube.com/watch?v=' . $ma : '';
+}
+
 function youtube_id($url){
     if (empty($url)) return '';
     $url = trim($url);

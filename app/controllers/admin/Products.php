@@ -446,6 +446,8 @@ class Products extends Controller {
         'description'       => ['description', 'mo_ta'],
         'vat_in'            => ['vat_in', 'vat_nhap'],
         'vat_out'           => ['vat_out', 'vat_xuat'],
+        // Video YouTube (khách 25/11/2026, dòng "Cập nhật nhanh giá": "thêm ... video")
+        'video_url'         => ['video_url', 'video', 'link_video'],
     ];
 
     public function import(){
@@ -563,6 +565,15 @@ class Products extends Controller {
             foreach (['vat_in', 'vat_out'] as $cotVat){
                 if (isset($colMap[$cotVat])) $data[$cotVat] = vat_hop_le(rtrim($get($row, $cotVat), '%'));
             }
+            /* Video: cũng CHỈ ghi khi file có cột — file cũ không xoá mất video đã
+               khai. Ô không phải link YouTube thì bỏ trống và báo. */
+            if (isset($colMap['video_url'])){
+                $vd = trim($get($row, 'video_url'));
+                $data['video_url'] = $vd !== '' ? (link_youtube($vd) ?: null) : null;
+                if ($vd !== '' && $data['video_url'] === null){
+                    $result['errors'][] = "Dòng $line ($code): cột video không phải link YouTube — để trống video.";
+                }
+            }
 
             $existing = $this->__model->findByCode($code);
 
@@ -611,9 +622,10 @@ class Products extends Controller {
     public function importTemplate(){
         $headers = ['code', 'name', 'oem_code', 'price', 'sale_price', 'warranty_month',
                     'status', 'category_slug', 'brand_slug', 'manufacturer_slug',
-                    'origin_slug', 'unit_slug', 'description', 'vat_in', 'vat_out'];
+                    'origin_slug', 'unit_slug', 'description', 'vat_in', 'vat_out', 'video_url'];
         $sample  = ['PT-0001', 'Lọc gió động cơ Vios', 'OEM-17801', '350000', '', '12',
-                    '1', 'loc-gio', 'bosch', '', 'nhat-ban', 'cai', 'Lọc gió chính hãng', '10', '10'];
+                    '1', 'loc-gio', 'bosch', '', 'nhat-ban', 'cai', 'Lọc gió chính hãng', '10', '10',
+                    'https://www.youtube.com/watch?v=dQw4w9WgXcQ'];
 
         header('Content-Type: text/csv; charset=UTF-8');
         header('Content-Disposition: attachment; filename="mau-import-phu-tung.csv"');
@@ -647,7 +659,7 @@ class Products extends Controller {
         echo "\xEF\xBB\xBF"; // BOM để Excel mở đúng tiếng Việt
         $out = fopen('php://output', 'w');
         fputcsv($out, ['code', 'oem_code', 'name', 'category', 'brand', 'origin', 'unit',
-                       'price', 'sale_price', 'warranty_month', 'status', 'vat_in', 'vat_out']);
+                       'price', 'sale_price', 'warranty_month', 'status', 'vat_in', 'vat_out', 'video_url']);
         foreach ($rows as $r){
             fputcsv($out, [
                 $r['code'],
@@ -664,6 +676,7 @@ class Products extends Controller {
                 // Để trống = "theo phiếu" — nhập lại file này thì vẫn ra NULL
                 isset($r['vat_in'])  && $r['vat_in']  !== null ? vat_chu($r['vat_in'])  : '',
                 isset($r['vat_out']) && $r['vat_out'] !== null ? vat_chu($r['vat_out']) : '',
+                isset($r['video_url']) ? (string) $r['video_url'] : '',
             ]);
         }
         fclose($out);
@@ -752,6 +765,12 @@ class Products extends Controller {
             $errors['price'] = 'Giá không hợp lệ';
         }
 
+        /* Video (khách 25/11/2026): chỉ nhận link YouTube — gõ sai thì báo, không
+           lặng lẽ bỏ đi rồi người dùng tưởng đã lưu. */
+        if (!empty($f['video_url']) && link_youtube($f['video_url']) === ''){
+            $errors['video_url'] = 'Chỉ nhận link YouTube (youtube.com/watch?v=… hoặc youtu.be/…)';
+        }
+
         return $errors;
     }
 
@@ -794,6 +813,8 @@ class Products extends Controller {
                HTML — lọc ở cửa vào như Tin tức. Trang khách lọc thêm lúc in
                (mo_ta_hang_hoa) cho dữ liệu cũ và đường nhập Excel. */
             'description'     => !empty($f['description']) ? loc_html_an_toan(trim($f['description'])) : null,
+            // Video YouTube — lưu dạng chuẩn; trống / sai đã chặn ở validateInput
+            'video_url'       => !empty($f['video_url']) ? (link_youtube($f['video_url']) ?: null) : null,
             /* META SEO — tài liệu khách 05/11/2026, Frontend mục 5: "chọn sửa
                để bổ sung thêm các trường meta seo".
 
