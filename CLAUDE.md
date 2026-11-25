@@ -90,7 +90,11 @@ PHP MVC tự viết, không framework (`core/`, `app/controllers|models|views`,
   Ngoại lệ gõ tay: biển số, số khung, số máy, số km, ghi chú / tình trạng.
 - Bảng trên điện thoại: **trượt ngang** + dòng gợi ý "Vuốt ngang để xem đủ các
   cột". Khách đã bác cột ghim (sticky) và thẻ xếp dọc.
-- Dữ liệu lưu nguyên văn, escape lúc in (`e()`, `{{ }}`). `SecurityTest` quét XSS.
+- Dữ liệu lưu nguyên văn, escape lúc in (`e()`, `{{ }}`). `SecurityTest` quét XSS:
+  mọi `<?php echo $bien` trong view phải qua `e()` / `(int)` / `number_format`.
+- View: `@if` / `@foreach` / `@endif` phải **đứng riêng một dòng** — viết chung dòng
+  với chữ thì bộ dựng view in ra nguyên văn `@if (...)` (đã gặp 25/11). Cần điều kiện
+  giữa dòng thì dùng `<?php if (...): ?>`.
 
 ## Máy chủ thật
 

@@ -9,16 +9,48 @@ tắc lâu dài nằm ở [`CLAUDE.md`](../CLAUDE.md) ở gốc repo. File này 
 | | |
 |---|---|
 | Nhánh | `ban-giao-khach` = `origin/ban-giao-khach`, cây sạch |
-| Commit code cuối | `f24994c` (20/11) — sau đó chỉ có commit tài liệu |
-| Test | **4482 PASS / 0 FAIL / 0 bỏ qua** — chạy lại 25/11/2026 trên bản có hai file bàn giao này |
-| Migration mới nhất | `000113` (`2026_11_18_000113_link_thanh_toan_hoa_don.php`, thêm cột `pay_token`) |
+| Đợt cuối | 25/11/2026 — sửa theo file Tracking của khách (mục 2a) |
+| Test | **4996 PASS / 0 FAIL / 0 bỏ qua** — chạy toàn bộ 25/11/2026 sau khi gộp đợt này |
+| Migration mới nhất | `000119` (`2026_11_25_000119_loai_phieu_tien_gui_ngan_hang.php`). Đợt 25/11 thêm `000114` → `000119`, **chạy TRƯỚC khi đẩy code** (mục 4) |
 
-Worktree cũ dọn được: `.claude/worktrees/kind-mendel-d5ca2f` và
-`.claude/worktrees/competent-herschel-09e8e5` — cả hai đã merge hết vào `ban-giao-khach`.
+Worktree cũ dọn được (đã merge hết vào `ban-giao-khach`): `.claude/worktrees/kind-mendel-d5ca2f`,
+`competent-herschel-09e8e5`, `sua-loi-khach-2511`, `agent-ab2024cf2229f66b0`,
+`agent-a028e6acfff919c76`.
 
 Apache ở máy local **không tự bật lại** khi phiên Claude cũ kết thúc. Chạy test thấy
 hàng loạt FAIL phần HTTP thì bật Apache trước (XAMPP Control Panel, hoặc chạy nền
 `C:\xampp\apache\bin\httpd.exe`).
+
+## 2a. Đợt 25/11/2026 — file "Tracking-Todo-Funtion list.xlsx" của khách
+
+Khách ghi vào cột G ("Sửa lại") sheet Tracking; hai ô chữ đỏ là việc mới. Anh nhắn
+thêm hai lỗi: chat không chạy, Sửa gara mất tài khoản chủ gara.
+
+| Commit | Việc | Migration |
+|---|---|---|
+| `fc48a3d` | **Chat không chạy**: hội thoại ghi `insert()` thô, không gắn gara → admin không thấy, tin thứ hai lỗi trùng `session_key` | 000114 gán hội thoại mồ côi |
+| `0735712` | Sửa gara: xem / sửa / đặt lại mật khẩu tài khoản chủ gara; bỏ nhãn "gara tổng" mồ côi | — |
+| `3ce6c9a` | Phiếu xuất thêm loại Xuất bảo hành, Xuất dùng nội bộ; sửa loại `'ban'` của đặt hàng nội bộ | 000115 |
+| `ecd7204` | Tên viết tắt về màn Cấu hình; Lĩnh vực = "Sửa chữa, bảo dưỡng gara" / "Khác" (giá trị lưu giữ `gara`/`phu_tung`) | — |
+| `6ff526d` `99d4494` | Bản in báo giá / hoá đơn hết thừa dòng (cột Tên ~65mm, CK + thuế 0% chỉ in khi có) | — |
+| `dd887cb` | Chân trang tự soạn THAY khối mặc định; menu chân trang hết lặp link | — |
+| `505193c` | Chủ gara tự thêm / đổi tên / xoá nhóm quyền; chặn trùng tên nhóm trong gara | 000116 |
+| `722d309` | Ô "Lắp cho đời xe" gập theo hãng | — |
+| `c373549` | Ô Mô tả hàng hoá / dịch vụ có bộ soạn thảo; trang khách in qua `mo_ta_hang_hoa()` | — |
+| `31e913b` | Báo cáo Hàng bán chạy (trong Báo cáo bán hàng) | — |
+| `b6c4cb8` | 🔴 8 màn phiếu kho trên điện thoại giống đơn mua (`dong-hang-kho.js`) | — |
+| `55dd7e6` `6e73cbc` | 🔴 **VAT nhập / VAT xuất theo hàng hoá**, VAT từng dòng đơn mua / báo giá / hoá đơn, in tách theo mức, HĐĐT `TSuat` từng dòng | 000117 |
+| `c94c54e` | Trang **Hồ sơ của tôi** (tên, ảnh, SĐT, địa chỉ + đổi mật khẩu) | 000118 |
+| `19a320e` | **Sổ quỹ** tiền mặt + tiền gửi ngân hàng (tab trong Báo cáo kế toán; 5 loại phiếu BC/BN qua 1121) | 000119 |
+
+Câu khách hỏi đã trả lời qua anh: MySQL 8; Model xe ở kho tổng (Danh mục xe);
+Quận/Huyện không còn (Tỉnh → Phường/Xã sau 2025); doanh thu theo NV / KH đã có ở
+Báo cáo bán hàng (nhóm Bán hàng bị menu gọn của Tân Phát ẩn); trạng thái báo giá
+đã có, không làm hợp đồng.
+
+**Chưa làm từ file này:** video cho hàng hoá (`parts` chưa có cột; thông số kỹ thuật
+thì đã có); đổi chữ "gara" → "công ty" toàn giao diện (~270 chỗ, đã hỏi anh phạm
+vi); hai ghi chú chờ khách — xem mục 5.
 
 ## 2. Đã làm gần đây (11 → 20/11/2026)
 
@@ -47,7 +79,11 @@ hàng loạt FAIL phần HTTP thì bật Apache trước (XAMPP Control Panel, h
   khai nào để dò).
 - Chứng chỉ SSL: Let's Encrypt `CN=eteksofts.vn`, hạn **11/02/2027**, đúng 5 tên:
   `eteksofts.vn`, `www.eteksofts.vn`, `tp01` / `dmsg` / `dmdn` `.etek.eteksofts.vn`.
-- DNS `*.eteksofts.vn` **chưa có**: `tp01.eteksofts.vn`, `ml.eteksofts.vn` → *Non-existent domain*.
+- DNS `*.eteksofts.vn` **ĐÃ CÓ** (đo chiều 25/11): `tp01` / `ml` `.eteksofts.vn` → `103.74.101.148`.
+  Cả cổng 80 lẫn 443 đã vào tới ứng dụng ("Không tìm thấy gara" — đúng, chưa khai).
+  Host lạ bất kỳ cũng vào ứng dụng (vhost mặc định), nên không đo được `ServerAlias`.
+  Chứng chỉ vẫn 5 tên cũ → `https://tp01.eteksofts.vn` lỗi chứng chỉ.
+- Anh mở thêm gara **lotus** (`lotus.etek.rikkeiedu.org`, ảnh chụp 25/11).
 - Gara trên máy chủ đã biết (theo chứng chỉ và lần đo 20/11): TP01 Tân Phát (gara
   tổng), DMSG và DMDN (hai gara mẫu), **ML MinhLong** (anh mở 20/11, hiện chỉ có
   `ml.etek.rikkeiedu.org` — `http://ml.etek.rikkeiedu.org/` ra đúng trang MinhLong). Có
@@ -59,20 +95,24 @@ hàng loạt FAIL phần HTTP thì bật Apache trước (XAMPP Control Panel, h
    20/11). Không cần sửa code. Làm đúng thứ tự trong
    `deploy/CHUYEN-TEN-MIEN-ETEKSOFTS.md` **Bước 6**:
    1. DNS Mắt Bão: thêm bản ghi Host `*`, loại `A`, giá trị `103.74.101.148`.
-      **Đang ở bước này:** 20/11 anh chụp màn Mắt Bão, ô "Tạo bản ghi" đã mở nhưng
-      chưa thêm; 25/11 tra vẫn chưa có.
+      **XONG** (đo 25/11 chiều).
    2. Thêm `*.eteksofts.vn` vào `ServerAlias` cả khối 80 lẫn 443, `httpd.exe -t`,
-      restart Apache.
-   3. Chạy lại win-acme kê thêm `<mã>.eteksofts.vn` của mọi gara (giữ tên cũ);
-      `wacs --list` chỉ được còn một lịch gia hạn.
+      restart Apache. Đường đã thông (xem mục 3) — nếu chưa thêm thì vẫn nên thêm.
+   3. **Đang ở bước này:** chạy lại win-acme kê thêm `<mã>.eteksofts.vn` của mọi gara
+      (giữ tên cũ; **nhớ cả `lotus`**); `wacs --list` chỉ được còn một lịch gia hạn.
    4. Màn Tên miền: khai `<mã>.eteksofts.vn` + tích "Đặt làm tên miền chính", **Tân
-      Phát trước**, rồi DMSG, DMDN, ML.
+      Phát trước**, rồi các gara còn lại.
    5. Mở thử `https://<mã>.eteksofts.vn`.
 
    Khi anh gửi ảnh / báo xong một bước: đo lại từ ngoài (`nslookup <tên> 8.8.8.8`,
    `curl`, `openssl s_client -connect eteksofts.vn:443 -servername <tên>`) trước khi
    bảo anh làm bước sau.
-2. Mỗi gara tự chọn **ngân hàng** + số tài khoản ở Cấu hình thì hoá đơn mới có QR.
+2. **Đẩy đợt 25/11 lên máy chủ**: 6 migration `000114` → `000119` (đều chỉ thêm cột /
+   thêm dòng / điền dữ liệu, chạy được khi code cũ còn chạy). Lệnh đúng thứ tự ở
+   `deploy/CHUYEN-TEN-MIEN-ETEKSOFTS.md` Bước 2 (`git checkout origin/ban-giao-khach --
+   database/migrations` → `migrate.php` → `git pull --ff-only`). **Chưa kiểm** anh đã
+   đẩy chưa.
+3. Mỗi gara tự chọn **ngân hàng** + số tài khoản ở Cấu hình thì hoá đơn mới có QR.
 3. Gara chưa khai cấu hình website riêng thì trang khách vẫn mang tên, hotline, địa
    chỉ, email của Tân Phát — gara tự điền ở Cấu hình (không phải lỗi code; muốn đổi
    cách lấy mặc định thì hỏi anh trước).
@@ -86,6 +126,14 @@ hàng loạt FAIL phần HTTP thì bật Apache trước (XAMPP Control Panel, h
 
 ## 5. Chờ khách trả lời — đừng tự đoán
 
+- File Tracking 25/11, dòng "Quản lý giá nhập": "chuyển tất cả danh sách chức năng theo
+  chiều ngang" — menu chức năng nằm ngang trên đầu trang, hay nút thao tác trong bảng
+  xếp ngang? Hai việc khác hẳn nhau.
+- File Tracking 25/11, dòng "Thêm mới, sửa, xóa sản phẩm": "chưa đổi đường dẫn" — slug
+  sản phẩm khi đổi tên, hay tên miền mới?
+- File Tracking 25/11: "đổi gara thành công ty (gara chỉ là 1 việc của công ty)" — đã
+  hỏi anh có đổi chữ trên toàn giao diện không.
+- File Tracking 25/11: "dùng AI gì, bước tiếp theo có thêm AI không" — anh trả lời khách.
 - "Đo đạc thông minh" trong tài liệu khách 05/11 là gì.
 - Lỗi nhóm tài khoản (chưa tái hiện được).
 - "Khách đăng ký tài khoản chưa chạy" có cùng gốc với lỗi đơn web (migration 000099) không.
