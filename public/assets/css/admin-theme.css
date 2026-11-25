@@ -777,6 +777,11 @@ body.adm-auth { background: var(--bg-page); }
  * tràn) và Ghi chú rộng 45px (gõ xong không đọc lại được). Bảng đã cuộn ngang
  * sẵn nên nới thêm 140px không làm vỡ gì — chỉ là cuộn xa hơn một chút.
  */
+/* Ô VAT % của từng dòng (25/11/2026) — MỌI khổ màn. Luật 96px ở mục màn hẹp
+   chỉ chạy dưới 768px; trên máy tính bảng tự co cột này còn đúng cái mũi tên,
+   không thấy mức thuế đang chọn (thấy khi duyệt màn Lập báo giá). */
+select.o-vat, select[name$="vat[]"] { min-width: 96px; }
+
 /* Mặc định ẩn: màn rộng dùng <tfoot> của chính bảng dòng hàng, để cột tiền
    thẳng hàng với cột "Thành tiền" ở trên. */
 .tong-man-hep { display: none; }
