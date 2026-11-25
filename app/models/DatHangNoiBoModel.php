@@ -152,7 +152,7 @@ class DatHangNoiBoModel extends Model {
                 $no  = $m->nextNo();
                 $id  = (int) $m->add([
                     'issue_no'     => $no,
-                    'issue_type'   => 'ban',
+                    'issue_type'   => 'xuat_ban',   // 'ban' cũ không có trong GoodsIssuesModel::$types (000115)
                     'warehouse_id' => (int) $khoXuat['id'],
                     'partner_id'   => (int) $khachGara['id'],
                     'partner_name' => $garaMua['name'],

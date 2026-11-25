@@ -5,7 +5,8 @@ use App\core\Model;
 /**
  * KHO — Phiếu xuất kho (đầu chứng từ).
  *
- * Loại: xuat_ban (giá vốn) / xuat_khac / xuat_tra (xuất trả NCC).
+ * Loại: xuat_ban (giá vốn) / xuat_khac / xuat_tra (xuất trả NCC) / xuat_bao_hanh /
+ * xuat_noi_bo (dùng trong xưởng).
  * Giá vốn xuất tính tại thời điểm GHI SỔ theo bình quân gia quyền hiện tại.
  */
 class GoodsIssuesModel extends Model {
@@ -19,6 +20,11 @@ class GoodsIssuesModel extends Model {
         'xuat_ban'  => 'Xuất bán (giá vốn)',
         'xuat_khac' => 'Xuất khác',
         'xuat_tra'  => 'Xuất trả NCC',
+        /* Khách yêu cầu 25/11/2026: hàng đem bảo hành cho khách và hàng lấy
+           dùng trong xưởng trước phải ghi "Xuất khác", cuối tháng không tách
+           ra được. Không có logic nào rẽ nhánh theo loại — chỉ là nhãn để lọc. */
+        'xuat_bao_hanh' => 'Xuất bảo hành',
+        'xuat_noi_bo'   => 'Xuất dùng nội bộ',
     ];
 
     public function getLists($type = '', $from = '', $to = ''){

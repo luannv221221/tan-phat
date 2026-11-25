@@ -92,6 +92,7 @@ $tests = [
     'LinkThanhToanTest.php'       => 'HOA DON — nut Gui thanh toan o danh sach + link /thanh-toan/<ma> cong khai, rieng tung gara',
     'ChatTheoGaraTest.php'        => 'WEBCHAT — hoi thoai gan gara dang mo: tin thu hai gui duoc, admin thay, khach nhan tra loi',
     'SuaGaraChuGaraTest.php'      => 'NEN TANG — man Sua gara xem / sua / dat lai mat khau tai khoan chu gara',
+    'LoaiPhieuXuatTest.php'       => 'KHO — loai phieu xuat: them xuat bao hanh, xuat dung noi bo; khong con ma la',
 ];
 
 $php      = PHP_BINARY;
