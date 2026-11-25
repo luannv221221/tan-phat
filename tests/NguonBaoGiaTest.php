@@ -128,9 +128,12 @@ if (preg_match('~id="chon-nguon".*?</div>\s*</div>~su', $v, $mNut)){
    nguoc nhau, va khong co gi vo ra de thay. Da doi het sang "kho tong". */
 $ngoaiNut = preg_replace('~<button\b.*?</button>~su', '', $v);
 $ngoaiNut = preg_replace('~<\?php\s*/\*.*?\*/\s*\?>~su', '', $ngoaiNut);
-preg_match_all('~(?:của|cua)\s+công\s+ty~ui', $ngoaiNut, $mCty);
+/* 25/11/2026: chu "gara" (don vi) doi het thanh "cong ty" (khach + anh chot), nen
+   "bang gia CUA CONG TY" gio dung nghia nut dau (cong ty dang lap phieu). Cai van
+   phai chan: goi KHO TONG — bang gia CHUNG cua Tan Phat — la "cua cong ty". */
+preg_match_all('~chung\s+(?:của|cua)\s+công\s+ty~ui', $ngoaiNut, $mCty);
 ok(empty($mCty[0]),
-   'Khong con cho nao goi kho tong la "cua cong ty"',
+   'Khong con cho nao goi kho tong (bang gia chung) la "cua cong ty"',
    'Con ' . count($mCty[0]) . ' cho — nut dau da ten la "Cong ty" (gara), '
    . 'dung chu do cho Tan Phat nua la mot man hinh hai nghia');
 
