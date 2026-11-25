@@ -305,15 +305,68 @@ này, chỉ thôi là tên chính. Không có nút "sửa" một tên miền: mu
 `https://tp01.eteksofts.vn/`, `https://dmsg.eteksofts.vn/`, `https://dmdn.eteksofts.vn/`,
 `https://ml.eteksofts.vn/`, và `https://eteksofts.vn/` vẫn ra trang Tân Phát.
 
-**Mở gara MỚI sau khi đổi xong:** gara mới tự nhận `<mã>.eteksofts.vn` làm tên chính
-— không phải khai tay. Với code từ commit `f24994c` trở đi, nó nhận thêm cả tên phụ
-`<mã>.etek.eteksofts.vn` và `<mã>.etek.rikkeiedu.org`. Còn **một việc tay mỗi lần mở
-gara**: chạy lại lệnh 6.3, thêm `<mã>.eteksofts.vn` của gara mới vào chuỗi, rồi restart
-Apache — chứng chỉ kê từng tên, chưa thêm thì `https://` của gara mới báo lỗi (dùng
-`http://` vẫn được). Muốn bỏ hẳn việc này phải dùng chứng chỉ wildcard `*.eteksofts.vn`,
-mà wildcard bắt buộc xác minh qua DNS: Mắt Bão không cho win-acme làm tự động, nên
-phải chuyển quản lý DNS sang nơi có API (vd. Cloudflare, miễn phí) — việc riêng, chỉ
-làm khi số gara nhiều lên.
+**Mở công ty MỚI sau khi đổi xong:** công ty mới tự nhận `<mã>.eteksofts.vn` làm tên
+chính — không phải khai tay. Với code từ commit `f24994c` trở đi, nó nhận thêm cả tên
+phụ `<mã>.etek.eteksofts.vn` và `<mã>.etek.rikkeiedu.org`. Chứng chỉ ở 6.3 kê **từng
+tên**, nên mỗi lần mở công ty lại phải chạy 6.3 thêm tên đó (chưa thêm thì `https://`
+báo lỗi, `http://` vẫn được). **Bỏ hẳn việc này bằng 6.6.**
+
+**6.6. Chứng chỉ dùng chung `*.eteksofts.vn` — làm MỘT LẦN, công ty mở sau tự có ổ
+khoá.** Làm 6.6 thì không cần 6.3 nữa (kể cả lần đầu).
+
+*Vì sao phải làm kiểu này:* chứng chỉ wildcard `*.eteksofts.vn` phủ **mọi**
+`<mã>.eteksofts.vn`, kể cả công ty chưa mở. Nhưng Let's Encrypt chỉ cấp wildcard khi
+chứng minh qua DNS (bản ghi TXT `_acme-challenge`, đổi mỗi lần gia hạn), mà DNS của
+`eteksofts.vn` ở **Mắt Bão** — không có API cho win-acme tự ghi. Cách lách là
+**acme-dns** (có sẵn trong win-acme, không tải thêm): thêm **một lần** bản ghi CNAME ở
+Mắt Bão, trỏ `_acme-challenge` sang máy chủ acme-dns; từ đó win-acme tự ghi TXT bên
+đó và tự gia hạn, không ai phải vào Mắt Bão nữa.
+
+Lần đầu phải chạy win-acme kiểu **hỏi–đáp** (acme-dns không chạy một dòng lệnh được ở
+lần đăng ký đầu). Chữ trên menu có thể lệch đôi chút theo bản win-acme — chọn dòng
+gần nghĩa nhất, phân vân thì chụp màn hình gửi em.
+
+1. Mở `cmd` bằng **Run as administrator**, gõ `C:\win-acme\wacs.exe`.
+2. Menu chính: chọn **`M`** (*Create certificate (full options)*).
+3. Nguồn tên miền: chọn **Manual input**, gõ đúng chuỗi:
+   `eteksofts.vn,*.eteksofts.vn,*.etek.eteksofts.vn`
+   - `*.eteksofts.vn` phủ `www` và mọi `<mã>.eteksofts.vn`.
+   - `*.etek.eteksofts.vn` giữ ổ khoá cho link cũ `<mã>.etek.eteksofts.vn` (wildcard
+     chỉ phủ **một** tầng: `*.eteksofts.vn` không phủ `dmsg.etek.eteksofts.vn`).
+   - Các câu hỏi tên chứng chỉ / tách chứng chỉ: Enter (giữ mặc định, một chứng chỉ).
+4. Cách chứng minh: chọn dòng **[dns] ... acme-dns**.
+5. Máy chủ acme-dns: gõ `https://auth.acme-dns.io/`
+6. win-acme in ra bản ghi cần tạo, dạng
+   `_acme-challenge.eteksofts.vn  CNAME  <chuỗi-dài>.auth.acme-dns.io`
+   — thường **hai** dòng (thêm `_acme-challenge.etek.eteksofts.vn`). **Để nguyên cửa sổ
+   đó**, vào Mắt Bão → Quản lý DNS `eteksofts.vn` → thêm từng bản ghi:
+   Host `_acme-challenge` (dòng thứ hai: `_acme-challenge.etek`), Loại **CNAME**, Giá
+   trị đúng chuỗi win-acme in ra. Đợi 5–15 phút rồi quay lại win-acme bấm Enter. Nó
+   tự kiểm CNAME; báo chưa thấy thì đợi thêm rồi thử lại.
+7. Cách cất: chọn **PEM encoded files**, đường dẫn `C:\ssl` (như 5.2).
+8. Bước cài đặt: chọn **No (additional) installation steps**.
+9. Xem tên file mới trong `C:\ssl`. Khác `eteksofts.vn-chain.pem` / `eteksofts.vn-key.pem`
+   thì sửa hai dòng `SSLCertificateFile` / `SSLCertificateKeyFile` của khối 443 (5.3)
+   cho khớp. `C:\xampp\apache\bin\httpd.exe -t` → `Syntax OK` → restart Apache.
+10. `C:\win-acme\wacs.exe --list`: huỷ lịch gia hạn **cũ** (lịch kê từng tên) —
+    `C:\win-acme\wacs.exe --cancel --id <id cũ>` — chỉ giữ lịch wildcard. Để cả hai thì
+    lịch cũ ghi đè chứng chỉ wildcard khi gia hạn.
+11. Mở thử `https://test.eteksofts.vn/`, `https://lotus.eteksofts.vn/`: phải có ổ khoá.
+
+Từ đây mở công ty mới là `https://<mã>.eteksofts.vn` có ổ khoá ngay. Gia hạn 60 ngày
+tự động; vẫn phải **restart Apache sau mỗi lần gia hạn** (5.4).
+
+Biết trước:
+- `auth.acme-dns.io` là máy chủ acme-dns **công cộng, miễn phí** (đo 25/11/2026:
+  `/health` trả 200); tác giả khuyên tự dựng máy riêng. Ngày nào nó ngừng thì gia
+  hạn thất bại — chứng chỉ đang có vẫn chạy tới hạn, win-acme ghi lỗi — khi đó quay
+  về 6.3, hoặc chuyển DNS sang Cloudflare (có API, win-acme có plugin).
+- Tên `*.etek.rikkeiedu.org` (DNS ở dotvndns) **không** nằm trong chứng chỉ này — vẫn
+  chạy `http://` như trước giờ.
+- **Tên miền RIÊNG** của một công ty (vd `garaabc.vn`, khai ở màn Tên miền) **không**
+  được wildcard phủ. Muốn khai xong là tự có ổ khoá thì phải đặt **Caddy** đứng trước
+  Apache (tự xin chứng chỉ ngay lần đầu có người mở tên đó, chỉ cho tên đã khai) —
+  việc riêng, làm khi có công ty thật sự dùng tên miền riêng.
 
 ## Bước 7 — Chuyển hẳn khách sang tên mới (tuỳ anh, làm sau cùng)
 

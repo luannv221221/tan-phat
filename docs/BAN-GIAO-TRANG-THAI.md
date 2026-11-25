@@ -101,11 +101,14 @@ trên form); hai ghi chú chờ khách — xem mục 5.
       **XONG** (đo 25/11 chiều).
    2. Thêm `*.eteksofts.vn` vào `ServerAlias` cả khối 80 lẫn 443, `httpd.exe -t`,
       restart Apache. Đường đã thông (xem mục 3) — nếu chưa thêm thì vẫn nên thêm.
-   3. **Đang ở bước này:** chạy lại win-acme kê thêm `<mã>.eteksofts.vn` của mọi gara
-      (giữ tên cũ; **nhớ cả `lotus`**); `wacs --list` chỉ được còn một lịch gia hạn.
+   3. **Đang ở bước này:** chứng chỉ cho `<mã>.eteksofts.vn`. Nên làm **6.6** (wildcard
+      `*.eteksofts.vn` qua acme-dns — làm một lần, công ty mở sau tự có ổ khoá) thay
+      cho 6.3 (kê từng tên, mỗi lần mở công ty lại chạy). `wacs --list` chỉ được còn
+      một lịch gia hạn.
    4. ~~Màn Tên miền: khai `<mã>.eteksofts.vn` làm chính~~ → **migration `000122` tự làm**
       cho mọi công ty (anh hỏi 25/11: "sao không làm mặc định ... mã.eteksofts.vn luôn").
-      Máy chủ: **chưa chạy 000122** lúc viết (đã chạy tới 000121).
+      Máy chủ: **ĐÃ chạy 000122** (đo 25/11 tối: `http://test.eteksofts.vn` ra trang
+      TEST, `dmsg.eteksofts.vn` ra DMSG, tên chưa khai ra "Không tìm thấy công ty").
    5. Mở thử `https://<mã>.eteksofts.vn`.
 
    Khi anh gửi ảnh / báo xong một bước: đo lại từ ngoài (`nslookup <tên> 8.8.8.8`,
@@ -123,9 +126,12 @@ trên form); hai ghi chú chờ khách — xem mục 5.
    chủ còn `APP_DEBUG=true` — **chưa xác nhận** đã sửa.
 5. win-acme tự gia hạn chứng chỉ nhưng Apache chỉ đọc chứng chỉ mới **sau khi
    restart** — nhắc anh trước 11/02/2027, hoặc gắn lệnh restart vào win-acme.
-6. Mỗi lần mở gara mới: chạy lại lệnh win-acme thêm tên gara đó (chứng chỉ kê từng
-   tên). Muốn bỏ việc này phải dùng wildcard qua DNS có API (vd. Cloudflare) — việc
-   riêng, chưa ai giao.
+6. Mỗi lần mở công ty mới: chạy lại lệnh win-acme thêm tên đó (chứng chỉ kê từng
+   tên). Anh hỏi 25/11 "có cách nào khi họ điền domain tự chạy ssl": **có** — chứng chỉ
+   wildcard `*.eteksofts.vn` qua **acme-dns** (một bản ghi CNAME ở Mắt Bão, không phải
+   chuyển DNS), hướng dẫn `deploy/CHUYEN-TEN-MIEN-ETEKSOFTS.md` **6.6** (thay 6.3).
+   Chưa làm trên máy chủ lúc viết. Tên miền RIÊNG của công ty (không phải
+   `.eteksofts.vn`) cần Caddy đứng trước Apache — chưa làm, chờ có công ty cần.
 
 ## 5. Chờ khách trả lời — đừng tự đoán
 
