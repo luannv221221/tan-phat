@@ -29,6 +29,35 @@ $profit = (float) $totals['revenue'] - (float) $totals['cost'];
     </div>
 </div>
 
+<?php /* HÀNG BÁN CHẠY — khách ghi 25/11/2026 cạnh "Báo cáo hàng tồn lâu". Có hàng tồn
+         lâu (đẩy bán / giảm giá) thì cần cả chiều ngược lại: hàng nào bán nhiều để
+         nhập thêm. Cùng kỳ lọc phía trên, chỉ hoá đơn đã ghi sổ. */ ?>
+<div class="card card-outline card-warning" id="hang-ban-chay">
+    <div class="card-header"><h3 class="card-title"><i class="fas fa-fire mr-2"></i>Hàng bán chạy <span class="text-muted small">(20 mặt hàng bán nhiều nhất trong kỳ)</span></h3></div>
+    <div class="card-body table-responsive p-0">
+        <table class="table table-sm table-hover mb-0">
+            <thead><tr><th class="text-center">#</th><th>Mã</th><th>Tên hàng</th><th class="text-right">SL bán</th><th class="text-center">Số HĐ</th><th class="text-right">Doanh thu</th><th class="text-right">Lãi gộp</th></tr></thead>
+            <tbody>
+            @if (!empty($banChay))
+                @foreach ($banChay as $i => $r)
+                <tr>
+                    <td class="text-center">{{(int)$i + 1}}</td>
+                    <td class="text-nowrap"><code>{{$r['ma']}}</code></td>
+                    <td>{{$r['ten']}}<?php if ($r['loai'] === 'service'): ?> <span class="badge badge-light border">Dịch vụ</span><?php endif; ?></td>
+                    <td class="text-right font-weight-bold">{{rtrim(rtrim(number_format((float)$r['so_luong'],3,',','.'),'0'),',')}}</td>
+                    <td class="text-center">{{(int)$r['so_hd']}}</td>
+                    <td class="text-right">{{number_format((float)$r['doanh_thu'],0,',','.')}}</td>
+                    <td class="text-right {{$r['lai_gop']>=0?'text-success':'text-danger'}}">{{number_format((float)$r['lai_gop'],0,',','.')}}</td>
+                </tr>
+                @endforeach
+            @else
+                <tr><td colspan="7" class="text-center text-muted py-3">Chưa có hàng bán trong kỳ này</td></tr>
+            @endif
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-6">
         <div class="card card-outline card-primary">

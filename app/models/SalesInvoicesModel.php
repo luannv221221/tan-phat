@@ -246,6 +246,49 @@ class SalesInvoicesModel extends Model {
      *
      * @return array [partner_id => ['ten' => , 'tien' => , 'so_hd' => ]]
      */
+    /**
+     * HÀNG BÁN CHẠY — khách ghi 25/11/2026 cạnh "Báo cáo hàng tồn lâu": "Báo cáo
+     * hàng bán chạy". Gộp dòng hàng của hoá đơn ĐÃ GHI SỔ (nháp chưa phải là đã
+     * bán) của gara đang mở, theo mặt hàng, xếp số lượng giảm dần.
+     *
+     * Tên / mã lấy từ bảng hàng hoá; dòng có mặt hàng đã xoá vẫn tính, mang
+     * tên "(hàng đã xoá)" — bỏ đi là tổng doanh thu bảng này lệch với báo cáo.
+     *
+     * @return array [['part_id','ma','ten','loai','so_luong','doanh_thu','gia_von','lai_gop','so_hd'], ...]
+     */
+    public function hangBanChay($from = '', $to = '', $gioiHan = 20){
+        list($dkGara, $bd) = $this->dkGara('s');
+        $sql = 'SELECT i.`part_id`, p.`code` AS `ma`, p.`name` AS `ten`, p.`item_type` AS `loai`,
+                       SUM(i.`quantity`) AS `so_luong`, SUM(i.`amount`) AS `doanh_thu`,
+                       SUM(i.`cost_amount`) AS `gia_von`, COUNT(DISTINCT i.`invoice_id`) AS `so_hd`
+                  FROM `sales_invoice_items` i
+                  JOIN `sales_invoices` s ON s.`id` = i.`invoice_id`
+                  LEFT JOIN `parts` p ON p.`id` = i.`part_id`
+                 WHERE ' . $dkGara . ' AND s.`status` = 1';
+        if ($from !== '') { $sql .= ' AND s.`invoice_date` >= ?'; $bd[] = $from; }
+        if ($to !== '')   { $sql .= ' AND s.`invoice_date` <= ?'; $bd[] = $to; }
+        $sql .= ' GROUP BY i.`part_id`, p.`code`, p.`name`, p.`item_type`
+                  ORDER BY `so_luong` DESC, `doanh_thu` DESC
+                  LIMIT ' . max(1, (int) $gioiHan);
+
+        $ra = [];
+        foreach ((array) $this->getRaw($sql, $bd) as $r){
+            $dt = (float) $r['doanh_thu']; $gv = (float) $r['gia_von'];
+            $ra[] = [
+                'part_id'   => (int) $r['part_id'],
+                'ma'        => (string) $r['ma'],
+                'ten'       => $r['ten'] !== null && $r['ten'] !== '' ? $r['ten'] : '(hàng đã xoá)',
+                'loai'      => (string) $r['loai'],
+                'so_luong'  => (float) $r['so_luong'],
+                'doanh_thu' => $dt,
+                'gia_von'   => $gv,
+                'lai_gop'   => $dt - $gv,
+                'so_hd'     => (int) $r['so_hd'],
+            ];
+        }
+        return $ra;
+    }
+
     public function tienBanTheoKhach($den = null){
         list($dkGara, $bd) = $this->dkGara('sales_invoices');
         $sql = 'SELECT `sales_invoices`.`customer_id` AS `pid`,

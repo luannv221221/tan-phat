@@ -27,7 +27,11 @@
                 <a href="{{_WEB_URL.'/admin/ton-kho-lau'}}" class="btn btn-sm btn-default">Xoá</a>
             </div>
         </form>
-        <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> "Số ngày tồn" = khoảng cách từ lần nhập/xuất gần nhất tới ngày báo cáo. Hàng để càng lâu càng cần đẩy bán / giảm giá.</p>
+        <p class="text-muted small mb-0"><i class="fas fa-info-circle mr-1"></i> "Số ngày tồn" = khoảng cách từ lần nhập/xuất gần nhất tới ngày báo cáo. Hàng để càng lâu càng cần đẩy bán / giảm giá.
+            @if (route('admin/bao-cao-ban-hang'))
+            Chiều ngược lại — hàng bán nhiều để nhập thêm: <a href="{{_WEB_URL.'/admin/bao-cao-ban-hang#hang-ban-chay'}}"><i class="fas fa-fire mr-1"></i>Hàng bán chạy</a>.
+            @endif
+        </p>
     </div>
 </div>
 

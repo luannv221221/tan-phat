@@ -52,6 +52,8 @@ class Salesreport extends Controller {
         $this->__data['content']['byCustomer']  = array_values($byCustomer);
         $this->__data['content']['byStaff']     = array_values($byStaff);
         $this->__data['content']['totals']      = $tot;
+        /* Hàng bán chạy — khách ghi 25/11/2026, cùng bộ lọc ngày của báo cáo. */
+        $this->__data['content']['banChay']     = $this->__model->hangBanChay($from, $to, 20);
         $this->__data['content']['filterFrom']  = $from;
         $this->__data['content']['filterTo']    = $to;
         $this->__data['content']['msg']         = Session::flash('msg');
