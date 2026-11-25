@@ -31,7 +31,7 @@ một li nào — họ vẫn thấy đủ tám nhóm như trước.
 | | Trước | Sau |
 |---|---|---|
 | Tổng quan | ✓ | ✓ |
-| **Quản lý gara** | nằm trong *Hệ thống* | **đứng riêng ngoài menu**, ngay dưới Tổng quan |
+| **Quản lý công ty** | nằm trong *Hệ thống* | **đứng riêng ngoài menu**, ngay dưới Tổng quan |
 | Bán hàng | ✓ | ẩn |
 | Kế toán | ✓ | ẩn |
 | Kho | ✓ | ✓ |
@@ -39,7 +39,7 @@ một li nào — họ vẫn thấy đủ tám nhóm như trước.
 | Danh mục xe | ✓ | ✓ |
 | CSKH | ✓ | ẩn |
 | Quản lý website | ✓ | ẩn |
-| Hệ thống | ✓ | ✓ (đã rút *Quản lý gara* ra) |
+| Hệ thống | ✓ | ✓ (đã rút *Quản lý công ty* ra) |
 
 ## Hai điều cần biết trước khi demo
 

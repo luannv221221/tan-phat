@@ -141,7 +141,7 @@ PowerShell thì mỗi dòng thành một lệnh riêng và báo `Missing express
 operator '--'`. Danh sách `--host` phải để trong nháy kép: PowerShell coi dấu phẩy
 trần là mảng và tách thành nhiều tham số.)*
 
-- `--host`: kê **đúng các gara đang có** (xem màn Quản lý gara). Gara mở sau thì chạy
+- `--host`: kê **đúng các gara đang có** (xem màn Quản lý công ty (tên cũ: Quản lý gara)). Gara mở sau thì chạy
   lại lệnh này với danh sách mới.
 - `--webroot`: đúng `DocumentRoot` của vhost. `.htaccess` của dự án phục vụ thẳng
   file có thật, nên file xác minh `/.well-known/acme-challenge/...` đi qua được.
@@ -259,7 +259,7 @@ Mở `http://tp01.eteksofts.vn/`: lúc này ra **"Không tìm thấy gara"** là
 đã thông, chỉ chưa khai ở 6.4). Ra trang XAMPP (`/dashboard/`) là file vhosts mất
 khối 80 — xem lại cảnh báo ở 5.3.
 
-**6.3. Cấp lại chứng chỉ, thêm tên mới.** Kê **mọi gara đang có** ở màn Quản lý gara
+**6.3. Cấp lại chứng chỉ, thêm tên mới.** Kê **mọi gara đang có** ở màn Quản lý công ty (tên cũ: Quản lý gara)
 (mỗi gara một tên `<mã>.eteksofts.vn`), và giữ các tên cũ đang có trong chứng chỉ
 để link đã gửi không bị lỗi. Với 4 gara TP01, DMSG, DMDN, ML:
 
@@ -274,7 +274,7 @@ Restart Apache. Sau đó chạy `C:\win-acme\wacs.exe --list`. Phải còn **m�
 hạn. Nếu có hai, lịch cũ 5 tên sẽ ghi đè chứng chỉ mới khi gia hạn, nên phải huỷ
 lịch cũ: `C:\win-acme\wacs.exe --cancel --id <id của lịch cũ>` (id in ở `--list`).
 
-**6.4. Khai tên trong ứng dụng.** Vào **Quản lý gara**, bấm nút quả địa cầu (Tên miền).
+**6.4. Khai tên trong ứng dụng.** Vào **Quản lý công ty (tên cũ: Quản lý gara)**, bấm nút quả địa cầu (Tên miền).
 Ở ô *Khai thêm tên miền*, nhập tên, **tích *Đặt làm tên miền chính***, bấm *Khai tên
 miền*. Làm **Tân Phát trước**:
 

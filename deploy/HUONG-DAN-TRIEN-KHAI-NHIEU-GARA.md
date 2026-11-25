@@ -52,7 +52,7 @@ C:\xampp\php\php.exe migrate.php status
 Máy local không có tên miền thật. Nhưng `*.localhost` trỏ về `127.0.0.1` sẵn
 trên Windows, nên chỉ cần khai thêm host `.localhost` cho từng gara.
 
-**Khai bằng màn hình** (từ 08/10/2026): Hệ thống › Quản lý gara → nút 🌐 ở cột
+**Khai bằng màn hình** (từ 08/10/2026): Hệ thống › Quản lý công ty (tên cũ: Quản lý gara) → nút 🌐 ở cột
 Thao tác → nhập `<mã gara>.localhost` → Khai tên miền. Màn đó đánh dấu host của
 máy nội bộ để khỏi lẫn với tên miền thật, và tự chặn các việc dễ làm hỏng (tắt
 hoặc xoá tên miền cuối cùng của một gara).
@@ -180,7 +180,7 @@ C:\xampp\php\php.exe migrate.php
 
 ### 2.3. Khai tên miền cho một gara — dùng màn hình, đừng gõ SQL
 
-Hệ thống › **Quản lý gara** → nút 🌐 ở cột Thao tác. Màn đó:
+Hệ thống › **Quản lý công ty (tên cũ: Quản lý gara)** → nút 🌐 ở cột Thao tác. Màn đó:
 
 - hiện **tên miền gốc** của hệ thống và địa chỉ mà gara mở sau sẽ nhận;
 - nhắc lại hai việc **ngoài hệ thống** (DNS + ServerAlias) ngay cạnh;
@@ -245,7 +245,7 @@ không tới được ứng dụng. Restart Apache sau khi sửa.
 | Mở một tên miền phụ chưa khai | **404** "Không tìm thấy gara" |
 | Đăng nhập tài khoản gara A tại địa chỉ gara B | **Bị đá ra** |
 | Menu nhóm Kho | Có mục **Đặt hàng kho tổng** |
-| Màn Quản lý gara › Thêm gara | Có khối **Tài khoản chủ gara** |
+| Màn Quản lý công ty (tên cũ: Quản lý gara) › Thêm gara | Có khối **Tài khoản chủ gara** |
 
 ### Kiểm riêng cho đợt 08/10/2026
 

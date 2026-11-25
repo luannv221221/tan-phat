@@ -90,6 +90,11 @@ PHP MVC tự viết, không framework (`core/`, `app/controllers|models|views`,
   Ngoại lệ gõ tay: biển số, số khung, số máy, số km, ghi chú / tình trạng.
 - Bảng trên điện thoại: **trượt ngang** + dòng gợi ý "Vuốt ngang để xem đủ các
   cột". Khách đã bác cột ghim (sticky) và thẻ xếp dọc.
+- **Chữ trên giao diện gọi đơn vị dùng hệ thống là "công ty", không phải "gara"** (khách
+  25/11/2026: "gara chỉ là 1 việc của công ty"): Quản lý công ty, Mã công ty, công ty
+  tổng, chủ công ty. "gara" chỉ còn ở nghĩa ngành nghề ("thiết bị gara ô tô", "Sửa chữa,
+  bảo dưỡng gara"). Tên biến / bảng / URL (`garages`, `$gara`) giữ nguyên. Chốt:
+  `tests/GaraThanhCongTyTest.php` — thêm chữ "gara" mới là test đỏ.
 - Dữ liệu lưu nguyên văn, escape lúc in (`e()`, `{{ }}`). `SecurityTest` quét XSS:
   mọi `<?php echo $bien` trong view phải qua `e()` / `(int)` / `number_format`.
 - View: `@if` / `@foreach` / `@endif` phải **đứng riêng một dòng** — viết chung dòng

@@ -55,7 +55,7 @@ thì chỉ tên miền đó hỏng.
 Mỗi tên miền một chứng chỉ riêng, nhưng **vẫn tự động**:
 
 1. Gara trỏ `A record` → `103.74.101.148` (việc của gara, một lần)
-2. Mình khai tên miền trong *Hệ thống › Quản lý gara › Tên miền*
+2. Mình khai tên miền trong *Hệ thống › Quản lý công ty (tên cũ: Quản lý gara) › Tên miền*
 3. Mình chạy `win-acme` cho tên miền đó — **khoảng 1 phút**
 4. Xong. Gia hạn tự động, không ai phải nhớ
 

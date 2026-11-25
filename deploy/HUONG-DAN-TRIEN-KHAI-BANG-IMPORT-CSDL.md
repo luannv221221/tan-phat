@@ -129,7 +129,7 @@ Khoảng hở chỉ dài bằng thời gian `git pull`. Cứ làm ngoài giờ l
 Ba việc sau nhập CSDL không mang theo được, phải làm riêng trên máy chủ:
 
 > **Khai tên miền cho một gara thì dùng màn hình**, đừng gõ SQL: Hệ thống ›
-> Quản lý gara → nút 🌐. Màn đó hiện tên miền gốc của hệ thống, nhắc hai việc
+> Quản lý công ty (tên cũ: Quản lý gara) → nút 🌐. Màn đó hiện tên miền gốc của hệ thống, nhắc hai việc
 > dưới đây ngay cạnh, và chặn các thao tác dễ làm hỏng (tắt / xoá tên miền cuối
 > cùng của một gara).
 
@@ -191,7 +191,7 @@ HTTP, chỉ là không mã hoá.
 | Một tên miền phụ chưa khai | **404** "Không tìm thấy gara" |
 | Đăng nhập gara A tại địa chỉ gara B | **Bị đá ra** |
 | Menu nhóm Kho | Có mục **Đặt hàng kho tổng** |
-| Quản lý gara › Thêm gara | Có khối **Tài khoản chủ gara** |
+| Quản lý công ty (tên cũ: Quản lý gara) › Thêm gara | Có khối **Tài khoản chủ gara** |
 | Đăng nhập bằng `admin@gara-mau.test` | **KHÔNG vào được** — đã dọn |
 
 Việc cuối quan trọng nhất: nếu tài khoản đó vẫn vào được nghĩa là **chưa chạy

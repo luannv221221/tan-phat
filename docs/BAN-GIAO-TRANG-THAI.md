@@ -11,7 +11,7 @@ tắc lâu dài nằm ở [`CLAUDE.md`](../CLAUDE.md) ở gốc repo. File này 
 | Nhánh | `ban-giao-khach` = `origin/ban-giao-khach`, cây sạch |
 | Đợt cuối | 25/11/2026 — sửa theo file Tracking của khách (mục 2a) |
 | Test | **5017 PASS / 0 FAIL / 0 bỏ qua** — chạy toàn bộ 25/11/2026 sau khi gộp đợt này |
-| Migration mới nhất | `000120` (`2026_11_25_000120_video_hang_hoa.php`). Đợt 25/11 thêm `000114` → `000120`, **chạy TRƯỚC khi đẩy code** (mục 4) |
+| Migration mới nhất | `000121` (`2026_11_25_000121_ten_man_gara_thanh_cong_ty.php`). Đợt 25/11 thêm `000114` → `000121`, **chạy TRƯỚC khi đẩy code** (mục 4) |
 
 Worktree cũ dọn được (đã merge hết vào `ban-giao-khach`): `.claude/worktrees/kind-mendel-d5ca2f`,
 `competent-herschel-09e8e5`, `sua-loi-khach-2511`, `agent-ab2024cf2229f66b0`,
@@ -43,6 +43,7 @@ thêm hai lỗi: chat không chạy, Sửa gara mất tài khoản chủ gara.
 | `c94c54e` | Trang **Hồ sơ của tôi** (tên, ảnh, SĐT, địa chỉ + đổi mật khẩu) | 000118 |
 | `19a320e` | **Sổ quỹ** tiền mặt + tiền gửi ngân hàng (tab trong Báo cáo kế toán; 5 loại phiếu BC/BN qua 1121) | 000119 |
 | (video) | Video YouTube cho hàng hoá: form, Excel nhập / xuất, tab Video trang khách | 000120 |
+| (đổi chữ) | Chữ "gara" (đơn vị) → "công ty" khắp giao diện, 228 chỗ; nghĩa ngành nghề ("thiết bị gara ô tô", "bảo dưỡng gara") + mã nội bộ giữ nguyên. Chốt: `tests/GaraThanhCongTyTest.php` | 000121 (tên 2 màn trong `modules`) |
 
 Câu khách hỏi đã trả lời qua anh: MySQL 8; Model xe ở kho tổng (Danh mục xe);
 Quận/Huyện không còn (Tỉnh → Phường/Xã sau 2025); doanh thu theo NV / KH đã có ở
@@ -50,8 +51,7 @@ Báo cáo bán hàng (nhóm Bán hàng bị menu gọn của Tân Phát ẩn); t
 đã có, không làm hợp đồng.
 
 **Chưa làm từ file này:** thông số kỹ thuật chưa có trong file Excel nhập / xuất (có
-trên form); đổi chữ "gara" → "công ty" toàn giao diện (~270 chỗ, đã hỏi anh phạm
-vi); hai ghi chú chờ khách — xem mục 5.
+trên form); hai ghi chú chờ khách — xem mục 5.
 
 ## 2. Đã làm gần đây (11 → 20/11/2026)
 
@@ -88,7 +88,7 @@ vi); hai ghi chú chờ khách — xem mục 5.
 - Gara trên máy chủ đã biết (theo chứng chỉ và lần đo 20/11): TP01 Tân Phát (gara
   tổng), DMSG và DMDN (hai gara mẫu), **ML MinhLong** (anh mở 20/11, hiện chỉ có
   `ml.etek.rikkeiedu.org` — `http://ml.etek.rikkeiedu.org/` ra đúng trang MinhLong). Có
-  thể còn gara khác — xem màn Quản lý gara trên máy chủ.
+  thể còn gara khác — xem màn Quản lý công ty trên máy chủ.
 
 ## 4. Việc đang dở — phần của anh trên máy chủ
 
@@ -108,7 +108,7 @@ vi); hai ghi chú chờ khách — xem mục 5.
    Khi anh gửi ảnh / báo xong một bước: đo lại từ ngoài (`nslookup <tên> 8.8.8.8`,
    `curl`, `openssl s_client -connect eteksofts.vn:443 -servername <tên>`) trước khi
    bảo anh làm bước sau.
-2. **Đẩy đợt 25/11 lên máy chủ**: 7 migration `000114` → `000120` (đều chỉ thêm cột /
+2. **Đẩy đợt 25/11 lên máy chủ**: 8 migration `000114` → `000121` (đều chỉ thêm cột /
    thêm dòng / điền dữ liệu, chạy được khi code cũ còn chạy). Lệnh đúng thứ tự ở
    `deploy/CHUYEN-TEN-MIEN-ETEKSOFTS.md` Bước 2 (`git checkout origin/ban-giao-khach --
    database/migrations` → `migrate.php` → `git pull --ff-only`). **Chưa kiểm** anh đã
@@ -132,8 +132,6 @@ vi); hai ghi chú chờ khách — xem mục 5.
   xếp ngang? Hai việc khác hẳn nhau.
 - File Tracking 25/11, dòng "Thêm mới, sửa, xóa sản phẩm": "chưa đổi đường dẫn" — slug
   sản phẩm khi đổi tên, hay tên miền mới?
-- File Tracking 25/11: "đổi gara thành công ty (gara chỉ là 1 việc của công ty)" — đã
-  hỏi anh có đổi chữ trên toàn giao diện không.
 - File Tracking 25/11: "dùng AI gì, bước tiếp theo có thêm AI không" — anh trả lời khách.
 - "Đo đạc thông minh" trong tài liệu khách 05/11 là gì.
 - Lỗi nhóm tài khoản (chưa tái hiện được).
