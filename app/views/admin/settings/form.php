@@ -37,6 +37,19 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                          yêu cầu: "cái này phải ở bên Quản lý website". Ở lại đây là những ô
                          quyết định CÁCH GARA LÀM VIỆC chứ không phải trang khách hiển thị
                          gì: lĩnh vực, diện tích xưởng, cách tính giá vốn, lịch cập nhật giá. */ ?>
+                <?php /* TÊN VIẾT TẮT — yêu cầu 29/10/2026; 12/11 theo tên + logo sang Cấu
+                         hình website, khách ghi 25/11/2026 "chuyển từ website về cấu hình":
+                         nó chỉ hiện ở menu trái TRANG QUẢN TRỊ (tên đầy đủ 35 ký tự phải kẹp
+                         hai dòng trong sidebar 232px), trang khách không dùng tới. */ ?>
+                <div class="form-group">
+                    <label>Tên viết tắt doanh nghiệp</label>
+                    <input type="text" name="site_short_name" class="form-control"
+                           value="{{$s('site_short_name')}}" placeholder="VD: Tân Phát ETEK"/>
+                    <small class="form-text text-muted">
+                        Hiện ở <b>menu trái trang quản trị</b>, cạnh logo — thay cho tên đầy đủ.
+                        Bỏ trống thì lấy tên website.
+                    </small>
+                </div>
                 <?php /* LĨNH VỰC — yêu cầu 29/10/2026, ảnh minh hoạ khoanh đúng
                          chỗ này (cạnh Logo). Quyết định màn Lập báo giá có hiện
                          khối Hãng bảo hiểm / Biển số xe / Số km hay không: chỗ
@@ -47,12 +60,15 @@ $s = function($key, $default = '') use ($settings){ return isset($settings[$key]
                     <label>Lĩnh vực</label>
                     <?php $lv = $s('linh_vuc', 'gara'); ?>
                     <select name="linh_vuc" class="form-control">
-                        <option value="gara" <?php echo $lv !== 'phu_tung' ? 'selected' : ''; ?>>Gara ô tô (sửa chữa, bảo dưỡng)</option>
-                        <option value="phu_tung" <?php echo $lv === 'phu_tung' ? 'selected' : ''; ?>>Bán phụ tùng, thiết bị</option>
+                        <?php /* Nhãn theo khách ghi 25/11/2026: "Lĩnh vực sửa thành (sửa chữa,
+                                 bảo dưỡng gara và khác)". GIÁ TRỊ LƯU giữ nguyên `gara` /
+                                 `phu_tung` — đổi giá trị là gara nào đã chọn sẽ bị đảo lựa chọn. */ ?>
+                        <option value="gara" <?php echo $lv !== 'phu_tung' ? 'selected' : ''; ?>>Sửa chữa, bảo dưỡng gara</option>
+                        <option value="phu_tung" <?php echo $lv === 'phu_tung' ? 'selected' : ''; ?>>Khác</option>
                     </select>
                     <small class="form-text text-muted">
-                        Chọn <b>Gara ô tô</b> thì màn Lập báo giá có thêm Hãng bảo hiểm, Bảo hiểm trả,
-                        Biển số xe và Số km vào. Chọn <b>Bán phụ tùng</b> thì báo giá chỉ cần thông tin khách hàng.
+                        Chọn <b>Sửa chữa, bảo dưỡng gara</b> thì màn Lập báo giá có thêm Hãng bảo hiểm, Bảo hiểm trả,
+                        Biển số xe và Số km. Chọn <b>Khác</b> (vd. chỉ bán phụ tùng, thiết bị) thì báo giá chỉ cần thông tin khách hàng.
                     </small>
                 </div>
                 <?php /* DIỆN TÍCH XƯỞNG — tài liệu khách 05/11/2026, Frontend

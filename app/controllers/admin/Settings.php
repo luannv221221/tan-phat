@@ -105,7 +105,8 @@ class Settings extends Controller {
      * và lưu màn chung không được làm mất hotline. */
     private $khoaWebsite = [
         // nhận diện + liên hệ — chuyển sang 12/11/2026
-        'site_name', 'site_slogan', 'site_short_name', 'logo',
+        /* `site_short_name` về lại màn Cấu hình — khách ghi 25/11/2026. */
+        'site_name', 'site_slogan', 'logo',
         'hotline', 'email', 'address', 'tax_code', 'facebook', 'zalo', 'messenger',
         // giao diện + SEO + chân trang — tách từ lần đầu
         'meta_description', 'meta_keywords', 'og_image',

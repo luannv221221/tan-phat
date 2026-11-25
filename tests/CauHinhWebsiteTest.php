@@ -100,7 +100,9 @@ ok(empty($sai), 'O nhap nam DUNG man cua khoa do (form khop voi danh sach trong 
 // ---------------------------------------------------------------------------
 section('Tam o khach chi ra nam o man website');
 
-foreach (['site_name', 'site_slogan', 'site_short_name', 'logo',
+/* `site_short_name` KHONG con o day: khach ghi 25/11/2026 "Ten viet tat doanh nghiep
+   chuyen tu website ve cau hinh" — xem muc ben duoi + NhanDienVaManHepTest. */
+foreach (['site_name', 'site_slogan', 'logo',
           'hotline', 'email', 'address', 'tax_code', 'facebook', 'zalo', 'messenger'] as $k){
     ok(in_array($k, $oWeb, true) && !in_array($k, $oChung, true),
        "`$k` o man Cau hinh website, khong con o Cau hinh chung");
@@ -111,7 +113,7 @@ foreach (['site_name', 'site_slogan', 'site_short_name', 'logo',
    (13/11/2026, LichBangGiaTest). No cung khong duoc nam trong whitelist cua Settings. */
 /* `bank_bin` thay cho `bank_name` (16/11/2026): ngan hang la O CHON theo ma
    NAPAS de hoa don in duoc ma QR; ten ngan hang dat theo o chon luc luu. */
-foreach (['linh_vuc', 'dien_tich_xuong', 'cost_method',
+foreach (['site_short_name', 'linh_vuc', 'dien_tich_xuong', 'cost_method',
           'bank_bin', 'bank_account', 'bank_holder'] as $k){
     ok(in_array($k, $oChung, true) && !in_array($k, $oWeb, true),
        "`$k` o lai Cau hinh chung (khong phai thu trang khach hien thi)");
