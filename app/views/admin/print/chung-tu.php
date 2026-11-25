@@ -156,14 +156,14 @@ table.khoi-ck td.o-qr { width: 34mm; padding-right: 5mm; text-align: center; }
                          gara không khai điện thoại / email thì bản cũ để một dòng trống
                          giữa địa chỉ và mã số thuế, hoặc dòng mở đầu bằng " | Email". */
                 $__lh = [];
-                if ($s('hotline') !== '') $__lh[] = 'Điện thoại: ' . e($s('hotline'));
-                if ($s('email') !== '')   $__lh[] = 'Email: ' . e($s('email'));
+                if ($s('hotline') !== '') $__lh[] = 'Điện thoại: ' . $s('hotline');
+                if ($s('email') !== '')   $__lh[] = 'Email: ' . $s('email');
                 $__dau = [];
-                if ($s('address') !== '')  $__dau[] = 'Địa chỉ: ' . e($s('address'));
-                if (!empty($__lh))         $__dau[] = implode(' &nbsp;|&nbsp; ', $__lh);
-                if ($s('tax_code') !== '') $__dau[] = 'Mã số thuế: ' . e($s('tax_code'));
+                if ($s('address') !== '')  $__dau[] = 'Địa chỉ: ' . $s('address');
+                if (!empty($__lh))         $__dau[] = implode(" \u{00A0}|\u{00A0} ", $__lh);
+                if ($s('tax_code') !== '') $__dau[] = 'Mã số thuế: ' . $s('tax_code');
                 ?>
-                <div class="dong-nho"><?php echo implode('<br/>', $__dau); ?></div>
+                <div class="dong-nho"><?php foreach ($__dau as $__i => $__x): ?><?php if ($__i > 0): ?><br/><?php endif; ?><?php echo e($__x); ?><?php endforeach; ?></div>
             </td>
         </tr>
     </table>
@@ -241,7 +241,7 @@ table.khoi-ck td.o-qr { width: 34mm; padding-right: 5mm; text-align: center; }
             $hienNhom = !empty($nhomHang) && !empty($nhomDichVu);
         ?>
             <?php if ($hienNhom): ?>
-            <tr class="nhom"><td colspan="<?php echo $soCot; ?>"><?php echo e($g[0]); ?></td></tr>
+            <tr class="nhom"><td colspan="<?php echo (int) $soCot; ?>"><?php echo e($g[0]); ?></td></tr>
             <?php endif; ?>
             <?php foreach ($g[1] as $d): $stt++; ?>
             <tr>
@@ -260,26 +260,26 @@ table.khoi-ck td.o-qr { width: 34mm; padding-right: 5mm; text-align: center; }
         <?php endforeach; ?>
 
         <?php if (empty($dong)): ?>
-            <tr><td colspan="<?php echo $soCot; ?>" class="giua" style="padding:10px">(Chưa có dòng hàng nào)</td></tr>
+            <tr><td colspan="<?php echo (int) $soCot; ?>" class="giua" style="padding:10px">(Chưa có dòng hàng nào)</td></tr>
         <?php endif; ?>
 
         <?php /* Tách riêng tiền hàng hoá và tiền dịch vụ khi chứng từ có cả hai —
                  gara muốn biết ngay phần vật tư và phần công thợ. */ ?>
         <?php if (!empty($nhomHang) && !empty($nhomDichVu)): ?>
-        <tr class="tong"><td colspan="<?php echo $soCot - 1; ?>" class="phai">Tiền hàng hoá</td><td class="phai"><?php echo e($tien($tong['hang'])); ?></td></tr>
-        <tr class="tong"><td colspan="<?php echo $soCot - 1; ?>" class="phai">Tiền dịch vụ</td><td class="phai"><?php echo e($tien($tong['dichvu'])); ?></td></tr>
+        <tr class="tong"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">Tiền hàng hoá</td><td class="phai"><?php echo e($tien($tong['hang'])); ?></td></tr>
+        <tr class="tong"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">Tiền dịch vụ</td><td class="phai"><?php echo e($tien($tong['dichvu'])); ?></td></tr>
         <?php endif; ?>
         <?php /* Thuế 0% thì hai dòng này chỉ lặp lại đúng số tổng — bỏ (khách báo
                  "thừa dòng" 25/11/2026). Có thuế thì in như cũ. */ ?>
         <?php if ((float) $tong['vat_rate'] != 0 || (float) $tong['tax'] != 0): ?>
-        <tr class="tong"><td colspan="<?php echo $soCot - 1; ?>" class="phai">Cộng tiền hàng chưa thuế</td><td class="phai"><?php echo e($tien($tong['subtotal'])); ?></td></tr>
-        <tr class="tong"><td colspan="<?php echo $soCot - 1; ?>" class="phai">Thuế GTGT (<?php echo e(rtrim(rtrim(number_format((float) $tong['vat_rate'], 2, '.', ''), '0'), '.')); ?>%)</td><td class="phai"><?php echo e($tien($tong['tax'])); ?></td></tr>
+        <tr class="tong"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">Cộng tiền hàng chưa thuế</td><td class="phai"><?php echo e($tien($tong['subtotal'])); ?></td></tr>
+        <tr class="tong"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">Thuế GTGT (<?php echo e(rtrim(rtrim(number_format((float) $tong['vat_rate'], 2, '.', ''), '0'), '.')); ?>%)</td><td class="phai"><?php echo e($tien($tong['tax'])); ?></td></tr>
         <?php endif; ?>
-        <tr class="tong-cuoi"><td colspan="<?php echo $soCot - 1; ?>" class="phai">TỔNG CỘNG THANH TOÁN</td><td class="phai"><?php echo e($tien($tong['total'])); ?></td></tr>
+        <tr class="tong-cuoi"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">TỔNG CỘNG THANH TOÁN</td><td class="phai"><?php echo e($tien($tong['total'])); ?></td></tr>
         <?php /* Hai dòng dưới chỉ in khi chứng từ có bảo hiểm trả — xem in_chung_tu(). */ ?>
         <?php if ($tong['baoHiem'] > 0): ?>
-        <tr class="tong"><td colspan="<?php echo $soCot - 1; ?>" class="phai">Bảo hiểm trả<?php echo !empty($ct['baoHiemTen']) ? ' (' . e($ct['baoHiemTen']) . ')' : ''; ?></td><td class="phai"><?php echo e($tien($tong['baoHiem'])); ?></td></tr>
-        <tr class="tong-cuoi"><td colspan="<?php echo $soCot - 1; ?>" class="phai">KHÁCH HÀNG PHẢI TRẢ</td><td class="phai"><?php echo e($tien($tong['khachTra'])); ?></td></tr>
+        <tr class="tong"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">Bảo hiểm trả<?php echo !empty($ct['baoHiemTen']) ? ' (' . e($ct['baoHiemTen']) . ')' : ''; ?></td><td class="phai"><?php echo e($tien($tong['baoHiem'])); ?></td></tr>
+        <tr class="tong-cuoi"><td colspan="<?php echo (int) $soCot - 1; ?>" class="phai">KHÁCH HÀNG PHẢI TRẢ</td><td class="phai"><?php echo e($tien($tong['khachTra'])); ?></td></tr>
         <?php endif; ?>
         </tbody>
     </table>
