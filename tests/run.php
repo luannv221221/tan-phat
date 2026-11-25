@@ -102,6 +102,7 @@ $tests = [
     'PhieuKhoMobileTest.php'      => 'KHO — 8 man phieu kho tren dien thoai giong don mua: o chon tim duoc, gop dong trung, nut xoa to, tong ngoai vung cuon',
     'VatTheoHangHoaTest.php'      => 'THUE — VAT nhap / VAT xuat theo hang hoa, VAT tung dong don mua / bao gia / hoa don',
     'HoSoNguoiDungTest.php'       => 'TAI KHOAN — Ho so cua toi: sua ten / anh / dien thoai / dia chi cua CHINH minh + doi mat khau cung trang',
+    'SoQuyTest.php'               => 'KE TOAN — so quy tien mat + tien gui ngan hang: ton dau ky, ton sau phieu, rieng tung gara',
 ];
 
 $php      = PHP_BINARY;

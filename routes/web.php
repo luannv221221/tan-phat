@@ -415,6 +415,11 @@ Route::group('admin', function(){
    Route::post('phieu-thu/edit/(\d+)',     'admin/phieuthu/postEdit/$1');
    Route::get('phieu-thu/huy/(\d+)',       'admin/phieuthu/huy/$1');
    Route::get('phieu-thu/in/(\d+)',        'admin/phieuthu/in/$1');
+   /* So du ban dau cua SO QUY (form o the So quy, Bao cao ke toan). Dat duoi
+      phieu-thu chu khong duoi bao-cao-ke-toan: bao cao chi co quyen `view`,
+      khong co duong ghi (BaoCaoVaBaoHiemTest). RoleMiddleware doi quyen GHI
+      phieu thu; Phieuthu::postSoDuQuy() doi them quyen SUA ca thu lan chi. */
+   Route::post('phieu-thu/so-du-quy',      'admin/phieuthu/postSoDuQuy');
 
    Route::get('phieu-chi',                 'admin/phieuchi');
    Route::get('phieu-chi/add',             'admin/phieuchi/add');

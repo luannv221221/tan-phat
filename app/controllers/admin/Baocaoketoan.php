@@ -16,6 +16,12 @@ use App\core\Session;
  *   4.   Gara còn nợ nhà cung cấp = tiền hàng đã nhập mua − đã chi
  *   5.   Báo cáo kinh doanh
  *
+ * Thêm 25/11/2026 (khách: "Thêm sổ quỹ (tiền mặt, tiền NH thì tự nhập)"):
+ *   6.   Sổ quỹ — tiền mặt (111*) hoặc tiền gửi ngân hàng (112*): tồn đầu kỳ,
+ *        từng phiếu kèm tồn sau phiếu, tồn cuối kỳ. Tính toán ở SoQuyModel.
+ *        Số dư ban đầu của quỹ KHÔNG ghi ở đây — form trên thẻ gửi sang
+ *        Phieuthu::postSoDuQuy(), để màn báo cáo vẫn chỉ xem.
+ *
  * ===================================================================
  *  LÃI GỘP VÀ DÒNG TIỀN LÀ HAI THỨ KHÁC NHAU — KHÔNG CỘNG VÀO NHAU.
  * ===================================================================
@@ -35,7 +41,7 @@ use App\core\Session;
 class Baocaoketoan extends Controller {
 
     private $__data = [];
-    private $__voucher, $__invoice, $__receipt, $__request;
+    private $__voucher, $__invoice, $__receipt, $__soQuy, $__request;
 
     private $routeBase = 'bao-cao-ke-toan';
     private $labelMany = 'Báo cáo kế toán';
@@ -48,6 +54,7 @@ class Baocaoketoan extends Controller {
         $this->__voucher = $this->model('AccVouchersModel');
         $this->__invoice = $this->model('SalesInvoicesModel');
         $this->__receipt = $this->model('GoodsReceiptsModel');
+        $this->__soQuy   = $this->model('SoQuyModel');
         $this->__request = new Request();
     }
 
@@ -70,6 +77,25 @@ class Baocaoketoan extends Controller {
         $c['tu'] = $tu; $c['den'] = $den; $c['theo'] = $theo; $c['tab'] = $tab;
         $c['dsTheoKy'] = self::$theoKy;
         $c['msg']      = Session::flash('msg');
+        $c['msgError'] = Session::flash('msgError');
+
+        // --- 6. Sổ quỹ ---
+        $quy = SoQuyModel::quyHopLe(isset($f['quy']) ? $f['quy'] : '');
+        $c['quy']   = $quy;
+        $c['dsQuy'] = SoQuyModel::$quy;
+        $c['soQuy'] = null; $c['suaSoDu'] = false; $c['urlPhieu'] = ['thu' => '', 'chi' => ''];
+        if ($tab === 'quy'){
+            $c['soQuy'] = $this->__soQuy->so($quy, $tu, $den);
+            /* Hỏi quyền MỘT lần, không hỏi mỗi dòng: mỗi lần route() là một
+               vòng RoleMiddleware có truy vấn CSDL. */
+            $suaThu = (bool) route('admin/phieu-thu/edit/0');
+            $suaChi = (bool) route('admin/phieu-chi/edit/0');
+            /* CÙNG điều kiện với Phieuthu::postSoDuQuy() — hiện form mà bấm Lưu
+               bị đá ra "không có quyền" là tệ hơn không hiện. */
+            $c['suaSoDu']  = $suaThu && $suaChi;
+            $c['urlPhieu'] = ['thu' => $suaThu ? _WEB_URL . '/admin/phieu-thu/edit/' : '',
+                              'chi' => $suaChi ? _WEB_URL . '/admin/phieu-chi/edit/' : ''];
+        }
 
         // --- 1 + 2. Thu / chi theo kỳ ---
         $c['theoKy']  = $this->gomTheoKy($theo, $tu, $den);
