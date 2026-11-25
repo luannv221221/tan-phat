@@ -66,16 +66,27 @@
                         }
                         ?>
                     </td>
-                    <?php /* Cho thấy trước gara nào còn ràng buộc — người bấm Xoá
+                    <?php /* Cho thấy trước công ty nào còn ràng buộc — người bấm Xoá
                              biết mình đang đụng vào cái gì, thay vì bấm xong mới
-                             nhận thông báo từ chối. */ ?>
+                             nhận thông báo từ chối.
+                             THU SAU NÚT "Xem chi tiết" (anh 25/11/2026: "ẩn đoạn này
+                             đi ấn xem chi tiết thì xem") — cả chuỗi "1 kho · 6 người
+                             dùng · ..." tràn khỏi màn. <details> đóng/mở không cần JS;
+                             xổ ra thì mỗi thứ một dòng. */ ?>
                     <td class="small text-muted">
-                        <?php
-                        $__d = isset($dangDung[(int) $item['id']]) ? $dangDung[(int) $item['id']] : [];
-                        $__t = [];
-                        foreach ($__d as $__nhan => $__n) $__t[] = $__n . ' ' . $__nhan;
-                        echo $__t ? e(implode(' · ', $__t)) : '<span class="text-black-50">trống</span>';
-                        ?>
+                        <?php $__d = isset($dangDung[(int) $item['id']]) ? $dangDung[(int) $item['id']] : []; ?>
+                        <?php if (!empty($__d)): ?>
+                        <details class="dang-co">
+                            <summary>Xem chi tiết</summary>
+                            <ul>
+                                <?php foreach ($__d as $__nhan => $__n): ?>
+                                <li>{{$__n . ' ' . $__nhan}}</li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </details>
+                        <?php else: ?>
+                        <span class="text-black-50">trống</span>
+                        <?php endif; ?>
                     </td>
                     <td class="text-center">
                         {!! $item['is_master']==1 ? '<span class="badge badge-info">Công ty tổng</span>' : '' !!}
