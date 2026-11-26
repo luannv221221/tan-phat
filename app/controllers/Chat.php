@@ -58,6 +58,7 @@ class Chat extends Controller {
         }
         $mid = $this->__msg->add($cid, 'customer', $body);
         $this->__conv->edit(['unread' => 1, 'status' => 'open', 'last_message_at' => date('Y-m-d H:i:s')], $cid);
+        $this->__conv->tatGo($cid, 'customer');   // gửi xong thì tắt "Khách đang nhập…"
 
         $this->json(['ok' => true, 'id' => $mid, 'sender' => 'customer', 'body' => $body]);
     }
@@ -82,6 +83,15 @@ class Chat extends Controller {
         $hasInfo = !empty($conv['guest_name']) || !empty($conv['guest_phone'])
                    || !empty($conv['member_id']);
 
-        $this->json(['messages' => $out, 'hasInfo' => (bool) $hasInfo]);
+        $this->json(['messages' => $out, 'hasInfo' => (bool) $hasInfo,
+                     'typing' => $this->__conv->benDangGo($conv, 'staff')]);
+    }
+
+    /** Khách đang gõ -> màn Hội thoại của nhân viên hiện "Khách đang nhập…" (26/11/2026). */
+    public function dangGo(){
+        $key = Session::get('chat_key');
+        $conv = !empty($key) ? $this->__conv->findBySession($key) : null;
+        if (empty($conv)) $this->json(['ok' => false]);
+        $this->json(['ok' => $this->__conv->baoGo((int) $conv['id'], 'customer')]);
     }
 }

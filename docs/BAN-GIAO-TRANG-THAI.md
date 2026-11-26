@@ -9,9 +9,9 @@ tắc lâu dài nằm ở [`CLAUDE.md`](../CLAUDE.md) ở gốc repo. File này 
 | | |
 |---|---|
 | Nhánh | `ban-giao-khach` = `origin/ban-giao-khach`, cây sạch |
-| Đợt cuối | 25/11/2026 — sửa theo file Tracking của khách (mục 2a) |
-| Test | **5050 PASS / 0 FAIL / 0 bỏ qua** — chạy toàn bộ 25/11/2026 sau khi gộp đợt này |
-| Migration mới nhất | `000122` (`2026_11_25_000122_ten_mien_chinh_ma_eteksofts.php`). Đợt 25/11 thêm `000114` → `000122`, **chạy TRƯỚC khi đẩy code** (mục 4) |
+| Đợt cuối | 26/11/2026 — chat tự nhận tin không F5 + "đang nhập…" (khách báo "cái chat cứ phải f5 mới nhận tin"); trước đó 25/11 sửa theo file Tracking (mục 2a) |
+| Test | **5100 PASS / 0 FAIL / 0 bỏ qua** — chạy toàn bộ 26/11/2026 sau khi sửa chat |
+| Migration mới nhất | `000123` (`2026_11_26_000123_chat_dang_go.php`, 2 cột "đang gõ" cho chat). Máy chủ đã chạy tới `000122`; **`000123` chưa chạy** — chạy TRƯỚC khi đẩy code (mục 4). Quên chạy thì chỉ mất dòng "đang nhập…", tự nhận tin vẫn chạy |
 
 Worktree cũ dọn được (đã merge hết vào `ban-giao-khach`): `.claude/worktrees/kind-mendel-d5ca2f`,
 `competent-herschel-09e8e5`, `sua-loi-khach-2511`, `agent-ab2024cf2229f66b0`,

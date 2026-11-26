@@ -433,6 +433,7 @@ $this->render($sub_content, $content);
     <h2 class="chatbox__title">Chat với chúng tôi <i class="fa fa-angle-down"></i></h2>
     <div class="chatbox__content">
         <div id="cw-msgs"></div>
+        <div id="cw-go" class="small text-muted px-2" style="display:none;font-style:italic">Nhân viên đang trả lời…</div>
         <div id="cw-info">
             <input type="text" id="cw-name" class="form-control" placeholder="Tên của bạn"/>
             <input type="tel" inputmode="numeric" maxlength="11" pattern="0[0-9]{9,10}" id="cw-phone" class="form-control" placeholder="Điện thoại"/>
@@ -541,7 +542,7 @@ if (!empty($settings['messenger'])){
     title.addEventListener('click', function(){
         var opening = chatbox.classList.contains('hide');
         chatbox.classList.toggle('hide', !opening);
-        if(opening && !started){ started = true; poll(); timer = setInterval(poll, 4000); }
+        if(opening && !started){ started = true; poll(); timer = setInterval(poll, 3000); }
     });
 
     var msgs = document.getElementById('cw-msgs');
@@ -550,9 +551,13 @@ if (!empty($settings['messenger'])){
     var nameEl = document.getElementById('cw-name');
     var phoneEl = document.getElementById('cw-phone');
     var info = document.getElementById('cw-info');
+    var goEl = document.getElementById('cw-go');
     var lastId = 0, timer = null, started = false;
+    /* Tin vừa gửi và lần hỏi kế tiếp có thể cùng trả về một tin — không vẽ hai lần. */
+    var daCo = {};
 
     function addMsg(m){
+        if(m.id){ if(daCo[m.id]) return; daCo[m.id] = 1; }
         var row = document.createElement('div');
         row.className = 'cw-m ' + (m.sender === 'staff' ? 'staff' : 'customer');
         var b = document.createElement('div'); b.className = 'b'; b.textContent = m.body;
@@ -571,6 +576,8 @@ if (!empty($settings['messenger'])){
                 // 2 ô trắng hiện lại dù khách đã khai từ trước.
                 if(d.hasInfo) hideInfo();
                 if(d.messages){ d.messages.forEach(addMsg); }
+                // "Nhân viên đang trả lời…" — khách thử chat 26/11/2026: "ko thấy typing".
+                if(goEl) goEl.style.display = d.typing ? 'block' : 'none';
             })
             .catch(function(){});
     }
@@ -605,6 +612,16 @@ if (!empty($settings['messenger'])){
             .catch(function(){ showErr('Mất kết nối, vui lòng thử lại.'); });
     }
     send.addEventListener('click', doSend);
+
+    // Báo "đang gõ" (tối đa 3 giây một lần) để nhân viên thấy "Khách đang nhập…".
+    // Chỉ báo khi đã có hội thoại (đã gửi ít nhất một tin).
+    var lanGo = 0;
+    input.addEventListener('input', function(){
+        if(!lastId || !input.value.trim()) return;
+        var bay = Date.now(); if(bay - lanGo < 3000) return; lanGo = bay;
+        var fd = new FormData(); fd.append('_token', TOKEN);
+        fetch(WEB + '/chat/dang-go', {method:'POST', body:fd, credentials:'same-origin'}).catch(function(){});
+    });
     input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); doSend(); } });
 })();
 </script>

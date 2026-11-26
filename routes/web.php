@@ -591,6 +591,8 @@ Route::group('admin', function(){
    Route::get('chat', 'admin/chatadmin');
    Route::get('chat/view/(\d+)', 'admin/chatadmin/view/$1');
    Route::post('chat/reply/(\d+)', 'admin/chatadmin/reply/$1');
+   Route::get('chat/poll/(\d+)', 'admin/chatadmin/poll/$1');       // man Hoi thoai tu hoi tin moi (26/11/2026)
+   Route::post('chat/dang-go/(\d+)', 'admin/chatadmin/dangGo/$1'); // nhan vien dang go -> khach thay "dang tra loi"
    Route::get('chat/set-status/(\d+)', 'admin/chatadmin/setStatus/$1');
    Route::get('chat/delete/(\d+)', 'admin/chatadmin/delete/$1');
 
@@ -687,6 +689,7 @@ Route::get('sitemap.xml', 'sitemap/index');
 // Webchat khách (JSON, polling)
 Route::post('chat/send', 'chat/send');
 Route::get('chat/poll', 'chat/poll');
+Route::post('chat/dang-go', 'chat/dangGo');   // khach dang go -> nhan vien thay "dang nhap" (26/11/2026)
 
 // Đăng ký bản tin + Liên hệ (public)
 Route::post('dang-ky-ban-tin', 'newsletter/subscribe');

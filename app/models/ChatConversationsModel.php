@@ -49,6 +49,41 @@ class ChatConversationsModel extends Model {
         return (int) ($r['c'] ?? 0);
     }
 
+    /* "ĐANG NHẬP…" HAI CHIỀU — khách thử chat 26/11/2026 gõ "Nhưng ko thấy
+       typing". Mỗi bên gõ phím thì ghi mốc vào cột của mình (migration 000123);
+       bên kia hỏi tin mới thấy mốc trong vòng GO_TRONG giây thì hiện dòng
+       "… đang nhập…". Gửi tin xong thì xoá mốc của bên gửi (tắt ngay).
+
+       Bọc try/catch: chạy code mới khi chưa chạy 000123 thì chỉ mất dòng "đang
+       nhập…", không được làm hỏng gửi / nhận tin. Gọi SAU khi đã kiểm hội
+       thoại thuộc công ty đang mở (getDetail / findBySession đều lọc theo công ty). */
+    const GO_TRONG = 6;
+
+    private static function cotGo($ben){
+        return $ben === 'staff' ? 'staff_typing_at' : 'customer_typing_at';
+    }
+
+    public function baoGo($id, $ben){
+        try {
+            $this->update('chat_conversations', [self::cotGo($ben) => date('Y-m-d H:i:s')], '`id` = ?', [(int) $id]);
+            return true;
+        } catch (\Throwable $e){ return false; }
+    }
+
+    public function tatGo($id, $ben){
+        try {
+            $this->update('chat_conversations', [self::cotGo($ben) => null], '`id` = ?', [(int) $id]);
+        } catch (\Throwable $e){ /* chưa chạy 000123 */ }
+    }
+
+    /** Bên $ben có đang gõ không, đọc từ dòng hội thoại vừa lấy ra. */
+    public function benDangGo($conv, $ben){
+        $cot = self::cotGo($ben);
+        if (empty($conv[$cot])) return false;
+        $t = strtotime($conv[$cot]);
+        return $t !== false && $t >= time() - self::GO_TRONG;
+    }
+
     public function edit($data, $id){ $data['update_at'] = date('Y-m-d H:i:s'); return $this->updateById($data, $id); }
     public function remove($id){ return $this->deleteById($id); }
 }

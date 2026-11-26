@@ -54,6 +54,12 @@ function csrf_token(){
     return \App\core\Session::csrfToken();
 }
 
+/** Request gửi bằng fetch / AJAX (header X-Requested-With) — trả JSON thay vì chuyển trang. */
+function la_ajax(){
+    return isset($_SERVER['HTTP_X_REQUESTED_WITH'])
+        && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+}
+
 /**
  * Escape dữ liệu trước khi in ra HTML — chống XSS.
  *

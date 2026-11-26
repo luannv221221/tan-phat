@@ -108,6 +108,7 @@ $tests = [
     'TenMienChinhMaEteksoftsTest.php' => 'TEN MIEN — moi cong ty chinh = <ma>.eteksofts.vn; cong ty mo moi tu nhan (000122)',
     'DangCoXemChiTietTest.php'    => 'GIAO DIEN — Quan ly cong ty: cot "Dang co" an sau nut "Xem chi tiet"',
     'NutLocDongBoTest.php'        => 'GIAO DIEN — nut loc o man danh sach: co chu "Loc", cung mot kieu',
+    'ChatTuNhanTinTest.php'       => 'CHAT — nhan vien tu nhan tin khong F5, tra loi AJAX, dang nhap hai chieu, poll khong gia han phien',
 ];
 
 $php      = PHP_BINARY;

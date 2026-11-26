@@ -2,7 +2,7 @@
 <div class="alert alert-success alert-dismissible"><button type="button" class="close" data-dismiss="alert">&times;</button><i class="fas fa-check-circle mr-1"></i> {{$msg}}</div>
 @endif
 
-<div class="card card-outline card-primary">
+<div class="card card-outline card-primary" id="hop-thu">
     <div class="card-header">
         <h3 class="card-title"><i class="fas fa-comments mr-2"></i>{{$page_name}}</h3>
         <div class="card-tools">{!! $unread > 0 ? '<span class="badge badge-danger">'.(int)$unread.' chưa đọc</span>' : '' !!}</div>
@@ -54,3 +54,31 @@
         </table>
     </div>
 </div>
+
+<script>
+/* HỘP THƯ TỰ LÀM MỚI — khách báo 26/11/2026 "cái chat cứ phải f5 mới nhận tin".
+   10 giây một lần tải lại CHÍNH trang này (giữ bộ lọc), chỉ thay số chưa đọc và
+   danh sách hội thoại; ô lọc không bị đụng. Gửi kèm X-Tu-Hoi để lần tự hỏi này
+   không tính là thao tác (phiên vẫn tự thoát sau 15 phút không dùng). */
+(function(){
+    var hop = document.getElementById('hop-thu');
+    if (!hop || !window.fetch || !window.DOMParser) return;
+    var dung = false;
+    function lamMoi(){
+        if (dung || document.hidden) return;
+        fetch(location.href, {credentials: 'same-origin', headers: {'X-Requested-With': 'XMLHttpRequest', 'X-Tu-Hoi': '1'}})
+            .then(function(r){ return r.text(); })
+            .then(function(html){
+                var moi = new DOMParser().parseFromString(html, 'text/html').getElementById('hop-thu');
+                if (!moi){ dung = true; return; }   // hết phiên: máy chủ trả trang đăng nhập
+                ['.card-tools', 'tbody'].forEach(function(sel){
+                    var cu = hop.querySelector(sel), thay = moi.querySelector(sel);
+                    if (cu && thay && cu.innerHTML !== thay.innerHTML) cu.innerHTML = thay.innerHTML;
+                });
+            })
+            .catch(function(){});
+    }
+    setInterval(lamMoi, 10000);
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden) lamMoi(); });
+})();
+</script>

@@ -89,7 +89,15 @@ class AuthMiddleware extends Middleware {
                 $response->redirect('dang-nhap');
             }
 
-            $this->setActivity(); //Lưu thời gian hoạt động cuối cùng của user
+            /* Lưu thời gian hoạt động cuối cùng — TRỪ các lần trang TỰ HỎI (màn
+               chat hỏi tin mới vài giây một lần, hộp thư chat tự làm mới — gửi kèm
+               header X-Tu-Hoi; 26/11/2026). Tự hỏi mà cũng tính là thao tác thì để
+               màn chat mở là phiên không bao giờ tự thoát sau 15 phút như đã hứa ở
+               trang đăng nhập. (Header giả được, nhưng giả thì chỉ tự rút ngắn
+               phiên của chính mình.) */
+            if (!Request::is('admin/chat/poll/*') && empty($_SERVER['HTTP_X_TU_HOI'])){
+                $this->setActivity();
+            }
 
             return true;
 
