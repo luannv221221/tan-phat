@@ -97,6 +97,9 @@
                     <td class="text-center">
                         @if (route('admin/'.$routeBase.'/edit/'.$item['id']))
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/ten-mien/'.$item['id']}}" class="btn btn-info btn-sm" title="Tên miền của công ty này"><i class="fas fa-globe"></i></a>
+                        @if ($item['is_master']!=1)
+                        <a href="{{_WEB_URL.'/admin/'.$routeBase.'/ke-toan/'.$item['id']}}" class="btn btn-primary btn-sm" title="Danh mục kế toán của công ty này: gán / bỏ gán tài khoản, loại phiếu"><i class="fas fa-book"></i></a>
+                        @endif
                         <a href="{{_WEB_URL.'/admin/'.$routeBase.'/edit/'.$item['id']}}" class="btn btn-warning btn-sm" title="Sửa"><i class="fas fa-edit"></i></a>
                         @endif
                         <?php /* Gara đã có dữ liệu thì chỉ KHOÁ được, không xoá: xoá đi là

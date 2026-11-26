@@ -68,6 +68,10 @@ Route::group('admin', function(){
    Route::get('garages/ten-mien-chinh/(\d+)',   'admin/garages/tenMienChinh/$1');
    Route::get('garages/ten-mien-tat/(\d+)',     'admin/garages/tenMienToggle/$1');
    Route::get('garages/ten-mien-xoa/(\d+)',     'admin/garages/tenMienXoa/$1');
+   /* Danh muc ke toan cua cong ty — Tan Phat gan / bo gan tai khoan + loai phieu
+      dung chung cho tung cong ty (anh chot 26/11/2026). POST kiem quyen edit trong controller. */
+   Route::get('garages/ke-toan/(\d+)',          'admin/garages/keToan/$1');
+   Route::post('garages/ke-toan/(\d+)',         'admin/garages/postKeToan/$1');
    /* Không còn route đổi gara (22/09/2026): các gara độc lập, gara làm việc
       luôn là gara của tài khoản — xem gara_hien_tai(). */
 

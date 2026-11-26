@@ -34,6 +34,11 @@ class AccVoucherTypesModel extends Model {
            joinOn() bọc backtick toàn bộ chuỗi và wrapField() NÉM LỖI với
            "acc_accounts AS tkno". Giá trị vẫn đi qua placeholder. */
         list($dkGara, $bd) = $this->dkChungVaRieng('v');
+        /* Loại phiếu dùng chung Tân Phát đã BỎ GÁN cho công ty này thì không
+           hiện, kể cả ô chọn lúc lập phiếu (AccSharedHiddenModel, 26/11/2026). */
+        list($dkGan, $bdGan) = $this->ganTheoCongTy()->dk(AccSharedHiddenModel::LP, '`v`.`id`');
+        $dkGara = '(' . $dkGara . ') AND ' . $dkGan;
+        $bd = array_merge($bd, $bdGan);
 
         $sql = 'SELECT `v`.*,
                        `tkno`.`code` AS `no_code`, `tkno`.`name` AS `no_name`,
@@ -49,11 +54,25 @@ class AccVoucherTypesModel extends Model {
         return $this->getRaw($sql . ' ORDER BY `v`.`loai` ASC, `v`.`code` ASC', $bd);
     }
 
-    public function getDetail($id){ return $this->getFirst($id); }
+    public function getDetail($id){
+        $r = $this->getFirst($id);
+        if (!empty($r) && $r['garage_id'] === null && $this->ganTheoCongTy()->biAn(AccSharedHiddenModel::LP, (int) $id)) return null;
+        return $r;
+    }
+
+    private $__gan = null;
+    private function ganTheoCongTy(){
+        if ($this->__gan === null){ require_once __DIR__ . '/AccSharedHiddenModel.php'; $this->__gan = new AccSharedHiddenModel(); }
+        return $this->__gan;
+    }
 
     /** Chi tiết KÈM mã tài khoản — lúc lập phiếu cần chép bản chụp nợ/có */
     public function chiTietKemTk($id){
         list($dk, $bd) = $this->dkChungVaRieng('v');
+        /* Gửi tay id loại phiếu đã bỏ gán cho công ty: không lập được phiếu. */
+        list($dkGan, $bdGan) = $this->ganTheoCongTy()->dk(AccSharedHiddenModel::LP, '`v`.`id`');
+        $dk = '(' . $dk . ') AND ' . $dkGan;
+        $bd = array_merge($bd, $bdGan);
         return $this->firstRaw(
             'SELECT `v`.*, `tkno`.`code` AS `no_code`, `tkco`.`code` AS `co_code`
                FROM `acc_voucher_types` `v`

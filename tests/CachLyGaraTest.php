@@ -607,7 +607,12 @@ $ngoaiLe = ['users' => 'dang nhap tim khap cac gara; chan tay o Users::phamVi',
                biet gara, bat loc theo gara o day la tu khoa chinh minh. No chi
                co ham DOC; them/sua ten mien lam o man Quan ly gara, noi da co
                lop phan quyen gac. */
-            'garage_domains' => 'bang quyet dinh gara tu host; loc theo gara o day la tu khoa chinh minh'];
+            'garage_domains' => 'bang quyet dinh gara tu host; loc theo gara o day la tu khoa chinh minh',
+            /* Viec GAN danh muc ke toan dung chung cho tung cong ty (26/11/2026):
+               Tan Phat ghi cho cong ty KHAC tu man Quan ly cong ty (module chi
+               Tan Phat), con khi doc thi AccSharedHiddenModel::dk() tu ghep
+               dung cong ty dang lam viec. Co test rieng: GanDanhMucKeToanTest. */
+            'acc_shared_hidden' => 'Tan Phat ghi cho cong ty khac; doc thi dk() tu ghep cong ty dang lam viec'];
 $chuaLam = [];   // bước 4 xong: mọi bảng riêng gara đều đã bật chặn
 $modelCua = [];
 foreach (glob($goc . 'app/models/*.php') as $f){

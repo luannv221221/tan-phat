@@ -34,6 +34,10 @@ class AccAccountsModel extends Model {
      */
     public function getTree($chiHoatDong = false){
         $q = $this->bangChungVaRieng();
+        /* Dòng dùng chung Tân Phát đã BỎ GÁN cho công ty này thì không hiện
+           (AccSharedHiddenModel, 26/11/2026). Bỏ cha thì con cũng đã bị bỏ theo. */
+        list($dkGan, $bdGan) = $this->ganTheoCongTy()->dk(AccSharedHiddenModel::TK, '`acc_accounts`.`id`');
+        if ($dkGan !== '1 = 1') $q = $q->whereRaw($dkGan, $bdGan);
         if ($chiHoatDong) $q = $q->where('status', '=', 1);
         $all = $q->orderBy('code', 'ASC')->get();
 
@@ -67,7 +71,19 @@ class AccAccountsModel extends Model {
     /** Chỉ tài khoản đang bật — cho ô chọn ở màn Loại phiếu */
     public function getActive(){ return $this->getTree(true); }
 
-    public function getDetail($id){ return $this->getFirst($id); }
+    /* Bỏ gán cho công ty thì cũng KHÔNG tra ra theo id: form gửi tay id tài
+       khoản đã bỏ gán (làm cha, làm nợ / có của loại phiếu) phải bị từ chối. */
+    public function getDetail($id){
+        $r = $this->getFirst($id);
+        if (!empty($r) && $r['garage_id'] === null && $this->ganTheoCongTy()->biAn(AccSharedHiddenModel::TK, (int) $id)) return null;
+        return $r;
+    }
+
+    private $__gan = null;
+    private function ganTheoCongTy(){
+        if ($this->__gan === null){ require_once __DIR__ . '/AccSharedHiddenModel.php'; $this->__gan = new AccSharedHiddenModel(); }
+        return $this->__gan;
+    }
 
     /**
      * Tra theo mã — TRONG TẦM THẤY của gara làm việc (chung + riêng).

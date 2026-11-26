@@ -252,6 +252,7 @@ class Garages extends Controller {
         }
 
         $this->__model->remove($id);
+        $this->model('AccSharedHiddenModel')->xoaCuaCongTy((int) $id);   // việc gán danh mục kế toán
         Session::flash('msg', 'Xoá ' . $this->labelOne . ' thành công');
         $this->__response->redirect('admin/' . $this->routeBase);
     }
@@ -280,6 +281,70 @@ class Garages extends Controller {
         Session::flash('msg', $moi === 1 ? 'Đã mở khoá công ty ' . $item['name']
                                          : 'Đã khoá công ty ' . $item['name'] . ' — nhân viên công ty không đăng nhập được nữa.');
         $this->__response->redirect('admin/' . $this->routeBase);
+    }
+
+    // ===== Danh mục kế toán của công ty =====
+
+    /**
+     * GÁN / BỎ GÁN DANH MỤC KẾ TOÁN DÙNG CHUNG CHO MỘT CÔNG TY.
+     *
+     * Anh chốt 26/11/2026: "tân phát dựng sẵn nhưng cho thể gán hoặc không gán
+     * theo từng cty, không phải cty con nào cũng giống nhau". Tân Phát tick từng
+     * tài khoản / loại phiếu dùng chung cho công ty này; bỏ tick thì công ty đó
+     * không thấy, không chọn được. Mặc định gán hết. Xem AccSharedHiddenModel.
+     *
+     * Thuộc module `garages` (chỉ Tân Phát) như màn Tên miền.
+     */
+    public function keToan($id){
+        $item = $this->__model->getDetail($id);
+        if (empty($item)){
+            Session::flash('msgError', 'Không tìm thấy ' . $this->labelOne);
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        if ((int) $item['is_master'] === 1){
+            Session::flash('msgError', 'Công ty tổng là nơi dựng bộ danh mục chuẩn — luôn thấy đủ, không gán / bỏ gán.');
+            $this->__response->redirect('admin/' . $this->routeBase); return;
+        }
+        $H = $this->model('AccSharedHiddenModel');
+
+        $this->__data['sub_content'] = $this->viewDir . '/ke-toan';
+        $this->__data['page_title']  = 'Danh mục kế toán của ' . $item['name'];
+        $this->baseData();
+        $c = &$this->__data['content'];
+        $c['page_name'] = 'Danh mục kế toán của ' . $item['name'];
+        $c['item']      = $item;
+        /* Người đang mở màn này là Tân Phát (module chỉ Tân Phát), nên hai danh
+           sách dưới là đúng BỘ DÙNG CHUNG, chưa bị lọc theo công ty nào. */
+        $c['dsTk']      = $this->model('AccAccountsModel')->getTree();
+        $c['dsLp']      = $this->model('AccVoucherTypesModel')->getLists();
+        $c['an']        = $H->anCua((int) $id);
+        $c['dangDung']  = $H->dangDung((int) $id);
+        $c['coBang']    = $H->coBang();
+        $c['msg']       = Session::flash('msg');
+        $c['msgError']  = Session::flash('msgError');
+        $c['giuLai']    = Session::flash('giuLai');
+        $this->render('layouts/admin/master_admin', $this->__data);
+    }
+
+    public function postKeToan($id){
+        $item = $this->chanNeuKhongSuaDuoc($id);
+        if (empty($item)) return;
+        if ((int) $item['is_master'] === 1){ $this->__response->redirect('admin/' . $this->routeBase); return; }
+
+        $H = $this->model('AccSharedHiddenModel');
+        if (!$H->coBang()){
+            Session::flash('msgError', 'Máy chủ chưa chạy migration 000124 — chưa lưu được việc gán.');
+            $this->__response->redirect('admin/' . $this->routeBase . '/ke-toan/' . (int) $id); return;
+        }
+        $f  = $this->__request->getFields();
+        $kq = $H->ganChoCongTy((int) $id,
+                               isset($f['tk']) ? (array) $f['tk'] : [],
+                               isset($f['lp']) ? (array) $f['lp'] : []);
+
+        Session::flash('msg', 'Đã lưu danh mục kế toán của ' . $item['name'] . ': bỏ gán '
+                            . $kq['anTk'] . ' tài khoản, ' . $kq['anLp'] . ' loại phiếu.');
+        if (!empty($kq['giuLai'])) Session::flash('giuLai', $kq['giuLai']);
+        $this->__response->redirect('admin/' . $this->routeBase . '/ke-toan/' . (int) $id);
     }
 
     // ===== Tên miền của gara =====
